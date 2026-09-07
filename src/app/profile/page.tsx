@@ -101,8 +101,34 @@ export default function ProfilePage() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfilePhoto(reader.result as string);
-        setHasChanges(true);
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_SIZE = 200;
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.6);
+          setProfilePhoto(compressed);
+          setHasChanges(true);
+        };
+        img.src = reader.result as string;
       };
       reader.readAsDataURL(file);
     }
@@ -171,15 +197,14 @@ export default function ProfilePage() {
             </p>
           </div>
 
-          <div className="grid gap-8 lg:grid-cols-3">
+          <div className="max-w-3xl mx-auto space-y-8">
             
-            {/* LEFT COLUMN: Profile Overview & Presets & Tier Badge */}
-            <div className="space-y-6">
+            {/* SINGLE PROFILE CARD */}
+            <div className="card-glass rounded-3xl p-6 md:p-10 bg-[color:var(--color-surface-container)] border border-[color:var(--color-outline-variant)]/30 relative overflow-hidden">
+              <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ background: 'radial-gradient(circle at top, var(--color-primary), transparent 60%)' }} />
               
-              {/* Profile Card & Avatar Selection */}
-              <div className="card-glass rounded-3xl p-6 bg-[color:var(--color-surface-container)] border border-[color:var(--color-outline-variant)]/30 relative overflow-hidden flex flex-col items-center text-center">
-                <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ background: 'radial-gradient(circle at top right, var(--color-primary), transparent 70%)' }} />
-                
+              {/* Profile Avatar Section (Top Centered) */}
+              <div className="flex flex-col items-center text-center mb-10 relative z-10">
                 {/* Large Circle Avatar Preset */}
                 <div className="relative group mb-4">
                   <div className="h-24 w-24 rounded-full flex items-center justify-center text-white text-4xl shadow-xl border-2 border-[color:var(--color-primary)]/45 relative overflow-hidden bg-gradient-to-br from-slate-200 to-slate-350 dark:from-slate-800 dark:to-slate-900 z-10 transition-transform duration-300 group-hover:scale-[1.02]">
@@ -208,70 +233,19 @@ export default function ProfilePage() {
                 <h2 className="text-xl font-black text-[color:var(--color-on-surface)]">{fullName || 'Guest User'}</h2>
                 <p className="text-xs text-[color:var(--color-on-surface-variant)] mt-1 font-mono">@{username || 'username'}</p>
 
-                {/* Simulated URL Paste for extra premium convenience */}
-                <div className="w-full mt-4 flex flex-col gap-1 text-left">
-                  <label className="text-[9px] uppercase tracking-wider text-[color:var(--color-outline)] font-bold">Or Paste Profile Image URL</label>
-                  <input 
-                    type="text" 
-                    placeholder="https://images.unsplash.com/..." 
-                    value={profilePhoto && !profilePhoto.startsWith('data:') ? profilePhoto : ''}
-                    onChange={(e) => {
-                      setProfilePhoto(e.target.value || null);
-                      setHasChanges(true);
-                    }}
-                    className="w-full bg-[color:var(--color-surface-dim)] border border-[color:var(--color-outline-variant)]/30 rounded-xl px-3 py-1.5 text-[10px] text-[color:var(--color-on-surface)] outline-none hover:border-[color:var(--color-primary)]/20 focus:border-[color:var(--color-primary)]/40 font-mono"
-                  />
-                </div>
-
-                {/* Preset Avatar Select Button */}
-                <button
-                  type="button"
-                  onClick={() => setShowAvatarPicker(!showAvatarPicker)}
-                  className="mt-4 w-full bg-[color:var(--color-surface-dim)] hover:bg-[color:var(--color-on-surface)]/[0.05] border border-[color:var(--color-outline-variant)]/30 text-on-surface rounded-xl py-2 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <span>Select Emoji Preset</span>
-                  <span>{showAvatarPicker ? '▲' : '▼'}</span>
-                </button>
-
-                {/* Inline Avatar Presets Selector Modal/Pill */}
-                {showAvatarPicker && (
-                  <div className="mt-2 w-full bg-[color:var(--color-surface-dim)]/90 border border-[color:var(--color-outline-variant)]/40 rounded-2xl p-3 grid grid-cols-4 gap-2 animate-fade-up z-30">
-                    {AVATAR_PRESETS.map((preset) => (
-                      <button
-                        key={preset.id}
-                        type="button"
-                        onClick={() => {
-                          setAvatar(preset.id);
-                          setProfilePhoto(null); // Clear custom photo if preset selected
-                          setShowAvatarPicker(false);
-                          setHasChanges(true);
-                        }}
-                        className={`flex flex-col items-center justify-center p-2 rounded-xl border text-[10px] font-bold gap-1 cursor-pointer transition-all ${
-                          avatar === preset.id && !profilePhoto
-                            ? 'bg-[color:var(--color-primary)]/15 border-[color:var(--color-primary)] text-[color:var(--color-primary)]'
-                            : 'bg-[color:var(--color-on-surface)]/[0.05] border-transparent text-[color:var(--color-on-surface-variant)] hover:bg-[color:var(--color-on-surface)]/[0.1] hover:text-[color:var(--color-on-surface)]'
-                        }`}
-                      >
-                        <span className="text-xl">{preset.emoji}</span>
-                        <span>{preset.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
                 {/* Loyalty stats */}
-                <div className="grid grid-cols-3 gap-2 w-full mt-6 pt-5 border-t border-[color:var(--color-outline-variant)]/30 text-left">
-                  <div className="flex flex-col">
+                <div className="flex items-center justify-center gap-10 mt-6 pt-5 border-t border-[color:var(--color-outline-variant)]/30 w-full max-w-md">
+                  <div className="flex flex-col items-center">
                     <span className="text-[9px] uppercase tracking-wider text-[color:var(--color-outline)] font-bold">Bookings</span>
-                    <span className="text-base font-black text-[color:var(--color-on-surface)] mt-1">12</span>
+                    <span className="text-xl font-black text-[color:var(--color-on-surface)] mt-1">12</span>
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col items-center">
                     <span className="text-[9px] uppercase tracking-wider text-[color:var(--color-outline)] font-bold">Active</span>
-                    <span className="text-base font-black text-[color:var(--color-primary)] mt-1 animate-pulse">1</span>
+                    <span className="text-xl font-black text-[color:var(--color-primary)] mt-1 animate-pulse">1</span>
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col items-center">
                     <span className="text-[9px] uppercase tracking-wider text-[color:var(--color-outline)] font-bold">Points</span>
-                    <span className="text-base font-black text-[color:var(--color-on-surface)] mt-1">4.8k</span>
+                    <span className="text-xl font-black text-[color:var(--color-on-surface)] mt-1">4.8k</span>
                   </div>
                 </div>
               </div>
@@ -306,13 +280,8 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-            </div>
-
-            {/* RIGHT COLUMN: Account settings forms, Preferences & Actions */}
-            <div className="lg:col-span-2 space-y-6">
-              
-              {/* Profile Details Form Card */}
-              <div className="card-glass rounded-3xl p-6 bg-[color:var(--color-surface-container)] border border-[color:var(--color-outline-variant)]/30 relative overflow-hidden">
+              {/* Profile Details Form */}
+              <div className="relative z-10">
                 <h2 className="text-base font-bold text-[color:var(--color-on-surface)] mb-5 flex items-center gap-2">
                   <User size={18} className="text-[color:var(--color-primary)]" />
                   <span>Personal Credentials</span>

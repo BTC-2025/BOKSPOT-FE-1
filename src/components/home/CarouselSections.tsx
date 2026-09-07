@@ -11,8 +11,9 @@ export function CarouselSections() {
   const recommendedScrollRef = useRef<HTMLDivElement>(null);
   const scrollRecommended = (direction: 'left' | 'right') => {
     if (recommendedScrollRef.current) {
-      const scrollAmount = 320;
-      recommendedScrollRef.current.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+      const { scrollLeft, clientWidth } = recommendedScrollRef.current;
+      const scrollTo = direction === 'left' ? scrollLeft - clientWidth : scrollLeft + clientWidth;
+      recommendedScrollRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
     }
   };
 
@@ -53,18 +54,35 @@ export function CarouselSections() {
             </div>
 
             <div className="relative group">
+              {/* Left Arrow */}
+              <button 
+                onClick={() => scrollRecommended('left')}
+                className="absolute -left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-[color:var(--color-surface-container)] border border-[color:var(--color-outline-variant)]/40 flex items-center justify-center shadow-md transition-all text-[color:var(--color-on-surface)] z-10 opacity-0 group-hover:opacity-100 hover:scale-110 hover:bg-[color:var(--color-surface-container-high)]"
+              >
+                <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+              </button>
+              
+              {/* Right Arrow */}
+              <button 
+                onClick={() => scrollRecommended('right')}
+                className="absolute -right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-[color:var(--color-surface-container)] border border-[color:var(--color-outline-variant)]/40 flex items-center justify-center shadow-md transition-all text-[color:var(--color-on-surface)] z-10 opacity-0 group-hover:opacity-100 hover:scale-110 hover:bg-[color:var(--color-surface-container-high)]"
+              >
+                <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+              </button>
 
-
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 pb-4 pt-1">
-              {RECOMMENDED_ITEMS.slice(0, 6).map((item) => (
+              <div 
+                ref={recommendedScrollRef}
+                className="flex gap-4 pb-6 pt-2 overflow-x-auto snap-x scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-1"
+              >
+              {RECOMMENDED_ITEMS.map((item) => (
                 <Link
                   key={item.id}
                   href={item.link}
-                  className="w-full shrink-0 group flex flex-col self-stretch"
+                  className="w-[280px] lg:w-[calc(20%-12px)] shrink-0 group flex flex-col self-stretch snap-start"
                 >
-                  <div className="bg-[color:var(--color-surface-container)] rounded-2xl overflow-hidden border border-[color:var(--color-outline-variant)]/20 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                  <div className="bg-[color:var(--color-surface-container)] rounded-[24px] overflow-hidden border border-[color:var(--color-outline-variant)]/20 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-[340px]">
                     {/* Image Section */}
-                    <div className="relative h-[260px] w-full shrink-0 overflow-hidden">
+                    <div className="relative flex-1 w-full overflow-hidden rounded-b-[20px]">
                       <img 
                         src={item.image} 
                         alt={item.title} 
@@ -81,37 +99,27 @@ export function CarouselSections() {
                       )}
                     </div>
                     
-                    {/* Content Section */}
-                    <div className="p-3 flex-1 flex flex-col">
-                      <div className="flex flex-col items-start justify-between mb-1">
-                        <h3 className="font-bold text-sm text-[color:var(--color-on-surface)] line-clamp-2">
-                          {item.title}
-                        </h3>
-                        <div className="flex text-yellow-500 shrink-0 mt-1">
-                          {[...Array(item.stars)].map((_, i) => (
-                            <Star key={i} className="w-3 h-3 fill-current" />
-                          ))}
-                        </div>
-                      </div>
+                    {/* Content Section (3 Lines) */}
+                    <div className="px-3 pt-2.5 pb-2.5 flex flex-col justify-center bg-[color:var(--color-surface-container)]">
+                      {/* Line 1: Title */}
+                      <h3 className="font-bold text-[13px] text-[color:var(--color-on-surface)] truncate">
+                        {item.title}
+                      </h3>
                       
-                      <p className="text-[11px] text-[color:var(--color-outline)] mb-3">{item.location}</p>
+                      {/* Line 2: Location */}
+                      <p className="text-[11px] text-[color:var(--color-outline)] truncate mt-0.5">
+                        {item.location}
+                      </p>
                       
-                      <div className="flex flex-col gap-2 mt-auto">
-                        <div className="flex items-center gap-1.5">
-                          <div className="bg-[#20274d] text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm">
-                            {item.ratingScore}
-                          </div>
-                          <div className="text-[10px] text-[color:var(--color-on-surface)] truncate">
-                            <span className="font-bold">{item.ratingText}</span>
-                            <span className="text-[color:var(--color-outline)] mx-1">•</span>
-                            <span className="text-[color:var(--color-outline)]">{item.usersCount}</span>
-                          </div>
+                      {/* Line 3: Rating & Price */}
+                      <div className="flex items-center justify-between mt-1.5">
+                        <div className="flex items-center gap-1">
+                          <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
+                          <span className="text-[11px] font-bold text-[color:var(--color-on-surface)]">{item.ratingScore}</span>
+                          <span className="text-[10px] text-[color:var(--color-outline)]">({item.usersCount})</span>
                         </div>
-                        
-                        <div className="w-full">
-                          <div className="text-[13px] font-extrabold text-[color:var(--color-on-surface)]">
-                            {item.price}
-                          </div>
+                        <div className="text-[13px] font-extrabold text-[color:var(--color-on-surface)]">
+                          {item.price}
                         </div>
                       </div>
                     </div>

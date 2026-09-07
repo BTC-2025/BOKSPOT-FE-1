@@ -4,6 +4,8 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import axios from 'axios';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 import { MockService, MOCK_SERVICES } from './mockData';
 
 interface UserState {
@@ -133,10 +135,11 @@ interface BookingFlowState {
   setAttendeeCount: (count: number) => void;
   setNotes: (notes: string) => void;
   setBookingResult: (result: any) => void;
-  addBooking: (booking: PersistedBooking) => void;
-  updateBooking: (bookingId: string, updates: Partial<PersistedBooking>) => void;
-  cancelBooking: (bookingId: string) => void;
-  completeBooking: (bookingId: string) => void;
+  fetchBookings: () => Promise<void>;
+  addBooking: (booking: PersistedBooking) => Promise<void>;
+  updateBooking: (bookingId: string, updates: Partial<PersistedBooking>) => Promise<void>;
+  cancelBooking: (bookingId: string) => Promise<void>;
+  completeBooking: (bookingId: string) => Promise<void>;
   addService: (service: MockService) => void;
   updateService: (service: MockService) => void;
   deleteService: (serviceId: string) => void;
@@ -150,9 +153,7 @@ interface BookingFlowState {
   resetFlow: () => void;
 }
 
-export const useBookingFlowStore = create<BookingFlowState>()(
-  persist(
-    (set) => ({
+export const useBookingFlowStore = create<BookingFlowState>()((set, get) => ({
       selectedService: null,
       selectedSlot: null,
       attendeeCount: 1,
@@ -201,16 +202,80 @@ export const useBookingFlowStore = create<BookingFlowState>()(
       setAttendeeCount: (count) => set({ attendeeCount: count }),
       setNotes: (notes) => set({ notes }),
       setBookingResult: (result) => set({ bookingResult: result }),
-      addBooking: (booking) => set((state) => ({ bookings: [booking, ...state.bookings] })),
-      updateBooking: (bookingId, updates) => set((state) => ({
-        bookings: state.bookings.map((b) => b.id === bookingId || b.ref === bookingId ? { ...b, ...updates } : b)
-      })),
-      cancelBooking: (bookingId) => set((state) => ({
-        bookings: state.bookings.map((b) => b.id === bookingId ? { ...b, status: 'CANCELLED' as const } : b)
-      })),
-      completeBooking: (bookingId) => set((state) => ({
-        bookings: state.bookings.map((b) => b.id === bookingId ? { ...b, status: 'COMPLETED' as const } : b)
-      })),
+
+      fetchBookings: async () => {
+        try {
+          const res = await axios.get(`${API_BASE}/bookings/sync`);
+          if (res.data && Array.isArray(res.data)) {
+            set({ bookings: res.data });
+          }
+        } catch (error) {
+          console.error("Error fetching bookings:", error);
+          set({ bookings: INITIAL_BOOKINGS });
+        }
+      },
+
+      addBooking: async (booking) => {
+        try {
+          await axios.post(`${API_BASE}/bookings/sync`, booking);
+          const currentBookings = get().bookings;
+          set({ bookings: [booking, ...currentBookings] });
+        } catch (error) {
+          console.error("Failed to add booking to DB", error);
+          set((state) => ({ bookings: [booking, ...state.bookings] }));
+        }
+      },
+      
+      updateBooking: async (bookingId, updates) => {
+        try {
+          const current = get().bookings.find(b => b.id === bookingId);
+          if (current) {
+            const updated = { ...current, ...updates };
+            await axios.post(`${API_BASE}/bookings/sync`, updated);
+          }
+        } catch (error) {
+          console.error("Failed to update booking to DB", error);
+        }
+        set((state) => ({
+          bookings: state.bookings.map((b) =>
+            b.id === bookingId ? { ...b, ...updates } : b
+          ),
+        }));
+      },
+      
+      cancelBooking: async (bookingId) => {
+        try {
+          const current = get().bookings.find(b => b.id === bookingId);
+          if (current) {
+            const updated = { ...current, status: 'CANCELLED' };
+            await axios.post(`${API_BASE}/bookings/sync`, updated);
+          }
+        } catch (error) {
+          console.error("Failed to cancel booking in DB", error);
+        }
+        set((state) => ({
+          bookings: state.bookings.map((b) =>
+            b.id === bookingId ? { ...b, status: 'CANCELLED' } : b
+          ),
+        }));
+      },
+      
+      completeBooking: async (bookingId) => {
+        try {
+          const current = get().bookings.find(b => b.id === bookingId);
+          if (current) {
+            const updated = { ...current, status: 'COMPLETED' };
+            await axios.post(`${API_BASE}/bookings/sync`, updated);
+          }
+        } catch (error) {
+          console.error("Failed to complete booking in DB", error);
+        }
+        set((state) => ({
+          bookings: state.bookings.map((b) =>
+            b.id === bookingId ? { ...b, status: 'COMPLETED' } : b
+          ),
+        }));
+      },
       addService: (service) => set((state) => ({ services: [service, ...state.services] })),
       updateService: (updated) => set((state) => ({
         services: state.services.map((s) => s.id === updated.id ? updated : s)
@@ -293,10 +358,7 @@ export const useBookingFlowStore = create<BookingFlowState>()(
         notes: '',
         bookingResult: null,
       }),
-    }),
-    { name: 'booking-flow-storage' },
-  )
-);
+    }));
 
 interface UIState {
   theme: 'system' | 'light' | 'dark';
@@ -320,6 +382,10 @@ export const useUIStore = create<UIState>()(
     { name: 'ui-storage' },
   ),
 );
+
+if (typeof window !== 'undefined') {
+  useBookingFlowStore.getState().fetchBookings();
+}
 
 export interface LocationState {
   city: string;

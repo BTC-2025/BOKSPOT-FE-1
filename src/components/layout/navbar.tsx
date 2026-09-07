@@ -4,18 +4,24 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Menu, X, Bell, User, Calendar, MapPin, Heart } from 'lucide-react';
+import { useUserStore } from '../../lib/store';
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const user = useUserStore(state => state.user);
 
   return (
     <header className="sticky top-0 z-50 glass">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-sm">
-            β
-          </div>
+          {user?.profilePhoto ? (
+            <img src={user.profilePhoto} alt="Profile" className="h-9 w-9 rounded-xl object-cover shadow-sm" />
+          ) : (
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-sm">
+              β
+            </div>
+          )}
           <span className="text-xl font-bold gradient-text hidden sm:block">BETA</span>
         </Link>
 
@@ -46,8 +52,12 @@ export function Navbar() {
             <Bell className="h-5 w-5" />
             <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500"></span>
           </button>
-          <Link href="/profile" className="ml-2 flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-sm font-semibold hover:opacity-90 transition-opacity">
-            U
+          <Link href="/profile" className="ml-2 flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-sm font-semibold hover:opacity-90 transition-opacity overflow-hidden">
+            {user?.profilePhoto ? (
+              <img src={user.profilePhoto} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              'U'
+            )}
           </Link>
         </div>
 

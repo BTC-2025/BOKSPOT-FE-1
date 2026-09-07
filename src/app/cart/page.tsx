@@ -17,6 +17,15 @@ export default function CartPage() {
   const router = useRouter();
   const { addBooking } = useBookingFlowStore();
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const { scrollLeft, clientWidth } = scrollRef.current;
+      const scrollTo = direction === 'left' ? scrollLeft - clientWidth : scrollLeft + clientWidth;
+      scrollRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
+    }
+  };
+
   const handlePayment = () => {
     // Generate bookings from cart items
     items.forEach(item => {
@@ -95,11 +104,11 @@ export default function CartPage() {
               items.map((item) => (
                 <div key={item.id} className="bg-white rounded-2xl p-4 md:p-5 flex flex-col md:flex-row md:items-center gap-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-slate-100/50 hover:shadow-md transition-shadow">
 
-                  <div className="flex items-center gap-4 flex-1">
+                  <Link href="/booking" className="flex items-center gap-4 flex-1 group hover:opacity-80 transition-opacity">
                     {/* Icon / Image */}
                     <div className={`w-14 h-14 shrink-0 rounded-xl bg-${item.iconColor || 'blue'}-50 flex items-center justify-center text-${item.iconColor || 'blue'}-600 overflow-hidden`}>
                       {item.image ? (
-                        <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                        <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                       ) : (
                         <span className="material-symbols-outlined text-[24px]">{item.icon || 'sell'}</span>
                       )}
@@ -107,7 +116,7 @@ export default function CartPage() {
 
                     {/* Details */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-slate-800 text-base truncate">{item.title}</h3>
+                      <h3 className="font-bold text-slate-800 text-base truncate group-hover:text-[#0056b3] transition-colors">{item.title}</h3>
                       <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
                         {item.date && (
                           <>
@@ -117,7 +126,7 @@ export default function CartPage() {
                         )}
                       </div>
                     </div>
-                  </div>
+                  </Link>
 
                   {/* Quantity & Price & Actions */}
                   <div className="flex items-center justify-between md:justify-end gap-4 pl-0 md:pl-4 mt-3 md:mt-0 border-t border-slate-100 md:border-t-0 pt-3 md:pt-0">
@@ -217,16 +226,36 @@ export default function CartPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 pb-6 pt-2">
-            {RECOMMENDED_ITEMS.slice(0, 6).map((item) => (
+          <div className="relative group">
+            {/* Left Arrow */}
+            <button 
+              onClick={() => scroll('left')}
+              className="absolute -left-5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-lg transition-all text-slate-600 z-10 opacity-0 group-hover:opacity-100 hover:scale-110 hover:bg-slate-50"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            
+            {/* Right Arrow */}
+            <button 
+              onClick={() => scroll('right')}
+              className="absolute -right-5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-lg transition-all text-slate-600 z-10 opacity-0 group-hover:opacity-100 hover:scale-110 hover:bg-slate-50"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+
+            <div 
+              ref={scrollRef}
+              className="flex gap-4 pb-6 pt-2 overflow-x-auto snap-x scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-2"
+            >
+            {RECOMMENDED_ITEMS.map((item) => (
               <Link
                 key={item.id}
                 href={item.link}
-                className="w-full shrink-0 group flex flex-col self-stretch"
+                className="w-[280px] lg:w-[calc(20%-12px)] shrink-0 group flex flex-col self-stretch snap-start"
               >
-                <div className="bg-white rounded-2xl overflow-hidden border border-slate-200/60 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                <div className="bg-white rounded-[24px] border border-slate-200/60 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-[340px] overflow-hidden">
                   {/* Image Section */}
-                  <div className="relative h-[260px] w-full shrink-0 overflow-hidden">
+                  <div className="relative flex-1 w-full overflow-hidden rounded-b-[20px]">
                     <img
                       src={item.image}
                       alt={item.title}
@@ -243,43 +272,34 @@ export default function CartPage() {
                     )}
                   </div>
 
-                  {/* Content Section */}
-                  <div className="p-3 flex-1 flex flex-col">
-                    <div className="flex flex-col items-start justify-between mb-1">
-                      <h3 className="font-bold text-sm text-slate-800 line-clamp-2">
-                        {item.title}
-                      </h3>
-                      <div className="flex text-yellow-500 shrink-0 mt-1">
-                        {[...Array(item.stars || 4)].map((_, i) => (
-                          <Star key={i} className="w-3 h-3 fill-current" />
-                        ))}
+                  {/* Content Section (3 Lines) */}
+                  <div className="px-3 pt-2.5 pb-2.5 flex flex-col justify-center bg-white">
+                    {/* Line 1: Title */}
+                    <h3 className="font-bold text-[13px] text-slate-800 truncate">
+                      {item.title}
+                    </h3>
+                    
+                    {/* Line 2: Location / Subtitle */}
+                    <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                      {item.location}
+                    </p>
+
+                    {/* Line 3: Rating & Price */}
+                    <div className="flex items-center justify-between mt-1.5">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
+                        <span className="text-[11px] font-bold text-slate-700">{item.ratingScore || '4.5'}</span>
+                        <span className="text-[10px] text-slate-400">({item.usersCount || '50+'})</span>
                       </div>
-                    </div>
-
-                    <p className="text-[11px] text-slate-500 mb-3">{item.location}</p>
-
-                    <div className="flex flex-col gap-2 mt-auto">
-                      <div className="flex items-center gap-1.5">
-                        <div className="bg-[#20274d] text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm">
-                          {item.ratingScore || '4.5'}
-                        </div>
-                        <div className="text-[10px] text-slate-700 truncate">
-                          <span className="font-bold">{item.ratingText || 'Great'}</span>
-                          <span className="text-slate-400 mx-1">•</span>
-                          <span className="text-slate-400">{item.usersCount || '50+'}</span>
-                        </div>
-                      </div>
-
-                      <div className="w-full">
-                        <div className="text-[13px] font-extrabold text-slate-800">
-                          {item.price || 'View'}
-                        </div>
+                      <div className="text-[13px] font-extrabold text-slate-800">
+                        {item.price || 'View'}
                       </div>
                     </div>
                   </div>
                 </div>
               </Link>
             ))}
+            </div>
           </div>
         </div>
       </div>
