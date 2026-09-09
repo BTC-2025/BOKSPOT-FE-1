@@ -7,6 +7,7 @@ import {
   Award, Sparkles, Check, CheckCircle2, Sliders, ShieldCheck, Heart, MapPin 
 } from 'lucide-react';
 import { useUserStore, useUIStore } from '../../lib/store';
+import { compressImage } from '../../lib/imageUtils';
 
 const AVATAR_PRESETS = [
   { id: 'jetsetter', label: 'Jetsetter', emoji: '✈️', color: 'from-amber-400 to-yellow-600' },
@@ -96,41 +97,16 @@ export default function ProfilePage() {
   }
 
   // Handle local photo upload
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const MAX_SIZE = 200;
-          let width = img.width;
-          let height = img.height;
-          
-          if (width > height) {
-            if (width > MAX_SIZE) {
-              height *= MAX_SIZE / width;
-              width = MAX_SIZE;
-            }
-          } else {
-            if (height > MAX_SIZE) {
-              width *= MAX_SIZE / height;
-              height = MAX_SIZE;
-            }
-          }
-          
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0, width, height);
-          const compressed = canvas.toDataURL('image/jpeg', 0.6);
-          setProfilePhoto(compressed);
-          setHasChanges(true);
-        };
-        img.src = reader.result as string;
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressed = await compressImage(file, 200, 200, 0.8);
+        setProfilePhoto(compressed);
+        setHasChanges(true);
+      } catch (err) {
+        console.error('Image compression failed', err);
+      }
     }
   };
 

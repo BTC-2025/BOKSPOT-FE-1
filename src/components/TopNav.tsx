@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { useLocationStore, useUIStore, useUserStore, useCartStore, useWishlistStore, useBookingFlowStore } from '../lib/store';
 import { LiveClock } from './LiveClock';
 import { ALL_SEARCHABLE_SERVICES, SearchableService } from '../lib/searchData';
+import { compressImage } from '../lib/imageUtils';
 import { LocationSelectorModal } from './LocationSelectorModal';
 import { UtilityDrawer } from './UtilityDrawer';
 
@@ -67,19 +68,18 @@ export function TopNav({
   const userPhoto = user?.profilePhoto || null;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (reader.result && typeof reader.result === 'string') {
-          setUser({
-            ...(user || {}),
-            profilePhoto: reader.result
-          });
-        }
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressed = await compressImage(file, 200, 200, 0.8);
+        setUser({
+          ...(user || {}),
+          profilePhoto: compressed
+        });
+      } catch (err) {
+        console.error('Image compression failed', err);
+      }
     }
   };
   // UI toggle states
