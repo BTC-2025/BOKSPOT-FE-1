@@ -211,7 +211,7 @@ export const useBookingFlowStore = create<BookingFlowState>()((set, get) => ({
           }
         } catch (error) {
           console.error("Error fetching bookings:", error);
-          set({ bookings: INITIAL_BOOKINGS });
+          set({ bookings: [] });
         }
       },
 

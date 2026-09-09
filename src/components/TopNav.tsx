@@ -5,9 +5,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { Search, Heart, ShoppingBag, Sparkles, MapPin, Map, X, User, Sun, Moon, Laptop } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useLocationStore, useUIStore, useUserStore, useCartStore, useWishlistStore } from '../lib/store';
+import { useLocationStore, useUIStore, useUserStore, useCartStore, useWishlistStore, useBookingFlowStore } from '../lib/store';
 import { LiveClock } from './LiveClock';
-import { ALL_SEARCHABLE_SERVICES } from '../lib/searchData';
+import { ALL_SEARCHABLE_SERVICES, SearchableService } from '../lib/searchData';
 import { LocationSelectorModal } from './LocationSelectorModal';
 import { UtilityDrawer } from './UtilityDrawer';
 
@@ -53,6 +53,7 @@ export function TopNav({
   const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
   const wishlistItems = useWishlistStore(state => state.items);
   const wishlistCount = wishlistItems.length;
+  const bookings = useBookingFlowStore(state => state.bookings);
   const { city, setCity, setLocation, setStatus, status, latitude, longitude } = useLocationStore();
   const [showMapModal, setShowMapModal] = useState(false);
   const [tempSelectedCity, setTempSelectedCity] = useState<string | null>(null);
@@ -130,13 +131,39 @@ export function TopNav({
       return;
     }
 
-    const filtered = ALL_SEARCHABLE_SERVICES.filter((service) =>
-      service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      service.groupTitle.toLowerCase().includes(searchQuery.toLowerCase())
+    const UNIVERSAL_ITEMS: SearchableService[] = [
+      ...ALL_SEARCHABLE_SERVICES,
+      { name: 'Profile Settings', emoji: '⚙️', groupTitle: 'Account & Settings', href: '/profile' },
+      { name: 'My Bookings', emoji: '📅', groupTitle: 'Account & Settings', href: '/tracks' },
+      { name: 'Wishlist', emoji: '❤️', groupTitle: 'Shopping', href: '/wishlist' },
+      { name: 'Cart', emoji: '🛍️', groupTitle: 'Shopping', href: '/cart' },
+      { name: 'Home', emoji: '🏠', groupTitle: 'Navigation', href: '/' },
+      { name: 'Categories', emoji: '📂', groupTitle: 'Navigation', href: '/categories' },
+      { name: 'Tracks', emoji: '🗺️', groupTitle: 'Navigation', href: '/tracks' },
+      { name: 'Become a Vendor', emoji: '🏪', groupTitle: 'Business', href: '/vendor/register' },
+      { name: 'Help & Support', emoji: '🎧', groupTitle: 'Support', href: '/support' },
+      ...bookings.map(b => ({
+        name: `Booking: ${b.item}`,
+        emoji: '🎟️',
+        groupTitle: `My Bookings - ${b.merchant}`,
+        href: '/tracks'
+      }))
+    ];
+
+    const query = searchQuery.toLowerCase();
+    const filtered = UNIVERSAL_ITEMS.filter((item) =>
+      item.name.toLowerCase().includes(query) ||
+      item.groupTitle.toLowerCase().includes(query)
     );
-    setSuggestions(filtered);
+    
+    // Remove exact duplicates by name
+    const uniqueFiltered = filtered.filter((item, index, self) =>
+      index === self.findIndex((t) => t.name === item.name)
+    );
+
+    setSuggestions(uniqueFiltered);
     setActiveIndex(-1);
-  }, [searchQuery]);
+  }, [searchQuery, bookings]);
 
   const handleSelectSuggestion = (service: any) => {
     router.push(service.href);
@@ -629,7 +656,7 @@ export function TopNav({
           <div className="w-[50px] shrink-0 h-full flex items-center justify-center border-l border-white/10">
             <button
               onClick={() => setUtilityDrawerOpen(!utilityDrawerOpen)}
-              className={`relative w-9 h-9 flex items-center justify-center rounded-xl bg-[#5a4409] hover:bg-[#72560c] border border-[#fceea7]/30 transition-all cursor-pointer shadow-md ${
+              className={`relative flex items-center justify-center transition-all cursor-pointer shadow-md custom-nav-icon-container custom-nav-icon-btn w-9 h-9 ${
                 utilityDrawerOpen 
                   ? 'opacity-100 scale-105 shadow-[0_0_10px_rgba(252,238,167,0.3)]'
                   : 'opacity-85 hover:opacity-100 hover:scale-105'
