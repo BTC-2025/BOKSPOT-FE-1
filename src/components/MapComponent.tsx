@@ -381,11 +381,18 @@ export default function MapComponent({
     });
 
     // Invalidate size on mount to prevent partial loading
-    setTimeout(() => {
-      map.invalidateSize();
+    const timer = setTimeout(() => {
+      try {
+        if (mapRef.current && (mapRef.current as any)._container) {
+          mapRef.current.invalidateSize();
+        }
+      } catch (e) {
+        // Safe catch if unmounted rapidly
+      }
     }, 150);
 
     return () => {
+      clearTimeout(timer);
       if (container) {
         container.removeEventListener('wheel', handleWheel);
       }
@@ -432,28 +439,32 @@ export default function MapComponent({
 
   // Update map view on center or zoom changes
   useEffect(() => {
-    if (mapRef.current) {
-      const currentCenter = mapRef.current.getCenter();
-      const currentZoom = mapRef.current.getZoom();
-      const distance = Math.sqrt(
-        Math.pow(currentCenter.lat - center[0], 2) + Math.pow(currentCenter.lng - center[1], 2)
-      );
-      
-      const zoomChanged = prevZoomRef.current !== zoom;
-      prevZoomRef.current = zoom;
+    if (mapRef.current && Array.isArray(center) && typeof center[0] === 'number' && typeof center[1] === 'number' && !isNaN(center[0]) && !isNaN(center[1])) {
+      try {
+        const currentCenter = mapRef.current.getCenter();
+        const currentZoom = mapRef.current.getZoom();
+        const distance = Math.sqrt(
+          Math.pow(currentCenter.lat - center[0], 2) + Math.pow(currentCenter.lng - center[1], 2)
+        );
+        
+        const zoomChanged = prevZoomRef.current !== zoom;
+        prevZoomRef.current = zoom;
 
-      // If the distance is very large (> 0.1 degrees), it's likely a city fly-to/reset,
-      // so we should reset the zoom to the prop zoom. Otherwise, preserve user's zoom.
-      const isLargeDistance = distance > 0.1;
+        // If the distance is very large (> 0.1 degrees), it's likely a city fly-to/reset,
+        // so we should reset the zoom to the prop zoom. Otherwise, preserve user's zoom.
+        const isLargeDistance = distance > 0.1;
 
-      // Only call setView if the difference is significant to prevent feedback loops
-      if (distance > 0.0005 || zoomChanged) {
-        const targetZoom = (zoomChanged || isLargeDistance) ? zoom : currentZoom;
-        mapRef.current.setView(center, targetZoom, { animate: true, duration: 0.8 });
-        setMapZoom(targetZoom);
+        // Only call setView if the difference is significant to prevent feedback loops
+        if (distance > 0.0005 || zoomChanged) {
+          const targetZoom = (zoomChanged || isLargeDistance) ? zoom : currentZoom;
+          mapRef.current.setView(center, targetZoom, { animate: true, duration: 0.8 });
+          setMapZoom(targetZoom);
+        }
+      } catch (err) {
+        console.warn('Map setView error:', err);
       }
     }
-  }, [center[0], center[1], zoom]);
+  }, [center?.[0], center?.[1], zoom]);
 
   // Live Geolocation Tracking
   useEffect(() => {

@@ -5,7 +5,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import axios from 'axios';
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000/api/v1';
 import { MockService, MOCK_SERVICES } from './mockData';
 
 interface UserState {
@@ -230,7 +230,7 @@ export const useBookingFlowStore = create<BookingFlowState>()((set, get) => ({
         try {
           const current = get().bookings.find(b => b.id === bookingId);
           if (current) {
-            const updated = { ...current, ...updates };
+            const updated = { ...current, ...updates };             
             await axios.post(`${API_BASE}/bookings/sync`, updated);
           }
         } catch (error) {

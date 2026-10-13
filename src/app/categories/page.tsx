@@ -356,29 +356,87 @@ function getServiceSubtitle(name: string): string {
   return 'Reserve slots instantly';
 }
 
+import { motion } from 'framer-motion';
+import { Sparkles, ArrowRight, Compass, Search, SlidersHorizontal } from 'lucide-react';
+
 export default function CategoriesPage() {
   const router = useRouter();
   const [activeGroup, setActiveGroup] = useState<string>('ALL');
+  const [searchFilter, setSearchFilter] = useState<string>('');
 
-  const visibleGroups = activeGroup === 'ALL'
+  const visibleGroups = (activeGroup === 'ALL'
     ? SERVICE_GROUPS
-    : SERVICE_GROUPS.filter(g => g.title === activeGroup);
+    : SERVICE_GROUPS.filter(g => g.title === activeGroup)
+  ).map(group => {
+    if (!searchFilter.trim()) return group;
+    const query = searchFilter.toLowerCase();
+    const filteredSubs = group.subcategories.map(sub => ({
+      ...sub,
+      items: sub.items.filter(item => 
+        item.name.toLowerCase().includes(query) || 
+        group.title.toLowerCase().includes(query) ||
+        sub.name.toLowerCase().includes(query)
+      )
+    })).filter(sub => sub.items.length > 0);
+
+    return {
+      ...group,
+      subcategories: filteredSubs
+    };
+  }).filter(group => group.subcategories.length > 0);
 
   return (
-    <>
-      <main className="page-content px-4 md:px-8 lg:pr-8 pt-[100px] md:pt-[132px]">
-        <div className="mx-auto max-w-7xl">
+    <main className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] transition-colors duration-300 relative overflow-hidden pb-20 pt-[80px] md:pt-[100px]">
+      {/* Ambient Luxury Glows */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-amber-500/10 via-amber-500/5 to-transparent blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-60 right-10 w-96 h-96 bg-amber-400/5 rounded-full blur-3xl pointer-events-none -z-10" />
 
-        {/* Category Tabs Switcher (Sticky Row) */}
-        <div className="sticky top-[42px] md:top-[48px] z-30 border-b border-[color:var(--color-outline-variant)]/20 py-3 mb-8 -mx-4 px-4 md:-mx-8 md:px-8 overflow-x-auto flex gap-2.5 scrollbar-none scroll-smooth">
-          {/* All button first */}
+      <div className="mx-auto max-w-7xl px-4 md:px-8">
+        {/* Luxury Hero Header */}
+        <div className="pt-4 pb-6 border-b border-[color:var(--color-outline-variant)]/20">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 text-[11px] font-bold text-amber-500 uppercase tracking-wider mb-2.5 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 backdrop-blur-md">
+                <Compass size={13} className="text-amber-500 animate-spin-slow" />
+                <span>Explore Directory</span>
+              </div>
+              <h1 className="text-3xl md:text-5xl font-black tracking-tight text-[color:var(--color-on-surface)] flex items-center gap-3">
+                All Categories
+                <Sparkles size={28} className="text-amber-400 hidden sm:inline-block animate-pulse" />
+              </h1>
+              <p className="mt-2 text-sm text-[color:var(--color-on-surface-variant)] max-w-2xl font-normal leading-relaxed">
+                Discover seamless bookings across transport, luxury stays, entertainment, sports, and local lifestyle services.
+              </p>
+            </div>
+
+            {/* Quick search input */}
+            <div className="relative flex items-center w-full md:w-80 rounded-2xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface)]/80 backdrop-blur-md px-4 py-2.5 focus-within:border-amber-400 focus-within:ring-2 focus-within:ring-amber-400/20 transition-all shadow-sm">
+              <Search size={16} className="text-amber-400 mr-2.5 shrink-0" />
+              <input
+                type="text"
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+                placeholder="Search category or service..."
+                className="w-full bg-transparent text-xs text-[color:var(--color-on-surface)] placeholder-[color:var(--color-outline)] outline-none font-medium"
+              />
+              {searchFilter && (
+                <button onClick={() => setSearchFilter('')} className="text-xs text-[color:var(--color-outline)] hover:text-white transition-colors">
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Category Filter Pills (Sticky Bar) */}
+        <div className="sticky top-[42px] md:top-[48px] z-30 py-3.5 mb-8 -mx-4 px-4 md:-mx-8 md:px-8 overflow-x-auto flex gap-2.5 scrollbar-none scroll-smooth bg-[var(--bg-base)]/85 backdrop-blur-xl border-b border-[color:var(--color-outline-variant)]/20 shadow-sm">
+          {/* All button */}
           <button
-            key="ALL"
             onClick={() => setActiveGroup('ALL')}
-            className={`px-4 py-2.5 rounded-full text-[11.5px] font-bold border transition-all cursor-pointer flex items-center gap-2 shrink-0 shadow-sm backdrop-blur-md ${
+            className={`px-4 py-2 rounded-full text-xs font-bold border transition-all cursor-pointer flex items-center gap-2 shrink-0 backdrop-blur-md ${
               activeGroup === 'ALL'
-                ? 'bg-[color:var(--color-primary)] text-white border-[color:var(--color-primary)] scale-105'
-                : 'bg-[color:var(--color-surface-container)]/40 border-[color:var(--color-outline-variant)]/20 text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)] hover:border-[color:var(--color-primary)]/30 hover:scale-[1.03] active:scale-95'
+                ? 'bg-amber-400 text-black border-amber-400 shadow-md shadow-amber-500/20 font-black scale-105'
+                : 'bg-[color:var(--color-surface)]/90 border-[color:var(--color-outline-variant)]/40 text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)] hover:border-amber-400/40 hover:scale-[1.02] active:scale-95'
             }`}
           >
             <span className="text-sm shrink-0">🌐</span>
@@ -388,10 +446,10 @@ export default function CategoriesPage() {
             <button
               key={group.title}
               onClick={() => setActiveGroup(group.title)}
-              className={`px-4 py-2.5 rounded-full text-[11.5px] font-bold border transition-all cursor-pointer flex items-center gap-2 shrink-0 shadow-sm backdrop-blur-md ${
+              className={`px-4 py-2 rounded-full text-xs font-bold border transition-all cursor-pointer flex items-center gap-2 shrink-0 backdrop-blur-md ${
                 activeGroup === group.title
-                  ? 'bg-[color:var(--color-primary)] text-white border-[color:var(--color-primary)] scale-105'
-                  : 'bg-[color:var(--color-surface-container)]/40 border-[color:var(--color-outline-variant)]/20 text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)] hover:border-[color:var(--color-primary)]/30 hover:scale-[1.03] active:scale-95'
+                  ? 'bg-amber-400 text-black border-amber-400 shadow-md shadow-amber-500/20 font-black scale-105'
+                  : 'bg-[color:var(--color-surface)]/90 border-[color:var(--color-outline-variant)]/40 text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)] hover:border-amber-400/40 hover:scale-[1.02] active:scale-95'
               }`}
             >
               <span className="text-sm shrink-0">{GROUP_EMOJIS[group.title] || '📍'}</span>
@@ -401,116 +459,112 @@ export default function CategoriesPage() {
         </div>
 
         {/* Categories Section Feed */}
-        <div className="space-y-12">
-          {visibleGroups.map((group) => {
+        <div className="space-y-14">
+          {visibleGroups.length === 0 ? (
+            <div className="py-24 text-center border border-dashed border-[color:var(--color-outline-variant)]/40 rounded-3xl bg-[color:var(--color-surface)]/50">
+              <p className="text-lg font-bold text-[color:var(--color-on-surface)]">No categories found matching "{searchFilter}"</p>
+              <p className="text-xs text-[color:var(--color-on-surface-variant)] mt-1">Try another search term or click "All" above.</p>
+            </div>
+          ) : visibleGroups.map((group) => {
             const id = group.title.toLowerCase().replace(/\s+/g, '-');
-            const isSingleView = activeGroup !== 'ALL';
+            const groupLink = getGroupHref(group.title);
+            
             return (
               <section
                 key={group.title}
                 id={id}
-                className="scroll-mt-36 text-left animate-fade-up border-b border-[color:var(--color-outline-variant)]/20 pb-12 mb-12 last:border-0"
+                className="scroll-mt-36 text-left animate-fade-up border-b border-[color:var(--color-outline-variant)]/20 pb-12 last:border-0"
               >
                 {/* Category Header */}
-                <div className="flex items-center gap-4.5 mb-6">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-[color:var(--color-primary)]/20 bg-[color:var(--color-primary)]/10 text-[color:var(--color-primary)] shadow-md">
-                    <span className="material-symbols-outlined text-[26px]">{group.icon}</span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-400/10 text-amber-500 shadow-lg shadow-amber-500/5">
+                      <span className="material-symbols-outlined text-[28px]">{group.icon}</span>
+                    </div>
+                    <div>
+                      <h2 className="text-xl md:text-2xl font-black text-[color:var(--color-on-surface)] tracking-tight">
+                        {group.title}
+                      </h2>
+                      <p className="mt-0.5 text-xs md:text-sm text-[color:var(--color-on-surface-variant)] font-normal">
+                        {group.description}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-[20px] md:text-[22px] font-black text-[color:var(--color-on-surface)] tracking-tight">
-                      {group.title}
-                    </h2>
-                    <p className="mt-1 text-xs md:text-sm text-[color:var(--color-on-surface-variant)]">
-                      {group.description}
-                    </p>
-                  </div>
+
+                  <Link 
+                    href={groupLink}
+                    className="inline-flex items-center gap-1.5 self-start sm:self-auto text-xs font-bold text-amber-400 hover:text-amber-300 hover:underline transition-colors group/link px-3 py-1.5 rounded-xl bg-amber-400/10 border border-amber-400/20"
+                  >
+                    <span>View all in {group.title}</span>
+                    <ArrowRight size={13} className="group-hover/link:translate-x-0.5 transition-transform" />
+                  </Link>
                 </div>
 
-                {isSingleView ? (
-                  /* ── SINGLE CATEGORY VIEW: No container, big cards in grid ── */
-                  <div className="space-y-10">
-                    {group.subcategories.map((subcat) => (
-                      <div key={subcat.name}>
-                        {/* Subcategory heading — no box */}
-                        <h3 className="text-[16px] font-extrabold text-[color:var(--color-on-surface)] tracking-tight mb-5 flex items-center gap-2">
-                          <span className="w-1 h-5 rounded-full bg-[color:var(--color-primary)] inline-block" />
-                          {subcat.name}
-                        </h3>
-                        {/* Big card grid */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {/* Subcategories Container */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {group.subcategories.map((subcat) => (
+                    <div 
+                      key={subcat.name} 
+                      className="bg-[color:var(--color-surface)] rounded-3xl p-6 shadow-md border border-[color:var(--color-outline-variant)]/30 hover:border-amber-400/30 transition-all flex flex-col justify-between"
+                    >
+                      <div>
+                        {/* Subcategory title */}
+                        <div className="flex items-center justify-between mb-4 pb-2 border-b border-[color:var(--color-outline-variant)]/20">
+                          <h3 className="text-sm font-extrabold text-[color:var(--color-on-surface)] tracking-wide flex items-center gap-2">
+                            <span className="w-1.5 h-4 rounded-full bg-amber-400 inline-block" />
+                            {subcat.name}
+                          </h3>
+                          <span className="text-[11px] font-bold text-[color:var(--color-on-surface-variant)] bg-[color:var(--color-surface-dim)] px-2.5 py-0.5 rounded-full border border-[color:var(--color-outline-variant)]/30">
+                            {subcat.items.length} {subcat.items.length === 1 ? 'service' : 'services'}
+                          </span>
+                        </div>
+
+                        {/* Subcategory service cards grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-3.5 pt-1">
                           {subcat.items.map((item) => {
                             const serviceHref = getHrefForCategoryItem(group.title, item.name);
+                            const price = getServicePrice(item.name);
                             return (
                               <Link
                                 key={item.name}
                                 href={serviceHref}
-                                className="group flex flex-col items-center"
+                                className="group relative flex flex-col rounded-2xl overflow-hidden bg-[color:var(--color-surface-dim)] border border-[color:var(--color-outline-variant)]/30 hover:border-amber-400/60 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300"
                               >
-                                <div className="w-full aspect-square rounded-3xl bg-white dark:bg-[#1a1a24] shadow-md border border-slate-200/80 dark:border-slate-800 group-hover:shadow-xl group-hover:-translate-y-2 transition-all duration-300 relative overflow-hidden">
+                                {/* Image Container */}
+                                <div className="w-full h-28 relative overflow-hidden bg-[color:var(--color-surface-dim)]">
                                   <img
                                     src={getServiceImage(item.name)}
                                     alt={item.name}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
                                   />
-                                  {/* Gradient overlay */}
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                  {/* Price badge */}
-                                  <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                    <span className="text-white text-[10px] font-bold">{getServicePrice(item.name)}</span>
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+
+                                  {/* Price pill */}
+                                  <div className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-md bg-amber-400 text-black text-[9.5px] font-black shadow-md">
+                                    {price}
                                   </div>
                                 </div>
-                                <h3 className="mt-3 text-center font-extrabold text-[13px] leading-tight text-[color:var(--color-on-surface-variant)] group-hover:text-[color:var(--color-primary)] line-clamp-2 px-1 w-full transition-colors duration-200">
-                                  {item.name}
-                                </h3>
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  /* ── ALL VIEW: Original compact horizontal scroll with container ── */
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {group.subcategories.map((subcat) => (
-                      <div key={subcat.name} className="bg-[color:var(--color-surface-container)] rounded-3xl p-5 shadow-sm border border-[color:var(--color-outline-variant)]/20 flex flex-col">
-                        <h3 className="text-[14px] font-extrabold text-[color:var(--color-on-surface)] tracking-tight mb-4">
-                          {subcat.name}
-                        </h3>
-                        <div className="flex gap-4 overflow-x-auto pb-4 pt-1 scroll-smooth snap-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex-1 items-start">
-                          {subcat.items.map((item) => {
-                            const serviceHref = getHrefForCategoryItem(group.title, item.name);
-                            return (
-                              <Link
-                                key={item.name}
-                                href={serviceHref}
-                                className="shrink-0 w-24 snap-start group flex flex-col items-center"
-                              >
-                                <div className="w-24 h-24 rounded-2xl bg-white dark:bg-[#1a1a24] shadow-[0_4px_15px_-6px_rgba(0,0,0,0.05)] border border-slate-200/80 dark:border-slate-800 group-hover:shadow-[0_10px_25px_-8px_rgba(0,0,0,0.12)] group-hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
-                                  <img
-                                    src={getServiceImage(item.name)}
-                                    alt={item.name}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                  />
+
+                                {/* Title & Emoji */}
+                                <div className="p-2.5 flex items-center justify-between gap-1">
+                                  <h4 className="font-bold text-xs text-[color:var(--color-on-surface)] group-hover:text-amber-400 line-clamp-1 transition-colors">
+                                    {item.name}
+                                  </h4>
+                                  <span className="text-xs shrink-0 group-hover:scale-110 transition-transform">{item.emoji}</span>
                                 </div>
-                                <h3 className="mt-2.5 text-center font-extrabold text-[11px] leading-tight text-[color:var(--color-on-surface-variant)] group-hover:text-[color:var(--color-primary)] line-clamp-2 px-1 w-full transition-colors duration-200">
-                                  {item.name}
-                                </h3>
                               </Link>
                             );
                           })}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    </div>
+                  ))}
+                </div>
               </section>
             );
           })}
         </div>
-
-        </div>
-      </main>
-    </>
+      </div>
+    </main>
   );
 }

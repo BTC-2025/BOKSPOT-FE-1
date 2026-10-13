@@ -1636,36 +1636,51 @@ export default function ProviderDiscoveryPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] transition-colors duration-300">
+    <main className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] transition-colors duration-300 relative overflow-hidden">
+      {/* Ambient Luxury Background Glows */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-amber-500/10 via-amber-500/5 to-transparent blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-40 right-10 w-72 h-72 bg-amber-400/5 rounded-full blur-3xl pointer-events-none -z-10" />
+
       {/* Inline Breadcrumb */}
       <div className="container-main flex items-center justify-between pt-6 pb-2">
-        <div className="flex items-center gap-4 min-w-0">
-          <Link href={`/${bookingType}`} className="btn-ghost p-2 shrink-0 border border-[var(--border-subtle)] rounded-full hover:bg-[var(--bg-surface)]">
-            <ArrowLeft size={20} />
+        <div className="flex items-center gap-3 min-w-0">
+          <Link 
+            href={`/${bookingType}`} 
+            className="p-2.5 shrink-0 rounded-xl bg-[var(--color-surface)]/70 backdrop-blur-md border border-[var(--color-outline-variant)]/40 hover:border-amber-400/60 hover:bg-amber-400/10 text-[var(--text-primary)] transition-all shadow-sm group"
+          >
+            <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
           </Link>
-          <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)] min-w-0">
-            <Link href="/" className="hover:text-[var(--text-primary)] transition-colors shrink-0">Home</Link>
-            <ChevronRight size={14} className="shrink-0" />
-            <Link href={`/${bookingType}`} className="hover:text-[var(--text-primary)] transition-colors truncate shrink-0">{bookingType}</Link>
-            <ChevronRight size={14} className="shrink-0" />
-            <span className="text-[var(--text-primary)] font-bold truncate">{categoryName}</span>
+          <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)] min-w-0">
+            <Link href="/" className="hover:text-amber-400 transition-colors shrink-0">Home</Link>
+            <ChevronRight size={13} className="shrink-0 opacity-40" />
+            <Link href={`/${bookingType}`} className="hover:text-amber-400 transition-colors truncate shrink-0 capitalize">{bookingType}</Link>
+            <ChevronRight size={13} className="shrink-0 opacity-40" />
+            <span className="text-[var(--text-primary)] font-bold truncate bg-amber-400/10 text-amber-500 px-2 py-0.5 rounded-md border border-amber-400/20">{categoryName}</span>
           </div>
         </div>
       </div>
 
-      <div className="container-main py-6 max-w-4xl mx-auto">
+      <div className="container-main py-6 max-w-7xl mx-auto">
+        {/* Luxury Hero Header */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
+          className="mb-8 relative"
         >
-          <div className="flex items-center gap-2 text-xs text-[color:var(--color-primary)] font-bold mb-1">
-            <MapPin size={12} className="animate-bounce" />
+          <div className="inline-flex items-center gap-2 text-[11px] font-bold text-amber-400 uppercase tracking-wider mb-2.5 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 backdrop-blur-md shadow-sm">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+            </span>
+            <MapPin size={12} className="text-amber-400" />
             <span>Search Hub: {city} Terminal</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-black text-[color:var(--color-on-surface)]">{categoryName}</h1>
-          <p className="text-xs text-[color:var(--color-on-surface-variant)] mt-1.5">
-            Interactive dispatcher portal for customized bookings.
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[color:var(--color-on-surface)] flex items-center gap-3">
+            {categoryName}
+            <Sparkles size={24} className="text-amber-400/80 hidden sm:inline-block animate-pulse" />
+          </h1>
+          <p className="text-sm text-[color:var(--color-on-surface-variant)] mt-2 max-w-xl font-normal leading-relaxed">
+            Curated top-rated choices and verified dispatcher portal in {city}.
           </p>
         </motion.div>
 
@@ -1680,70 +1695,74 @@ export default function ProviderDiscoveryPage() {
           {/* Standard fallback listing for all other categories */}
           {!isCustomBooking && (
             <div className="space-y-6">
-              {/* Search, Sort, and View Mode Toggle Bar */}
-              <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-[color:var(--color-surface-container)]/50 border border-[color:var(--color-outline-variant)]/20 p-3 rounded-2xl">
-                <div className="relative flex items-center w-full sm:max-w-xs rounded-xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-dim)]/50 px-3 py-1.5 focus-within:border-[color:var(--color-primary)]/50 transition-all">
-                  <Search size={14} className="text-[color:var(--color-outline)] mr-2" />
+              {/* Premium Glassmorphic Controls Bar */}
+              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-[color:var(--color-surface)]/80 backdrop-blur-xl border border-[color:var(--color-outline-variant)]/40 p-3.5 rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20">
+                <div className="relative flex items-center w-full sm:max-w-md rounded-xl border border-[color:var(--color-outline-variant)]/40 bg-[color:var(--color-surface-dim)]/70 px-3.5 py-2.5 focus-within:border-amber-400 focus-within:ring-2 focus-within:ring-amber-400/20 transition-all shadow-inner">
+                  <Search size={16} className="text-amber-400/80 mr-2.5 shrink-0" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={`Search ${categoryName}...`}
-                    className="w-full bg-transparent text-xs text-[color:var(--color-on-surface)] placeholder-[color:var(--color-outline)] outline-none"
+                    placeholder={`Search ${categoryName} or location...`}
+                    className="w-full bg-transparent text-sm text-[color:var(--color-on-surface)] placeholder-[color:var(--color-outline)] outline-none font-medium"
                   />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery('')} className="text-xs text-[color:var(--color-outline)] hover:text-white transition-colors">
+                      <X size={14} />
+                    </button>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                  <div className="flex items-center gap-1.5">
-                    <SlidersHorizontal size={13} className="text-[color:var(--color-outline)]" />
+                  {/* Sort Selector */}
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[color:var(--color-surface-dim)]/70 border border-[color:var(--color-outline-variant)]/40">
+                    <SlidersHorizontal size={14} className="text-amber-400 shrink-0" />
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
-                      className="bg-transparent text-xs font-bold text-[color:var(--color-on-surface-variant)] outline-none cursor-pointer"
+                      className="bg-transparent text-xs font-semibold text-[color:var(--color-on-surface)] outline-none cursor-pointer"
                     >
                       {SORT_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value} className="bg-[color:var(--color-surface-container-high)] text-[color:var(--color-on-surface)]">
+                        <option key={opt.value} value={opt.value} className="bg-[color:var(--color-surface)] text-[color:var(--color-on-surface)] font-medium">
                           {opt.label}
                         </option>
                       ))}
                     </select>
                   </div>
 
-                  <div className="h-4 w-px bg-[color:var(--color-outline-variant)]/25" />
-
-                  {/* Segmented view mode control */}
-                  <div className="flex rounded-lg border border-[color:var(--color-outline-variant)]/30 p-0.5 bg-[color:var(--color-surface-dim)]">
+                  {/* Segmented View Mode Control */}
+                  <div className="flex rounded-xl border border-[color:var(--color-outline-variant)]/40 p-1 bg-[color:var(--color-surface-dim)]/80 shadow-inner">
                     <button
                       onClick={() => setViewMode('grid')}
-                      className={`flex items-center gap-1 px-3 py-1 rounded-md text-[10px] font-bold uppercase cursor-pointer transition-colors ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase cursor-pointer transition-all ${
                         viewMode === 'grid'
-                          ? 'bg-[color:var(--color-primary)] text-[color:var(--color-on-primary)]'
+                          ? 'bg-amber-400 text-black shadow-md shadow-amber-500/20 font-black'
                           : 'text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)]'
                       }`}
                     >
-                      <Grid size={12} />
+                      <Grid size={13} />
                       Grid
                     </button>
                     <button
                       onClick={() => setViewMode('list')}
-                      className={`flex items-center gap-1 px-3 py-1 rounded-md text-[10px] font-bold uppercase cursor-pointer transition-colors ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase cursor-pointer transition-all ${
                         viewMode === 'list'
-                          ? 'bg-[color:var(--color-primary)] text-[color:var(--color-on-primary)]'
+                          ? 'bg-amber-400 text-black shadow-md shadow-amber-500/20 font-black'
                           : 'text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)]'
                       }`}
                     >
-                      <List size={12} />
+                      <List size={13} />
                       List
                     </button>
                     <button
                       onClick={() => setViewMode('map')}
-                      className={`flex items-center gap-1 px-3 py-1 rounded-md text-[10px] font-bold uppercase cursor-pointer transition-colors ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase cursor-pointer transition-all ${
                         viewMode === 'map'
-                          ? 'bg-[color:var(--color-primary)] text-[color:var(--color-on-primary)]'
+                          ? 'bg-amber-400 text-black shadow-md shadow-amber-500/20 font-black'
                           : 'text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)]'
                       }`}
                     >
-                      <Map size={12} />
+                      <Map size={13} />
                       Map
                     </button>
                   </div>
@@ -1751,7 +1770,7 @@ export default function ProviderDiscoveryPage() {
               </div>
 
               {viewMode === 'map' ? (
-                <div className="h-[480px] w-full rounded-3xl overflow-hidden border border-[color:var(--color-outline-variant)]/30 relative">
+                <div className="h-[520px] w-full rounded-3xl overflow-hidden border border-[color:var(--color-outline-variant)]/40 relative shadow-2xl">
                   <MapComponent
                     center={[latitude || 13.0827, longitude || 80.2707]}
                     zoom={13}
@@ -1770,17 +1789,17 @@ export default function ProviderDiscoveryPage() {
                   />
                 </div>
               ) : filteredServices.length === 0 ? (
-                <div className="col-span-full py-16 px-6 rounded-3xl border-2 border-dashed border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-col items-center justify-center text-center">
-                  <div className="h-16 w-16 bg-[var(--bg-base)] rounded-2xl flex items-center justify-center mb-4 text-[var(--text-secondary)]">
-                    <Search size={32} />
+                <div className="col-span-full py-20 px-6 rounded-3xl border border-dashed border-[color:var(--color-outline-variant)]/60 bg-[color:var(--color-surface)]/60 backdrop-blur-md flex flex-col items-center justify-center text-center shadow-lg">
+                  <div className="h-16 w-16 bg-amber-400/10 border border-amber-400/20 rounded-2xl flex items-center justify-center mb-4 text-amber-400 shadow-inner">
+                    <Search size={30} />
                   </div>
                   <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">No {categoryName} found</h3>
-                  <p className="text-[var(--text-secondary)] max-w-md mx-auto">
-                    There are no services available for this category in the selected location right now. Please check back later.
+                  <p className="text-sm text-[var(--text-secondary)] max-w-md mx-auto leading-relaxed">
+                    There are no services available matching your criteria in {city} right now. Please explore other categories or check back soon.
                   </p>
                 </div>
               ) : (
-                <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5' : 'grid-cols-1'}`}>
+                <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
                   {Object.values(filteredServices.reduce((acc: any, service: any) => {
                     const mId = service.merchantObj?.id || (typeof service.merchant === 'string' ? service.merchant : service.merchant?.id) || 'unknown';
                     const mObj = service.merchantObj || (typeof service.merchant === 'string' ? { id: service.merchant, name: service.merchant } : service.merchant) || { name: 'BokSpot Merchant', id: 'unknown' };
@@ -1791,6 +1810,9 @@ export default function ProviderDiscoveryPage() {
                         service: service,
                         categories: new Set(),
                         groupImageUrl: null,
+                        minPrice: service.basePrice || service.price || null,
+                        rating: service.rating || 4.8,
+                        reviewCount: service.reviewCount || 24,
                         dist: (latitude !== null && longitude !== null && mObj.latitude && mObj.longitude)
                             ? `${calculateDistance(latitude, longitude, mObj.latitude, mObj.longitude)} km`
                             : '4.5 km',
@@ -1801,6 +1823,9 @@ export default function ProviderDiscoveryPage() {
                       acc[mId].groupName = service.category;
                       acc[mId].groupCity = service.city;
                     } 
+                    if (service.basePrice && (!acc[mId].minPrice || service.basePrice < acc[mId].minPrice)) {
+                      acc[mId].minPrice = service.basePrice;
+                    }
                     
                     if (mObj.allCategories && Array.isArray(mObj.allCategories)) {
                       mObj.allCategories.forEach((cat: string) => acc[mId].categories.add(cat));
@@ -1818,49 +1843,80 @@ export default function ProviderDiscoveryPage() {
                         initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: Math.min(i * 0.05, 0.4) }}
+                        className="h-full"
                       >
-                        <Link href={`/${bookingType}/${category}/${m.id || m.slug || 'merchant'}`}>
-                          <div className={`group flex flex-col h-full bg-[color:var(--color-surface)] rounded-2xl overflow-hidden border border-[color:var(--color-outline-variant)]/30 hover:border-[color:var(--color-outline-variant)] transition-all cursor-pointer shadow-sm ${viewMode === 'list' ? 'sm:flex-row' : ''}`}>
-                            {/* Image Header */}
-                            <div className={`relative bg-gray-100 shrink-0 ${viewMode === 'list' ? 'sm:w-64 h-48 sm:h-auto' : 'h-48 w-full'}`}>
+                        <Link href={`/${bookingType}/${category}/${m.id || m.slug || 'merchant'}`} className="block h-full">
+                          <div className={`group relative flex flex-col h-full bg-[color:var(--color-surface)] rounded-3xl overflow-hidden border border-[color:var(--color-outline-variant)]/30 hover:border-amber-400/50 hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-300 cursor-pointer ${viewMode === 'list' ? 'sm:flex-row' : ''}`}>
+                            {/* Image Header with Hover Zoom */}
+                            <div className={`relative overflow-hidden bg-[color:var(--color-surface-dim)] shrink-0 ${viewMode === 'list' ? 'sm:w-80 h-52 sm:h-auto' : 'h-52 w-full'}`}>
                               <img 
                                 src={group.groupImageUrl || s?.metadata?.mainImageUrl || s?.imageUrl || s?.images?.[0] || m.images?.[0] || `https://images.unsplash.com/photo-1540039155732-68bebc6894b9?w=800&q=80`} 
                                 alt={m.name} 
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                                 onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1540039155732-68bebc6894b9?w=800&q=80'; }}
                               />
+
+                              {/* Subtle Gradient Overlay */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+
+                              {/* Verified Pill / Rating Badge */}
+                              <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white text-[11px] font-bold shadow-md">
+                                <Star size={12} className="text-amber-400 fill-amber-400" />
+                                <span>{group.rating || '4.8'}</span>
+                                <span className="text-white/60 text-[9px]">({group.reviewCount || '20+'})</span>
+                              </div>
+
+                              <div className="absolute top-3 right-3 p-2 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-white/80 hover:text-amber-400 hover:scale-110 transition-all shadow-md">
+                                <Heart size={14} />
+                              </div>
+
+                              {/* Bottom of Image: Price tag preview if available */}
+                              {group.minPrice && (
+                                <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-amber-400 text-black font-extrabold text-xs shadow-lg">
+                                  From ₹{group.minPrice}
+                                </div>
+                              )}
                             </div>
 
                             {/* Info Body */}
-                            <div className="p-4 flex flex-col flex-1">
-                              <h3 className="font-bold text-[16px] text-[color:var(--color-on-surface)] truncate leading-tight mb-1">
-                                {m.name}
-                              </h3>
-                              <div className="flex items-center text-[11px] font-medium text-[color:var(--color-on-surface-variant)] mb-3">
-                                <span className="truncate max-w-[140px]">{group.groupCity || city || 'Chennai'}</span>
-                                {group.dist && (
-                                  <>
-                                    <span className="mx-1.5 text-[color:var(--color-outline-variant)]">•</span>
-                                    <span className="shrink-0">{group.dist}</span>
-                                  </>
-                                )}
+                            <div className="p-5 flex flex-col flex-1 justify-between">
+                              <div>
+                                <div className="flex items-start justify-between gap-2 mb-1">
+                                  <h3 className="font-extrabold text-[17px] text-[color:var(--color-on-surface)] group-hover:text-amber-400 transition-colors line-clamp-1 tracking-tight">
+                                    {m.name}
+                                  </h3>
+                                </div>
+
+                                <div className="flex items-center text-xs font-medium text-[color:var(--color-on-surface-variant)] mb-3.5">
+                                  <MapPin size={13} className="text-amber-400/80 mr-1 shrink-0" />
+                                  <span className="truncate max-w-[150px]">{group.groupCity || city || 'Chennai'}</span>
+                                  {group.dist && (
+                                    <>
+                                      <span className="mx-2 text-[color:var(--color-outline-variant)]">•</span>
+                                      <span className="shrink-0 font-semibold text-[color:var(--color-on-surface)]/80">{group.dist}</span>
+                                    </>
+                                  )}
+                                </div>
                               </div>
 
-                              {/* Tags/Chips */}
+                              {/* Tags / Service Offerings */}
                               {chips.length > 0 && (
-                                <div className="flex flex-wrap gap-1.5 mt-auto">
-                                  {chips.map((chip: any, idx: number) => (
-                                    <span 
-                                      key={idx} 
-                                      className={`px-2 py-0.5 rounded text-[9px] font-semibold border transition-colors ${
-                                        chip === categoryName 
-                                          ? 'bg-[color:var(--color-primary)] border-[color:var(--color-primary)] text-[#0C0C10]' 
-                                          : 'bg-[color:var(--color-surface-container)] border-[color:var(--color-outline-variant)]/40 text-[color:var(--color-on-surface)]'
-                                      }`}
-                                    >
-                                      {chip}
-                                    </span>
-                                  ))}
+                                <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[color:var(--color-outline-variant)]/20 mt-2">
+                                  {chips.map((chip: any, idx: number) => {
+                                    const isCurrentCat = chip === categoryName;
+                                    return (
+                                      <span 
+                                        key={idx} 
+                                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide transition-all ${
+                                          isCurrentCat 
+                                            ? 'bg-amber-400 text-black shadow-sm font-extrabold' 
+                                            : 'bg-[color:var(--color-surface-dim)]/80 border border-[color:var(--color-outline-variant)]/40 text-[color:var(--color-on-surface)]/90 hover:border-amber-400/40'
+                                        }`}
+                                      >
+                                        {chip}
+                                      </span>
+                                    );
+                                  })}
                                 </div>
                               )}
                             </div>
