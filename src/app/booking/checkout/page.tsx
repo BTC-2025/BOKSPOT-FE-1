@@ -63,13 +63,22 @@ export default function CheckoutPage() {
 
   const listing = selectedService.selectedListing;
   const meta = listing?.metadata || {};
+  const isHotel = Boolean(selectedService.metadata?.hotelBooking);
   const availableAddons = meta.addons || [];
   const addonsTotal = selectedAddons.reduce((sum: number, idx: number) => sum + (availableAddons[idx]?.price || 0), 0);
   
-  const basePrice = listing?.price || selectedService.price || 0;
+  const basePrice = isHotel 
+    ? Math.round(selectedService.price / 1.12) // extract pre-tax price from inclusive total
+    : (listing?.price || selectedService.price || 0);
+
   const platformFee = 29;
-  const gst = Math.round((basePrice + addonsTotal) * 0.18);
-  const total = basePrice + addonsTotal + platformFee + gst;
+  const gst = isHotel 
+    ? (selectedService.price - basePrice) // exact 12% GST calculated in template
+    : Math.round((basePrice + addonsTotal) * 0.18);
+
+  const total = isHotel 
+    ? (selectedService.price + addonsTotal + platformFee) 
+    : (basePrice + addonsTotal + platformFee + gst);
 
   const formatDate = (dateStr: string) => {
     try {
@@ -176,29 +185,68 @@ export default function CheckoutPage() {
                   <h3 className="font-extrabold text-lg text-gray-900">{listing?.name || selectedService.name}</h3>
                   <p className="text-sm text-gray-500 font-medium">{selectedService.name} · {selectedService.merchant}</p>
 
-                  {/* Dynamic Details */}
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {meta.roomType && (
-                      <span className="text-xs font-bold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100 flex items-center gap-1">
-                        <Bed size={11} />{meta.roomType}
-                      </span>
-                    )}
-                    {meta.maxGuests && (
-                      <span className="text-xs font-bold px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full border border-purple-100 flex items-center gap-1">
-                        <Users size={11} />Max {meta.maxGuests} guests
-                      </span>
-                    )}
-                    {meta.checkInTime && (
-                      <span className="text-xs font-bold px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full border border-amber-100 flex items-center gap-1">
-                        <Clock size={11} />Check-in: {meta.checkInTime}
-                      </span>
-                    )}
-                    {meta.checkOutTime && (
-                      <span className="text-xs font-bold px-2.5 py-1 bg-orange-50 text-orange-700 rounded-full border border-orange-100 flex items-center gap-1">
-                        <Clock size={11} />Check-out: {meta.checkOutTime}
-                      </span>
-                    )}
-                  </div>
+                  {/* Dynamic Hotel / Listing Details */}
+                  {selectedService.metadata?.hotelBooking ? (
+                    <div className="space-y-2 mt-3 pt-3 border-t border-gray-100">
+                      <div className="flex flex-wrap gap-2">
+                        <span className="text-xs font-bold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100 flex items-center gap-1">
+                          <Bed size={12} /> {selectedService.metadata.hotelBooking.roomType}
+                        </span>
+                        <span className="text-xs font-bold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100 flex items-center gap-1">
+                          🍴 {selectedService.metadata.hotelBooking.mealPlan}
+                        </span>
+                        <span className="text-xs font-bold px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full border border-purple-100 flex items-center gap-1">
+                          <Users size={12} /> {selectedService.metadata.hotelBooking.rooms} Room, {selectedService.metadata.hotelBooking.adults} Adults{selectedService.metadata.hotelBooking.children > 0 ? `, ${selectedService.metadata.hotelBooking.children} Kids` : ''}
+                        </span>
+                        {selectedService.metadata.hotelBooking.nights > 0 && (
+                          <span className="text-xs font-bold px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full border border-amber-100 flex items-center gap-1">
+                            <Clock size={12} /> {selectedService.metadata.hotelBooking.nights} Night{selectedService.metadata.hotelBooking.nights > 1 ? 's' : ''} Stay
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Check-in & Check-out details */}
+                      <div className="grid grid-cols-2 gap-2 pt-2 bg-gray-50 p-2.5 rounded-xl border border-gray-100 text-xs">
+                        <div>
+                          <span className="text-gray-400 font-bold block text-[10px] uppercase">Check-In</span>
+                          <span className="font-extrabold text-gray-800">{selectedService.metadata.hotelBooking.checkIn}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-400 font-bold block text-[10px] uppercase">Check-Out</span>
+                          <span className="font-extrabold text-gray-800">{selectedService.metadata.hotelBooking.checkOut}</span>
+                        </div>
+                      </div>
+
+                      {selectedService.metadata.hotelBooking.specialRequests?.length > 0 && (
+                        <div className="text-[11px] text-gray-500 font-medium">
+                          <strong>Special Requests:</strong> {selectedService.metadata.hotelBooking.specialRequests.join(', ')}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {meta.roomType && (
+                        <span className="text-xs font-bold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100 flex items-center gap-1">
+                          <Bed size={11} />{meta.roomType}
+                        </span>
+                      )}
+                      {meta.maxGuests && (
+                        <span className="text-xs font-bold px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full border border-purple-100 flex items-center gap-1">
+                          <Users size={11} />Max {meta.maxGuests} guests
+                        </span>
+                      )}
+                      {meta.checkInTime && (
+                        <span className="text-xs font-bold px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full border border-amber-100 flex items-center gap-1">
+                          <Clock size={11} />Check-in: {meta.checkInTime}
+                        </span>
+                      )}
+                      {meta.checkOutTime && (
+                        <span className="text-xs font-bold px-2.5 py-1 bg-orange-50 text-orange-700 rounded-full border border-orange-100 flex items-center gap-1">
+                          <Clock size={11} />Check-out: {meta.checkOutTime}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               

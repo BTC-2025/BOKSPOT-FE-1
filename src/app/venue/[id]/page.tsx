@@ -123,21 +123,21 @@ export default function VenuePage() {
         <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8 flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div className="flex-1 space-y-4">
             <div className="flex flex-wrap gap-2 mb-2">
-              <span className="bg-[#8b6508]/10 text-[#8b6508] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide">Premium Venue</span>
-              <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1"><CheckCircle2 size={12} /> Verified</span>
+              <span className="bg-[#ff6325]/10 text-[#ff6325] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide">Premium Venue</span>
+              <span className="bg-emerald-500/10 text-emerald-600 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1"><CheckCircle2 size={12} /> Verified</span>
             </div>
             <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">{merchant.name}</h1>
             
             <div className="flex flex-wrap items-center gap-4 text-slate-600 font-medium">
-              <div className="flex items-center gap-1.5 bg-yellow-50 px-3 py-1.5 rounded-lg border border-yellow-100">
-                <Star className="text-yellow-500 fill-yellow-500" size={18} />
+              <div className="flex items-center gap-1.5 bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/20">
+                <Star className="text-amber-500 fill-amber-500" size={18} />
                 <span className="text-slate-900 font-bold">{merchant.rating}</span>
                 <span className="text-slate-500 text-sm">({merchant.reviewCount} reviews)</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <MapPin size={18} className="text-slate-400" />
                 <span>{merchant.location || 'Chennai, Tamil Nadu'}</span>
-                <button className="text-blue-600 hover:underline text-sm ml-1 font-semibold">View Map</button>
+                <button className="text-[#0a3161] hover:text-[#ff6325] hover:underline text-sm ml-1 font-semibold">View Map</button>
               </div>
             </div>
           </div>
@@ -148,7 +148,7 @@ export default function VenuePage() {
           <div className="lg:col-span-2 space-y-8">
             <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
               <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <Info className="text-blue-500" /> About the Venue
+                <Info className="text-[#0a3161]" /> About the Venue
               </h2>
               <p className="text-slate-600 leading-relaxed text-lg">
                 {merchant.description}
@@ -157,12 +157,12 @@ export default function VenuePage() {
 
             <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
               <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-                <CheckCircle2 className="text-green-500" /> Things to Know
+                <CheckCircle2 className="text-emerald-500" /> Things to Know
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {merchant.thingsToKnow?.map((thing: string, idx: number) => (
                   <div key={idx} className="flex items-start gap-3">
-                    <div className="mt-1 bg-green-100 p-1 rounded-full text-green-600">
+                    <div className="mt-1 bg-emerald-50 p-1 rounded-full text-emerald-600">
                       <Check size={14} strokeWidth={3} />
                     </div>
                     <span className="text-slate-700 font-medium">{thing}</span>
@@ -176,7 +176,7 @@ export default function VenuePage() {
           <div className="lg:col-span-1 space-y-6">
             <div className="sticky top-24 space-y-6">
               <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 overflow-hidden relative">
-                <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-[#8b6508] to-yellow-400" />
+                <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-[#0a3161] via-[#ff6325] to-[#ff8452]" />
                 <h3 className="text-xl font-black text-slate-900 mb-6">Available Options</h3>
                 
                 <div className="space-y-6 max-h-[65vh] overflow-y-auto pr-2 custom-scrollbar">
@@ -191,13 +191,13 @@ export default function VenuePage() {
                       {(categoryService.metadata?.listings || []).length > 0 ? (
                         <div className="space-y-4">
                           {(categoryService.metadata?.listings || []).map((listing: any, lIdx: number) => (
-                            <div key={lIdx} className="group bg-slate-50 rounded-2xl p-4 border border-slate-100 hover:border-[#8b6508]/30 hover:shadow-md transition-all cursor-pointer" onClick={() => handleBookService(listing)}>
+                            <div key={lIdx} className="group bg-slate-50 rounded-2xl p-4 border border-slate-100 hover:border-[#ff6325]/40 hover:shadow-md transition-all cursor-pointer" onClick={() => handleBookService(listing)}>
                               <div className="flex justify-between items-start mb-2">
-                                <h5 className="font-bold text-slate-900 group-hover:text-[#8b6508] transition-colors">{listing.name}</h5>
+                                <h5 className="font-bold text-slate-900 group-hover:text-[#ff6325] transition-colors">{listing.name}</h5>
                                 <span className="font-black text-slate-900">₹{listing.basePrice || listing.price || 0}</span>
                               </div>
                               <p className="text-sm text-slate-500 mb-4 line-clamp-2">{listing.description}</p>
-                              <button className="w-full py-2.5 bg-slate-900 hover:bg-[#8b6508] text-white rounded-xl font-bold transition-colors shadow-sm">
+                              <button className="w-full py-2.5 bg-[#0a3161] hover:bg-[#ff6325] text-white rounded-xl font-bold transition-all shadow-sm">
                                 Book {listing.name}
                               </button>
                             </div>

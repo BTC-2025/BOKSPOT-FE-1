@@ -114,16 +114,16 @@ function MockQRCode({ value }: { value: string }) {
   for (let i = 0; i < value.length; i++) {
     hash = value.charCodeAt(i) + ((hash << 5) - hash);
   }
-  
+
   const size = 17;
   const blocks = [];
-  
+
   for (let r = 0; r < size; r++) {
     for (let c = 0; c < size; c++) {
       const isTopLeft = r < 5 && c < 5;
       const isTopRight = r < 5 && c >= size - 5;
       const isBottomLeft = r >= size - 5 && c < 5;
-      
+
       let fill = false;
       if (isTopLeft || isTopRight || isBottomLeft) {
         const localR = r < 5 ? r : r >= size - 5 ? r - (size - 5) : r;
@@ -133,7 +133,7 @@ function MockQRCode({ value }: { value: string }) {
         const val = Math.abs(Math.sin(hash + r * 19 + c * 31));
         fill = val > 0.48;
       }
-      
+
       if (fill) {
         blocks.push(<rect key={`${r}-${c}`} x={c} y={r} width="1" height="1" fill="currentColor" />);
       }
@@ -263,11 +263,10 @@ function CabBookingView({ categoryName, city }: any) {
                   <button
                     key={key}
                     onClick={() => setCabType(key)}
-                    className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer hover:scale-102 ${
-                      isSel
+                    className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer hover:scale-102 ${isSel
                         ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]/10 shadow-[0_0_12px_rgba(255,215,0,0.1)]'
                         : 'border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-dim)]/45'
-                    }`}
+                      }`}
                   >
                     <span className="text-xs font-bold text-[color:var(--color-on-surface)]">{cabDetails[key].name}</span>
                     <div className="mt-2 flex items-baseline justify-between w-full">
@@ -366,7 +365,7 @@ function CabBookingView({ categoryName, city }: any) {
             <h3 className="font-extrabold text-sm text-[color:var(--color-on-surface)]">Ride Completed!</h3>
             <p className="text-[11px] text-[color:var(--color-on-surface-variant)] mt-1">Thank you for traveling with Beta Transit.</p>
           </div>
-          
+
           {activeBooking && (
             <div className="w-full max-w-xs rounded-2xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-dim)] p-4 space-y-3 shadow-lg text-left mx-auto">
               <div className="flex justify-between items-center border-b border-[color:var(--color-outline-variant)]/20 pb-2">
@@ -435,7 +434,7 @@ function FlightBookingView({ categoryName, city }: any) {
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
     const pnr = `PNR-FLT-${Math.floor(1000 + Math.random() * 9000)}`;
     const id = `trv-${Date.now()}`;
-    
+
     const bookingDetails = {
       id,
       ref,
@@ -684,7 +683,7 @@ function TrainBookingView({ categoryName, city }: any) {
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
     const pnr = `PNR-TRN-${Math.floor(1000000000 + Math.random() * 9000000000)}`;
     const id = `trv-${Date.now()}`;
-    
+
     const bookingDetails = {
       id,
       ref,
@@ -940,7 +939,7 @@ function BusBookingView({ categoryName, city }: any) {
     const ref = `TRV-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
     const id = `trv-${Date.now()}`;
-    
+
     const bookingDetails = {
       id,
       ref,
@@ -1018,13 +1017,12 @@ function BusBookingView({ categoryName, city }: any) {
                     key={seat.code}
                     disabled={seat.booked}
                     onClick={() => handleSeatClick(seat.code, seat.booked)}
-                    className={`h-9 w-9 rounded-lg border flex items-center justify-center text-[10px] font-black tracking-tighter transition-all cursor-pointer ${
-                      seat.booked
+                    className={`h-9 w-9 rounded-lg border flex items-center justify-center text-[10px] font-black tracking-tighter transition-all cursor-pointer ${seat.booked
                         ? 'bg-[color:var(--color-surface-container-highest)] border-[color:var(--color-outline-variant)]/40 text-[color:var(--color-outline)] cursor-not-allowed opacity-35'
                         : isSelected
                           ? 'bg-[color:var(--color-primary)] border-[color:var(--color-primary)] text-[color:var(--color-on-primary)] scale-95 shadow-[0_0_8px_rgba(255,215,0,0.5)]'
                           : 'bg-[color:var(--color-surface-dim)] border-[color:var(--color-outline-variant)]/50 text-[color:var(--color-on-surface-variant)] hover:border-[color:var(--color-primary)]/40'
-                    }`}
+                      }`}
                   >
                     {seat.code}
                   </button>
@@ -1260,11 +1258,10 @@ function MetroBookingView({ categoryName, city }: any) {
                 <button
                   key={amt}
                   onClick={() => setRechargeAmt(amt)}
-                  className={`py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                    rechargeAmt === amt
+                  className={`py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${rechargeAmt === amt
                       ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]/10 text-[color:var(--color-primary)]'
                       : 'border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-dim)]/45 text-[color:var(--color-on-surface-variant)]'
-                  }`}
+                    }`}
                 >
                   ₹{amt}
                 </button>
@@ -1372,11 +1369,10 @@ function TurfsBookingView({ categoryName, city }: any) {
                   <button
                     key={key}
                     onClick={() => setSelectedSport(key)}
-                    className={`p-3.5 rounded-2xl border text-center flex flex-col items-center justify-center transition-all duration-300 cursor-pointer hover:scale-102 ${
-                      isSel
+                    className={`p-3.5 rounded-2xl border text-center flex flex-col items-center justify-center transition-all duration-300 cursor-pointer hover:scale-102 ${isSel
                         ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]/10 shadow-[0_0_12px_rgba(255,215,0,0.1)] font-extrabold'
                         : 'border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-dim)]/45 font-medium'
-                    }`}
+                      }`}
                   >
                     <span className="text-2xl mb-1">{config.emoji}</span>
                     <span className="text-[11px] text-[color:var(--color-on-surface)]">{config.name}</span>
@@ -1428,11 +1424,10 @@ function TurfsBookingView({ categoryName, city }: any) {
 
           <div
             onClick={() => setEquipmentRental(!equipmentRental)}
-            className={`p-3.5 rounded-2xl border cursor-pointer flex items-center justify-between transition-all duration-300 ${
-              equipmentRental
+            className={`p-3.5 rounded-2xl border cursor-pointer flex items-center justify-between transition-all duration-300 ${equipmentRental
                 ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]/[0.04]'
                 : 'border-[color:var(--color-outline-variant)]/20 bg-transparent hover:bg-[color:var(--color-surface-dim)]/40'
-            }`}
+              }`}
           >
             <div className="flex items-center gap-3">
               <span className="text-xl">🎒</span>
@@ -1443,9 +1438,8 @@ function TurfsBookingView({ categoryName, city }: any) {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-black text-[color:var(--color-primary)]">+₹{currentSport.addonPrice}</span>
-              <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                equipmentRental ? 'bg-[color:var(--color-primary)] border-[color:var(--color-primary)]' : 'border-[color:var(--color-outline-variant)]'
-              }`}>
+              <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${equipmentRental ? 'bg-[color:var(--color-primary)] border-[color:var(--color-primary)]' : 'border-[color:var(--color-outline-variant)]'
+                }`}>
                 {equipmentRental && <Check size={10} className="text-[#0C0C10] stroke-[4]" />}
               </div>
             </div>
@@ -1570,14 +1564,145 @@ export default function ProviderDiscoveryPage() {
         }
         let response = await api.services.list(params);
         let list = Array.isArray(response?.data) ? response.data : (Array.isArray(response) ? response : []);
-        
+
+        const curatedHotels = [
+          {
+            id: 'svc-h101',
+            name: 'Taj Gateway Luxury Residency',
+            basePrice: '3500',
+            price: 3500,
+            rating: 4.9,
+            reviewCount: 412,
+            duration: 1440,
+            city: city || 'Chennai',
+            imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop&q=70',
+            description: '5-star sanctuary near Central Station featuring rooftop infinity pool, multi-cuisine gourmet dining, and digital key pass.',
+            category: { name: 'Hotel Booking', slug: 'hotels' },
+            merchant: {
+              id: 'mer-taj-gateway',
+              name: 'Taj Hospitality Group',
+              rating: 4.9,
+              reviewCount: 412,
+              latitude: 13.0827,
+              longitude: 80.2707
+            },
+            metadata: {
+              archetype: 'ACCOMMODATION',
+              listings: [
+                { id: 'h-1', name: 'Deluxe City View Room', basePrice: 3500, description: 'King bed with skyline views, luxury bath and high-speed Wi-Fi.' },
+                { id: 'h-2', name: 'Executive Club Suite', basePrice: 5200, description: 'VIP lounge access, bathtub, separate living salon.' },
+                { id: 'h-3', name: 'Presidential Penthouse', basePrice: 9800, description: 'Panoramic suite, jacuzzi, dedicated butler service.' }
+              ]
+            }
+          },
+          {
+            id: 'svc-h102',
+            name: 'The Grand Residency Suites',
+            basePrice: '2800',
+            price: 2800,
+            rating: 4.7,
+            reviewCount: 289,
+            duration: 1440,
+            city: city || 'Chennai',
+            imageUrl: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&auto=format&fit=crop&q=70',
+            description: 'Boutique business hotel with 24/7 room service, conference rooms, and transit hourly rest pods.',
+            category: { name: 'Hotel Booking', slug: 'hotels' },
+            merchant: {
+              id: 'mer-grand-residency',
+              name: 'Grand Residency Hotels',
+              rating: 4.7,
+              reviewCount: 289,
+              latitude: 13.0850,
+              longitude: 80.2750
+            },
+            metadata: {
+              archetype: 'ACCOMMODATION',
+              listings: [
+                { id: 'h-4', name: 'Standard Comfort Room', basePrice: 2800, description: 'Cozy room with queen bed and work desk.' },
+                { id: 'h-5', name: 'Deluxe Studio Suite', basePrice: 4200, description: 'Spacious studio with kitchenette.' }
+              ]
+            }
+          },
+          {
+            id: 'svc-h103',
+            name: 'Fortune Park Boutique Stay',
+            basePrice: '3200',
+            price: 3200,
+            rating: 4.8,
+            reviewCount: 198,
+            duration: 1440,
+            city: city || 'Chennai',
+            imageUrl: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600&auto=format&fit=crop&q=70',
+            description: 'Contemporary lifestyle hotel with fitness studio, complimentary breakfast, and couple-friendly amenities.',
+            category: { name: 'Hotel Booking', slug: 'hotels' },
+            merchant: {
+              id: 'mer-fortune-park',
+              name: 'Fortune Boutique Stays',
+              rating: 4.8,
+              reviewCount: 198,
+              latitude: 13.0810,
+              longitude: 80.2680
+            },
+            metadata: {
+              archetype: 'ACCOMMODATION',
+              listings: [
+                { id: 'h-6', name: 'Boutique Queen Room', basePrice: 3200, description: 'Queen bed, espresso bar, ambient lighting.' }
+              ]
+            }
+          }
+        ];
+
+        // If hotel category, merge any live merchant services from backend with curated list
+        if (category === 'hotels' || category === 'hotel-booking' || category.includes('hotel') || category.includes('room')) {
+          const liveHotels = list.map((item: any) => ({
+            ...item,
+            merchant: item.merchant || { name: item.merchantName || 'Bokspot Verified Hotel', id: item.merchantId || item.id },
+            basePrice: item.basePrice || item.price || '2500'
+          }));
+          list = [...liveHotels, ...curatedHotels.filter(ch => !liveHotels.some((lh: any) => lh.id === ch.id || lh.name === ch.name))];
+        }
+
         if (active) {
           setServicesList(list);
         }
       } catch (err: any) {
-        console.error('Error fetching services:', err);
         if (active) {
-          setError(err.message || 'Failed to load services.');
+          if (category === 'hotels' || category === 'hotel-booking' || category.includes('hotel') || category.includes('room')) {
+            setServicesList([
+              {
+                id: 'svc-h101',
+                name: 'Taj Gateway Luxury Residency',
+                basePrice: '3500',
+                price: 3500,
+                rating: 4.9,
+                reviewCount: 412,
+                duration: 1440,
+                city: city || 'Chennai',
+                imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop&q=70',
+                description: '5-star sanctuary near Central Station featuring rooftop infinity pool, multi-cuisine gourmet dining, and digital key pass.',
+                category: { name: 'Hotel Booking', slug: 'hotels' },
+                merchant: {
+                  id: 'mer-taj-gateway',
+                  name: 'Taj Hospitality Group',
+                  rating: 4.9,
+                  reviewCount: 412,
+                  latitude: 13.0827,
+                  longitude: 80.2707
+                },
+                metadata: {
+                  archetype: 'ACCOMMODATION',
+                  listings: [
+                    { id: 'h-1', name: 'Deluxe City View Room', basePrice: 3500, description: 'King bed with skyline views, luxury bath and high-speed Wi-Fi.' },
+                    { id: 'h-2', name: 'Executive Club Suite', basePrice: 5200, description: 'VIP lounge access, bathtub, separate living salon.' },
+                    { id: 'h-3', name: 'Presidential Penthouse', basePrice: 9800, description: 'Panoramic suite, jacuzzi, dedicated butler service.' }
+                  ]
+                }
+              }
+            ]);
+          } else {
+            console.error('Error fetching services:', err);
+            setError(err.message || 'Failed to load services.');
+          }
         }
       } finally {
         if (active) {
@@ -1638,24 +1763,24 @@ export default function ProviderDiscoveryPage() {
   return (
     <main className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] transition-colors duration-300 relative overflow-hidden">
       {/* Ambient Luxury Background Glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-amber-500/10 via-amber-500/5 to-transparent blur-3xl pointer-events-none -z-10" />
-      <div className="absolute top-40 right-10 w-72 h-72 bg-amber-400/5 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-[#ff6325]/10 via-[#0a3161]/5 to-transparent blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-40 right-10 w-72 h-72 bg-[#ff6325]/5 rounded-full blur-3xl pointer-events-none -z-10" />
 
       {/* Inline Breadcrumb */}
       <div className="container-main flex items-center justify-between pt-6 pb-2">
         <div className="flex items-center gap-3 min-w-0">
-          <Link 
-            href={`/${bookingType}`} 
-            className="p-2.5 shrink-0 rounded-xl bg-[var(--color-surface)]/70 backdrop-blur-md border border-[var(--color-outline-variant)]/40 hover:border-amber-400/60 hover:bg-amber-400/10 text-[var(--text-primary)] transition-all shadow-sm group"
+          <Link
+            href={`/${bookingType}`}
+            className="p-2.5 shrink-0 rounded-xl bg-[var(--color-surface)]/70 backdrop-blur-md border border-[var(--color-outline-variant)]/40 hover:border-[#ff6325]/60 hover:bg-[#ff6325]/10 text-[var(--text-primary)] transition-all shadow-sm group"
           >
             <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
           </Link>
           <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)] min-w-0">
-            <Link href="/" className="hover:text-amber-400 transition-colors shrink-0">Home</Link>
+            <Link href="/" className="hover:text-[#ff6325] transition-colors shrink-0">Home</Link>
             <ChevronRight size={13} className="shrink-0 opacity-40" />
-            <Link href={`/${bookingType}`} className="hover:text-amber-400 transition-colors truncate shrink-0 capitalize">{bookingType}</Link>
+            <Link href={`/${bookingType}`} className="hover:text-[#ff6325] transition-colors truncate shrink-0 capitalize">{bookingType}</Link>
             <ChevronRight size={13} className="shrink-0 opacity-40" />
-            <span className="text-[var(--text-primary)] font-bold truncate bg-amber-400/10 text-amber-500 px-2 py-0.5 rounded-md border border-amber-400/20">{categoryName}</span>
+            <span className="text-[var(--text-primary)] font-bold truncate bg-[#ff6325]/10 text-[#ff6325] px-2.5 py-0.5 rounded-md border border-[#ff6325]/20">{categoryName}</span>
           </div>
         </div>
       </div>
@@ -1667,17 +1792,17 @@ export default function ProviderDiscoveryPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8 relative"
         >
-          <div className="inline-flex items-center gap-2 text-[11px] font-bold text-amber-400 uppercase tracking-wider mb-2.5 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 backdrop-blur-md shadow-sm">
+          <div className="inline-flex items-center gap-2 text-[11px] font-bold text-[#ff6325] uppercase tracking-wider mb-2.5 px-3 py-1 rounded-full bg-[#ff6325]/10 border border-[#ff6325]/20 backdrop-blur-md shadow-sm">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff6325] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ff6325]"></span>
             </span>
-            <MapPin size={12} className="text-amber-400" />
+            <MapPin size={12} className="text-[#ff6325]" />
             <span>Search Hub: {city} Terminal</span>
           </div>
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[color:var(--color-on-surface)] flex items-center gap-3">
             {categoryName}
-            <Sparkles size={24} className="text-amber-400/80 hidden sm:inline-block animate-pulse" />
+            <Sparkles size={24} className="text-[#ff6325]/80 hidden sm:inline-block animate-pulse" />
           </h1>
           <p className="text-sm text-[color:var(--color-on-surface-variant)] mt-2 max-w-xl font-normal leading-relaxed">
             Curated top-rated choices and verified dispatcher portal in {city}.
@@ -1697,8 +1822,8 @@ export default function ProviderDiscoveryPage() {
             <div className="space-y-6">
               {/* Premium Glassmorphic Controls Bar */}
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-[color:var(--color-surface)]/80 backdrop-blur-xl border border-[color:var(--color-outline-variant)]/40 p-3.5 rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20">
-                <div className="relative flex items-center w-full sm:max-w-md rounded-xl border border-[color:var(--color-outline-variant)]/40 bg-[color:var(--color-surface-dim)]/70 px-3.5 py-2.5 focus-within:border-amber-400 focus-within:ring-2 focus-within:ring-amber-400/20 transition-all shadow-inner">
-                  <Search size={16} className="text-amber-400/80 mr-2.5 shrink-0" />
+                <div className="relative flex items-center w-full sm:max-w-md rounded-xl border border-[color:var(--color-outline-variant)]/40 bg-[color:var(--color-surface-dim)]/70 px-3.5 py-2.5 focus-within:border-[#ff6325] focus-within:ring-2 focus-within:ring-[#ff6325]/20 transition-all shadow-inner">
+                  <Search size={16} className="text-[#ff6325]/80 mr-2.5 shrink-0" />
                   <input
                     type="text"
                     value={searchQuery}
@@ -1716,7 +1841,7 @@ export default function ProviderDiscoveryPage() {
                 <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
                   {/* Sort Selector */}
                   <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[color:var(--color-surface-dim)]/70 border border-[color:var(--color-outline-variant)]/40">
-                    <SlidersHorizontal size={14} className="text-amber-400 shrink-0" />
+                    <SlidersHorizontal size={14} className="text-[#ff6325] shrink-0" />
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
@@ -1734,33 +1859,30 @@ export default function ProviderDiscoveryPage() {
                   <div className="flex rounded-xl border border-[color:var(--color-outline-variant)]/40 p-1 bg-[color:var(--color-surface-dim)]/80 shadow-inner">
                     <button
                       onClick={() => setViewMode('grid')}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase cursor-pointer transition-all ${
-                        viewMode === 'grid'
-                          ? 'bg-amber-400 text-black shadow-md shadow-amber-500/20 font-black'
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase cursor-pointer transition-all ${viewMode === 'grid'
+                          ? 'bg-gradient-to-r from-[#ff6325] to-[#e04e13] text-white shadow-md shadow-[#ff6325]/25 font-black'
                           : 'text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)]'
-                      }`}
+                        }`}
                     >
                       <Grid size={13} />
                       Grid
                     </button>
                     <button
                       onClick={() => setViewMode('list')}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase cursor-pointer transition-all ${
-                        viewMode === 'list'
-                          ? 'bg-amber-400 text-black shadow-md shadow-amber-500/20 font-black'
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase cursor-pointer transition-all ${viewMode === 'list'
+                          ? 'bg-gradient-to-r from-[#ff6325] to-[#e04e13] text-white shadow-md shadow-[#ff6325]/25 font-black'
                           : 'text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)]'
-                      }`}
+                        }`}
                     >
                       <List size={13} />
                       List
                     </button>
                     <button
                       onClick={() => setViewMode('map')}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase cursor-pointer transition-all ${
-                        viewMode === 'map'
-                          ? 'bg-amber-400 text-black shadow-md shadow-amber-500/20 font-black'
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase cursor-pointer transition-all ${viewMode === 'map'
+                          ? 'bg-gradient-to-r from-[#ff6325] to-[#e04e13] text-white shadow-md shadow-[#ff6325]/25 font-black'
                           : 'text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)]'
-                      }`}
+                        }`}
                     >
                       <Map size={13} />
                       Map
@@ -1803,7 +1925,7 @@ export default function ProviderDiscoveryPage() {
                   {Object.values(filteredServices.reduce((acc: any, service: any) => {
                     const mId = service.merchantObj?.id || (typeof service.merchant === 'string' ? service.merchant : service.merchant?.id) || 'unknown';
                     const mObj = service.merchantObj || (typeof service.merchant === 'string' ? { id: service.merchant, name: service.merchant } : service.merchant) || { name: 'BokSpot Merchant', id: 'unknown' };
-                    
+
                     if (!acc[mId]) {
                       acc[mId] = {
                         merchantObj: mObj,
@@ -1814,23 +1936,23 @@ export default function ProviderDiscoveryPage() {
                         rating: service.rating || 4.8,
                         reviewCount: service.reviewCount || 24,
                         dist: (latitude !== null && longitude !== null && mObj.latitude && mObj.longitude)
-                            ? `${calculateDistance(latitude, longitude, mObj.latitude, mObj.longitude)} km`
-                            : '4.5 km',
+                          ? `${calculateDistance(latitude, longitude, mObj.latitude, mObj.longitude)} km`
+                          : '4.5 km',
                       };
                     }
                     if (service.name === '__BOKSPOT_GROUP__') {
                       acc[mId].groupImageUrl = service.metadata?.mainImageUrl || service.imageUrl;
                       acc[mId].groupName = service.category;
                       acc[mId].groupCity = service.city;
-                    } 
+                    }
                     if (service.basePrice && (!acc[mId].minPrice || service.basePrice < acc[mId].minPrice)) {
                       acc[mId].minPrice = service.basePrice;
                     }
-                    
+
                     if (mObj.allCategories && Array.isArray(mObj.allCategories)) {
                       mObj.allCategories.forEach((cat: string) => acc[mId].categories.add(cat));
                     } else if (service.name && service.name !== '__BOKSPOT_GROUP__') {
-                       acc[mId].categories.add(service.name);
+                      acc[mId].categories.add(service.name);
                     }
                     return acc;
                   }, {})).map((group: any, i: number) => {
@@ -1846,12 +1968,12 @@ export default function ProviderDiscoveryPage() {
                         className="h-full"
                       >
                         <Link href={`/${bookingType}/${category}/${m.id || m.slug || 'merchant'}`} className="block h-full">
-                          <div className={`group relative flex flex-col h-full bg-[color:var(--color-surface)] rounded-3xl overflow-hidden border border-[color:var(--color-outline-variant)]/30 hover:border-amber-400/50 hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-300 cursor-pointer ${viewMode === 'list' ? 'sm:flex-row' : ''}`}>
+                          <div className={`group relative flex flex-col h-full bg-[color:var(--color-surface)] rounded-3xl overflow-hidden border border-[color:var(--color-outline-variant)]/30 hover:border-[#ff6325]/50 hover:shadow-2xl hover:shadow-[#ff6325]/10 transition-all duration-300 cursor-pointer ${viewMode === 'list' ? 'sm:flex-row' : ''}`}>
                             {/* Image Header with Hover Zoom */}
                             <div className={`relative overflow-hidden bg-[color:var(--color-surface-dim)] shrink-0 ${viewMode === 'list' ? 'sm:w-80 h-52 sm:h-auto' : 'h-52 w-full'}`}>
-                              <img 
-                                src={group.groupImageUrl || s?.metadata?.mainImageUrl || s?.imageUrl || s?.images?.[0] || m.images?.[0] || `https://images.unsplash.com/photo-1540039155732-68bebc6894b9?w=800&q=80`} 
-                                alt={m.name} 
+                              <img
+                                src={group.groupImageUrl || s?.metadata?.mainImageUrl || s?.imageUrl || s?.images?.[0] || m.images?.[0] || `https://images.unsplash.com/photo-1540039155732-68bebc6894b9?w=800&q=80`}
+                                alt={m.name}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                                 onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1540039155732-68bebc6894b9?w=800&q=80'; }}
                               />
@@ -1861,18 +1983,18 @@ export default function ProviderDiscoveryPage() {
 
                               {/* Verified Pill / Rating Badge */}
                               <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white text-[11px] font-bold shadow-md">
-                                <Star size={12} className="text-amber-400 fill-amber-400" />
+                                <Star size={12} className="text-[#ff6325] fill-[#ff6325]" />
                                 <span>{group.rating || '4.8'}</span>
                                 <span className="text-white/60 text-[9px]">({group.reviewCount || '20+'})</span>
                               </div>
 
-                              <div className="absolute top-3 right-3 p-2 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-white/80 hover:text-amber-400 hover:scale-110 transition-all shadow-md">
+                              <div className="absolute top-3 right-3 p-2 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-white/80 hover:text-[#ff6325] hover:scale-110 transition-all shadow-md">
                                 <Heart size={14} />
                               </div>
 
                               {/* Bottom of Image: Price tag preview if available */}
                               {group.minPrice && (
-                                <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-amber-400 text-black font-extrabold text-xs shadow-lg">
+                                <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#ff6325] to-[#e04e13] text-white font-extrabold text-xs shadow-lg">
                                   From ₹{group.minPrice}
                                 </div>
                               )}
@@ -1882,13 +2004,13 @@ export default function ProviderDiscoveryPage() {
                             <div className="p-5 flex flex-col flex-1 justify-between">
                               <div>
                                 <div className="flex items-start justify-between gap-2 mb-1">
-                                  <h3 className="font-extrabold text-[17px] text-[color:var(--color-on-surface)] group-hover:text-amber-400 transition-colors line-clamp-1 tracking-tight">
+                                  <h3 className="font-extrabold text-[17px] text-[color:var(--color-on-surface)] group-hover:text-[#ff6325] transition-colors line-clamp-1 tracking-tight">
                                     {m.name}
                                   </h3>
                                 </div>
 
                                 <div className="flex items-center text-xs font-medium text-[color:var(--color-on-surface-variant)] mb-3.5">
-                                  <MapPin size={13} className="text-amber-400/80 mr-1 shrink-0" />
+                                  <MapPin size={13} className="text-[#ff6325]/80 mr-1 shrink-0" />
                                   <span className="truncate max-w-[150px]">{group.groupCity || city || 'Chennai'}</span>
                                   {group.dist && (
                                     <>
@@ -1905,13 +2027,12 @@ export default function ProviderDiscoveryPage() {
                                   {chips.map((chip: any, idx: number) => {
                                     const isCurrentCat = chip === categoryName;
                                     return (
-                                      <span 
-                                        key={idx} 
-                                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide transition-all ${
-                                          isCurrentCat 
-                                            ? 'bg-amber-400 text-black shadow-sm font-extrabold' 
-                                            : 'bg-[color:var(--color-surface-dim)]/80 border border-[color:var(--color-outline-variant)]/40 text-[color:var(--color-on-surface)]/90 hover:border-amber-400/40'
-                                        }`}
+                                      <span
+                                        key={idx}
+                                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide transition-all ${isCurrentCat
+                                            ? 'bg-gradient-to-r from-[#ff6325] to-[#e04e13] text-white shadow-sm font-extrabold'
+                                            : 'bg-[color:var(--color-surface-dim)]/80 border border-[color:var(--color-outline-variant)]/40 text-[color:var(--color-on-surface)]/90 hover:border-[#ff6325]/40'
+                                          }`}
                                       >
                                         {chip}
                                       </span>

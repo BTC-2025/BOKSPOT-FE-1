@@ -9,18 +9,18 @@ import { CheckCircle2, XCircle, Clock, ArrowLeft, MapPin, Calendar, Download, Sh
 // ─── Status colour schemes ────────────────────────────────────────────────────
 const STATUS_CONFIG = {
   PENDING: {
-    gradient: 'from-yellow-400 via-amber-300 to-yellow-500',
-    bgGradient: 'from-yellow-50 via-amber-50 to-yellow-100',
-    borderColor: 'border-amber-300',
-    textColor: 'text-amber-700',
-    iconBg: 'bg-amber-100',
-    pulseColor: 'bg-amber-400',
+    gradient: 'from-[#ff6325] via-[#ff8452] to-[#e04e13]',
+    bgGradient: 'from-orange-50 via-slate-50 to-orange-100',
+    borderColor: 'border-[#ff6325]/30',
+    textColor: 'text-[#ff6325]',
+    iconBg: 'bg-[#ff6325]/10',
+    pulseColor: 'bg-[#ff6325]',
     icon: Clock,
-    iconColor: 'text-amber-600',
+    iconColor: 'text-[#ff6325]',
     title: 'Payment Confirmed!',
     subtitle: 'Waiting for the venue to accept your booking...',
     badge: '⏳ Awaiting Acceptance',
-    badgeColor: 'bg-amber-100 text-amber-700 border-amber-200',
+    badgeColor: 'bg-[#ff6325]/10 text-[#ff6325] border-[#ff6325]/30',
     showPulse: true,
   },
   CONFIRMED: {

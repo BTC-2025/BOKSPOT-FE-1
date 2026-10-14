@@ -12,8 +12,8 @@ function calculateBearing(lat1: number, lon1: number, lat2: number, lon2: number
 
   const y = Math.sin(dLon) * Math.cos(lat2Rad);
   const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) -
-            Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
-  
+    Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
+
   let brng = Math.atan2(y, x) * 180 / Math.PI;
   return (brng + 360) % 360;
 }
@@ -22,11 +22,11 @@ function getHaversineDistance(lat1: number, lon1: number, lat2: number, lon2: nu
   const R = 6371; // Earth's radius in km
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
 
@@ -180,7 +180,7 @@ export default function MapComponent({
 
     const successCallback = (position: any) => {
       const { latitude, longitude } = position.coords;
-      
+
       // Update live coords and center so route is dynamically calculated from actual physical location
       setLiveCoords([latitude, longitude]);
       liveCoordsRef.current = [latitude, longitude];
@@ -190,7 +190,7 @@ export default function MapComponent({
 
       if (mapRef.current) {
         mapRef.current.setView([latitude, longitude], 17, { animate: true, duration: 1.2 });
-        
+
         // Remove previous user marker if it exists
         if (userMarkerRef.current) {
           userMarkerRef.current.remove();
@@ -208,7 +208,7 @@ export default function MapComponent({
           iconSize: [24, 24],
           iconAnchor: [12, 12],
         });
-        
+
         const newMarker = L.marker([latitude, longitude], { icon: userIcon }).addTo(mapRef.current);
         userMarkerRef.current = newMarker;
       }
@@ -227,7 +227,7 @@ export default function MapComponent({
             // Simulate a location offset near current active city center
             const shiftLat = center[0] + (Math.random() - 0.5) * 0.015;
             const shiftLng = center[1] + (Math.random() - 0.5) * 0.015;
-            
+
             successCallback({
               coords: {
                 latitude: shiftLat,
@@ -315,10 +315,10 @@ export default function MapComponent({
 
     const performZoom = () => {
       if (!mapRef.current || !zoomLatLng) return;
-      
+
       const now = Date.now();
       const currentZoom = map.getZoom();
-      
+
       if (Math.abs(targetZoom - currentZoom) < 0.01) return;
 
       // Use Leaflet's smooth CSS-animated zoom (duration 0.15s)
@@ -326,14 +326,14 @@ export default function MapComponent({
         animate: true,
         duration: 0.15
       } as any);
-      
+
       lastZoomTime = now;
     };
 
     const handleWheel = (e: WheelEvent) => {
       if (e.ctrlKey) {
         e.preventDefault();
-        
+
         isPinching = true;
 
         if (zoomTimeout) {
@@ -342,7 +342,7 @@ export default function MapComponent({
         }
 
         zoomLatLng = map.mouseEventToLatLng(e);
-        
+
         // Normalize delta based on deltaMode
         let delta = -e.deltaY;
         if (e.deltaMode === 1) { // Line mode
@@ -350,13 +350,13 @@ export default function MapComponent({
         } else if (e.deltaMode === 2) { // Page mode
           delta *= 100;
         }
-        
+
         const zoomFactor = 0.003;
         const minZoom = map.getMinZoom();
         const maxZoom = map.getMaxZoom();
-        
+
         targetZoom = Math.max(minZoom, Math.min(maxZoom, targetZoom + delta * zoomFactor));
-        
+
         const now = Date.now();
         if (now - lastZoomTime >= 100) {
           performZoom();
@@ -446,7 +446,7 @@ export default function MapComponent({
         const distance = Math.sqrt(
           Math.pow(currentCenter.lat - center[0], 2) + Math.pow(currentCenter.lng - center[1], 2)
         );
-        
+
         const zoomChanged = prevZoomRef.current !== zoom;
         prevZoomRef.current = zoom;
 
@@ -520,10 +520,10 @@ export default function MapComponent({
               }
             }
           },
-          { 
-            enableHighAccuracy: highAccuracy, 
-            timeout: highAccuracy ? 6000 : 15000, 
-            maximumAge: 10000 
+          {
+            enableHighAccuracy: highAccuracy,
+            timeout: highAccuracy ? 6000 : 15000,
+            maximumAge: 10000
           }
         );
       };
@@ -607,124 +607,124 @@ export default function MapComponent({
 
       let startPoint: [number, number] = liveCoords || center;
 
-        // Ensure we calculate routing locally to guarantee beautiful, natural road turns.
-        // If the start and destination are in different cities or far apart (>10 km),
-        // we snap the starting point to a nearby road coordinate (~1.2 km away).
-        const dist = Math.sqrt(
-          Math.pow(startPoint[0] - endPoint[0], 2) + Math.pow(startPoint[1] - endPoint[1], 2)
-        );
-        if (dist > 0.1) {
-          startPoint = [endPoint[0] - 0.007, endPoint[1] - 0.007];
+      // Ensure we calculate routing locally to guarantee beautiful, natural road turns.
+      // If the start and destination are in different cities or far apart (>10 km),
+      // we snap the starting point to a nearby road coordinate (~1.2 km away).
+      const dist = Math.sqrt(
+        Math.pow(startPoint[0] - endPoint[0], 2) + Math.pow(startPoint[1] - endPoint[1], 2)
+      );
+      if (dist > 0.1) {
+        startPoint = [endPoint[0] - 0.007, endPoint[1] - 0.007];
+      }
+
+      // Generate a unique route cache key with 4 decimal precision to avoid jittery refetches
+      const routeKey = `${startPoint[0].toFixed(4)},${startPoint[1].toFixed(4)}->${endPoint[0].toFixed(4)},${endPoint[1].toFixed(4)}`;
+
+      // If the route hasn't changed and the route line is already active, return early
+      if (lastFetchedRouteKeyRef.current === routeKey && routeLineRef.current) {
+        return;
+      }
+
+      // Clean up the previous route line before showing fallback or fetching new OSRM route
+      if (routeLineRef.current) {
+        routeLineRef.current.remove();
+        routeLineRef.current = null;
+      }
+
+      lastFetchedRouteKeyRef.current = routeKey;
+
+      // Draw straight line fallback immediately first (double layered casing/core)
+      const drawFallbackLine = () => {
+        if (routeLineRef.current) routeLineRef.current.remove();
+
+        const casing = L.polyline([startPoint, endPoint], {
+          color: 'rgba(99, 102, 241, 0.35)',
+          weight: 9,
+          lineCap: 'round',
+          lineJoin: 'round'
+        });
+
+        const core = L.polyline([startPoint, endPoint], {
+          color: '#6366f1',
+          weight: 4,
+          dashArray: '8, 8',
+          lineCap: 'round',
+          lineJoin: 'round'
+        });
+
+        routeLineRef.current = L.featureGroup([casing, core]).addTo(mapRef.current!) as any;
+        routePointsRef.current = [startPoint, endPoint];
+      };
+
+      // Draw straight line fallback immediately as placeholder/loading state
+      drawFallbackLine();
+      setRoutingError(null);
+
+      // Async route fetching from multiple endpoints (primary: openstreetmap.de, secondary: project-osrm.org)
+      const fetchRoute = async (start: [number, number], end: [number, number]) => {
+        const endpoints = [
+          `https://routing.openstreetmap.de/routed-car/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`,
+          `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`
+        ];
+
+        let lastError = null;
+        for (const url of endpoints) {
+          try {
+            const res = await fetch(url);
+            if (!res.ok) {
+              lastError = new Error(`HTTP error! status: ${res.status}`);
+              continue;
+            }
+            const data = await res.json();
+            if (data && data.routes && data.routes[0] && data.routes[0].geometry) {
+              return data.routes[0].geometry.coordinates;
+            }
+          } catch (err) {
+            lastError = err;
+            console.warn(`Routing endpoint failed: ${url}`, err);
+          }
         }
+        throw lastError || new Error("All routing endpoints failed");
+      };
 
-        // Generate a unique route cache key with 4 decimal precision to avoid jittery refetches
-        const routeKey = `${startPoint[0].toFixed(4)},${startPoint[1].toFixed(4)}->${endPoint[0].toFixed(4)},${endPoint[1].toFixed(4)}`;
+      fetchRoute(startPoint, endPoint)
+        .then(geojsonCoords => {
+          // Stop if route key changed during fetch (race condition)
+          if (lastFetchedRouteKeyRef.current !== routeKey) return;
 
-        // If the route hasn't changed and the route line is already active, return early
-        if (lastFetchedRouteKeyRef.current === routeKey && routeLineRef.current) {
-          return;
-        }
+          const routePoints: [number, number][] = geojsonCoords.map((coord: [number, number]) => [coord[1], coord[0]]);
 
-        // Clean up the previous route line before showing fallback or fetching new OSRM route
-        if (routeLineRef.current) {
-          routeLineRef.current.remove();
-          routeLineRef.current = null;
-        }
-
-        lastFetchedRouteKeyRef.current = routeKey;
-
-        // Draw straight line fallback immediately first (double layered casing/core)
-        const drawFallbackLine = () => {
           if (routeLineRef.current) routeLineRef.current.remove();
-          
-          const casing = L.polyline([startPoint, endPoint], {
-            color: 'rgba(99, 102, 241, 0.35)',
-            weight: 9,
+
+          // Draw beautiful Google Maps style road polyline (Casing + Core)
+          const casing = L.polyline(routePoints, {
+            color: 'rgba(37, 99, 235, 0.35)', // transparent blue glow
+            weight: 11,
             lineCap: 'round',
             lineJoin: 'round'
           });
 
-          const core = L.polyline([startPoint, endPoint], {
-            color: '#6366f1',
-            weight: 4,
-            dashArray: '8, 8',
+          const core = L.polyline(routePoints, {
+            color: '#1a73e8', // Google Maps navigation blue core
+            weight: 5,
             lineCap: 'round',
             lineJoin: 'round'
           });
 
           routeLineRef.current = L.featureGroup([casing, core]).addTo(mapRef.current!) as any;
-          routePointsRef.current = [startPoint, endPoint];
-        };
+          routePointsRef.current = routePoints;
 
-        // Draw straight line fallback immediately as placeholder/loading state
-        drawFallbackLine();
-        setRoutingError(null);
-
-        // Async route fetching from multiple endpoints (primary: openstreetmap.de, secondary: project-osrm.org)
-        const fetchRoute = async (start: [number, number], end: [number, number]) => {
-          const endpoints = [
-            `https://routing.openstreetmap.de/routed-car/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`,
-            `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`
-          ];
-
-          let lastError = null;
-          for (const url of endpoints) {
-            try {
-              const res = await fetch(url);
-              if (!res.ok) {
-                lastError = new Error(`HTTP error! status: ${res.status}`);
-                continue;
-              }
-              const data = await res.json();
-              if (data && data.routes && data.routes[0] && data.routes[0].geometry) {
-                return data.routes[0].geometry.coordinates;
-              }
-            } catch (err) {
-              lastError = err;
-              console.warn(`Routing endpoint failed: ${url}`, err);
-            }
+          // adjust bounds to show the entire route
+          if (mapRef.current && routeLineRef.current) {
+            mapRef.current.fitBounds(routeLineRef.current.getBounds().pad(0.2), { animate: true });
           }
-          throw lastError || new Error("All routing endpoints failed");
-        };
-
-        fetchRoute(startPoint, endPoint)
-          .then(geojsonCoords => {
-            // Stop if route key changed during fetch (race condition)
-            if (lastFetchedRouteKeyRef.current !== routeKey) return;
-
-            const routePoints: [number, number][] = geojsonCoords.map((coord: [number, number]) => [coord[1], coord[0]]);
-            
-            if (routeLineRef.current) routeLineRef.current.remove();
-
-            // Draw beautiful Google Maps style road polyline (Casing + Core)
-            const casing = L.polyline(routePoints, {
-              color: 'rgba(37, 99, 235, 0.35)', // transparent blue glow
-              weight: 11,
-              lineCap: 'round',
-              lineJoin: 'round'
-            });
-
-            const core = L.polyline(routePoints, {
-              color: '#1a73e8', // Google Maps navigation blue core
-              weight: 5,
-              lineCap: 'round',
-              lineJoin: 'round'
-            });
-
-            routeLineRef.current = L.featureGroup([casing, core]).addTo(mapRef.current!) as any;
-            routePointsRef.current = routePoints;
-
-            // adjust bounds to show the entire route
-            if (mapRef.current && routeLineRef.current) {
-              mapRef.current.fitBounds(routeLineRef.current.getBounds().pad(0.2), { animate: true });
-            }
-          })
-          .catch(err => {
-            if (lastFetchedRouteKeyRef.current !== routeKey) return;
-            console.warn("OSRM routing failed, drawing fallback line:", err);
-            setRoutingError("Road-based routing unavailable. Showing direct line.");
-            drawFallbackLine();
-          });
+        })
+        .catch(err => {
+          if (lastFetchedRouteKeyRef.current !== routeKey) return;
+          console.warn("OSRM routing failed, drawing fallback line:", err);
+          setRoutingError("Road-based routing unavailable. Showing direct line.");
+          drawFallbackLine();
+        });
     } else {
       // Clear route line if selection is cleared or showRoute is false
       if (routeLineRef.current) {
@@ -771,7 +771,7 @@ export default function MapComponent({
       const currentLatLng = customPinMarkerRef.current.getLatLng();
       const diffLat = Math.abs(currentLatLng.lat - customPin.lat);
       const diffLng = Math.abs(currentLatLng.lng - customPin.lng);
-      
+
       if (diffLat > 0.00001 || diffLng > 0.00001) {
         const isDragging = customPinMarkerRef.current.dragging && (customPinMarkerRef.current.dragging as any)._draggable && (customPinMarkerRef.current.dragging as any)._draggable._moving;
         if (!isDragging) {
@@ -802,9 +802,9 @@ export default function MapComponent({
       iconAnchor: [24, 24],
     });
 
-    const pinMarker = L.marker([customPin.lat, customPin.lng], { 
+    const pinMarker = L.marker([customPin.lat, customPin.lng], {
       icon: customPinIcon,
-      draggable: true 
+      draggable: true
     });
     pinMarker.addTo(mapRef.current);
     customPinMarkerRef.current = pinMarker;
@@ -824,7 +824,7 @@ export default function MapComponent({
         onMapClick(position.lat, position.lng);
       }
     });
-    
+
     pinMarker.bindPopup(`
       <div class="p-2.5 font-sans min-w-[180px] bg-slate-950 text-white rounded-xl border border-rose-800 shadow-2xl text-center">
         <h4 class="font-extrabold text-xs text-rose-400 mb-1">📍 Custom Pin Dropped</h4>
@@ -859,16 +859,14 @@ export default function MapComponent({
         className: 'custom-leaflet-marker',
         html: `
           <div class="relative flex items-center justify-center w-10 h-10">
-            ${
-              isSelected
-                 ? `<span class="absolute inline-flex h-8 w-8 animate-ping rounded-full bg-amber-500/40"></span>`
-                 : ''
-            }
-            <div class="relative flex h-9 w-9 items-center justify-center rounded-full border-2 ${
-              isSelected
-                ? 'border-amber-400 bg-amber-950 scale-110 shadow-xl'
-                : 'border-indigo-500 bg-slate-900 hover:border-indigo-400 hover:scale-105'
-            } shadow-lg transition-all duration-300">
+            ${isSelected
+            ? `<span class="absolute inline-flex h-8 w-8 animate-ping rounded-full bg-amber-500/40"></span>`
+            : ''
+          }
+            <div class="relative flex h-9 w-9 items-center justify-center rounded-full border-2 ${isSelected
+            ? 'border-amber-400 bg-amber-950 scale-110 shadow-xl'
+            : 'border-indigo-500 bg-slate-900 hover:border-indigo-400 hover:scale-105'
+          } shadow-lg transition-all duration-300">
               <span class="text-base select-none">${marker.emoji || '📍'}</span>
             </div>
           </div>
@@ -892,23 +890,20 @@ export default function MapComponent({
             <h4 class="font-extrabold text-sm text-slate-100 leading-tight mb-0.5">${marker.name}</h4>
             <p class="text-[11px] text-slate-400">${marker.merchant}</p>
           </div>
-          ${
-            marker.description
-              ? `<p class="text-[10px] text-slate-400/90 leading-relaxed border-t border-slate-900 pt-1.5 mt-0.5">${marker.description}</p>`
-              : ''
-          }
-          ${
-            marker.address
-              ? `<p class="text-[9px] text-slate-500 flex items-center gap-1 mt-0.5">📍 ${marker.address}</p>`
-              : ''
-          }
+          ${marker.description
+          ? `<p class="text-[10px] text-slate-400/90 leading-relaxed border-t border-slate-900 pt-1.5 mt-0.5">${marker.description}</p>`
+          : ''
+        }
+          ${marker.address
+          ? `<p class="text-[9px] text-slate-500 flex items-center gap-1 mt-0.5">📍 ${marker.address}</p>`
+          : ''
+        }
           <div class="flex justify-between items-center border-t border-slate-900 pt-2.5 mt-1">
             <span class="font-black text-indigo-300 text-sm">${marker.price}</span>
-            ${
-              marker.linkUrl
-                ? `<a href="${marker.linkUrl}" class="text-center bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-[10px] uppercase font-bold py-2 px-4 rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all shadow-md active:scale-[0.97]">Book Slot</a>`
-                : ''
-            }
+            ${marker.linkUrl
+          ? `<a href="${marker.linkUrl}" class="text-center bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-[10px] uppercase font-bold py-2 px-4 rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all shadow-md active:scale-[0.97]">Book Slot</a>`
+          : ''
+        }
           </div>
         </div>
       `;
@@ -955,21 +950,19 @@ export default function MapComponent({
       <div className="absolute top-4 right-4 z-[400] flex bg-slate-900/90 backdrop-blur-md rounded-xl border border-white/10 p-0.5 shadow-xl select-none">
         <button
           onClick={() => setMapMode('normal')}
-          className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
-            mapMode === 'normal'
+          className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${mapMode === 'normal'
               ? 'bg-indigo-600 text-white shadow-md'
               : 'text-slate-400 hover:text-white'
-          }`}
+            }`}
         >
           Normal
         </button>
         <button
           onClick={() => setMapMode('satellite')}
-          className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
-            mapMode === 'satellite'
+          className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${mapMode === 'satellite'
               ? 'bg-indigo-600 text-white shadow-md'
               : 'text-slate-400 hover:text-white'
-          }`}
+            }`}
         >
           Satellite
         </button>
@@ -979,9 +972,8 @@ export default function MapComponent({
       {showRoute && (selectedMarkerId || customPin) && (
         <button
           onClick={handleSimulateNavigation}
-          className={`absolute bottom-[18rem] right-3.5 z-[400] flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 shadow-xl transition-all cursor-pointer group ${
-            isSimulating ? 'bg-amber-600 text-white animate-pulse' : 'bg-slate-900/90 hover:bg-amber-600 text-white'
-          }`}
+          className={`absolute bottom-[18rem] right-3.5 z-[400] flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 shadow-xl transition-all cursor-pointer group ${isSimulating ? 'bg-amber-600 text-white animate-pulse' : 'bg-slate-900/90 hover:bg-amber-600 text-white'
+            }`}
           title={isSimulating ? "Pause Simulation" : "Simulate Navigation"}
         >
           {isSimulating ? (
@@ -995,9 +987,8 @@ export default function MapComponent({
       {/* Floating Live Tracking Button */}
       <button
         onClick={() => setIsTracking(!isTracking)}
-        className={`absolute bottom-[15rem] right-3.5 z-[400] flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 shadow-xl transition-all cursor-pointer group ${
-          isTracking ? 'bg-emerald-600 text-white animate-pulse' : 'bg-slate-900/90 hover:bg-emerald-600 text-white'
-        }`}
+        className={`absolute bottom-[15rem] right-3.5 z-[400] flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 shadow-xl transition-all cursor-pointer group ${isTracking ? 'bg-emerald-600 text-white animate-pulse' : 'bg-slate-900/90 hover:bg-emerald-600 text-white'
+          }`}
         title={isTracking ? "Live GPS Tracking Active" : "Start Live GPS Tracking"}
       >
         <Navigation className={`h-4.5 w-4.5 text-slate-300 group-hover:text-white transition-colors ${isTracking ? 'text-white' : ''}`} />

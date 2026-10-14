@@ -388,21 +388,21 @@ export default function CategoriesPage() {
   return (
     <main className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] transition-colors duration-300 relative overflow-hidden pb-20 pt-[80px] md:pt-[100px]">
       {/* Ambient Luxury Glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-amber-500/10 via-amber-500/5 to-transparent blur-3xl pointer-events-none -z-10" />
-      <div className="absolute top-60 right-10 w-96 h-96 bg-amber-400/5 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-[#ff6325]/10 via-[#0a3161]/5 to-transparent blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-60 right-10 w-96 h-96 bg-[#ff6325]/5 rounded-full blur-3xl pointer-events-none -z-10" />
 
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         {/* Luxury Hero Header */}
         <div className="pt-4 pb-6 border-b border-[color:var(--color-outline-variant)]/20">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-2 text-[11px] font-bold text-amber-500 uppercase tracking-wider mb-2.5 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 backdrop-blur-md">
-                <Compass size={13} className="text-amber-500 animate-spin-slow" />
+              <div className="inline-flex items-center gap-2 text-[11px] font-bold text-[#ff6325] uppercase tracking-wider mb-2.5 px-3 py-1 rounded-full bg-[#ff6325]/10 border border-[#ff6325]/20 backdrop-blur-md">
+                <Compass size={13} className="text-[#ff6325] animate-spin-slow" />
                 <span>Explore Directory</span>
               </div>
               <h1 className="text-3xl md:text-5xl font-black tracking-tight text-[color:var(--color-on-surface)] flex items-center gap-3">
                 All Categories
-                <Sparkles size={28} className="text-amber-400 hidden sm:inline-block animate-pulse" />
+                <Sparkles size={28} className="text-[#ff6325] hidden sm:inline-block animate-pulse" />
               </h1>
               <p className="mt-2 text-sm text-[color:var(--color-on-surface-variant)] max-w-2xl font-normal leading-relaxed">
                 Discover seamless bookings across transport, luxury stays, entertainment, sports, and local lifestyle services.
@@ -410,8 +410,8 @@ export default function CategoriesPage() {
             </div>
 
             {/* Quick search input */}
-            <div className="relative flex items-center w-full md:w-80 rounded-2xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface)]/80 backdrop-blur-md px-4 py-2.5 focus-within:border-amber-400 focus-within:ring-2 focus-within:ring-amber-400/20 transition-all shadow-sm">
-              <Search size={16} className="text-amber-400 mr-2.5 shrink-0" />
+            <div className="relative flex items-center w-full md:w-80 rounded-2xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface)]/80 backdrop-blur-md px-4 py-2.5 focus-within:border-[#ff6325] focus-within:ring-2 focus-within:ring-[#ff6325]/20 transition-all shadow-sm">
+              <Search size={16} className="text-[#ff6325] mr-2.5 shrink-0" />
               <input
                 type="text"
                 value={searchFilter}
@@ -435,8 +435,8 @@ export default function CategoriesPage() {
             onClick={() => setActiveGroup('ALL')}
             className={`px-4 py-2 rounded-full text-xs font-bold border transition-all cursor-pointer flex items-center gap-2 shrink-0 backdrop-blur-md ${
               activeGroup === 'ALL'
-                ? 'bg-amber-400 text-black border-amber-400 shadow-md shadow-amber-500/20 font-black scale-105'
-                : 'bg-[color:var(--color-surface)]/90 border-[color:var(--color-outline-variant)]/40 text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)] hover:border-amber-400/40 hover:scale-[1.02] active:scale-95'
+                ? 'bg-gradient-to-r from-[#ff6325] to-[#e04e13] text-white border-[#ff6325] shadow-md shadow-[#ff6325]/25 font-black scale-105'
+                : 'bg-[color:var(--color-surface)]/90 border-[color:var(--color-outline-variant)]/40 text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)] hover:border-[#ff6325]/40 hover:scale-[1.02] active:scale-95'
             }`}
           >
             <span className="text-sm shrink-0">🌐</span>
@@ -448,8 +448,8 @@ export default function CategoriesPage() {
               onClick={() => setActiveGroup(group.title)}
               className={`px-4 py-2 rounded-full text-xs font-bold border transition-all cursor-pointer flex items-center gap-2 shrink-0 backdrop-blur-md ${
                 activeGroup === group.title
-                  ? 'bg-amber-400 text-black border-amber-400 shadow-md shadow-amber-500/20 font-black scale-105'
-                  : 'bg-[color:var(--color-surface)]/90 border-[color:var(--color-outline-variant)]/40 text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)] hover:border-amber-400/40 hover:scale-[1.02] active:scale-95'
+                  ? 'bg-gradient-to-r from-[#ff6325] to-[#e04e13] text-white border-[#ff6325] shadow-md shadow-[#ff6325]/25 font-black scale-105'
+                  : 'bg-[color:var(--color-surface)]/90 border-[color:var(--color-outline-variant)]/40 text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)] hover:border-[#ff6325]/40 hover:scale-[1.02] active:scale-95'
               }`}
             >
               <span className="text-sm shrink-0">{GROUP_EMOJIS[group.title] || '📍'}</span>
@@ -478,7 +478,7 @@ export default function CategoriesPage() {
                 {/* Category Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                   <div className="flex items-center gap-4">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-400/10 text-amber-500 shadow-lg shadow-amber-500/5">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-[#ff6325]/30 bg-[#ff6325]/10 text-[#ff6325] shadow-lg shadow-[#ff6325]/5">
                       <span className="material-symbols-outlined text-[28px]">{group.icon}</span>
                     </div>
                     <div>
@@ -493,7 +493,7 @@ export default function CategoriesPage() {
 
                   <Link 
                     href={groupLink}
-                    className="inline-flex items-center gap-1.5 self-start sm:self-auto text-xs font-bold text-amber-400 hover:text-amber-300 hover:underline transition-colors group/link px-3 py-1.5 rounded-xl bg-amber-400/10 border border-amber-400/20"
+                    className="inline-flex items-center gap-1.5 self-start sm:self-auto text-xs font-bold text-[#ff6325] hover:text-[#ff8452] hover:underline transition-colors group/link px-3 py-1.5 rounded-xl bg-[#ff6325]/10 border border-[#ff6325]/20"
                   >
                     <span>View all in {group.title}</span>
                     <ArrowRight size={13} className="group-hover/link:translate-x-0.5 transition-transform" />
@@ -505,13 +505,13 @@ export default function CategoriesPage() {
                   {group.subcategories.map((subcat) => (
                     <div 
                       key={subcat.name} 
-                      className="bg-[color:var(--color-surface)] rounded-3xl p-6 shadow-md border border-[color:var(--color-outline-variant)]/30 hover:border-amber-400/30 transition-all flex flex-col justify-between"
+                      className="bg-[color:var(--color-surface)] rounded-3xl p-6 shadow-md border border-[color:var(--color-outline-variant)]/30 hover:border-[#ff6325]/30 transition-all flex flex-col justify-between"
                     >
                       <div>
                         {/* Subcategory title */}
                         <div className="flex items-center justify-between mb-4 pb-2 border-b border-[color:var(--color-outline-variant)]/20">
                           <h3 className="text-sm font-extrabold text-[color:var(--color-on-surface)] tracking-wide flex items-center gap-2">
-                            <span className="w-1.5 h-4 rounded-full bg-amber-400 inline-block" />
+                            <span className="w-1.5 h-4 rounded-full bg-[#ff6325] inline-block" />
                             {subcat.name}
                           </h3>
                           <span className="text-[11px] font-bold text-[color:var(--color-on-surface-variant)] bg-[color:var(--color-surface-dim)] px-2.5 py-0.5 rounded-full border border-[color:var(--color-outline-variant)]/30">
@@ -528,7 +528,7 @@ export default function CategoriesPage() {
                               <Link
                                 key={item.name}
                                 href={serviceHref}
-                                className="group relative flex flex-col rounded-2xl overflow-hidden bg-[color:var(--color-surface-dim)] border border-[color:var(--color-outline-variant)]/30 hover:border-amber-400/60 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300"
+                                className="group relative flex flex-col rounded-2xl overflow-hidden bg-[color:var(--color-surface-dim)] border border-[color:var(--color-outline-variant)]/30 hover:border-[#ff6325]/60 hover:shadow-xl hover:shadow-[#ff6325]/10 transition-all duration-300"
                               >
                                 {/* Image Container */}
                                 <div className="w-full h-28 relative overflow-hidden bg-[color:var(--color-surface-dim)]">
@@ -540,14 +540,14 @@ export default function CategoriesPage() {
                                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
                                   {/* Price pill */}
-                                  <div className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-md bg-amber-400 text-black text-[9.5px] font-black shadow-md">
+                                  <div className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-md bg-[#ff6325] text-white text-[9.5px] font-black shadow-md">
                                     {price}
                                   </div>
                                 </div>
 
                                 {/* Title & Emoji */}
                                 <div className="p-2.5 flex items-center justify-between gap-1">
-                                  <h4 className="font-bold text-xs text-[color:var(--color-on-surface)] group-hover:text-amber-400 line-clamp-1 transition-colors">
+                                  <h4 className="font-bold text-xs text-[color:var(--color-on-surface)] group-hover:text-[#ff6325] line-clamp-1 transition-colors">
                                     {item.name}
                                   </h4>
                                   <span className="text-xs shrink-0 group-hover:scale-110 transition-transform">{item.emoji}</span>

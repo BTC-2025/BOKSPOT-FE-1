@@ -90,20 +90,20 @@
   --animate-float-up: floatUp 6s ease-in-out infinite;
   --animate-slow-sail: slowSail 8s ease-in-out infinite;
 
-  /* ── Brand Theme Colors (New Palette) ───────────────────────── */
-  --color-primary: #d4af37;
-  /* gold/yellow       */
-  --color-primary-fixed: #fceea7;
-  /* pale gold tint    */
-  --color-primary-fixed-dim: #cca022;
-  /* deep gold         */
-  --color-on-primary: #031020;
-  /* dark blue on gold */
-  --color-on-primary-fixed: #031020;
-  --color-on-primary-fixed-variant: #523E00;
-  --color-primary-container: #3D3000;
-  /* dark gold surface */
-  --color-on-primary-container: #FFE680;
+  /* ── Brand Theme Colors (Official Bokspot Palette) ────────── */
+  --color-primary: #0a3161;
+  /* Bokspot Navy Blue */
+  --color-primary-fixed: #e2edff;
+  /* pale navy tint    */
+  --color-primary-fixed-dim: #124b8f;
+  /* deep navy         */
+  --color-on-primary: #ffffff;
+  /* white text on navy */
+  --color-on-primary-fixed: #051b36;
+  --color-on-primary-fixed-variant: #0a3161;
+  --color-primary-container: #0f1c30;
+  /* dark navy surface */
+  --color-on-primary-container: #d4e5ff;
 
   /* ── Dark Surfaces (Obsidian Palette) ───────────────────────── */
   --color-surface-dim: #090b10;
@@ -201,22 +201,22 @@
  * ================================================================ */
 @media (prefers-color-scheme: light) {
   :root {
-    --color-primary: #8B7000;
-    /* deeper, elegant gold with high contrast */
-    --color-primary-fixed: #FFF0A0;
-    /* pale gold tint */
-    --color-primary-fixed-dim: #C59B00;
-    /* dark gold */
+    --color-primary: #0a3161;
+    /* Bokspot Deep Navy Blue */
+    --color-primary-fixed: #e2edff;
+    /* pale navy tint */
+    --color-primary-fixed-dim: #124b8f;
+    /* deep navy */
     --color-on-primary: #FFFFFF;
     /* white text on primary */
-    --color-primary-container: #FFF8E0;
-    /* very light warm gold background */
-    --color-on-primary-container: #523E00;
-    /* dark gold text */
-    --color-secondary-container: #E8E8F8;
-    --color-on-secondary-container: #0C0C20;
-    --color-tertiary-container: #F0ECE2;
-    --color-on-tertiary-container: #1F1A12;
+    --color-primary-container: #edf4ff;
+    /* very light warm navy background */
+    --color-on-primary-container: #0a3161;
+    /* dark navy text */
+    --color-secondary-container: #fff0eb;
+    --color-on-secondary-container: #e04e13;
+    --color-tertiary-container: #fff0eb;
+    --color-on-tertiary-container: #e04e13;
 
     --color-surface-dim: #E8E8F0;
     --color-surface: #F5F5FA;
@@ -239,22 +239,22 @@
 }
 
 .light {
-  --color-primary: #8B7000;
-  /* deeper, elegant gold with high contrast */
-  --color-primary-fixed: #FFF0A0;
-  /* pale gold tint */
-  --color-primary-fixed-dim: #C59B00;
-  /* dark gold */
+  --color-primary: #0a3161;
+  /* Bokspot Deep Navy Blue */
+  --color-primary-fixed: #e2edff;
+  /* pale navy tint */
+  --color-primary-fixed-dim: #124b8f;
+  /* deep navy */
   --color-on-primary: #FFFFFF;
   /* white text on primary */
-  --color-primary-container: #FFF8E0;
-  /* very light warm gold background */
-  --color-on-primary-container: #523E00;
-  /* dark gold text */
-  --color-secondary-container: #E8E8F8;
-  --color-on-secondary-container: #0C0C20;
-  --color-tertiary-container: #F0ECE2;
-  --color-on-tertiary-container: #1F1A12;
+  --color-primary-container: #edf4ff;
+  /* very light warm navy surface */
+  --color-on-primary-container: #0a3161;
+  /* dark navy text */
+  --color-secondary-container: #fff0eb;
+  --color-on-secondary-container: #e04e13;
+  --color-tertiary-container: #fff0eb;
+  --color-on-tertiary-container: #e04e13;
 
   --color-surface-dim: #E8E8F0;
   --color-surface: #F5F5FA;
@@ -276,14 +276,15 @@
 }
 
 .dark {
-  --color-primary: #FFD700;
-  --color-primary-fixed: #FFF0A0;
-  --color-primary-fixed-dim: #F0C000;
-  --color-on-primary: #0A0800;
-  --color-on-primary-fixed: #0A0800;
-  --color-on-primary-fixed-variant: #3A2E00;
-  --color-primary-container: #3D3000;
-  --color-on-primary-container: #FFE680;
+  --color-primary: #ff6325;
+  /* Bokspot Orange accent */
+  --color-primary-fixed: #ffe4d6;
+  --color-primary-fixed-dim: #e04e13;
+  --color-on-primary: #ffffff;
+  --color-on-primary-fixed: #3d1405;
+  --color-on-primary-fixed-variant: #7a2c0f;
+  --color-primary-container: #260d03;
+  --color-on-primary-container: #ffcca8;
 
   --color-surface-dim: #090b10;
   --color-surface: #0f1219;
@@ -392,9 +393,9 @@
  * ================================================================ */
 @layer components {
 
-  /* Neon gold gradient text */
+  /* Bokspot brand gradient text */
   .text-gradient-brand {
-    background: linear-gradient(120deg, #FFE066 0%, #FFD700 45%, #FFA500 100%);
+    background: linear-gradient(120deg, #ff8452 0%, #ff6325 50%, #e04e13 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -779,8 +780,7 @@
   animation: goldPulse 2.5s ease-in-out infinite;
 }
 
-/* Custom Navbar Styling - Dynamic Theme Adaptive (Premium Dark Shadowed Gold) */
-/* Custom Navbar Styling - Dynamic Theme Adaptive (Premium Elegant Gold) */
+/* Custom Navbar Styling - Premium Bokspot Deep Navy + Orange Accent (Matching Business App) */
 .custom-navbar {
   position: fixed;
   top: 0;
@@ -790,35 +790,35 @@
   transition: all 0.3s ease;
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
-  background: #d4a729 !important;
-  border-bottom: 1px solid rgba(252, 238, 167, 0.4) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  background: linear-gradient(135deg, #071f3d 0%, #0a3161 65%, #0f407a 100%) !important;
+  border-bottom: 2px solid rgba(255, 99, 37, 0.45) !important;
+  box-shadow: 0 4px 25px rgba(10, 49, 97, 0.4) !important;
 }
 
 /* Dark Mode Styling */
 .dark .custom-navbar {
-  background: #d4a729 !important;
-  border-bottom: 1px solid rgba(252, 238, 167, 0.4) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  background: linear-gradient(135deg, #071f3d 0%, #0a3161 65%, #0f407a 100%) !important;
+  border-bottom: 2px solid rgba(255, 99, 37, 0.45) !important;
+  box-shadow: 0 4px 25px rgba(10, 49, 97, 0.4) !important;
 }
 
 /* Light Mode Styling */
 .light .custom-navbar {
-  background: #d4a729 !important;
-  border-bottom: 1px solid rgba(252, 238, 167, 0.4) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  background: linear-gradient(135deg, #071f3d 0%, #0a3161 65%, #0f407a 100%) !important;
+  border-bottom: 2px solid rgba(255, 99, 37, 0.45) !important;
+  box-shadow: 0 4px 25px rgba(10, 49, 97, 0.4) !important;
 }
 
 /* Brand Logo Color Classes (To prevent overrides) */
 .logo-text-bok {
-  color: #0a3161 !important;
+  color: #ffffff !important;
 }
 
 .logo-text-spot {
   color: #ff6325 !important;
 }
 
-/* High legibility color overrides inside Elegant Gold Navbar */
+/* High legibility color overrides inside Navbar */
 .custom-navbar,
 .custom-navbar a,
 .custom-navbar select,
@@ -829,18 +829,18 @@
 .custom-navbar .custom-nav-btn div,
 .custom-navbar .custom-nav-icon-container span,
 .custom-navbar .custom-nav-icon-btn {
-  color: #fceea7 !important;
+  color: #ffffff !important;
 }
 
 /* Lucide and other icon color fallback */
 .custom-navbar svg:not(.lucide-sparkles) {
-  color: #fceea7 !important;
-  stroke: #fceea7 !important;
+  color: #ffffff !important;
+  stroke: #ffffff !important;
 }
 
 /* Placeholder color */
 .custom-navbar input::placeholder {
-  color: rgba(252, 238, 167, 0.5) !important;
+  color: rgba(255, 255, 255, 0.55) !important;
 }
 
 /* Light Mode Specific Legibility overrides inside Gold Navbar */
@@ -876,7 +876,7 @@
   border-color: rgba(139, 112, 0, 0.5) !important;
 }
 
-/* Button Styling */
+/* Button Styling (Matching Business App) */
 .custom-nav-btn {
   border-radius: 9999px;
   font-weight: 800;
@@ -892,58 +892,47 @@
 }
 
 .dark .custom-nav-btn,
+.light .custom-nav-btn,
 .custom-navbar .custom-nav-btn {
-  background-color: #5a4409 !important;
-  border: 1px solid rgba(252, 238, 167, 0.28) !important;
-  color: #fceea7 !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15) !important;
 }
 
 .dark .custom-nav-btn:hover,
+.light .custom-nav-btn:hover,
 .custom-navbar .custom-nav-btn:hover {
-  background-color: #72560c !important;
-  border-color: rgba(252, 238, 167, 0.45) !important;
+  background-color: rgba(255, 99, 37, 0.25) !important;
+  border-color: rgba(255, 99, 37, 0.5) !important;
+  color: #ffffff !important;
   transform: scale(1.02);
 }
 
 .dark .custom-nav-btn:active,
+.light .custom-nav-btn:active,
 .custom-navbar .custom-nav-btn:active {
   transform: scale(0.98);
 }
 
-.light .custom-nav-btn {
-  background-color: #fdf8e2 !important;
-  border: 1px solid rgba(139, 112, 0, 0.3) !important;
-  color: #8B7000 !important;
-}
-
-.light .custom-nav-btn:hover {
-  background-color: #f9f0ca !important;
-  border-color: rgba(139, 112, 0, 0.5) !important;
-  transform: scale(1.02);
-}
-
-.light .custom-nav-btn:active {
-  transform: scale(0.98);
-}
-
-/* Capsule Menu Styling */
+/* Capsule Menu Styling (Matching Business App) */
 .custom-nav-capsule {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px;
+  padding: 5px;
   border-radius: 9999px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
 }
 
 .dark .custom-nav-capsule,
 .light .custom-nav-capsule,
 .custom-navbar .custom-nav-capsule {
-  background-color: #2b1f02 !important;
-  border: 1px solid rgba(252, 238, 167, 0.15) !important;
+  background-color: rgba(5, 23, 46, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
 }
 
 /* Link Items */
@@ -954,7 +943,7 @@
 .dark .custom-nav-link-inactive,
 .light .custom-nav-link-inactive,
 .custom-navbar .custom-nav-link-inactive {
-  color: rgba(252, 238, 167, 0.72) !important;
+  color: rgba(255, 255, 255, 0.75) !important;
 }
 
 .dark .custom-nav-link-inactive:hover,
@@ -973,9 +962,9 @@
 
 /* Active indicator background */
 .custom-navbar .custom-nav-active-bg {
-  background-color: #8b6508 !important;
-  border: 1px solid rgba(252, 238, 167, 0.35) !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2) !important;
+  background-color: #ff6325 !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 4px 14px rgba(255, 99, 37, 0.45) !important;
 }
 
 /* Icon Button Containers */
@@ -993,8 +982,8 @@
 .dark .custom-nav-icon-container,
 .light .custom-nav-icon-container,
 .custom-navbar .custom-nav-icon-container {
-  border: 1px solid rgba(252, 238, 167, 0.28) !important;
-  background-color: #5a4409 !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 .custom-nav-icon-btn {
@@ -1009,29 +998,29 @@
 .dark .custom-nav-icon-btn,
 .light .custom-nav-icon-btn,
 .custom-navbar .custom-nav-icon-btn {
-  color: rgba(252, 238, 167, 0.8) !important;
+  color: #ffffff !important;
 }
 
 .dark .custom-nav-icon-btn:hover,
 .light .custom-nav-icon-btn:hover,
 .custom-navbar .custom-nav-icon-btn:hover {
   color: #ffffff !important;
-  background-color: rgba(252, 238, 167, 0.1) !important;
+  background-color: rgba(255, 99, 37, 0.3) !important;
 }
 
 /* Mobile Actions Capsule */
 .custom-navbar .custom-nav-mobile-capsule {
-  background-color: #5a4409 !important;
-  border: 1px solid rgba(252, 238, 167, 0.28) !important;
+  background-color: rgba(5, 23, 46, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
 .custom-navbar .custom-nav-mobile-capsule button,
 .custom-navbar .custom-nav-mobile-capsule select {
-  color: #fceea7 !important;
+  color: #ffffff !important;
 }
 
 .custom-navbar .custom-nav-mobile-capsule svg {
-  color: #fceea7 !important;
+  color: #ffffff !important;
 }
 
 /* Reset dropdown contents inside the navbar to use the standard theme colors (crucial for Light Mode visibility) */
@@ -1107,8 +1096,8 @@
 
 .light .custom-navbar .absolute .text-primary,
 .light .custom-navbar .absolute .text-primary * {
-  color: #8b7000 !important;
-  /* Premium gold accent */
+  color: #ff6325 !important;
+  /* Bokspot orange accent */
 }
 
 /* Ensure the profile avatar circle text/icon color is forced to a premium dark shade */

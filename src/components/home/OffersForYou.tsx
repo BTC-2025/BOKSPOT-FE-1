@@ -99,7 +99,7 @@ export function OffersForYou() {
             
             {/* Decorative Icon matching the image style */}
             <div className="absolute right-4 bottom-4 opacity-80 pointer-events-none transform rotate-[-15deg] group-hover:scale-110 transition-transform duration-300">
-              {offer.id === 1 && <span className="material-symbols-outlined text-[70px] text-yellow-300 drop-shadow-md">celebration</span>}
+              {offer.id === 1 && <span className="material-symbols-outlined text-[70px] text-white/90 drop-shadow-md">celebration</span>}
               {offer.id === 2 && <span className="material-symbols-outlined text-[70px] text-orange-400 drop-shadow-md">credit_card</span>}
               {offer.id === 3 && <span className="material-symbols-outlined text-[70px] text-red-500 drop-shadow-md">payments</span>}
               {offer.id === 4 && <span className="material-symbols-outlined text-[70px] text-orange-500 drop-shadow-md">account_balance_wallet</span>}
@@ -114,7 +114,7 @@ export function OffersForYou() {
                 </div>
               )}
               {offer.isFestival && (
-                <div className="text-[10px] font-bold text-yellow-300 uppercase tracking-widest mb-1 drop-shadow-sm">
+                <div className="text-[10px] font-bold text-white uppercase tracking-widest mb-1 drop-shadow-sm">
                   FESTIVE SALE
                 </div>
               )}

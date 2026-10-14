@@ -6,6 +6,7 @@ import { ArrowLeft, Check, ChevronRight, Clock, Users, Wifi, Coffee, Tv, Car, Be
 import { api } from '../../../lib/api';
 import { useBookingFlowStore } from '../../../lib/store';
 import EventTemplate from '../../../components/archetypes/EventTemplate';
+import HotelAccommodationTemplate from '../../../components/archetypes/HotelAccommodationTemplate';
 
 const DUMMY_SLOTS = [
   { id: 'slot-1', timeStr: '8:00 AM - 9:00 AM', available: true, remaining: 3 },
@@ -108,10 +109,27 @@ export default function DistrictServiceDetailPage() {
   });
   let slotsToDisplay = Array.from(availableSlotsMap.values());
 
-  const archetype = service.metadata?.archetype || service.rawConfig?.metadata?.archetype;
+  const archetype = (service.metadata?.archetype || service.rawConfig?.metadata?.archetype || '').toUpperCase();
   const catLower = (service.category?.name || service.category || '').toLowerCase();
-  if (archetype === 'Event' || catLower.includes('event') || catLower.includes('show') || catLower.includes('concert')) {
+  const nameLower = (service.name || '').toLowerCase();
+
+  if (archetype === 'EVENT' || catLower.includes('event') || catLower.includes('show') || catLower.includes('concert')) {
     return <EventTemplate service={service} />;
+  }
+
+  if (
+    archetype === 'ACCOMMODATION' || 
+    archetype === 'HOTEL' ||
+    catLower.includes('hotel') || 
+    catLower.includes('resort') || 
+    catLower.includes('room') || 
+    catLower.includes('stay') || 
+    catLower.includes('accommodation') ||
+    nameLower.includes('hotel') ||
+    nameLower.includes('resort') ||
+    nameLower.includes('suite')
+  ) {
+    return <HotelAccommodationTemplate service={service} />;
   }
 
   const selectedSlot = slotsToDisplay.find(s => s.id === selectedSlotId);
