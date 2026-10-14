@@ -41,7 +41,7 @@ export default function CartPage() {
         time: '10:00 AM', // Default time
         status: 'CONFIRMED',
         createdAt: new Date().toISOString()
-      });
+      } as any);
     });
 
     clearCart();

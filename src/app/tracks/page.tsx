@@ -76,7 +76,7 @@ const getBookingType = (serviceName: string, fallback?: string) => {
   return fallback || 'Service Booking';
 };
 
-const getCategoryName = (serviceName: string, originalCat: string) => {
+const getCategoryName = (serviceName: string, originalCat?: string) => {
   if (originalCat && originalCat !== 'Category') return originalCat;
   const name = (serviceName || '').toLowerCase();
   if (name.includes('room')) return 'Deluxe Room';
@@ -277,7 +277,7 @@ function TracksContent() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <AnimatePresence mode="popLayout">
-                {filteredBookings.map((b, i) => {
+                {filteredBookings.map((b: any, i) => {
                   const st = STATUS_STYLE[b.status] || STATUS_STYLE.PENDING;
                   
                   const formatDate = (iso: string) => {

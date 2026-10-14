@@ -45,7 +45,7 @@ export default function VenuePage() {
             thingsToKnow: (realMerchant.amenities && realMerchant.amenities.length > 0) ? realMerchant.amenities : ['Free WiFi', 'Parking', 'Air Conditioning'],
             rating: realMerchant.rating || 4.8,
             reviewCount: realMerchant.reviewCount || 0,
-            location: `${realMerchant.city || 'City'}, ${realMerchant.state || ''}`,
+            location: `${realMerchant.city || 'City'}, ${(realMerchant as any).state || ''}`,
           });
         }
       } catch (err) {

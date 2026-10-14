@@ -197,14 +197,14 @@ export const api = {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout for Render cold start
         const baseUrl = API_BASE;
-        
+
         // Build query string
         const queryParams = new URLSearchParams();
         if (params?.categorySlug) queryParams.append('categorySlug', params.categorySlug);
         if (params?.city) queryParams.append('city', params.city);
         if (params?.search) queryParams.append('search', params.search);
         if (params?.merchantId) queryParams.append('merchantId', params.merchantId);
-        
+
         const res = await fetch(`${baseUrl}/services?${queryParams.toString()}`, { signal: controller.signal, cache: 'no-store' });
         clearTimeout(timeoutId);
         if (res.ok) {
@@ -248,7 +248,7 @@ export const api = {
             city: srv.merchant?.city || 'Chennai',
             category: srv.category?.name || 'Category',
             // Pass the dynamic configurations straight to UI
-            rawConfig: srv 
+            rawConfig: srv
           }));
           // Return actual data, even if empty, so the UI can show an empty state instead of dummy cards
           return {
@@ -259,7 +259,7 @@ export const api = {
       } catch (err) {
         console.warn('Backend services list error:', err);
       }
-      
+
       // If backend fails completely, return empty
       return {
         data: [],
@@ -273,58 +273,58 @@ export const api = {
         const baseUrl = API_BASE;
         const res = await fetch(`${baseUrl}/services/${id}`, { signal: controller.signal });
         clearTimeout(timeoutId);
-        
+
         if (!res.ok) {
           const contentType = res.headers.get("content-type");
           if (contentType && contentType.includes("application/json")) {
-              const errorData = await res.json();
-              throw new Error(errorData.error?.message || 'Failed to fetch service');
+            const errorData = await res.json();
+            throw new Error(errorData.error?.message || 'Failed to fetch service');
           } else {
-              throw new Error(`Server Error: ${res.status} ${res.statusText}`);
+            throw new Error(`Server Error: ${res.status} ${res.statusText}`);
           }
         }
-        
+
         const body = await res.json();
         if (body.data) {
-             const srv = body.data;
-             return {
-                id: srv.id,
-                name: srv.name,
-                slug: srv.slug || srv.id,
-                description: srv.description,
-                shortDescription: srv.shortDescription || srv.description?.substring(0, 50),
-                serviceType: srv.serviceType || srv.name,
-                basePrice: srv.basePrice || 0,
-                currency: srv.currency || 'INR',
-                durationMinutes: srv.durationMinutes || 60,
-                images: (srv.images && srv.images.length > 0) ? srv.images : ['https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&q=80'],
-                image: (srv.images && srv.images.length > 0 && srv.images[0]) ? srv.images[0] : 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&q=80',
-                rating: srv.rating || 5,
-                reviewCount: srv.reviewCount || 10,
-                isFeatured: srv.isFeatured || false,
-                metadata: srv.metadata || {},
-                merchant: srv.metadata?.merchantName || srv.merchant?.name || 'Merchant',
-                merchantObj: srv.merchant ? {
-                  ...srv.merchant,
-                  name: srv.metadata?.merchantName || srv.merchant.name,
-                  images: srv.images && srv.images.length > 0 ? srv.images : []
-                } : undefined,
-                categoryObj: srv.category,
-                city: srv.merchant?.city || 'Chennai',
-                category: srv.category?.name || 'Category',
-                rawConfig: srv 
-             };
+          const srv = body.data;
+          return {
+            id: srv.id,
+            name: srv.name,
+            slug: srv.slug || srv.id,
+            description: srv.description,
+            shortDescription: srv.shortDescription || srv.description?.substring(0, 50),
+            serviceType: srv.serviceType || srv.name,
+            basePrice: srv.basePrice || 0,
+            currency: srv.currency || 'INR',
+            durationMinutes: srv.durationMinutes || 60,
+            images: (srv.images && srv.images.length > 0) ? srv.images : ['https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&q=80'],
+            image: (srv.images && srv.images.length > 0 && srv.images[0]) ? srv.images[0] : 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&q=80',
+            rating: srv.rating || 5,
+            reviewCount: srv.reviewCount || 10,
+            isFeatured: srv.isFeatured || false,
+            metadata: srv.metadata || {},
+            merchant: srv.metadata?.merchantName || srv.merchant?.name || 'Merchant',
+            merchantObj: srv.merchant ? {
+              ...srv.merchant,
+              name: srv.metadata?.merchantName || srv.merchant.name,
+              images: srv.images && srv.images.length > 0 ? srv.images : []
+            } : undefined,
+            categoryObj: srv.category,
+            city: srv.merchant?.city || 'Chennai',
+            category: srv.category?.name || 'Category',
+            rawConfig: srv
+          };
         }
       } catch (err) {
         console.warn('Backend service details error, falling back to static parser:', err);
       }
-      
+
       if (id.startsWith('ds-')) {
         const parts = id.split('-');
         const indexStr = parts[parts.length - 1];
         const slugParts = parts.slice(1, parts.length - 1);
         const categorySlug = slugParts.join('-');
-        
+
         const mocks = getMockServicesByCategory(categorySlug);
         const found = mocks.find(s => s.id === id);
         if (found) return found;
@@ -334,13 +334,13 @@ export const api = {
         const parts = id.split('-');
         const indexStr = parts[parts.length - 1];
         const categorySlug = parts.slice(1, parts.length - 1).join('-');
-        
+
         const categoryName = formatSlug(categorySlug);
         const names = ['Care', 'Studio', 'Pro', 'Express', 'Hub', 'Specialists'];
         const nameIdx = categorySlug.length % names.length;
         const merchantName = `${categoryName} ${names[nameIdx]}`;
         const merchantSlug = `${categorySlug}-${indexStr}`;
-        
+
         const merchant: Merchant = {
           id: `mer-${merchantSlug}`,
           name: merchantName,
@@ -382,7 +382,7 @@ export const api = {
           category,
         };
       }
-      
+
       throw new Error(`Service not found: ${id}`);
     },
   },

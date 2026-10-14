@@ -44,9 +44,9 @@ interface TopNavProps {
 
 export function TopNav({
   utilityDrawerOpen = false,
-  setUtilityDrawerOpen = () => {},
+  setUtilityDrawerOpen = () => { },
   activeUtilityTab = null,
-  setActiveUtilityTab = () => {},
+  setActiveUtilityTab = () => { },
 }: TopNavProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -142,10 +142,10 @@ export function TopNav({
       { name: 'Tracks', emoji: '🗺️', groupTitle: 'Navigation', href: '/tracks' },
       { name: 'Become a Vendor', emoji: '🏪', groupTitle: 'Business', href: '/vendor/register' },
       { name: 'Help & Support', emoji: '🎧', groupTitle: 'Support', href: '/support' },
-      ...bookings.map(b => ({
-        name: `Booking: ${b.item}`,
+      ...bookings.map((b: any) => ({
+        name: `Booking: ${b.serviceName || b.item || 'Booking'}`,
         emoji: '🎟️',
-        groupTitle: `My Bookings - ${b.merchant}`,
+        groupTitle: `My Bookings - ${b.merchantName || b.merchant || 'Merchant'}`,
         href: '/tracks'
       }))
     ];
@@ -155,7 +155,7 @@ export function TopNav({
       item.name.toLowerCase().includes(query) ||
       item.groupTitle.toLowerCase().includes(query)
     );
-    
+
     // Remove exact duplicates by name
     const uniqueFiltered = filtered.filter((item, index, self) =>
       index === self.findIndex((t) => t.name === item.name)
@@ -333,46 +333,43 @@ export function TopNav({
             <nav className="custom-nav-capsule shadow-lg relative">
               <Link
                 href="/"
-                className={`w-20 text-center py-1 text-[13px] font-extrabold tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${
-                  pathname === '/'
+                className={`w-20 text-center py-1 text-[13px] font-extrabold tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${pathname === '/'
                     ? 'custom-nav-link-active'
                     : 'custom-nav-link-inactive'
-                }`}
+                  }`}
               >
                 {pathname === '/' && (
                   <div
                     className="absolute inset-0 rounded-full bg-[color:var(--color-primary)]/20 border border-[color:var(--color-primary)]/45 shadow-[0_0_12px_rgba(255,215,0,0.15)] backdrop-blur-md -z-10 custom-nav-active-bg"
-                    />
+                  />
                 )}
                 Home
               </Link>
               <Link
                 href="/categories"
-                className={`w-28 text-center py-1 text-[13px] font-extrabold tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${
-                  pathname === '/categories'
+                className={`w-28 text-center py-1 text-[13px] font-extrabold tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${pathname === '/categories'
                     ? 'custom-nav-link-active'
                     : 'custom-nav-link-inactive'
-                }`}
+                  }`}
               >
                 {pathname === '/categories' && (
                   <div
                     className="absolute inset-0 rounded-full bg-[color:var(--color-primary)]/20 border border-[color:var(--color-primary)]/45 shadow-[0_0_12px_rgba(255,215,0,0.15)] backdrop-blur-md -z-10 custom-nav-active-bg"
-                    />
+                  />
                 )}
                 Categories
               </Link>
               <Link
                 href="/tracks"
-                className={`w-24 text-center py-1 text-[13px] font-extrabold tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${
-                  pathname === '/tracks'
+                className={`w-24 text-center py-1 text-[13px] font-extrabold tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${pathname === '/tracks'
                     ? 'custom-nav-link-active'
                     : 'custom-nav-link-inactive'
-                }`}
+                  }`}
               >
                 {pathname === '/tracks' && (
                   <div
                     className="absolute inset-0 rounded-full bg-[color:var(--color-primary)]/20 border border-[color:var(--color-primary)]/45 shadow-[0_0_12px_rgba(255,215,0,0.15)] backdrop-blur-md -z-10 custom-nav-active-bg"
-                    />
+                  />
                 )}
                 Tracks
               </Link>
@@ -386,10 +383,9 @@ export function TopNav({
             <div className="hidden lg:flex items-center gap-2 mr-2">
               {/* Search Icon Container Wrapper */}
               <div className="relative" ref={searchContainerRef}>
-                <div 
-                  className={`custom-nav-icon-container shadow-md transition-all duration-300 ${
-                    searchOpen ? 'w-52 xl:w-64 px-3 py-1' : 'w-8 h-8 justify-center'
-                  }`}
+                <div
+                  className={`custom-nav-icon-container shadow-md transition-all duration-300 ${searchOpen ? 'w-52 xl:w-64 px-3 py-1' : 'w-8 h-8 justify-center'
+                    }`}
                 >
                   <button
                     onClick={() => {
@@ -404,9 +400,8 @@ export function TopNav({
                     <Search size={14} strokeWidth={2.5} />
                   </button>
                   <div
-                    className={`overflow-hidden transition-all duration-300 flex items-center ${
-                      searchOpen ? 'w-36 xl:w-48 opacity-100 ml-2' : 'w-0 opacity-0'
-                    }`}
+                    className={`overflow-hidden transition-all duration-300 flex items-center ${searchOpen ? 'w-36 xl:w-48 opacity-100 ml-2' : 'w-0 opacity-0'
+                      }`}
                   >
                     <input
                       type="text"
@@ -438,11 +433,10 @@ export function TopNav({
                           }}
                           onClick={() => handleSelectSuggestion(service)}
                           onMouseEnter={() => setActiveIndex(index)}
-                          className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors duration-200 ${
-                            isActive
+                          className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors duration-200 ${isActive
                               ? 'bg-primary/10 text-primary font-bold'
                               : 'text-on-surface hover:bg-surface-container-highest'
-                          }`}
+                            }`}
                         >
                           <div className="flex items-center gap-3">
                             <span className="text-base">{service.emoji}</span>
@@ -466,7 +460,7 @@ export function TopNav({
               {/* Wishlist Icon Container */}
               <Link
                 href="/wishlist"
-                className="custom-nav-icon-container custom-nav-icon-btn w-8 h-8 shadow-md transition-all hover:scale-105 active:scale-95 relative" 
+                className="custom-nav-icon-container custom-nav-icon-btn w-8 h-8 shadow-md transition-all hover:scale-105 active:scale-95 relative"
                 aria-label="Wishlist"
               >
                 <Heart size={14} strokeWidth={2} />
@@ -478,7 +472,7 @@ export function TopNav({
               {/* Cart Icon Container */}
               <Link
                 href="/cart"
-                className="custom-nav-icon-container custom-nav-icon-btn w-8 h-8 shadow-md transition-all hover:scale-105 active:scale-95 relative" 
+                className="custom-nav-icon-container custom-nav-icon-btn w-8 h-8 shadow-md transition-all hover:scale-105 active:scale-95 relative"
                 aria-label="Cart"
               >
                 <ShoppingBag size={14} strokeWidth={2} />
@@ -523,8 +517,8 @@ export function TopNav({
                   </span>
 
                   {/* Chevron pointing down/up on the right */}
-                  <span 
-                    className="material-symbols-outlined text-[15px] !text-white transition-transform duration-200" 
+                  <span
+                    className="material-symbols-outlined text-[15px] !text-white transition-transform duration-200"
                     style={{ transform: profileOpen ? 'rotate(180deg)' : 'none' }}
                   >
                     keyboard_arrow_down
@@ -579,8 +573,8 @@ export function TopNav({
                       </Link>
                     </div>
 
-                      {/* Action buttons */}
-                      <div className="flex flex-col gap-0.5">
+                    {/* Action buttons */}
+                    <div className="flex flex-col gap-0.5">
 
                       <button
                         onClick={() => {
@@ -656,11 +650,10 @@ export function TopNav({
           <div className="w-[50px] shrink-0 h-full flex items-center justify-center border-l border-white/10">
             <button
               onClick={() => setUtilityDrawerOpen(!utilityDrawerOpen)}
-              className={`relative flex items-center justify-center transition-all cursor-pointer shadow-md custom-nav-icon-container custom-nav-icon-btn w-9 h-9 ${
-                utilityDrawerOpen 
+              className={`relative flex items-center justify-center transition-all cursor-pointer shadow-md custom-nav-icon-container custom-nav-icon-btn w-9 h-9 ${utilityDrawerOpen
                   ? 'opacity-100 scale-105 shadow-[0_0_10px_rgba(252,238,167,0.3)]'
                   : 'opacity-85 hover:opacity-100 hover:scale-105'
-              }`}
+                }`}
               title="Bokspot Utilities"
             >
               <img src="/utility-icon.png?v=3" alt="Utilities" className="w-[22px] h-[22px] object-contain" />
@@ -717,15 +710,15 @@ export function TopNav({
                   >
                     <div
                       className={`h-7 w-7 rounded-full absolute -translate-y-0.5 transition-all duration-300 ${isSelected
-                          ? 'bg-[color:var(--color-primary)]/20 animate-ping'
-                          : 'bg-[color:var(--color-on-surface)]/[0.05] group-hover/node:bg-[color:var(--color-primary)]/10 scale-90'
+                        ? 'bg-[color:var(--color-primary)]/20 animate-ping'
+                        : 'bg-[color:var(--color-on-surface)]/[0.05] group-hover/node:bg-[color:var(--color-primary)]/10 scale-90'
                         }`}
                     />
 
                     <div
                       className={`h-3.5 w-3.5 rounded-full border-2 transition-all duration-300 relative z-10 ${isSelected
-                          ? 'bg-[color:var(--color-primary)] border-[color:var(--color-surface)] scale-110 shadow-[0_0_10px_rgba(255,215,0,0.8)]'
-                          : 'bg-[color:var(--color-surface-container)] border-[color:var(--color-outline)] group-hover/node:border-[color:var(--color-primary)]'
+                        ? 'bg-[color:var(--color-primary)] border-[color:var(--color-surface)] scale-110 shadow-[0_0_10px_rgba(255,215,0,0.8)]'
+                        : 'bg-[color:var(--color-surface-container)] border-[color:var(--color-outline)] group-hover/node:border-[color:var(--color-primary)]'
                         }`}
                     />
 
