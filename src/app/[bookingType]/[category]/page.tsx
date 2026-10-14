@@ -1687,7 +1687,7 @@ export default function ProviderDiscoveryPage() {
                 city: city || 'Chennai',
                 imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop&q=70',
                 description: '5-star sanctuary near Central Station featuring rooftop infinity pool, multi-cuisine gourmet dining, and digital key pass.',
-                category: { name: 'Hotel Booking', slug: 'hotels' },
+                category: { id: 'cat-hotels', name: 'Hotel Booking', slug: 'hotels' } as any,
                 merchant: {
                   id: 'mer-taj-gateway',
                   name: 'Taj Hospitality Group',
@@ -1695,7 +1695,7 @@ export default function ProviderDiscoveryPage() {
                   reviewCount: 412,
                   latitude: 13.0827,
                   longitude: 80.2707
-                },
+                } as any,
                 metadata: {
                   archetype: 'ACCOMMODATION',
                   listings: [
@@ -1704,7 +1704,7 @@ export default function ProviderDiscoveryPage() {
                     { id: 'h-3', name: 'Presidential Penthouse', basePrice: 9800, description: 'Panoramic suite, jacuzzi, dedicated butler service.' }
                   ]
                 }
-              }
+              } as any
             ]);
           } else {
             console.error('Error fetching services:', err);
