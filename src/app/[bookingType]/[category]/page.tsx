@@ -1652,14 +1652,21 @@ export default function ProviderDiscoveryPage() {
           }
         ];
 
-        // If hotel category, merge any live merchant services from backend with curated list
+        // If hotel category, prioritize real live merchant services from backend
         if (category === 'hotels' || category === 'hotel-booking' || category.includes('hotel') || category.includes('room')) {
           const liveHotels = list.map((item: any) => ({
             ...item,
             merchant: item.merchant || { name: item.merchantName || 'Bokspot Verified Hotel', id: item.merchantId || item.id },
             basePrice: item.basePrice || item.price || '2500'
           }));
-          list = [...liveHotels, ...curatedHotels.filter(ch => !liveHotels.some((lh: any) => lh.id === ch.id || lh.name === ch.name))];
+
+          // If real hotels are registered by businesses, only show the real hotels.
+          // Otherwise, show curated hotels only if database is completely empty.
+          if (liveHotels.length > 0) {
+            list = liveHotels;
+          } else {
+            list = curatedHotels;
+          }
         }
 
         if (active) {
@@ -1923,11 +1930,12 @@ export default function ProviderDiscoveryPage() {
               ) : (
                 <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
                   {Object.values(filteredServices.reduce((acc: any, service: any) => {
-                    const mId = service.merchantObj?.id || (typeof service.merchant === 'string' ? service.merchant : service.merchant?.id) || 'unknown';
                     const mObj = service.merchantObj || (typeof service.merchant === 'string' ? { id: service.merchant, name: service.merchant } : service.merchant) || { name: 'BokSpot Merchant', id: 'unknown' };
+                    const mId = mObj.id && mObj.id !== 'unknown' ? mObj.id : (mObj.name || service.name || 'unknown');
+                    const groupKey = (mObj.name ? mObj.name.toLowerCase().trim() : mId);
 
-                    if (!acc[mId]) {
-                      acc[mId] = {
+                    if (!acc[groupKey]) {
+                      acc[groupKey] = {
                         merchantObj: mObj,
                         service: service,
                         categories: new Set(),
@@ -1941,18 +1949,18 @@ export default function ProviderDiscoveryPage() {
                       };
                     }
                     if (service.name === '__BOKSPOT_GROUP__') {
-                      acc[mId].groupImageUrl = service.metadata?.mainImageUrl || service.imageUrl;
-                      acc[mId].groupName = service.category;
-                      acc[mId].groupCity = service.city;
+                      acc[groupKey].groupImageUrl = service.metadata?.mainImageUrl || service.imageUrl;
+                      acc[groupKey].groupName = service.category;
+                      acc[groupKey].groupCity = service.city;
                     }
-                    if (service.basePrice && (!acc[mId].minPrice || service.basePrice < acc[mId].minPrice)) {
-                      acc[mId].minPrice = service.basePrice;
+                    if (service.basePrice && (!acc[groupKey].minPrice || service.basePrice < acc[groupKey].minPrice)) {
+                      acc[groupKey].minPrice = service.basePrice;
                     }
 
                     if (mObj.allCategories && Array.isArray(mObj.allCategories)) {
-                      mObj.allCategories.forEach((cat: string) => acc[mId].categories.add(cat));
+                      mObj.allCategories.forEach((cat: string) => acc[groupKey].categories.add(cat));
                     } else if (service.name && service.name !== '__BOKSPOT_GROUP__') {
-                      acc[mId].categories.add(service.name);
+                      acc[groupKey].categories.add(service.name);
                     }
                     return acc;
                   }, {})).map((group: any, i: number) => {
