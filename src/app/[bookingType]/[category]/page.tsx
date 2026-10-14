@@ -1565,108 +1565,13 @@ export default function ProviderDiscoveryPage() {
         let response = await api.services.list(params);
         let list = Array.isArray(response?.data) ? response.data : (Array.isArray(response) ? response : []);
 
-        const curatedHotels = [
-          {
-            id: 'svc-h101',
-            name: 'Taj Gateway Luxury Residency',
-            basePrice: '3500',
-            price: 3500,
-            rating: 4.9,
-            reviewCount: 412,
-            duration: 1440,
-            city: city || 'Chennai',
-            imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop&q=70',
-            description: '5-star sanctuary near Central Station featuring rooftop infinity pool, multi-cuisine gourmet dining, and digital key pass.',
-            category: { name: 'Hotel Booking', slug: 'hotels' },
-            merchant: {
-              id: 'mer-taj-gateway',
-              name: 'Taj Hospitality Group',
-              rating: 4.9,
-              reviewCount: 412,
-              latitude: 13.0827,
-              longitude: 80.2707
-            },
-            metadata: {
-              archetype: 'ACCOMMODATION',
-              listings: [
-                { id: 'h-1', name: 'Deluxe City View Room', basePrice: 3500, description: 'King bed with skyline views, luxury bath and high-speed Wi-Fi.' },
-                { id: 'h-2', name: 'Executive Club Suite', basePrice: 5200, description: 'VIP lounge access, bathtub, separate living salon.' },
-                { id: 'h-3', name: 'Presidential Penthouse', basePrice: 9800, description: 'Panoramic suite, jacuzzi, dedicated butler service.' }
-              ]
-            }
-          },
-          {
-            id: 'svc-h102',
-            name: 'The Grand Residency Suites',
-            basePrice: '2800',
-            price: 2800,
-            rating: 4.7,
-            reviewCount: 289,
-            duration: 1440,
-            city: city || 'Chennai',
-            imageUrl: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&auto=format&fit=crop&q=70',
-            description: 'Boutique business hotel with 24/7 room service, conference rooms, and transit hourly rest pods.',
-            category: { name: 'Hotel Booking', slug: 'hotels' },
-            merchant: {
-              id: 'mer-grand-residency',
-              name: 'Grand Residency Hotels',
-              rating: 4.7,
-              reviewCount: 289,
-              latitude: 13.0850,
-              longitude: 80.2750
-            },
-            metadata: {
-              archetype: 'ACCOMMODATION',
-              listings: [
-                { id: 'h-4', name: 'Standard Comfort Room', basePrice: 2800, description: 'Cozy room with queen bed and work desk.' },
-                { id: 'h-5', name: 'Deluxe Studio Suite', basePrice: 4200, description: 'Spacious studio with kitchenette.' }
-              ]
-            }
-          },
-          {
-            id: 'svc-h103',
-            name: 'Fortune Park Boutique Stay',
-            basePrice: '3200',
-            price: 3200,
-            rating: 4.8,
-            reviewCount: 198,
-            duration: 1440,
-            city: city || 'Chennai',
-            imageUrl: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600&auto=format&fit=crop&q=70',
-            description: 'Contemporary lifestyle hotel with fitness studio, complimentary breakfast, and couple-friendly amenities.',
-            category: { name: 'Hotel Booking', slug: 'hotels' },
-            merchant: {
-              id: 'mer-fortune-park',
-              name: 'Fortune Boutique Stays',
-              rating: 4.8,
-              reviewCount: 198,
-              latitude: 13.0810,
-              longitude: 80.2680
-            },
-            metadata: {
-              archetype: 'ACCOMMODATION',
-              listings: [
-                { id: 'h-6', name: 'Boutique Queen Room', basePrice: 3200, description: 'Queen bed, espresso bar, ambient lighting.' }
-              ]
-            }
-          }
-        ];
-
-        // If hotel category, prioritize real live merchant services from backend
+        // Format real merchant services if returned from backend
         if (category === 'hotels' || category === 'hotel-booking' || category.includes('hotel') || category.includes('room')) {
-          const liveHotels = list.map((item: any) => ({
+          list = list.map((item: any) => ({
             ...item,
             merchant: item.merchant || { name: item.merchantName || 'Bokspot Verified Hotel', id: item.merchantId || item.id },
             basePrice: item.basePrice || item.price || '2500'
           }));
-
-          // If real hotels are registered by businesses, only show the real hotels.
-          // Otherwise, show curated hotels only if database is completely empty.
-          if (liveHotels.length > 0) {
-            list = liveHotels;
-          } else {
-            list = curatedHotels;
-          }
         }
 
         if (active) {
@@ -1674,42 +1579,8 @@ export default function ProviderDiscoveryPage() {
         }
       } catch (err: any) {
         if (active) {
-          if (category === 'hotels' || category === 'hotel-booking' || category.includes('hotel') || category.includes('room')) {
-            setServicesList([
-              {
-                id: 'svc-h101',
-                name: 'Taj Gateway Luxury Residency',
-                basePrice: '3500',
-                price: 3500,
-                rating: 4.9,
-                reviewCount: 412,
-                duration: 1440,
-                city: city || 'Chennai',
-                imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop&q=70',
-                description: '5-star sanctuary near Central Station featuring rooftop infinity pool, multi-cuisine gourmet dining, and digital key pass.',
-                category: { id: 'cat-hotels', name: 'Hotel Booking', slug: 'hotels' } as any,
-                merchant: {
-                  id: 'mer-taj-gateway',
-                  name: 'Taj Hospitality Group',
-                  rating: 4.9,
-                  reviewCount: 412,
-                  latitude: 13.0827,
-                  longitude: 80.2707
-                } as any,
-                metadata: {
-                  archetype: 'ACCOMMODATION',
-                  listings: [
-                    { id: 'h-1', name: 'Deluxe City View Room', basePrice: 3500, description: 'King bed with skyline views, luxury bath and high-speed Wi-Fi.' },
-                    { id: 'h-2', name: 'Executive Club Suite', basePrice: 5200, description: 'VIP lounge access, bathtub, separate living salon.' },
-                    { id: 'h-3', name: 'Presidential Penthouse', basePrice: 9800, description: 'Panoramic suite, jacuzzi, dedicated butler service.' }
-                  ]
-                }
-              } as any
-            ]);
-          } else {
-            console.error('Error fetching services:', err);
-            setError(err.message || 'Failed to load services.');
-          }
+          console.error('Error fetching services:', err);
+          setError(err.message || 'Failed to load services.');
         }
       } finally {
         if (active) {
