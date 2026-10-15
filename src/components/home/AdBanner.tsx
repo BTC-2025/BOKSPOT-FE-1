@@ -19,10 +19,9 @@ export function AdBanner() {
 
   return (
     <section
-      id="ad-banner-hero"
-      data-ad-slot=""
+      id="hero-featured-spotlight"
       aria-label="Featured Experiences"
-      className="ad-block mb-8 w-full relative overflow-hidden rounded-[28px] md:rounded-[36px] shadow-2xl border border-[color:var(--color-outline-variant)]/25 bg-[color:var(--color-surface-container)] group"
+      className="featured-spotlight-carousel mb-8 w-full relative overflow-hidden rounded-[28px] md:rounded-[36px] shadow-2xl border border-[color:var(--color-outline-variant)]/25 bg-[color:var(--color-surface-container)] group"
     >
       {/* Ambient glow behind banner */}
       <div className="absolute -inset-1 bg-gradient-to-r from-[#0a3161]/30 via-transparent to-[#ff6325]/20 blur-xl opacity-75 pointer-events-none -z-10" />
