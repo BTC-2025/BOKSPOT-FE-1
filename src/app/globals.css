@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 @keyframes vehicleDrive {
   0% {
@@ -780,33 +781,33 @@
   animation: goldPulse 2.5s ease-in-out infinite;
 }
 
-/* Custom Navbar Styling - Premium Bokspot Deep Navy + Orange Accent (Matching Business App) */
+/* Custom Navbar Styling - Ultra-Luxury Obsidian Glass with Amber-Orange Micro-Glow */
 .custom-navbar {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   z-index: 50;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  background: linear-gradient(135deg, #071f3d 0%, #0a3161 65%, #0f407a 100%) !important;
-  border-bottom: 2px solid rgba(255, 99, 37, 0.45) !important;
-  box-shadow: 0 4px 25px rgba(10, 49, 97, 0.4) !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  background: linear-gradient(180deg, rgba(8, 26, 50, 0.94) 0%, rgba(6, 19, 38, 0.96) 100%) !important;
+  border-bottom: 1px solid rgba(255, 99, 37, 0.35) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.08) inset !important;
 }
 
 /* Dark Mode Styling */
 .dark .custom-navbar {
-  background: linear-gradient(135deg, #071f3d 0%, #0a3161 65%, #0f407a 100%) !important;
-  border-bottom: 2px solid rgba(255, 99, 37, 0.45) !important;
-  box-shadow: 0 4px 25px rgba(10, 49, 97, 0.4) !important;
+  background: linear-gradient(180deg, rgba(7, 16, 30, 0.95) 0%, rgba(5, 12, 24, 0.98) 100%) !important;
+  border-bottom: 1px solid rgba(255, 99, 37, 0.3) !important;
+  box-shadow: 0 6px 32px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.06) inset !important;
 }
 
 /* Light Mode Styling */
 .light .custom-navbar {
-  background: linear-gradient(135deg, #071f3d 0%, #0a3161 65%, #0f407a 100%) !important;
-  border-bottom: 2px solid rgba(255, 99, 37, 0.45) !important;
-  box-shadow: 0 4px 25px rgba(10, 49, 97, 0.4) !important;
+  background: linear-gradient(180deg, rgba(10, 37, 72, 0.95) 0%, rgba(8, 28, 56, 0.98) 100%) !important;
+  border-bottom: 1px solid rgba(255, 99, 37, 0.38) !important;
+  box-shadow: 0 4px 25px rgba(10, 49, 97, 0.3), 0 1px 0 rgba(255, 255, 255, 0.1) inset !important;
 }
 
 /* Brand Logo Color Classes (To prevent overrides) */
@@ -928,28 +929,47 @@
   transition: all 0.3s ease;
 }
 
+.custom-navbar .custom-nav-btn {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 9999px !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.custom-navbar .custom-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 99, 37, 0.45) !important;
+  transform: translateY(-1px) !important;
+}
+
 .dark .custom-nav-capsule,
 .light .custom-nav-capsule,
 .custom-navbar .custom-nav-capsule {
-  background-color: rgba(5, 23, 46, 0.85) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  background: rgba(5, 17, 34, 0.75) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 9999px !important;
+  padding: 3px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) inset, 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(16px) !important;
 }
 
 /* Link Items */
 .custom-nav-link-inactive {
-  transition: color 0.2s ease;
+  transition: all 0.2s ease;
+  border-radius: 9999px;
 }
 
 .dark .custom-nav-link-inactive,
 .light .custom-nav-link-inactive,
 .custom-navbar .custom-nav-link-inactive {
-  color: rgba(255, 255, 255, 0.75) !important;
+  color: rgba(255, 255, 255, 0.72) !important;
 }
 
 .dark .custom-nav-link-inactive:hover,
 .light .custom-nav-link-inactive:hover,
 .custom-navbar .custom-nav-link-inactive:hover {
   color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 /* Active Nav Link */
@@ -962,9 +982,16 @@
 
 /* Active indicator background */
 .custom-navbar .custom-nav-active-bg {
-  background-color: #ff6325 !important;
-  border: 1px solid rgba(255, 255, 255, 0.4) !important;
-  box-shadow: 0 4px 14px rgba(255, 99, 37, 0.45) !important;
+  background: linear-gradient(135deg, #ff6325 0%, #ea580c 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  box-shadow: 0 4px 16px rgba(255, 99, 37, 0.45), 0 1px 0 rgba(255, 255, 255, 0.3) inset !important;
+  border-radius: 9999px !important;
+}
+
+.light .custom-navbar .custom-nav-active-bg {
+  background: linear-gradient(135deg, #0a3161 0%, #1557bf 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.45) !important;
+  box-shadow: 0 4px 16px rgba(10, 49, 97, 0.5), 0 1px 0 rgba(255, 255, 255, 0.3) inset !important;
 }
 
 /* Icon Button Containers */

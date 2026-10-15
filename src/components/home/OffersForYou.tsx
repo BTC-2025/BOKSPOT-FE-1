@@ -69,34 +69,34 @@ export function OffersForYou() {
       </div>
 
       {/* Left Arrow */}
-      <button 
-        onClick={() => scroll('left')} 
+      <button
+        onClick={() => scroll('left')}
         className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white dark:bg-[#1f2937] border border-black/10 dark:border-white/10 flex items-center justify-center shadow-lg hover:scale-110 transition-all opacity-0 group-hover:opacity-100 mt-2"
       >
         <span className="material-symbols-outlined text-[20px] text-[color:var(--color-on-surface)]">chevron_left</span>
       </button>
 
       {/* Right Arrow */}
-      <button 
-        onClick={() => scroll('right')} 
+      <button
+        onClick={() => scroll('right')}
         className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white dark:bg-[#1f2937] border border-black/10 dark:border-white/10 flex items-center justify-center shadow-lg hover:scale-110 transition-all opacity-0 group-hover:opacity-100 mt-2"
       >
         <span className="material-symbols-outlined text-[20px] text-[color:var(--color-on-surface)]">chevron_right</span>
       </button>
 
-      <div 
+      <div
         ref={scrollRef}
         className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar scroll-smooth snap-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
       >
         {offers.map((offer) => (
-          <div 
+          <div
             key={offer.id}
             className={`w-[280px] lg:w-[220px] xl:w-full xl:flex-1 shrink-0 h-[160px] rounded-2xl p-5 flex flex-col justify-between snap-start relative overflow-hidden cursor-pointer ${offer.bg}`}
           >
             {/* Background Decorations & Icons */}
             <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-black/5 rounded-full blur-xl" />
             <div className="absolute -right-10 top-0 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
-            
+
             {/* Decorative Icon matching the image style */}
             <div className="absolute right-4 bottom-4 opacity-80 pointer-events-none transform rotate-[-15deg] group-hover:scale-110 transition-transform duration-300">
               {offer.id === 1 && <span className="material-symbols-outlined text-[70px] text-white/90 drop-shadow-md">celebration</span>}

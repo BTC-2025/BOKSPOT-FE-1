@@ -25,7 +25,7 @@ export default function DistrictServiceDetailPage() {
   const router = useRouter();
   const id = params?.id as string;
   const listingId = searchParams?.get('listing');
-  const { setSelectedService, setSelectedSlot } = useBookingFlowStore();
+  const { setSelectedService, setSelectedSlot, selectedService } = useBookingFlowStore();
 
   const [service, setService] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,21 +43,33 @@ export default function DistrictServiceDetailPage() {
         if (active) {
           const mapped = {
             ...rawService,
-            price: parseFloat(rawService.basePrice),
-            merchant: rawService.merchant?.name || 'Venue',
-            category: rawService.category?.name || 'Category',
+            price: parseFloat(rawService.basePrice) || rawService.price || 0,
+            merchant: rawService.merchant?.name || (typeof rawService.merchant === 'string' ? rawService.merchant : 'Venue'),
+            category: rawService.category?.name || (typeof rawService.category === 'string' ? rawService.category : 'Category'),
           };
           setService(mapped);
         }
       } catch (err: any) {
-        if (active) setError(err.message || 'Failed to load service details.');
+        if (active) {
+          if (selectedService && (selectedService.id === id || String(selectedService.id) === String(id))) {
+            const mapped = {
+              ...selectedService,
+              price: parseFloat(selectedService.basePrice) || selectedService.price || 0,
+              merchant: selectedService.merchant?.name || (typeof selectedService.merchant === 'string' ? selectedService.merchant : 'Venue'),
+              category: selectedService.category?.name || (typeof selectedService.category === 'string' ? selectedService.category : 'Category'),
+            };
+            setService(mapped);
+          } else {
+            setError(err.message || 'Failed to load service details.');
+          }
+        }
       } finally {
         if (active) setLoading(false);
       }
     };
     if (id) fetchService();
     return () => { active = false; };
-  }, [id]);
+  }, [id, selectedService]);
 
   const dates = Array.from({ length: 14 }, (_, i) => {
     const d = new Date();

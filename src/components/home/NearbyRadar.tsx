@@ -143,125 +143,227 @@ const cityCenter = useMemo(() => {
     return list.sort((a, b) => (a.distance || 0) - (b.distance || 0));
   }, [city, cityCenter, activeMapCenter, realServices]);
 
-  // Default select first item
+  // Filter state for category pills
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+
+  const filteredServices = useMemo(() => {
+    // Filter out ugly test names like AC ROOM, __BOKSPOT_GROUP__, etc.
+    const cleanList = homepageNearbyServices.filter(s => {
+      const n = (s.name || '').toLowerCase();
+      return !n.includes('__bokspot') && !n.includes('test luxury') && n !== 'ac room';
+    });
+
+    if (selectedCategory === 'All') return cleanList;
+    return cleanList.filter(s => s.category?.toLowerCase().includes(selectedCategory.toLowerCase()));
+  }, [homepageNearbyServices, selectedCategory]);
+
+  // Default select first item of filtered list
   useEffect(() => {
-    if (homepageNearbyServices.length > 0) {
-      // Keep selected item within the list if still matching, otherwise pick first
-      const exists = homepageNearbyServices.some(s => s.id === selectedNearbyService?.id);
+    if (filteredServices.length > 0) {
+      const exists = filteredServices.some(s => s.id === selectedNearbyService?.id);
       if (!exists) {
-        setSelectedNearbyService(homepageNearbyServices[0]);
+        setSelectedNearbyService(filteredServices[0]);
       }
     }
-  }, [homepageNearbyServices, selectedNearbyService]);
+  }, [filteredServices, selectedNearbyService]);
+
+  const categories = ['All', 'Turfs', 'Hospitals', 'Restaurants', 'Hotels', 'Salons'];
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.6, delay: 0.4 }}
+      transition={{ duration: 0.6 }}
     >
-                {/* Row 6: Nearby Services */}
-          <section className="mb-12">
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h2 className="text-[18px] font-bold text-[color:var(--color-on-surface)] tracking-tight">Nearby Services Live Radar</h2>
-                <p className="text-[12px] mt-0.5 text-[color:var(--color-outline)]">Real-time local tracking and instant slot bookings in {city}</p>
+      <section className="mb-12 text-left">
+        {/* Section Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
+              </span>
+              <h2 className="text-[19px] sm:text-[21px] font-black text-[color:var(--color-on-surface)] tracking-tight">
+                Live Radar & Instant Slots
+              </h2>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
+                {city || 'Chennai'}
+              </span>
+            </div>
+            <p className="text-[12px] mt-1 text-[color:var(--color-outline)] font-medium">
+              Geolocated venues, turf availability & clinic queues within 5 km of you
+            </p>
+          </div>
+
+          <Link
+            href="/maps"
+            className="group flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-bold text-[color:var(--color-primary)] hover:bg-[color:var(--color-primary)]/10 border border-[color:var(--color-primary)]/20 transition-all duration-300 self-start sm:self-auto"
+          >
+            <span>Full-Screen Radar</span>
+            <span className="material-symbols-outlined text-[14px] group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+          </Link>
+        </div>
+
+        {/* Main Radar Card */}
+        <div className="relative rounded-[32px] overflow-hidden border border-[color:var(--color-outline-variant)]/25 bg-[color:var(--color-surface-container)]/80 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.06)] p-3 sm:p-5">
+          
+          {/* Top Quick Filter Capsules */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            {categories.map((cat) => {
+              const active = selectedCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-3.5 py-1 rounded-full text-[11px] font-extrabold transition-all duration-300 shrink-0 cursor-pointer ${
+                    active
+                      ? 'bg-[color:var(--color-primary)] text-white shadow-md'
+                      : 'bg-[color:var(--color-surface-container-high)] text-[color:var(--color-outline)] hover:text-[color:var(--color-on-surface)] hover:bg-[color:var(--color-surface-container-highest)] border border-[color:var(--color-outline-variant)]/30'
+                  }`}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+            <span className="text-[10px] text-[color:var(--color-outline)] font-bold ml-auto hidden md:inline shrink-0">
+              {filteredServices.length} verified venues found
+            </span>
+          </div>
+
+          <div className="grid lg:grid-cols-12 gap-4 items-stretch">
+            {/* Map Canvas (70% width on desktop) */}
+            <div className="lg:col-span-8 h-[360px] sm:h-[400px] rounded-[24px] overflow-hidden border border-[color:var(--color-outline-variant)]/30 shadow-inner relative bg-slate-900">
+              <MapComponent
+                center={
+                  selectedNearbyService && typeof selectedNearbyService.lat === 'number' && typeof selectedNearbyService.lng === 'number'
+                    ? [selectedNearbyService.lat, selectedNearbyService.lng]
+                    : userPannedCenter || mapCenter || [13.0827, 80.2707]
+                }
+                zoom={selectedNearbyService ? 16 : 14}
+                selectedMarkerId={selectedNearbyService?.id}
+                onCenterChange={(lat, lng) => setUserPannedCenter([lat, lng])}
+                onMarkerClick={(marker) => {
+                  if (selectedNearbyService && selectedNearbyService.id === marker.id) {
+                    setSelectedNearbyService(null);
+                  } else {
+                    const match = filteredServices.find(s => s.id === marker.id);
+                    if (match) setSelectedNearbyService(match);
+                  }
+                }}
+                markers={filteredServices.map(svc => ({
+                  id: svc.id,
+                  name: svc.name,
+                  merchant: svc.merchant,
+                  lat: svc.lat,
+                  lng: svc.lng,
+                  emoji: svc.emoji,
+                  category: svc.category,
+                  price: svc.price,
+                  rating: svc.rating,
+                  linkUrl: `/service/${svc.id}`
+                }))}
+              />
+
+              {/* Floating Map Overlay Capsule */}
+              <div className="absolute top-3 left-3 z-[400] flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-md bg-black/75 border border-white/20 text-white text-[11px] font-bold shadow-lg pointer-events-none">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                <span>Live GPS Radar Feed</span>
               </div>
-              <Link
-                href="/maps"
-                className="flex items-center gap-1 text-[12px] font-semibold text-[color:var(--color-primary)] hover:gap-2 transition-all duration-300"
-              >
-                Expand Maps Hub
-                <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
-              </Link>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-6 items-stretch">
-              {/* Map Canvas */}
-              <div className="lg:col-span-2 h-[380px] rounded-3xl overflow-hidden border border-[color:var(--color-outline-variant)]/30 shadow-2xl relative bg-slate-900/50">
-                <MapComponent
-                  center={
-                    (selectedNearbyService && typeof selectedNearbyService.lat === 'number' && typeof selectedNearbyService.lng === 'number')
-                      ? [selectedNearbyService.lat, selectedNearbyService.lng]
-                      : (userPannedCenter || mapCenter || [13.0827, 80.2707])
-                  }
-                  zoom={selectedNearbyService ? 17 : 13}
-                  selectedMarkerId={selectedNearbyService?.id}
-                  onCenterChange={(lat, lng) => setUserPannedCenter([lat, lng])}
-                  onMarkerClick={(marker) => {
-                    if (selectedNearbyService && selectedNearbyService.id === marker.id) {
-                      setSelectedNearbyService(null);
-                    } else {
-                      const match = homepageNearbyServices.find(s => s.id === marker.id);
-                      if (match) setSelectedNearbyService(match);
-                    }
-                  }}
-                  markers={homepageNearbyServices.map(svc => ({
-                    id: svc.id,
-                    name: svc.name,
-                    merchant: svc.merchant,
-                    lat: svc.lat,
-                    lng: svc.lng,
-                    emoji: svc.emoji,
-                    category: svc.category,
-                    price: svc.price,
-                    rating: svc.rating,
-                    linkUrl: `/service/${svc.id}`
-                  }))}
-                />
+            {/* Sensing Feed Sidebar (30% width) */}
+            <div className="lg:col-span-4 rounded-[24px] border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-container-high)]/50 backdrop-blur-md p-3.5 flex flex-col justify-between h-[360px] sm:h-[400px]">
+              
+              {/* Header */}
+              <div className="flex items-center justify-between pb-2.5 mb-1 border-b border-[color:var(--color-outline-variant)]/20">
+                <div className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[16px] text-emerald-500">sensors</span>
+                  <span className="text-[11px] font-black uppercase tracking-wider text-[color:var(--color-on-surface)]">
+                    Nearby Venues
+                  </span>
+                </div>
+                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  Live
+                </span>
               </div>
 
-              {/* Scrollable list card */}
-              <div className="lg:col-span-1 rounded-3xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-container)]/80 backdrop-blur p-4 flex flex-col justify-between h-[380px] card-glass">
-                <div className="overflow-y-auto custom-scrollbar flex-1 pr-1 space-y-2">
-                  <span className="text-[10px] uppercase tracking-wider font-extrabold text-[color:var(--color-primary)] block mb-1">📡 Real-Time Sensing Feed</span>
-                  {homepageNearbyServices.map((svc) => {
+              {/* Scrollable list */}
+              <div className="overflow-y-auto custom-scrollbar flex-1 pr-1 space-y-2">
+                {filteredServices.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-[color:var(--color-outline)] font-medium">
+                    No active slots in this category.
+                  </div>
+                ) : (
+                  filteredServices.map((svc) => {
                     const isSelected = selectedNearbyService?.id === svc.id;
                     return (
                       <div
                         key={svc.id}
                         onClick={() => setSelectedNearbyService(svc)}
-                        className={`p-3 rounded-2xl cursor-pointer border transition-all flex items-center gap-3 ${isSelected
-                            ? 'bg-[color:var(--color-primary)]/10 border-[color:var(--color-primary)]'
-                            : 'bg-[color:var(--color-surface-dim)]/30 border-[color:var(--color-outline-variant)]/20 hover:bg-[color:var(--color-surface-dim)]/50'
-                          }`}
+                        className={`p-3 rounded-2xl cursor-pointer border transition-all duration-300 flex items-center gap-3 ${
+                          isSelected
+                            ? 'bg-[color:var(--color-primary)]/10 border-[color:var(--color-primary)] shadow-sm'
+                            : 'bg-[color:var(--color-surface-container)] border-[color:var(--color-outline-variant)]/20 hover:border-[color:var(--color-outline-variant)]/50 hover:bg-[color:var(--color-surface-container-high)]'
+                        }`}
                       >
-                        <div className="h-10 w-10 shrink-0 rounded-xl bg-[color:var(--color-surface-container-high)] border border-[color:var(--color-outline-variant)]/30 flex items-center justify-center text-xl">
+                        <div className="h-10 w-10 shrink-0 rounded-xl bg-[color:var(--color-surface-container-high)] border border-[color:var(--color-outline-variant)]/30 flex items-center justify-center text-lg shadow-inner">
                           {svc.emoji}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <h4 className="font-extrabold text-xs text-[color:var(--color-on-surface)] truncate leading-tight">{svc.name}</h4>
-                          <div className="flex items-center gap-2 mt-1 text-[10px] text-[color:var(--color-on-surface-variant)]">
-                            <span className="font-bold flex items-center gap-0.5"><Star className="h-2.5 w-2.5 text-yellow-500 fill-yellow-500" /> {svc.rating}</span>
+                          <h4 className="font-extrabold text-[12px] text-[color:var(--color-on-surface)] truncate leading-tight">
+                            {svc.name}
+                          </h4>
+                          <div className="flex items-center gap-2 mt-1 text-[10px] text-[color:var(--color-outline)] font-medium">
+                            <span className="flex items-center gap-0.5 text-amber-500 font-bold">
+                              <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+                              {svc.rating}
+                            </span>
                             <span>•</span>
-                            <span className="font-medium">📍 {svc.distance ? `${svc.distance.toFixed(1)} km` : '1.2 km'}</span>
+                            <span className="truncate">
+                              {svc.distance ? `${svc.distance.toFixed(1)} km away` : '1.2 km away'}
+                            </span>
                           </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="text-[11px] font-black text-[color:var(--color-on-surface)] block">
+                            {svc.price}
+                          </span>
                         </div>
                       </div>
                     );
-                  })}
-                </div>
-
-                {/* Bottom preview detail card */}
-                {selectedNearbyService && (
-                  <div className="mt-3 border-t border-[color:var(--color-outline-variant)]/20 pt-3 flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <h4 className="font-black text-xs text-[color:var(--color-on-surface)] truncate">{selectedNearbyService.name}</h4>
-                      <p className="text-[10px] text-[color:var(--color-primary)] font-bold mt-0.5">{selectedNearbyService.price}</p>
-                    </div>
-                    <Link
-                      href={`/service/${selectedNearbyService.id}`}
-                      className="rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-3.5 py-2 text-[10px] uppercase font-bold text-white shadow hover:from-indigo-600 hover:to-purple-700 active:scale-[0.98] transition-all flex items-center gap-1 shrink-0"
-                    >
-                      Book <ArrowRight className="h-3 w-3" />
-                    </Link>
-                  </div>
+                  })
                 )}
               </div>
-            </div>
-          </section>
 
+              {/* Bottom active venue preview card */}
+              {selectedNearbyService && (
+                <div className="mt-2.5 pt-2.5 border-t border-[color:var(--color-outline-variant)]/25 flex items-center justify-between gap-3 bg-[color:var(--color-surface-container)]/80 p-2.5 rounded-2xl border border-[color:var(--color-outline-variant)]/20 shadow-sm">
+                  <div className="min-w-0">
+                    <span className="text-[9px] font-black uppercase tracking-wider text-emerald-500 block">
+                      Ready for Booking
+                    </span>
+                    <h4 className="font-extrabold text-[12px] text-[color:var(--color-on-surface)] truncate">
+                      {selectedNearbyService.name}
+                    </h4>
+                    <p className="text-[11px] font-black text-[color:var(--color-primary)]">
+                      {selectedNearbyService.price}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/service/${selectedNearbyService.id}`}
+                    className="rounded-full bg-[color:var(--color-primary)] px-4 py-2 text-[11px] font-bold text-white shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-1 shrink-0"
+                  >
+                    <span>Book Slot</span>
+                    <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
     </motion.div>
   );
 }

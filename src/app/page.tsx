@@ -14,11 +14,12 @@ import { calculateDistance, getProvidersByCategory } from '../lib/mockData';
 import { api } from '../lib/api';
 import { CarouselSections } from '../components/home/CarouselSections';
 import { ConciergeJourneys } from '../components/home/ConciergeJourneys';
-import { ExploreMore } from '../components/home/ExploreMore';
-import { OffersForYou } from '../components/home/OffersForYou';
+import { WeekendEscapes } from '../components/home/WeekendEscapes';
+import { VerifiedPartners } from '../components/home/VerifiedPartners';
 import { NearbyRadar } from '../components/home/NearbyRadar';
 import { ShortcutsDock } from '../components/home/ShortcutsDock';
 import { AdBanner } from '../components/home/AdBanner';
+import { MegaMenuSubnav } from '../components/home/MegaMenuSubnav';
 import { CategoryCard, SectionHeader, StatCard, WishlistButton, CartAddButton } from '../components/home/HomeShared';
 import { CITY_COORDINATES, EXPLORE_SECTIONS, RECOMMENDED_ITEMS, CONCIERGE_JOURNEYS_POOL, MOCK_ADS, MOCK_ACTIVITIES, getCombinedConciergePool } from '../lib/homeData';
 
@@ -71,6 +72,7 @@ export default function HomePage() {
 
 
 
+
   // Live activity notification ticker state
   const [currentActivity, setCurrentActivity] = useState<any>(null);
   const [showActivity, setShowActivity] = useState(false);
@@ -118,7 +120,7 @@ export default function HomePage() {
     return d;
   };
 
-  
+
 
   useEffect(() => {
     setMounted(true);
@@ -139,55 +141,25 @@ export default function HomePage() {
 
       <main className="page-content px-4 md:px-8 lg:pr-8">
         <div className="mx-auto w-full">
-          {/* Row 1: Main Categories & Dashboard pill */}
-          <div className="flex items-center justify-between flex-wrap gap-4 mb-2 pt-3.5">
-            <div className="flex items-center gap-2.5 overflow-x-auto py-2 pr-4 custom-scrollbar shrink-0 max-w-full lg:max-w-[75%] scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-              {['travel-transport', 'stay-accommodation', 'entertainment-events', 'sports-turf', 'lifestyle-local'].map(catId => {
-                const category = SUBNAV_CATEGORIES.find(c => c.id === catId);
-                if (!category) return null;
-                return (
-                  <Link
-                    key={category.id}
-                    href={category.href}
-                    className="transition-all flex items-center gap-1 cursor-pointer text-[13px] font-extrabold text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)] shrink-0 pr-2"
-                  >
-                    <span className="text-[14px] leading-none shrink-0">{category.emoji}</span>
-                    <span className="whitespace-nowrap">{category.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-            <div className="flex items-center gap-3 px-1">
-              <Link
-                href="/vendor/register"
-                className="bg-[#2a4365] text-white pl-1.5 pr-4 h-8 rounded-full flex items-center gap-2 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all text-[11px] font-bold cursor-pointer shrink-0 border border-white/20"
-              >
-                <div className="h-6 w-6 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm">
-                  <span className="material-symbols-outlined text-[7px] text-[#2a4365]" style={{ transform: 'scale(0.7)' }}>storefront</span>
-                </div>
-                <span className="text-white text-[11px] font-bold tracking-wide select-none">VENDOR</span>
-              </Link>
-              <Link href="/support" className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 transition-colors shrink-0" aria-label="Help & Support">
-                <span className="material-symbols-outlined text-[20px] text-[color:var(--color-on-surface)]">support_agent</span>
-              </Link>
-              <Link href="/profile" className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 transition-colors shrink-0" aria-label="Settings">
-                <span className="material-symbols-outlined text-[20px] text-[color:var(--color-on-surface)]">settings</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Divider line between services and ad banner */}
-          <div className="w-full relative border-b border-[color:var(--color-outline-variant)]/20 mb-2" />
+          {/* Row 1: Mega-Menu Subnav & High-Speed Service Jump Capsule */}
+          <MegaMenuSubnav />
 
           {/* Row 2: Ad Banner */}
           <AdBanner />
 
           {/* Row 3: Shortcuts Dock */}
-          <section className="mb-6 mt-6 md:mt-8">
+          <section className="mb-10">
+            <div className="flex items-center justify-between mb-3 px-1">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-[#ff6325] animate-pulse" />
+                <h3 className="text-xs font-black uppercase tracking-wider text-[color:var(--color-outline)]">Quick Actions Dock</h3>
+              </div>
+              <span className="text-[11px] font-semibold text-[color:var(--color-outline)] hidden sm:inline">Tap any service for instant booking flow</span>
+            </div>
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3 p-2 rounded-[24px] bg-[color:var(--color-surface-container)]/30 border border-[color:var(--color-outline-variant)]/20 backdrop-blur-xl shadow-lg">
               {Array.isArray(activeShortcuts) && activeShortcuts.length > 0 ? (
-                activeShortcuts.slice(0, 6).map(id => AVAILABLE_SHORTCUTS.find(s => s.id === id)).filter(Boolean).map(shortcut => {
+                activeShortcuts.slice(0, 7).map(id => AVAILABLE_SHORTCUTS.find(s => s.id === id)).filter(Boolean).map(shortcut => {
                   if (!shortcut) return null;
                   const handleAction = () => {
                     if (shortcut.actionType === 'modal') {
@@ -200,24 +172,28 @@ export default function HomePage() {
                     <button
                       key={shortcut.id}
                       onClick={handleAction}
-                      className="h-10 px-5 rounded-2xl border border-[color:var(--color-outline-variant)]/20 bg-[color:var(--color-surface-container)]/40 hover:border-[color:var(--color-primary)]/30 hover:bg-[color:var(--color-surface-container-high)]/60 hover:scale-[1.03] transition-all flex items-center gap-2 cursor-pointer text-xs font-extrabold text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)] shadow-sm backdrop-blur-md"
+                      className="group h-11 px-5 rounded-2xl border border-[color:var(--color-outline-variant)]/25 bg-[color:var(--color-surface-container)]/70 hover:border-[#ff6325]/50 hover:bg-[color:var(--color-surface-container-high)] hover:scale-[1.03] active:scale-[0.97] transition-all flex items-center gap-2.5 cursor-pointer text-xs font-extrabold text-[color:var(--color-on-surface)] shadow-sm hover:shadow-[0_4px_16px_rgba(255,99,37,0.15)]"
                     >
-                      <span className="material-symbols-outlined text-[16px] text-[color:var(--color-primary)]">{shortcut.icon}</span>
-                      <span>{shortcut.label}</span>
+                      <div className="w-6 h-6 rounded-lg bg-[#ff6325]/10 group-hover:bg-[#ff6325] text-[#ff6325] group-hover:text-white flex items-center justify-center transition-colors">
+                        <span className="material-symbols-outlined text-[15px]">{shortcut.icon}</span>
+                      </div>
+                      <span className="tracking-wide">{shortcut.label}</span>
                     </button>
                   );
                 })
               ) : (
-                <span className="text-xs text-[color:var(--color-outline)] italic mr-2">No shortcuts added yet.</span>
+                <span className="text-xs text-[color:var(--color-outline)] italic mr-2 pl-3">No shortcuts added yet.</span>
               )}
 
               {/* Manage Dock Shortcuts Button */}
               <button
                 onClick={() => setShortcutModalOpen(true)}
-                className="h-10 px-4 rounded-2xl border border-dashed border-[color:var(--color-primary)]/40 bg-[color:var(--color-primary)]/[0.03] hover:border-[color:var(--color-primary)] hover:bg-[color:var(--color-primary)]/10 hover:scale-[1.03] transition-all flex items-center gap-1.5 cursor-pointer text-xs font-extrabold text-[color:var(--color-primary)]"
+                className="h-11 px-4.5 rounded-2xl border-2 border-dashed border-[#ff6325]/40 bg-[#ff6325]/[0.04] hover:border-[#ff6325] hover:bg-[#ff6325]/10 hover:scale-[1.03] active:scale-[0.97] transition-all flex items-center gap-2 cursor-pointer text-xs font-black text-[#ff6325]"
               >
-                <span className="material-symbols-outlined text-[16px]">add</span>
-                <span>Shortcut</span>
+                <div className="w-5 h-5 rounded-full bg-[#ff6325]/15 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[14px]">add</span>
+                </div>
+                <span>Customize Dock</span>
               </button>
             </div>
           </section>
@@ -227,179 +203,203 @@ export default function HomePage() {
           <ConciergeJourneys />
           <div className="h-px bg-[color:var(--color-outline-variant)]/20 my-8 w-full" />
 
-          <ExploreMore />
-          <OffersForYou />
+          {/* Weekend Getaways & Escapes from Chennai */}
+          <WeekendEscapes />
+
+          {/* World-Class Verified Arenas & Top-Rated Partners */}
+          <VerifiedPartners />
+
           <NearbyRadar />
-          {/* Row 7: Detailed Footer */}
-          <footer className="mt-16 border-t border-[color:var(--color-outline-variant)]/20 bg-[color:var(--color-surface-container)]/10 backdrop-blur-xl pt-12 pb-24 px-6 md:px-12 rounded-t-[32px] card-glass relative overflow-hidden">
-            <div className="absolute inset-0 opacity-[0.02]" style={{ background: 'radial-gradient(circle at top right, var(--color-primary), transparent 60%)' }} />
+            {/* Row 7: Detailed Luxury Footer */}
+            <footer className="mt-20 border border-[color:var(--color-outline-variant)]/25 bg-[color:var(--color-surface-container)]/70 backdrop-blur-2xl pt-14 pb-20 px-6 sm:px-10 lg:px-14 rounded-[36px] shadow-[0_20px_50px_rgba(0,0,0,0.06)] relative overflow-hidden text-left">
+              {/* Subtle ambient luxury mesh */}
+              <div 
+                className="absolute right-0 top-0 w-96 h-96 rounded-full opacity-10 pointer-events-none blur-3xl"
+                style={{ background: 'radial-gradient(circle, var(--color-primary), #0a3161)' }}
+              />
 
-            {/* Top Row: Customer Support Socials & Newsletter */}
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-6 pb-8 border-b border-[color:var(--color-outline-variant)]/10 z-10 relative">
+              {/* Top Banner: Brand Statement & Newsletter Subscription */}
+              <div className="grid lg:grid-cols-12 gap-8 pb-12 border-b border-[color:var(--color-outline-variant)]/20 relative z-10 items-center">
+                
+                {/* Left: Brand Identity with Official Logo */}
+                <div className="lg:col-span-6 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Link href="/" className="hover:opacity-90 active:scale-95 transition-all">
+                      <img 
+                        src="/logo.png?v=3" 
+                        alt="BokSpot" 
+                        className="h-10 sm:h-12 object-contain" 
+                      />
+                    </Link>
+                    <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-[color:var(--color-primary)]/10 text-[color:var(--color-primary)] border border-[color:var(--color-primary)]/20">
+                      Super App
+                    </span>
+                  </div>
+                  <p className="text-[13px] text-[color:var(--color-outline)] font-medium max-w-md leading-relaxed">
+                    India&apos;s all-in-one luxury booking platform. Instant verified reservations for turf sports, private cinema screenings, express transit, retreats & healthcare.
+                  </p>
+                </div>
 
-              {/* Left: Customer Support Social Handles */}
-              <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left w-full lg:w-auto">
-                <span className="text-[10px] uppercase tracking-[0.25em] font-extrabold text-[color:var(--color-outline)]">
-                  Customer Support
-                </span>
-                <div className="flex items-center justify-center gap-2.5">
+                {/* Right: Newsletter Box */}
+                <div className="lg:col-span-6 flex flex-col sm:flex-row items-center justify-end gap-3">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const email = (e.currentTarget.elements.namedItem('email') as HTMLInputElement).value;
+                      if (email) {
+                        alert(`Thank you for subscribing, ${email}!`);
+                        e.currentTarget.reset();
+                      }
+                    }}
+                    className="flex items-center w-full sm:max-w-md rounded-2xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-container-high)]/80 p-1.5 focus-within:border-[color:var(--color-primary)] shadow-sm backdrop-blur-md transition-all"
+                  >
+                    <input
+                      name="email"
+                      type="email"
+                      required
+                      placeholder="Enter your email for VIP drops & perks..."
+                      className="flex-1 bg-transparent border-none outline-none text-xs text-[color:var(--color-on-surface)] placeholder-[color:var(--color-outline)] px-3 py-2 font-medium"
+                    />
+                    <button
+                      type="submit"
+                      className="px-5 py-2.5 rounded-xl bg-[color:var(--color-primary)] text-white hover:opacity-90 active:scale-95 transition-all text-[11px] font-black uppercase tracking-wider shadow-md shrink-0 cursor-pointer"
+                    >
+                      Subscribe
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              {/* Middle Grid: 4 Modern Navigation Columns */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-12 border-b border-[color:var(--color-outline-variant)]/20 relative z-10">
+                
+                {/* Column 1: Curated Verticals */}
+                <div className="space-y-3.5">
+                  <h4 className="text-[11px] uppercase tracking-widest font-black text-[color:var(--color-on-surface)]">
+                    Curated Verticals
+                  </h4>
+                  <ul className="space-y-2.5">
+                    {[
+                      { label: 'FIFA 2-Star Turfs', href: '/sports-turf/football-turf' },
+                      { label: 'Laser IMAX Theatres', href: '/entertainment-events/movies' },
+                      { label: 'Executive Vande Bharat', href: '/travel-transport/trains' },
+                      { label: 'Boutique Seafront Villas', href: '/stay-accommodation/hotels' },
+                      { label: 'NABH Super Clinics', href: '/service/1' }
+                    ].map((link) => (
+                      <li key={link.label}>
+                        <Link
+                          href={link.href}
+                          className="text-xs text-[color:var(--color-outline)] hover:text-[color:var(--color-primary)] transition-colors font-semibold flex items-center gap-1 group"
+                        >
+                          <span className="w-1 h-1 rounded-full bg-[color:var(--color-outline)] group-hover:bg-[color:var(--color-primary)] transition-colors" />
+                          <span>{link.label}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Column 2: Platform Links */}
+                <div className="space-y-3.5">
+                  <h4 className="text-[11px] uppercase tracking-widest font-black text-[color:var(--color-on-surface)]">
+                    Navigation Hub
+                  </h4>
+                  <ul className="space-y-2.5">
+                    {[
+                      { label: 'Home Experience', href: '/' },
+                      { label: 'All Booking Categories', href: '/categories' },
+                      { label: 'Live GPS Radar Maps', href: '/maps' },
+                      { label: 'Concierge Booking Tracks', href: '/tracks' },
+                      { label: 'Verified Partner Portal', href: '/vendor/register' }
+                    ].map((link) => (
+                      <li key={link.label}>
+                        <Link
+                          href={link.href}
+                          className="text-xs text-[color:var(--color-outline)] hover:text-[color:var(--color-primary)] transition-colors font-semibold flex items-center gap-1 group"
+                        >
+                          <span className="w-1 h-1 rounded-full bg-[color:var(--color-outline)] group-hover:bg-[color:var(--color-primary)] transition-colors" />
+                          <span>{link.label}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Column 3: Trust & Safety */}
+                <div className="space-y-3.5">
+                  <h4 className="text-[11px] uppercase tracking-widest font-black text-[color:var(--color-on-surface)]">
+                    Trust & Guarantees
+                  </h4>
+                  <ul className="space-y-2.5">
+                    {[
+                      { label: 'Zero Booking Fee Policy', href: '/support' },
+                      { label: 'Instant QR Slot Guarantee', href: '/support' },
+                      { label: '100% Refund Guidelines', href: '/support' },
+                      { label: 'Audited Partner Criteria', href: '/vendor/register' },
+                      { label: 'Data & Privacy Security', href: '/support' }
+                    ].map((link) => (
+                      <li key={link.label}>
+                        <Link
+                          href={link.href}
+                          className="text-xs text-[color:var(--color-outline)] hover:text-[color:var(--color-primary)] transition-colors font-semibold flex items-center gap-1 group"
+                        >
+                          <span className="w-1 h-1 rounded-full bg-[color:var(--color-outline)] group-hover:bg-[color:var(--color-primary)] transition-colors" />
+                          <span>{link.label}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Column 4: 24/7 Concierge Support */}
+                <div className="space-y-3.5">
+                  <h4 className="text-[11px] uppercase tracking-widest font-black text-[color:var(--color-on-surface)]">
+                    Dedicated Support
+                  </h4>
+                  <p className="text-[11px] text-[color:var(--color-outline)] font-medium leading-relaxed">
+                    Need instant slot confirmation or venue assistance? Connect with our team 24/7.
+                  </p>
+                  <div className="pt-1 flex flex-col gap-2">
+                    <Link
+                      href="/support"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[color:var(--color-primary)]/10 text-[color:var(--color-primary)] hover:bg-[color:var(--color-primary)] hover:text-white transition-all text-xs font-bold border border-[color:var(--color-primary)]/20"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">headset_mic</span>
+                      <span>Live Chat Concierge</span>
+                    </Link>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Bottom Row: Social Pills & Copyright */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-5 pt-8 relative z-10">
+                {/* Social icons */}
+                <div className="flex items-center gap-2">
                   {[
-                    { icon: 'public', label: 'FB', href: 'https://facebook.com', color: 'hover:text-blue-500' },
-                    { icon: 'share', label: 'TW', href: 'https://twitter.com', color: 'hover:text-sky-400' },
-                    { icon: 'photo_camera', label: 'IG', href: 'https://instagram.com', color: 'hover:text-pink-500' },
-                    { icon: 'smart_display', label: 'YT', href: 'https://youtube.com', color: 'hover:text-red-500' },
-                    { icon: 'send', label: 'TG', href: 'https://telegram.org', color: 'hover:text-sky-500' }
+                    { icon: 'public', label: 'Website', href: '/' },
+                    { icon: 'share', label: 'Twitter', href: 'https://twitter.com' },
+                    { icon: 'photo_camera', label: 'Instagram', href: 'https://instagram.com' },
+                    { icon: 'smart_display', label: 'YouTube', href: 'https://youtube.com' }
                   ].map((social) => (
                     <a
                       key={social.label}
                       href={social.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`w-9 h-9 rounded-full bg-[color:var(--color-surface-container-high)]/40 border border-[color:var(--color-outline-variant)]/20 flex items-center justify-center text-[color:var(--color-on-surface-variant)] transition-all hover:scale-105 active:scale-95 shadow-sm ${social.color}`}
+                      className="w-9 h-9 rounded-full bg-[color:var(--color-surface-container-high)] border border-[color:var(--color-outline-variant)]/25 flex items-center justify-center text-[color:var(--color-outline)] hover:text-[color:var(--color-primary)] hover:border-[color:var(--color-primary)]/40 hover:scale-105 active:scale-95 transition-all shadow-sm"
                       title={social.label}
                     >
                       <span className="material-symbols-outlined text-[16px]">{social.icon}</span>
                     </a>
                   ))}
                 </div>
+
+                <p className="text-[11px] font-bold text-[color:var(--color-outline)] tracking-wider">
+                  &copy; 2026 BOKSPOT TECHNOLOGIES PVT LTD • CHENNAI, INDIA
+                </p>
               </div>
-
-              {/* Right: Newsletter Subscription */}
-              <div className="w-full lg:w-auto flex flex-col md:flex-row items-center justify-center lg:justify-end gap-3">
-                <span className="text-[10px] uppercase tracking-[0.25em] font-extrabold text-[color:var(--color-outline)] shrink-0">
-                  Subscribe to Newsletter
-                </span>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const email = (e.currentTarget.elements.namedItem('email') as HTMLInputElement).value;
-                    if (email) {
-                      alert(`Thank you for subscribing, ${email}!`);
-                      e.currentTarget.reset();
-                    }
-                  }}
-                  className="flex items-center w-full md:w-80 rounded-2xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-container)]/50 p-1.5 focus-within:border-[color:var(--color-primary)]/45 transition-colors card-glass"
-                >
-                  <input
-                    name="email"
-                    type="email"
-                    required
-                    placeholder="Enter your email"
-                    className="flex-1 bg-transparent border-none outline-none text-xs text-[color:var(--color-on-surface)] placeholder-[color:var(--color-outline)] px-3 py-1"
-                  />
-                  <button
-                    type="submit"
-                    className="px-4 py-2 rounded-xl bg-[color:var(--color-primary)] text-[color:var(--color-on-primary)] hover:bg-[color:var(--color-primary-fixed-dim)] transition-colors text-[10px] font-black uppercase tracking-wider"
-                  >
-                    Subscribe
-                  </button>
-                </form>
-              </div>
-            </div>
-
-            {/* Center Row: 4 Columns */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-10 z-10 relative">
-
-              {/* Column 1: Exclusive Bookings */}
-              <div className="text-left space-y-3">
-                <h4 className="text-[11px] uppercase tracking-wider font-extrabold text-[color:var(--color-primary)]">
-                  Exclusive Bookings
-                </h4>
-                <ul className="space-y-2">
-                  {['New Events', 'Featured Venues', 'Top Locations', 'Ongoing Promos'].map((link) => (
-                    <li key={link}>
-                      <Link
-                        href="/categories"
-                        className="text-xs text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-primary)] transition-colors font-semibold"
-                      >
-                        {link}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Column 2: BokSpot */}
-              <div className="text-left space-y-3">
-                <h4 className="text-[11px] uppercase tracking-wider font-extrabold bg-white/90 dark:bg-white/95 px-2.5 py-1 rounded-full border border-white/10 shadow-sm inline-block">
-                  <span className="logo-text-bok text-[#0a3161]">Bok</span>
-                  <span className="logo-text-spot text-[#ff6325]">Spot</span>
-                </h4>
-                <ul className="space-y-2">
-                  {[
-                    { label: 'Home', href: '/' },
-                    { label: 'All Categories', href: '/categories' },
-                    { label: 'Live Radar Maps', href: '/maps' },
-                    { label: 'Active Tracks', href: '/tracks' }
-                  ].map((link) => (
-                    <li key={link.label}>
-                      <Link
-                        href={link.href}
-                        className="text-xs text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-primary)] transition-colors font-semibold"
-                      >
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Column 3: About Us */}
-              <div className="text-left space-y-3">
-                <h4 className="text-[11px] uppercase tracking-wider font-extrabold text-[color:var(--color-primary)]">
-                  About Us
-                </h4>
-                <ul className="space-y-2">
-                  {['Our Story', 'Company Bio', 'Careers', 'Press Kit', 'Privacy Policy'].map((link) => (
-                    <li key={link}>
-                      <Link
-                        href="/profile#settings"
-                        className="text-xs text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-primary)] transition-colors font-semibold"
-                      >
-                        {link}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Column 4: Customer Care Support */}
-              <div className="text-left space-y-3">
-                <h4 className="text-[11px] uppercase tracking-wider font-extrabold text-[color:var(--color-primary)]">
-                  Customer Care Support
-                </h4>
-                <ul className="space-y-2">
-                  {['Help Center / FAQs', 'Contact Support', 'Live Chat', 'Refund Policy', 'Terms of Service'].map((link) => (
-                    <li key={link}>
-                      <Link
-                        href="/profile#saved"
-                        className="text-xs text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-primary)] transition-colors font-semibold"
-                      >
-                        {link}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            {/* Bottom Row: Logo & Copyright */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t border-[color:var(--color-outline-variant)]/10 z-10 relative">
-              <Link
-                href="/"
-                className="flex items-center gap-2 bg-white/90 dark:bg-white/95 px-3.5 py-1.5 rounded-full border border-white/20 shadow-md font-['Playfair_Display'] text-[15px] tracking-[0.15em] uppercase font-extrabold hover:opacity-90 transition-all shrink-0"
-              >
-                <Sparkles className="w-4 h-4 text-[#ff6325] fill-[#ff6325]" />
-                <span className="font-black">
-                  <span className="logo-text-bok text-[#0a3161]">BOK</span>
-                  <span className="logo-text-spot text-[#ff6325]">SPOT</span>
-                </span>
-              </Link>
-              <p className="text-[10px] font-bold text-[color:var(--color-outline)] tracking-wider">
-                COPYRIGHT &copy; 2026 BOKSPOT. ALL RIGHTS RESERVED.
-              </p>
-            </div>
-          </footer>
+            </footer>
         </div>
       </main>
 
@@ -500,10 +500,10 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.9 }}
             transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-            className="fixed bottom-20 lg:bottom-6 left-4 z-40 max-w-sm rounded-2xl border border-white/10 bg-black/75 backdrop-blur-xl p-4 shadow-2xl flex gap-3 text-left group"
+            className="fixed bottom-20 lg:bottom-6 right-4 sm:right-8 lg:right-20 z-40 max-w-sm rounded-2xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-container)]/95 dark:bg-black/90 backdrop-blur-xl p-4 shadow-[0_12px_40px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.6)] flex gap-3 text-left group transition-colors duration-300"
           >
             {/* Live Indicator Icon */}
-            <div className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-lg shrink-0 shadow-inner">
+            <div className="h-9 w-9 rounded-xl bg-[color:var(--color-surface-container-high)]/80 border border-[color:var(--color-outline-variant)]/30 flex items-center justify-center text-lg shrink-0 shadow-inner">
               {currentActivity.emoji}
             </div>
 
@@ -511,17 +511,17 @@ export default function HomePage() {
             <div className="flex-1 space-y-1 pr-4">
               <div className="flex items-center gap-1.5">
                 <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-600 dark:bg-emerald-400"></span>
                 </span>
-                <span className="text-[9px] uppercase font-black tracking-widest text-emerald-400">Live booking activity</span>
+                <span className="text-[9px] uppercase font-black tracking-widest text-emerald-600 dark:text-emerald-400">Live booking activity</span>
               </div>
-              <p className="text-[11px] font-semibold text-slate-300 leading-normal">
-                <span className="font-extrabold text-white">{currentActivity.user}</span> in <span className="text-[#fceea7] font-bold">{currentActivity.city}</span> {currentActivity.action} <span className="font-bold text-white underline underline-offset-2 decoration-indigo-400">{currentActivity.item}</span> <span className="text-slate-400 text-[10px] block font-medium mt-0.5">at {currentActivity.merchant}</span>
+              <p className="text-[11px] font-semibold text-[color:var(--color-on-surface-variant)] leading-normal">
+                <span className="font-extrabold text-[color:var(--color-on-surface)]">{currentActivity.user}</span> in <span className="text-[color:var(--color-primary)] font-bold">{currentActivity.city}</span> {currentActivity.action} <span className="font-bold text-[color:var(--color-on-surface)] underline underline-offset-2 decoration-[color:var(--color-primary)]/50">{currentActivity.item}</span> <span className="text-[color:var(--color-outline)] text-[10px] block font-medium mt-0.5">at {currentActivity.merchant}</span>
               </p>
               <div className="flex items-center gap-2 pt-1">
-                <span className="text-[9px] font-bold text-slate-500 uppercase">{currentActivity.time}</span>
-                <Link href={currentActivity.link || '/'} className="text-[9px] font-black text-indigo-400 uppercase tracking-wider hover:text-indigo-300 transition-colors flex items-center gap-0.5">
+                <span className="text-[9px] font-bold text-[color:var(--color-outline)] uppercase">{currentActivity.time}</span>
+                <Link href={currentActivity.link || '/'} className="text-[9px] font-black text-[color:var(--color-primary)] uppercase tracking-wider hover:underline transition-colors flex items-center gap-0.5">
                   View Service <ArrowRight size={8} />
                 </Link>
               </div>
@@ -534,7 +534,7 @@ export default function HomePage() {
                 setShowActivity(false);
                 setActivityDismissed(true);
               }}
-              className="absolute top-2 right-2 text-slate-500 hover:text-slate-300 p-1 hover:bg-white/5 rounded-lg transition-all cursor-pointer"
+              className="absolute top-2 right-2 text-[color:var(--color-outline)] hover:text-[color:var(--color-on-surface)] p-1 hover:bg-[color:var(--color-outline-variant)]/20 rounded-lg transition-all cursor-pointer"
             >
               <X size={12} />
             </button>

@@ -41,15 +41,27 @@ export function CarouselSections() {
       transition={{ duration: 0.6 }}
     >
       {/* Row 4: Recommended Section */}
-      <section className="mb-4">
+      <section className="mb-6">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-[18px] font-extrabold text-[color:var(--color-on-surface)] tracking-tight">Recommended For You</h2>
-            <p className="text-[11px] mt-0.5 text-[color:var(--color-outline)]">Curated bookings and activities tailored to your profile</p>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-[color:var(--color-primary)]/10 text-[color:var(--color-primary)]">
+                <span className="material-symbols-outlined text-[16px]">auto_awesome</span>
+              </span>
+              <h2 className="text-[19px] sm:text-[20px] font-black text-[color:var(--color-on-surface)] tracking-tight">
+                Recommended For You
+              </h2>
+            </div>
+            <p className="text-[12px] mt-1 text-[color:var(--color-outline)] font-medium">
+              Curated bookings, premium stays, express transit & exclusive events tailored for you
+            </p>
           </div>
-          <Link href="/search" className="flex items-center gap-1 text-[11px] font-bold text-[color:var(--color-primary)] hover:gap-1.5 transition-all duration-300">
-            View All
-            <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
+          <Link 
+            href="/search" 
+            className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold text-[color:var(--color-primary)] hover:bg-[color:var(--color-primary)]/10 border border-[color:var(--color-primary)]/20 transition-all duration-300"
+          >
+            <span>View All</span>
+            <span className="material-symbols-outlined text-[14px] group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
           </Link>
         </div>
 
@@ -57,69 +69,123 @@ export function CarouselSections() {
           {/* Left Arrow */}
           <button
             onClick={() => scrollRecommended('left')}
-            className="absolute -left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-[color:var(--color-surface-container)] border border-[color:var(--color-outline-variant)]/40 flex items-center justify-center shadow-md transition-all text-[color:var(--color-on-surface)] z-10 opacity-0 group-hover:opacity-100 hover:scale-110 hover:bg-[color:var(--color-surface-container-high)]"
+            aria-label="Scroll left"
+            className="absolute -left-3.5 top-[40%] -translate-y-1/2 w-10 h-10 rounded-full bg-[color:var(--color-surface-container)]/95 backdrop-blur-md border border-[color:var(--color-outline-variant)]/40 flex items-center justify-center shadow-xl transition-all text-[color:var(--color-on-surface)] z-20 opacity-0 group-hover:opacity-100 hover:scale-110 hover:bg-[color:var(--color-surface-container-high)]"
           >
-            <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+            <span className="material-symbols-outlined text-[20px]">chevron_left</span>
           </button>
 
           {/* Right Arrow */}
           <button
             onClick={() => scrollRecommended('right')}
-            className="absolute -right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-[color:var(--color-surface-container)] border border-[color:var(--color-outline-variant)]/40 flex items-center justify-center shadow-md transition-all text-[color:var(--color-on-surface)] z-10 opacity-0 group-hover:opacity-100 hover:scale-110 hover:bg-[color:var(--color-surface-container-high)]"
+            aria-label="Scroll right"
+            className="absolute -right-3.5 top-[40%] -translate-y-1/2 w-10 h-10 rounded-full bg-[color:var(--color-surface-container)]/95 backdrop-blur-md border border-[color:var(--color-outline-variant)]/40 flex items-center justify-center shadow-xl transition-all text-[color:var(--color-on-surface)] z-20 opacity-0 group-hover:opacity-100 hover:scale-110 hover:bg-[color:var(--color-surface-container-high)]"
           >
-            <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+            <span className="material-symbols-outlined text-[20px]">chevron_right</span>
           </button>
 
           <div
             ref={recommendedScrollRef}
-            className="flex gap-4 pb-6 pt-2 overflow-x-auto snap-x scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-1"
+            className="flex gap-4.5 pb-6 pt-1 overflow-x-auto snap-x scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-1"
           >
-            {RECOMMENDED_ITEMS.map((item) => (
+            {RECOMMENDED_ITEMS.map((item: any) => (
               <Link
                 key={item.id}
                 href={item.link}
-                className="w-[280px] lg:w-[calc(20%-12px)] shrink-0 group flex flex-col self-stretch snap-start"
+                className="w-[285px] sm:w-[300px] lg:w-[calc(25%-14px)] shrink-0 group flex flex-col snap-start"
               >
-                <div className="bg-[color:var(--color-surface-container)] rounded-[24px] overflow-hidden border border-[color:var(--color-outline-variant)]/20 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-[340px]">
+                <div className="relative bg-[color:var(--color-surface-container)] rounded-[24px] overflow-hidden border border-[color:var(--color-outline-variant)]/30 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_36px_rgba(0,0,0,0.12)] hover:border-[color:var(--color-primary)]/40 transition-all duration-500 flex flex-col h-[360px] hover:-translate-y-1.5">
+                  
                   {/* Image Section */}
-                  <div className="relative flex-1 w-full overflow-hidden rounded-b-[20px]">
+                  <div className="relative h-[200px] w-full overflow-hidden bg-slate-800">
                     <img
                       src={item.image}
                       alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                      onError={(e: any) => {
+                        // High-reliability fallback image if any unsplash id fails
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop&q=80';
+                      }}
+                      className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
                     />
-                    <WishlistButton item={item} />
-                    <CartAddButton item={item} />
-                    {/* Badge */}
-                    {item.badge && (
-                      <div className={`absolute top-2 left-2 ${item.badgeBg} text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10 shadow-sm flex items-center gap-1`}>
-                        <span className="material-symbols-outlined text-[10px]">sell</span>
-                        {item.badge}
+                    
+                    {/* Modern gradient scrim */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/30 pointer-events-none" />
+
+                    {/* Category pill - Top Left */}
+                    {item.category && (
+                      <div className="absolute top-3 left-3 z-10">
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md bg-black/60 text-white/95 border border-white/20 shadow-sm flex items-center gap-1">
+                          {item.badgeIcon && (
+                            <span className="material-symbols-outlined text-[12px] text-amber-300">
+                              {item.badgeIcon}
+                            </span>
+                          )}
+                          {item.category}
+                        </span>
                       </div>
                     )}
+
+                    {/* Wishlist Button - Top Right */}
+                    <WishlistButton item={item} />
+
+                    {/* Bottom Row on Image: Deal Badge & Price Pill */}
+                    <div className="absolute bottom-3 inset-x-3 z-10 flex items-center justify-between gap-2 pointer-events-none">
+                      {/* Deal badge */}
+                      {item.badge ? (
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md shadow-md border border-white/25 flex items-center gap-1 ${item.badgeBg}`}>
+                          {item.badge}
+                        </span>
+                      ) : <span />}
+
+                      {/* Floating Glass Price Chip */}
+                      <div className="flex items-baseline gap-1.5 px-3 py-1 rounded-xl backdrop-blur-md bg-black/80 border border-white/25 text-white shadow-lg">
+                        <span className="text-[13px] font-black tracking-tight">{item.price}</span>
+                        {item.originalPrice && (
+                          <span className="text-[10px] text-white/60 line-through font-semibold">
+                            {item.originalPrice}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Content Section (3 Lines) */}
-                  <div className="px-3 pt-2.5 pb-2.5 flex flex-col justify-center bg-[color:var(--color-surface-container)]">
-                    {/* Line 1: Title */}
-                    <h3 className="font-bold text-[13px] text-[color:var(--color-on-surface)] truncate">
-                      {item.title}
-                    </h3>
+                  {/* Card Content Section */}
+                  <div className="p-4 flex-1 flex flex-col justify-between bg-[color:var(--color-surface-container)]">
+                    <div>
+                      {/* Title */}
+                      <h3 className="font-extrabold text-[14px] leading-snug text-[color:var(--color-on-surface)] line-clamp-1 group-hover:text-[color:var(--color-primary)] transition-colors">
+                        {item.title}
+                      </h3>
 
-                    {/* Line 2: Location */}
-                    <p className="text-[11px] text-[color:var(--color-outline)] truncate mt-0.5">
-                      {item.location}
-                    </p>
-
-                    {/* Line 3: Rating & Price */}
-                    <div className="flex items-center justify-between mt-1.5">
-                      <div className="flex items-center gap-1">
-                        <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
-                        <span className="text-[11px] font-bold text-[color:var(--color-on-surface)]">{item.ratingScore}</span>
-                        <span className="text-[10px] text-[color:var(--color-outline)]">({item.usersCount})</span>
+                      {/* Location */}
+                      <div className="flex items-center gap-1.5 text-[11px] text-[color:var(--color-outline)] font-medium mt-1.5">
+                        <span className="material-symbols-outlined text-[13px] text-[color:var(--color-primary)] shrink-0">
+                          location_on
+                        </span>
+                        <span className="truncate">{item.location}</span>
                       </div>
-                      <div className="text-[13px] font-extrabold text-[color:var(--color-on-surface)]">
-                        {item.price}
+                    </div>
+
+                    {/* Bottom Metadata & Booking Action */}
+                    <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-[color:var(--color-outline-variant)]/25">
+                      {/* Rating pill */}
+                      <div className="flex items-center gap-1.5 bg-amber-500/10 dark:bg-amber-500/15 px-2.5 py-1 rounded-full border border-amber-500/20">
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                        <span className="text-[11px] font-black text-amber-600 dark:text-amber-400">
+                          {item.ratingScore}
+                        </span>
+                        <span className="text-[10px] text-[color:var(--color-outline)] font-medium hidden sm:inline">
+                          ({item.usersCount})
+                        </span>
+                      </div>
+
+                      {/* Book CTA pill */}
+                      <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-[color:var(--color-primary)]/10 text-[color:var(--color-primary)] group-hover:bg-[color:var(--color-primary)] group-hover:text-white transition-all duration-300 font-bold text-[11px] shadow-sm">
+                        <span>Book Slot</span>
+                        <span className="material-symbols-outlined text-[13px] group-hover:translate-x-0.5 transition-transform">
+                          arrow_forward
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -137,100 +203,146 @@ export function CarouselSections() {
         if (!sec) return null;
         return (
           <section className="mb-10 text-left">
-            <div className="bg-[color:var(--color-surface-container)] rounded-3xl p-6 shadow-sm border border-[color:var(--color-outline-variant)]/20">
-              <div className="flex items-center justify-between mb-5">
+            <div className="bg-[color:var(--color-surface-container)] rounded-[32px] p-5 sm:p-7 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-[color:var(--color-outline-variant)]/25 backdrop-blur-xl relative overflow-hidden">
+              {/* Subtle ambient gradient mesh */}
+              <div 
+                className="absolute -right-20 -top-20 w-80 h-80 rounded-full opacity-10 pointer-events-none blur-3xl"
+                style={{ background: 'radial-gradient(circle, #f97316, #ef4444)' }}
+              />
+
+              <div className="flex items-center justify-between mb-6 relative z-10">
                 <div>
-                  <h2 className="text-[18px] font-extrabold text-[color:var(--color-on-surface)] tracking-tight flex items-center gap-2">
-                    <span className="select-none text-xl">{sec.emoji}</span>
-                    <span>{sec.title}</span>
-                  </h2>
-                  <p className="text-[11px] mt-0.5 text-[color:var(--color-outline)]">{sec.description}</p>
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-rose-500/30 text-rose-500 shadow-sm">
+                      <span className="material-symbols-outlined text-[18px]">local_fire_department</span>
+                    </span>
+                    <h2 className="text-[19px] sm:text-[21px] font-black text-[color:var(--color-on-surface)] tracking-tight">
+                      {sec.title}
+                    </h2>
+                    <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
+                      Live Demand
+                    </span>
+                  </div>
+                  <p className="text-[12px] mt-1 text-[color:var(--color-outline)] font-medium">
+                    {sec.description}
+                  </p>
                 </div>
-                <div className="flex items-center gap-4">
-                  <Link href={sec.href} className="flex items-center gap-1 text-[11px] font-bold text-[color:var(--color-primary)] hover:gap-1.5 transition-all duration-300">
-                    View All
-                    <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
-                  </Link>
-                </div>
+                <Link 
+                  href={sec.href} 
+                  className="group flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-bold text-[color:var(--color-primary)] hover:bg-[color:var(--color-primary)]/10 border border-[color:var(--color-primary)]/20 transition-all duration-300"
+                >
+                  <span>View All</span>
+                  <span className="material-symbols-outlined text-[14px] group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+                </Link>
               </div>
 
               <div className="relative group">
                 {/* Left Arrow */}
                 <button
                   onClick={() => scrollTrending('left')}
-                  className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white dark:bg-[#1f2937] border border-black/10 dark:border-white/10 flex items-center justify-center shadow-lg hover:scale-110 transition-all opacity-0 group-hover:opacity-100"
+                  aria-label="Scroll left"
+                  className="absolute -left-4 top-[42%] -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[color:var(--color-surface-container)]/95 backdrop-blur-md border border-[color:var(--color-outline-variant)]/40 flex items-center justify-center shadow-xl hover:scale-110 transition-all opacity-0 group-hover:opacity-100 text-[color:var(--color-on-surface)]"
                 >
-                  <span className="material-symbols-outlined text-[20px] text-[color:var(--color-on-surface)]">chevron_left</span>
+                  <span className="material-symbols-outlined text-[20px]">chevron_left</span>
                 </button>
 
                 {/* Right Arrow */}
                 <button
                   onClick={() => scrollTrending('right')}
-                  className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white dark:bg-[#1f2937] border border-black/10 dark:border-white/10 flex items-center justify-center shadow-lg hover:scale-110 transition-all opacity-0 group-hover:opacity-100"
+                  aria-label="Scroll right"
+                  className="absolute -right-4 top-[42%] -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[color:var(--color-surface-container)]/95 backdrop-blur-md border border-[color:var(--color-outline-variant)]/40 flex items-center justify-center shadow-xl hover:scale-110 transition-all opacity-0 group-hover:opacity-100 text-[color:var(--color-on-surface)]"
                 >
-                  <span className="material-symbols-outlined text-[20px] text-[color:var(--color-on-surface)]">chevron_right</span>
+                  <span className="material-symbols-outlined text-[20px]">chevron_right</span>
                 </button>
 
                 <div
                   ref={trendingScrollRef}
-                  className="flex gap-4 overflow-x-auto pb-4 pt-1 scroll-smooth snap-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                  className="flex gap-4.5 overflow-x-auto pb-4 pt-1 scroll-smooth snap-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-1"
                 >
                   {sec.items.map((item: any) => (
                     <Link
                       key={item.id}
                       href={item.link}
-                      className="w-[280px] shrink-0 snap-start group flex flex-col self-stretch"
+                      className="w-[285px] sm:w-[300px] shrink-0 snap-start group flex flex-col"
                     >
-                      <div className="bg-[color:var(--color-surface-container)] rounded-2xl overflow-hidden border border-[color:var(--color-outline-variant)]/20 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                      <div className="relative bg-[color:var(--color-surface-container-high)]/60 rounded-[24px] overflow-hidden border border-[color:var(--color-outline-variant)]/30 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_16px_36px_rgba(0,0,0,0.12)] hover:border-[color:var(--color-primary)]/40 transition-all duration-500 flex flex-col h-[350px] hover:-translate-y-1.5">
                         {/* Image Section */}
-                        <div className="relative h-[160px] w-full shrink-0 overflow-hidden">
+                        <div className="relative h-[190px] w-full shrink-0 overflow-hidden bg-slate-800">
                           <img
                             src={item.image}
                             alt={item.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                            onError={(e: any) => {
+                              e.currentTarget.src = 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop&q=80';
+                            }}
+                            className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
                           />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/25 pointer-events-none" />
+                          
+                          {/* Wishlist Button - Top Right */}
                           <WishlistButton item={item} />
-                          <CartAddButton item={item} />
-                          {/* Badge */}
-                          {item.badge && (
-                            <div className={`absolute top-2 left-2 ${item.badgeBg} text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10 shadow-sm flex items-center gap-1`}>
-                              <span className="material-symbols-outlined text-[10px]">sell</span>
-                              {item.badge}
+
+                          {/* Top-Left Category Badge */}
+                          {item.emoji && (
+                            <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5">
+                              <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md bg-black/60 text-white/95 border border-white/20 shadow-sm flex items-center gap-1">
+                                <span className="text-[12px]">{item.emoji}</span>
+                                <span>Trending</span>
+                              </span>
                             </div>
                           )}
+
+                          {/* Bottom Row on Image: Badge & Price */}
+                          <div className="absolute bottom-3 inset-x-3 z-10 flex items-center justify-between gap-2 pointer-events-none">
+                            {item.badge ? (
+                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md shadow-md border border-white/25 flex items-center gap-1 ${item.badgeBg || 'bg-rose-500 text-white'}`}>
+                                {item.badge}
+                              </span>
+                            ) : <span />}
+
+                            <div className="flex items-baseline gap-1.5 px-3 py-1 rounded-xl backdrop-blur-md bg-black/80 border border-white/25 text-white shadow-lg">
+                              <span className="text-[13px] font-black tracking-tight">{item.price}</span>
+                            </div>
+                          </div>
                         </div>
 
                         {/* Content Section */}
-                        <div className="p-3 flex-1 flex flex-col">
-                          <div className="flex items-start justify-between mb-1">
-                            <h3 className="font-bold text-sm text-[color:var(--color-on-surface)] truncate pr-2">
-                              {item.title}
-                            </h3>
-                            <div className="flex text-yellow-500 shrink-0">
-                              {[...Array(item.stars || 4)].map((_, i) => (
-                                <Star key={i} className="w-3 h-3 fill-current" />
-                              ))}
+                        <div className="p-4 flex-1 flex flex-col justify-between bg-[color:var(--color-surface-container)]">
+                          <div>
+                            <div className="flex items-start justify-between gap-2">
+                              <h3 className="font-extrabold text-[14px] leading-snug text-[color:var(--color-on-surface)] line-clamp-1 group-hover:text-[color:var(--color-primary)] transition-colors">
+                                {item.title}
+                              </h3>
+                              <div className="flex text-amber-400 shrink-0">
+                                {[...Array(item.stars || 5)].map((_, i) => (
+                                  <Star key={i} className="w-3 h-3 fill-current" />
+                                ))}
+                              </div>
                             </div>
+
+                            <p className="text-[11px] text-[color:var(--color-outline)] mt-1.5 flex items-center gap-1 font-medium truncate">
+                              <span className="material-symbols-outlined text-[13px] text-[color:var(--color-primary)] shrink-0">location_on</span>
+                              <span className="truncate">{item.location}</span>
+                            </p>
                           </div>
 
-                          <p className="text-[11px] text-[color:var(--color-outline)] mb-3">{item.location}</p>
-
-                          <div className="flex items-end justify-between mt-auto">
-                            <div className="flex items-center gap-1.5">
-                              <div className="bg-[#20274d] text-white text-[11px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                          <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-[color:var(--color-outline-variant)]/25">
+                            <div className="flex items-center gap-1.5 bg-amber-500/10 dark:bg-amber-500/15 px-2.5 py-1 rounded-full border border-amber-500/20">
+                              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                              <span className="text-[11px] font-black text-amber-600 dark:text-amber-400">
                                 {item.ratingScore}
-                              </div>
-                              <div className="text-[10px] text-[color:var(--color-on-surface)]">
-                                <span className="font-bold">{item.ratingText}</span>
-                                <span className="text-[color:var(--color-outline)] mx-1">•</span>
-                                <span className="text-[color:var(--color-outline)]">{item.usersCount}</span>
-                              </div>
+                              </span>
+                              <span className="text-[10px] text-[color:var(--color-outline)] font-medium">
+                                ({item.usersCount})
+                              </span>
                             </div>
 
-                            <div className="text-right">
-                              <div className="text-sm font-extrabold text-[color:var(--color-on-surface)]">
-                                {item.price}
-                              </div>
+                            <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-[color:var(--color-primary)]/10 text-[color:var(--color-primary)] group-hover:bg-[color:var(--color-primary)] group-hover:text-white transition-all duration-300 font-bold text-[11px] shadow-sm">
+                              <span>Book Slot</span>
+                              <span className="material-symbols-outlined text-[13px] group-hover:translate-x-0.5 transition-transform">
+                                arrow_forward
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -250,103 +362,138 @@ export function CarouselSections() {
         if (!sec) return null;
         return (
           <section className="mb-10 text-left">
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h2 className="text-[18px] font-extrabold text-[color:var(--color-on-surface)] tracking-tight flex items-center gap-2">
-                  <span className="select-none text-xl">{sec.emoji}</span>
-                  <span>{sec.title}</span>
-                </h2>
-                <p className="text-[11px] mt-0.5 text-[color:var(--color-outline)]">{sec.description}</p>
+            <div className="bg-[color:var(--color-surface-container)] rounded-[32px] p-5 sm:p-7 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-[color:var(--color-outline-variant)]/25 backdrop-blur-xl relative overflow-hidden">
+              {/* Ambient blur circle */}
+              <div 
+                className="absolute -right-20 -top-20 w-80 h-80 rounded-full opacity-10 pointer-events-none blur-3xl"
+                style={{ background: 'radial-gradient(circle, #10b981, #06b6d4)' }}
+              />
+
+              <div className="flex items-center justify-between mb-6 relative z-10">
+                <div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 text-emerald-500 shadow-sm">
+                      <span className="material-symbols-outlined text-[18px]">event_available</span>
+                    </span>
+                    <h2 className="text-[19px] sm:text-[21px] font-black text-[color:var(--color-on-surface)] tracking-tight">
+                      {sec.title}
+                    </h2>
+                  </div>
+                  <p className="text-[12px] mt-1 text-[color:var(--color-outline)] font-medium">
+                    {sec.description}
+                  </p>
+                </div>
+                <Link 
+                  href={sec.href} 
+                  className="group flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-bold text-[color:var(--color-primary)] hover:bg-[color:var(--color-primary)]/10 border border-[color:var(--color-primary)]/20 transition-all duration-300"
+                >
+                  <span>View All</span>
+                  <span className="material-symbols-outlined text-[14px] group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+                </Link>
               </div>
-              <Link href={sec.href} className="flex items-center gap-1 text-[11px] font-bold text-[color:var(--color-primary)] hover:gap-1.5 transition-all duration-300">
-                View All
-                <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
-              </Link>
-            </div>
 
-            <div className="relative group">
-              {/* Left Arrow */}
-              <button
-                onClick={() => scrollEvents('left')}
-                className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white dark:bg-[#1f2937] border border-black/10 dark:border-white/10 flex items-center justify-center shadow-lg hover:scale-110 transition-all opacity-0 group-hover:opacity-100"
-              >
-                <span className="material-symbols-outlined text-[20px] text-[color:var(--color-on-surface)]">chevron_left</span>
-              </button>
+              <div className="relative group">
+                {/* Left Arrow */}
+                <button
+                  onClick={() => scrollEvents('left')}
+                  aria-label="Scroll left"
+                  className="absolute -left-4 top-[42%] -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[color:var(--color-surface-container)]/95 backdrop-blur-md border border-[color:var(--color-outline-variant)]/40 flex items-center justify-center shadow-xl hover:scale-110 transition-all opacity-0 group-hover:opacity-100 text-[color:var(--color-on-surface)]"
+                >
+                  <span className="material-symbols-outlined text-[20px]">chevron_left</span>
+                </button>
 
-              {/* Right Arrow */}
-              <button
-                onClick={() => scrollEvents('right')}
-                className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white dark:bg-[#1f2937] border border-black/10 dark:border-white/10 flex items-center justify-center shadow-lg hover:scale-110 transition-all opacity-0 group-hover:opacity-100"
-              >
-                <span className="material-symbols-outlined text-[20px] text-[color:var(--color-on-surface)]">chevron_right</span>
-              </button>
+                {/* Right Arrow */}
+                <button
+                  onClick={() => scrollEvents('right')}
+                  aria-label="Scroll right"
+                  className="absolute -right-4 top-[42%] -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[color:var(--color-surface-container)]/95 backdrop-blur-md border border-[color:var(--color-outline-variant)]/40 flex items-center justify-center shadow-xl hover:scale-110 transition-all opacity-0 group-hover:opacity-100 text-[color:var(--color-on-surface)]"
+                >
+                  <span className="material-symbols-outlined text-[20px]">chevron_right</span>
+                </button>
 
-              <div
-                ref={eventsScrollRef}
-                className="flex gap-4 overflow-x-auto pb-4 pt-1 custom-scrollbar scroll-smooth snap-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-              >
-                {sec.items.map((item: any) => (
-                  <Link
-                    key={item.id}
-                    href={item.link}
-                    className="w-[380px] shrink-0 snap-start group flex flex-col self-stretch"
-                  >
-                    <div className="bg-[color:var(--color-surface-container)] rounded-2xl overflow-hidden border border-[color:var(--color-outline-variant)]/20 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full">
-                      {/* Image Section */}
-                      <div className="relative h-[200px] w-full shrink-0 overflow-hidden">
-                        <img
-                          src={item.image}
-                          alt={item.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                        <WishlistButton item={item} />
-                        <CartAddButton item={item} />
-                        {/* Badge */}
-                        {item.badge && (
-                          <div className={`absolute top-2 left-2 ${item.badgeBg} text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10 shadow-sm flex items-center gap-1`}>
-                            <span className="material-symbols-outlined text-[10px]">sell</span>
-                            {item.badge}
-                          </div>
-                        )}
-                      </div>
+                <div
+                  ref={eventsScrollRef}
+                  className="flex gap-4.5 overflow-x-auto pb-4 pt-1 custom-scrollbar scroll-smooth snap-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-1"
+                >
+                  {sec.items.map((item: any) => (
+                    <Link
+                      key={item.id}
+                      href={item.link}
+                      className="w-[300px] sm:w-[320px] shrink-0 snap-start group flex flex-col"
+                    >
+                      <div className="relative bg-[color:var(--color-surface-container-high)]/60 rounded-[24px] overflow-hidden border border-[color:var(--color-outline-variant)]/30 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_16px_36px_rgba(0,0,0,0.12)] hover:border-[color:var(--color-primary)]/40 transition-all duration-500 flex flex-col h-[350px] hover:-translate-y-1.5">
+                        {/* Image Section */}
+                        <div className="relative h-[190px] w-full shrink-0 overflow-hidden bg-slate-800">
+                          <img
+                            src={item.image}
+                            alt={item.title}
+                            loading="lazy"
+                            onError={(e: any) => {
+                              e.currentTarget.src = 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop&q=80';
+                            }}
+                            className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/25 pointer-events-none" />
+                          <WishlistButton item={item} />
+                          
+                          {/* Badge */}
+                          {item.badge && (
+                            <div className="absolute bottom-3 left-3 z-10">
+                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md shadow-md border border-white/25 flex items-center gap-1 ${item.badgeBg}`}>
+                                {item.badge}
+                              </span>
+                            </div>
+                          )}
 
-                      {/* Content Section */}
-                      <div className="p-3 flex-1 flex flex-col">
-                        <div className="flex items-start justify-between mb-1">
-                          <h3 className="font-bold text-sm text-[color:var(--color-on-surface)] truncate pr-2">
-                            {item.title}
-                          </h3>
-                          <div className="flex text-yellow-500 shrink-0">
-                            {[...Array(item.stars || 4)].map((_, i) => (
-                              <Star key={i} className="w-3 h-3 fill-current" />
-                            ))}
+                          {/* Floating Price Pill */}
+                          <div className="absolute bottom-3 right-3 z-10 flex items-baseline gap-1.5 px-3 py-1 rounded-xl backdrop-blur-md bg-black/80 border border-white/25 text-white shadow-lg">
+                            <span className="text-[13px] font-black tracking-tight">{item.price}</span>
                           </div>
                         </div>
 
-                        <p className="text-[11px] text-[color:var(--color-outline)] mb-3">{item.location}</p>
+                        {/* Content Section */}
+                        <div className="p-4 flex-1 flex flex-col justify-between bg-[color:var(--color-surface-container)]">
+                          <div>
+                            <div className="flex items-start justify-between gap-2">
+                              <h3 className="font-extrabold text-[14px] leading-snug text-[color:var(--color-on-surface)] line-clamp-1 group-hover:text-[color:var(--color-primary)] transition-colors">
+                                {item.title}
+                              </h3>
+                              <div className="flex text-amber-400 shrink-0">
+                                {[...Array(item.stars || 4)].map((_, i) => (
+                                  <Star key={i} className="w-3 h-3 fill-current" />
+                                ))}
+                              </div>
+                            </div>
 
-                        <div className="flex items-end justify-between mt-auto">
-                          <div className="flex items-center gap-1.5">
-                            <div className="bg-[#20274d] text-white text-[11px] font-bold px-1.5 py-0.5 rounded shadow-sm">
-                              {item.ratingScore}
-                            </div>
-                            <div className="text-[10px] text-[color:var(--color-on-surface)]">
-                              <span className="font-bold">{item.ratingText}</span>
-                              <span className="text-[color:var(--color-outline)] mx-1">•</span>
-                              <span className="text-[color:var(--color-outline)]">{item.usersCount}</span>
-                            </div>
+                            <p className="text-[11px] text-[color:var(--color-outline)] mt-1.5 flex items-center gap-1 font-medium truncate">
+                              <span className="material-symbols-outlined text-[13px] text-[color:var(--color-primary)] shrink-0">location_on</span>
+                              <span className="truncate">{item.location}</span>
+                            </p>
                           </div>
 
-                          <div className="text-right">
-                            <div className="text-sm font-extrabold text-[color:var(--color-on-surface)]">
-                              {item.price}
+                          <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-[color:var(--color-outline-variant)]/25">
+                            <div className="flex items-center gap-1.5 bg-amber-500/10 dark:bg-amber-500/15 px-2.5 py-1 rounded-full border border-amber-500/20">
+                              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                              <span className="text-[11px] font-black text-amber-600 dark:text-amber-400">
+                                {item.ratingScore}
+                              </span>
+                              <span className="text-[10px] text-[color:var(--color-outline)] font-medium">
+                                ({item.usersCount})
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-[color:var(--color-primary)]/10 text-[color:var(--color-primary)] group-hover:bg-[color:var(--color-primary)] group-hover:text-white transition-all duration-300 font-bold text-[11px] shadow-sm">
+                              <span>Book Slot</span>
+                              <span className="material-symbols-outlined text-[13px] group-hover:translate-x-0.5 transition-transform">
+                                arrow_forward
+                              </span>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
           </section>

@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Map, Clock, CheckCircle2, ChevronRight, ChevronLeft, Info, ShieldCheck, Search, Users, Utensils, X } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useLocationStore } from '@/lib/store';
+import { useLocationStore, useBookingFlowStore } from '@/lib/store';
 
 const CATEGORY_NAMES: Record<string, string> = {
   // Travel & Transport
@@ -35,6 +35,7 @@ export default function VenueProfilePage() {
   const category = params?.category as string;
   const merchantId = params?.merchantId as string;
   const { city } = useLocationStore();
+  const { setSelectedService } = useBookingFlowStore();
 
   const [liveServices, setLiveServices] = useState<any[]>([]);
   const [merchantData, setMerchantData] = useState<any>(null);
@@ -272,12 +273,33 @@ export default function VenueProfilePage() {
 
                       <button
                         onClick={() => {
-                          if (firstService?.id) router.push(`/service/${firstService.id}`);
-                          else setIsModalOpen(true);
+                          const targetService = firstService || liveServices[0];
+                          if (targetService?.id) {
+                            setSelectedService({
+                              ...targetService,
+                              price: startingPrice,
+                              metadata: {
+                                ...(targetService.metadata || {}),
+                                hotelBooking: true,
+                                roomType: targetService.name || 'AC Room',
+                                venueName: venueName,
+                                address: address
+                              }
+                            });
+                            router.push(`/service/${targetService.id}`);
+                          } else {
+                            const roomsSection = document.getElementById('available-rooms-section');
+                            if (roomsSection) {
+                              roomsSection.scrollIntoView({ behavior: 'smooth' });
+                            } else {
+                              setIsModalOpen(true);
+                            }
+                          }
                         }}
-                        className="w-full mt-2.5 py-3 bg-[#006ce4] hover:bg-[#0057b8] active:scale-[0.98] text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-lg shadow-blue-600/25 transition-all cursor-pointer flex items-center justify-center gap-2"
+                        className="w-full mt-2.5 py-3 bg-gradient-to-r from-[#006ce4] to-[#0057b8] hover:brightness-110 active:scale-[0.98] text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-lg shadow-blue-600/30 transition-all cursor-pointer flex items-center justify-center gap-2 group"
                       >
                         <span>BOOK THIS NOW</span>
+                        <span className="material-symbols-outlined text-[15px] group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
                       </button>
                     </div>
                   </div>
@@ -464,10 +486,24 @@ export default function VenueProfilePage() {
                         </div>
 
                         <button
-                          onClick={() => router.push(`/service/${svc.id}`)}
-                          className="px-6 py-2.5 bg-gradient-to-r from-[#ff6325] to-[#e04e13] hover:brightness-110 active:scale-95 text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-md shadow-orange-500/25 transition-all shrink-0 cursor-pointer"
+                          onClick={() => {
+                            setSelectedService({
+                              ...svc,
+                              price: startingPrice || 1500,
+                              metadata: {
+                                ...(svc.metadata || {}),
+                                hotelBooking: true,
+                                roomType: svc.name,
+                                venueName: venueName,
+                                address: address
+                              }
+                            });
+                            router.push(`/service/${svc.id}`);
+                          }}
+                          className="px-6 py-2.5 bg-gradient-to-r from-[#ff6325] to-[#e04e13] hover:brightness-110 active:scale-95 text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-md shadow-orange-500/25 transition-all shrink-0 cursor-pointer flex items-center gap-1.5"
                         >
-                          Reserve Room &rarr;
+                          <span>Reserve Room</span>
+                          <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
                         </button>
                       </div>
                     </div>

@@ -318,60 +318,55 @@ export function TopNav({
             <div className="relative hidden lg:inline-block">
               <button
                 onClick={() => setIsLocationModalOpen(true)}
-                className="custom-nav-btn px-4 h-8 shadow-md duration-200"
+                className="custom-nav-btn pl-2.5 pr-3 h-8 shadow-md duration-200 flex items-center gap-2 hover:border-[#ff6325]/40"
               >
-                <MapPin size={14} className={status === 'detecting' ? 'animate-bounce' : ''} />
-                <span className="!text-white">{mounted ? (city || 'Select Location') : 'Chennai'}</span>
-                <span className="material-symbols-outlined text-[16px] !text-white transition-transform duration-200" style={{ transform: isLocationModalOpen ? 'rotate(180deg)' : 'none' }}>keyboard_arrow_down</span>
+                <div className="relative flex items-center justify-center">
+                  <MapPin size={13} className={`text-[#ff6325] ${status === 'detecting' ? 'animate-bounce' : ''}`} />
+                  <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-[#ff6325] rounded-full animate-ping" />
+                </div>
+                <span className="!text-white text-[12px] font-black">{mounted ? (city || 'Select Location') : 'Chennai'}</span>
+                <span className="material-symbols-outlined text-[15px] !text-white/80 transition-transform duration-200" style={{ transform: isLocationModalOpen ? 'rotate(180deg)' : 'none' }}>keyboard_arrow_down</span>
               </button>
             </div>
 
           </div>
 
-          {/* Center Column: Floating Navigation Menu */}
+          {/* Center Column: Floating Luxury Segmented Dock */}
           <div className="hidden lg:flex flex-none justify-center">
-            <nav className="custom-nav-capsule shadow-lg relative">
+            <nav className="custom-nav-capsule shadow-lg relative flex items-center p-1">
               <Link
                 href="/"
-                className={`w-20 text-center py-1 text-[13px] font-extrabold tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${pathname === '/'
+                className={`flex items-center justify-center gap-1.5 px-4 py-1.5 text-[12px] font-black tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${pathname === '/'
                     ? 'custom-nav-link-active'
                     : 'custom-nav-link-inactive'
                   }`}
               >
                 {pathname === '/' && (
                   <div
-                    className="absolute inset-0 rounded-full bg-[color:var(--color-primary)]/20 border border-[color:var(--color-primary)]/45 shadow-[0_0_12px_rgba(255,215,0,0.15)] backdrop-blur-md -z-10 custom-nav-active-bg"
+                    className="absolute inset-0 rounded-full custom-nav-active-bg -z-10"
                   />
                 )}
-                Home
+                <span className="material-symbols-outlined text-[15px]">home</span>
+                <span>Home</span>
               </Link>
-              <Link
-                href="/categories"
-                className={`w-28 text-center py-1 text-[13px] font-extrabold tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${pathname === '/categories'
-                    ? 'custom-nav-link-active'
-                    : 'custom-nav-link-inactive'
-                  }`}
-              >
-                {pathname === '/categories' && (
-                  <div
-                    className="absolute inset-0 rounded-full bg-[color:var(--color-primary)]/20 border border-[color:var(--color-primary)]/45 shadow-[0_0_12px_rgba(255,215,0,0.15)] backdrop-blur-md -z-10 custom-nav-active-bg"
-                  />
-                )}
-                Categories
-              </Link>
+
               <Link
                 href="/tracks"
-                className={`w-24 text-center py-1 text-[13px] font-extrabold tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${pathname === '/tracks'
+                className={`flex items-center justify-center gap-1.5 px-4 py-1.5 text-[12px] font-black tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${pathname === '/tracks'
                     ? 'custom-nav-link-active'
                     : 'custom-nav-link-inactive'
                   }`}
               >
                 {pathname === '/tracks' && (
                   <div
-                    className="absolute inset-0 rounded-full bg-[color:var(--color-primary)]/20 border border-[color:var(--color-primary)]/45 shadow-[0_0_12px_rgba(255,215,0,0.15)] backdrop-blur-md -z-10 custom-nav-active-bg"
+                    className="absolute inset-0 rounded-full custom-nav-active-bg -z-10"
                   />
                 )}
-                Tracks
+                <span className="material-symbols-outlined text-[15px]">receipt_long</span>
+                <span>My Bookings</span>
+                {Array.isArray(bookings) && bookings.length > 0 && (
+                  <span className="h-2 w-2 rounded-full bg-[#ff6325] animate-pulse" />
+                )}
               </Link>
             </nav>
           </div>
@@ -498,12 +493,12 @@ export function TopNav({
               <div className="hidden lg:flex items-center gap-2 relative" ref={profileRef}>
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
-                  className="custom-nav-btn pl-1.5 pr-3 h-8 rounded-full flex items-center gap-2 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                  className="group custom-nav-btn pl-1.5 pr-3 h-8.5 rounded-full flex items-center gap-2 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border border-white/15 bg-white/5 hover:bg-white/10 hover:border-[#ff6325]/40"
                   aria-label="Toggle profile menu"
                   title="Profile Settings"
                 >
-                  {/* Solid circle with user photo or initial on the left */}
-                  <div className="h-6 w-6 rounded-full bg-[#1557bf] text-white flex items-center justify-center shrink-0 shadow-sm overflow-hidden text-[11px] font-bold profile-avatar-circle">
+                  {/* Sleek User Avatar */}
+                  <div className="h-6 w-6 rounded-full bg-gradient-to-br from-[#ff6325] to-[#1557bf] text-white flex items-center justify-center shrink-0 shadow-sm overflow-hidden text-[11px] font-black profile-avatar-circle ring-1 ring-white/30">
                     {userPhoto ? (
                       <img src={userPhoto} alt={userName} className="h-full w-full object-cover animate-fade-in" />
                     ) : (
@@ -511,14 +506,14 @@ export function TopNav({
                     )}
                   </div>
 
-                  {/* Username in the middle */}
-                  <span className="!text-white text-[12px] font-bold tracking-wide select-none">
+                  {/* Clean Username */}
+                  <span className="!text-white text-[12px] font-bold tracking-wide select-none truncate max-w-[130px]">
                     {userName}
                   </span>
 
                   {/* Chevron pointing down/up on the right */}
                   <span
-                    className="material-symbols-outlined text-[15px] !text-white transition-transform duration-200"
+                    className="material-symbols-outlined text-[15px] !text-white/80 group-hover:!text-white transition-transform duration-200"
                     style={{ transform: profileOpen ? 'rotate(180deg)' : 'none' }}
                   >
                     keyboard_arrow_down
@@ -566,22 +561,64 @@ export function TopNav({
                       <Link
                         href="/profile"
                         onClick={() => setProfileOpen(false)}
-                        className="mt-3.5 px-5 py-2 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-[13px] font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2 transition-all shadow-sm active:scale-98"
+                        className="mt-3.5 px-5 py-2 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-[13px] font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2 transition-all shadow-sm active:scale-98 cursor-pointer"
                       >
-                        <span className="material-symbols-outlined text-[16px]">manage_accounts</span>
+                        <span className="material-symbols-outlined text-[16px] text-slate-600 dark:text-slate-300">manage_accounts</span>
                         <span>Manage your account</span>
                       </Link>
                     </div>
 
-                    {/* Action buttons */}
-                    <div className="flex flex-col gap-0.5">
+                    {/* Theme Selector (Appearance) */}
+                    <div className="border-t border-slate-200 dark:border-slate-800/80 px-2 py-3 my-2">
+                      <div className="flex items-center justify-between mb-2 px-1">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Appearance</span>
+                        <span className="text-[11px] font-extrabold capitalize text-[#ff6325]">{theme || 'System'}</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                        <button
+                          type="button"
+                          onClick={() => setTheme('light')}
+                          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            theme === 'light'
+                              ? 'bg-white text-slate-900 shadow-sm'
+                              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                          }`}
+                        >
+                          <Sun size={13} className={theme === 'light' ? 'text-amber-500' : ''} /> Light
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setTheme('dark')}
+                          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            theme === 'dark'
+                              ? 'bg-slate-900 text-white shadow-sm'
+                              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                          }`}
+                        >
+                          <Moon size={13} className={theme === 'dark' ? 'text-blue-400' : ''} /> Dark
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setTheme('system')}
+                          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            theme === 'system'
+                              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
+                              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                          }`}
+                        >
+                          <Laptop size={13} /> Auto
+                        </button>
+                      </div>
+                    </div>
 
+                    {/* Action buttons */}
+                    <div className="flex flex-col gap-0.5 border-t border-slate-200 dark:border-slate-800/80 pt-1">
                       <button
                         onClick={() => {
                           setProfileOpen(false);
                           router.push('/login');
                         }}
-                        className="w-full px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/60 flex items-center gap-3 text-[13px] font-semibold text-slate-700 dark:text-slate-300 transition-colors text-left cursor-pointer"
+                        className="w-full px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/60 flex items-center gap-3 text-[13px] font-semibold text-slate-700 dark:text-slate-200 transition-colors text-left cursor-pointer"
                       >
                         <span className="material-symbols-outlined text-[19px] text-slate-500 dark:text-slate-400">person_add</span>
                         <span>Add another account</span>
@@ -593,9 +630,9 @@ export function TopNav({
                           logout();
                           router.push('/');
                         }}
-                        className="w-full px-3 py-2.5 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-3 text-[13px] font-bold text-[#e53935] hover:text-[#d32f2f] transition-colors text-left cursor-pointer"
+                        className="w-full px-3 py-2.5 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-3 text-[13px] font-bold text-red-500 hover:text-red-600 transition-colors text-left cursor-pointer"
                       >
-                        <span className="material-symbols-outlined text-[19px] text-[#e53935]">logout</span>
+                        <span className="material-symbols-outlined text-[19px] text-red-500">logout</span>
                         <span>Sign out of this account</span>
                       </button>
                     </div>
