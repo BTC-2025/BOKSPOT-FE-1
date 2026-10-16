@@ -8,7 +8,7 @@ import {
   ArrowLeft, ChevronRight, MapPin, Star, Clock, Shield, Search, SlidersHorizontal,
   List, Map, AlertCircle, Plane, Train, Bus, Car, Compass, Sparkles, QrCode, Ticket, Grid,
   Luggage, X, RotateCw, CheckCircle2, ShieldCheck, Heart, User, Phone, Check, RefreshCw,
-  Navigation, HelpCircle, Activity, AlertTriangle
+  Navigation, HelpCircle, Activity, AlertTriangle, Bed, Calendar, Users, Plus, Minus, ChevronDown
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
@@ -1525,8 +1525,39 @@ export default function ProviderDiscoveryPage() {
   const category = params?.category as string;
   const { city, latitude, longitude } = useLocationStore();
   const [sortBy, setSortBy] = useState('distance');
-  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
+
+  const isHotelCategory = category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'camping' || bookingType === 'stay-accommodation';
+  const [hotelDestination, setHotelDestination] = useState('');
+  const [checkInDate, setCheckInDate] = useState(() => {
+    const d = new Date();
+    return d.toISOString().split('T')[0];
+  });
+  const [checkOutDate, setCheckOutDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 2);
+    return d.toISOString().split('T')[0];
+  });
+  const [guestDropdownOpen, setGuestDropdownOpen] = useState(false);
+  const [adults, setAdults] = useState(2);
+  const [children, setChildren] = useState(0);
+  const [childAges, setChildAges] = useState<number[]>([]);
+  const [rooms, setRooms] = useState(1);
+  const [pets, setPets] = useState(false);
+  const [petCount, setPetCount] = useState<number>(0);
+
+  // Autocomplete suggestions state
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
+
+  // Faceted Filters State (Sidebar / Bar)
+  const [priceRange, setPriceRange] = useState<number>(10000); // Max price ceiling
+  const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<string[]>([]);
+  const [minRating, setMinRating] = useState<number>(0);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [freeCancellationOnly, setFreeCancellationOnly] = useState<boolean>(false);
+  const [petFriendlyOnly, setPetFriendlyOnly] = useState<boolean>(false);
+
 
   const [servicesList, setServicesList] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1605,8 +1636,8 @@ export default function ProviderDiscoveryPage() {
   // Handle local sorting
   const sortedServices = [...(Array.isArray(servicesList) ? servicesList : [])].sort((a, b) => {
     if (sortBy === 'price') {
-      const priceA = parseFloat(a.basePrice) || 0;
-      const priceB = parseFloat(b.basePrice) || 0;
+      const priceA = parseFloat(a.basePrice || (a as any).price || '0') || 0;
+      const priceB = parseFloat(b.basePrice || (b as any).price || '0') || 0;
       return priceA - priceB;
     }
     if (sortBy === 'rating') {
@@ -1616,22 +1647,90 @@ export default function ProviderDiscoveryPage() {
       return (b.reviewCount || 0) - (a.reviewCount || 0);
     }
     if (sortBy === 'distance' && latitude !== null && longitude !== null) {
-      const distA = a.merchant.latitude && a.merchant.longitude ? calculateDistance(latitude, longitude, a.merchant.latitude, a.merchant.longitude) : 9999;
-      const distB = b.merchant.latitude && b.merchant.longitude ? calculateDistance(latitude, longitude, b.merchant.latitude, b.merchant.longitude) : 9999;
+      const distA = a.merchant?.latitude && a.merchant?.longitude ? calculateDistance(latitude, longitude, a.merchant.latitude, a.merchant.longitude) : 9999;
+      const distB = b.merchant?.latitude && b.merchant?.longitude ? calculateDistance(latitude, longitude, b.merchant.latitude, b.merchant.longitude) : 9999;
       return distA - distB;
     }
     return 0;
   });
 
-  // Handle local search
-  const filteredServices = sortedServices.filter(s => {
+  // Handle local search & Unified Intelligent Filtering
+  const filteredServices = sortedServices.filter((s: any) => {
+    // Price range filter
+    const itemPrice = parseFloat(s.basePrice || s.price || '0');
+    if (priceRange && itemPrice > 0 && itemPrice > priceRange) return false;
+
+    // Minimum rating filter
+    if (minRating > 0 && (s.rating || 0) < minRating) return false;
+
+    // Property Type filter
+    if (selectedPropertyTypes.length > 0) {
+      const pType = (s.category || s.metadata?.propertyType || '').toLowerCase();
+      const matchType = selectedPropertyTypes.some(t => pType.includes(t.toLowerCase()));
+      if (!matchType) return false;
+    }
+
+    // Amenities filter
+    if (selectedAmenities.length > 0) {
+      const rawMeta = JSON.stringify(s.metadata || {}).toLowerCase();
+      const rawDesc = (s.description || '').toLowerCase();
+      const hasAllAmenities = selectedAmenities.every(a => rawMeta.includes(a.toLowerCase()) || rawDesc.includes(a.toLowerCase()));
+      if (!hasAllAmenities) return false;
+    }
+
+    // Free cancellation only
+    if (freeCancellationOnly) {
+      const rawText = `${s.name} ${s.description || ''} ${JSON.stringify(s.metadata || {})} ${JSON.stringify(s.merchant?.metadata || {})}`.toLowerCase();
+      const hasFreeCancellation = rawText.includes('free cancellation') || 
+                                  rawText.includes('cancellation available') || 
+                                  rawText.includes('cancel anytime') || 
+                                  rawText.includes('24h before') ||
+                                  (s.metadata?.policies && JSON.stringify(s.metadata.policies).toLowerCase().includes('cancellation'));
+      if (!hasFreeCancellation) return false;
+    }
+
+    // Pet friendly only
+    if (petFriendlyOnly || pets || petCount > 0) {
+      const rawText = `${s.name} ${s.description || ''} ${JSON.stringify(s.metadata || {})} ${JSON.stringify(s.merchant?.metadata || {})}`.toLowerCase();
+      if (rawText.includes('no pets') || rawText.includes('pets not allowed') || rawText.includes('strictly no pets')) {
+        return false;
+      }
+      // If user explicitly activated pet friendly filter, verify positive pet allowance
+      if (petFriendlyOnly) {
+        const isPetFriendly = rawText.includes('pet friendly') || 
+                             rawText.includes('pets allowed') || 
+                             rawText.includes('pet-friendly') || 
+                             rawText.includes('pets welcome') ||
+                             rawText.includes('dog friendly');
+        if (!isPetFriendly) return false;
+      }
+    }
+
+    // Unified Intelligent Search Query
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
-    return (
-      s.name.toLowerCase().includes(query) ||
-      s.merchant.name.toLowerCase().includes(query) ||
-      (s.description && s.description.toLowerCase().includes(query))
-    );
+
+    // Check query for special keywords (e.g. "top rated", "pet", "cheap", "ac", "pool")
+    if (query.includes('top rated') || query.includes('best') || query.includes('5 star')) {
+      if ((s.rating || 0) >= 4.5) return true;
+    }
+    if (query.includes('pet') || query.includes('dog') || query.includes('cat')) {
+      const raw = `${s.name} ${s.description || ''} ${JSON.stringify(s.metadata || {})}`.toLowerCase();
+      if (!raw.includes('no pets')) return true;
+    }
+
+    // Deep match across all attributes: Name, Merchant, City, Address, Description, Amenities, Tags
+    const matchName = s.name?.toLowerCase().includes(query);
+    const matchMerchant = s.merchant?.name?.toLowerCase().includes(query);
+    const matchCity = s.city?.toLowerCase().includes(query) || s.merchant?.city?.toLowerCase().includes(query);
+    const matchAddress = s.merchant?.address?.toLowerCase().includes(query);
+    const matchDesc = s.description && s.description.toLowerCase().includes(query);
+    
+    // Check metadata / amenities / features
+    const metadataStr = JSON.stringify(s.metadata || {}).toLowerCase();
+    const matchMeta = metadataStr.includes(query);
+
+    return matchName || matchMerchant || matchCity || matchAddress || matchDesc || matchMeta;
   });
 
   if (loading && !isCustomBooking) {
@@ -1698,104 +1797,501 @@ export default function ProviderDiscoveryPage() {
           {/* Standard fallback listing for all other categories */}
           {!isCustomBooking && (
             <div className="space-y-6">
-              {/* Premium Glassmorphic Controls Bar */}
-              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-[color:var(--color-surface)]/80 backdrop-blur-xl border border-[color:var(--color-outline-variant)]/40 p-3.5 rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20">
-                <div className="relative flex items-center w-full sm:max-w-md rounded-xl border border-[color:var(--color-outline-variant)]/40 bg-[color:var(--color-surface-dim)]/70 px-3.5 py-2.5 focus-within:border-[#ff6325] focus-within:ring-2 focus-within:ring-[#ff6325]/20 transition-all shadow-inner">
-                  <Search size={16} className="text-[#ff6325]/80 mr-2.5 shrink-0" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={`Search ${categoryName} or location...`}
-                    className="w-full bg-transparent text-sm text-[color:var(--color-on-surface)] placeholder-[color:var(--color-outline)] outline-none font-medium"
-                  />
-                  {searchQuery && (
-                    <button onClick={() => setSearchQuery('')} className="text-xs text-[color:var(--color-outline)] hover:text-white transition-colors">
-                      <X size={14} />
-                    </button>
-                  )}
-                </div>
+              {/* ── UNIFIED ALL-IN-ONE SEARCH BAR & FILTER DOCK ── */}
+              <div className="rounded-2xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-container)]/80 backdrop-blur-xl p-3 shadow-xl space-y-3">
+                
+                {/* Unified Search & Discovery Bar */}
+                {isHotelCategory ? (
+                  /* ── BOKSPOT LUXURY HOTEL SEARCH BAR (#033266 Brand Palette) ── */
+                  <div className="space-y-3">
+                    <div className="bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-md p-2.5 sm:p-3 transition-all hover:shadow-lg">
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 items-center">
+                        {/* 1. Destination / Locality / Hotel Name with Autocomplete */}
+                        <div className="lg:col-span-4 relative">
+                          <div className="flex items-center rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 px-3.5 py-2.5 focus-within:border-[#033266] dark:focus-within:border-[#ff6325] focus-within:bg-white dark:focus-within:bg-slate-800 focus-within:ring-2 focus-within:ring-[#033266]/15 transition-all">
+                            <Bed size={18} className="text-[#033266] dark:text-[#ff6325] mr-2.5 shrink-0" />
+                            <div className="flex flex-col flex-1 min-w-0">
+                              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400 leading-none mb-0.5">Where are you going?</span>
+                              <input
+                                type="text"
+                                value={searchQuery}
+                                onFocus={() => setShowAutocomplete(true)}
+                                onChange={(e) => {
+                                  setSearchQuery(e.target.value);
+                                  setShowAutocomplete(true);
+                                }}
+                                placeholder="City, locality, landmark or hotel name..."
+                                className="w-full bg-transparent text-xs sm:text-sm font-semibold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none"
+                              />
+                            </div>
+                            {searchQuery && (
+                              <button 
+                                type="button"
+                                onClick={() => setSearchQuery('')} 
+                                className="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xs p-1 cursor-pointer"
+                                title="Clear search"
+                              >
+                                <X size={14} />
+                              </button>
+                            )}
+                          </div>
 
-                <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                  {/* Sort Selector */}
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[color:var(--color-surface-dim)]/70 border border-[color:var(--color-outline-variant)]/40">
-                    <SlidersHorizontal size={14} className="text-[#ff6325] shrink-0" />
-                    <select
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      className="bg-transparent text-xs font-semibold text-[color:var(--color-on-surface)] outline-none cursor-pointer"
-                    >
-                      {SORT_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value} className="bg-[color:var(--color-surface)] text-[color:var(--color-on-surface)] font-medium">
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                          {/* Autocomplete Dropdown */}
+                          {showAutocomplete && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={() => setShowAutocomplete(false)} />
+                              <div className="absolute top-full left-0 mt-1.5 w-full bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl p-2 z-50 max-h-64 overflow-y-auto">
+                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1.5">
+                                  Popular Localities & Hotels
+                                </div>
+                                {[
+                                  { label: `${city || 'Chennai'} Central`, type: 'City Hub', icon: '📍' },
+                                  { label: `${city || 'Chennai'} Airport Area`, type: 'Transit', icon: '✈️' },
+                                  { label: 'OMR - IT Corridor', type: 'Locality', icon: '🏢' },
+                                  { label: 'T. Nagar Shopping District', type: 'Commercial', icon: '🛍️' },
+                                  { label: 'ECR Beach Resorts', type: 'Leisure', icon: '🏖️' },
+                                  ...servicesList.slice(0, 4).map(s => ({
+                                    label: s.name,
+                                    type: 'Verified Property',
+                                    icon: '🏨'
+                                  }))
+                                ].map((item, idx) => (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={() => {
+                                      setSearchQuery(item.label);
+                                      setShowAutocomplete(false);
+                                    }}
+                                    className="w-full text-left flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-xs text-slate-700 dark:text-slate-200 cursor-pointer"
+                                  >
+                                    <span className="flex items-center gap-2 font-medium truncate">
+                                      <span>{item.icon}</span>
+                                      <span className="truncate">{item.label}</span>
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 shrink-0 font-semibold">{item.type}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
 
-                  {/* Segmented View Mode Control */}
-                  <div className="flex rounded-xl border border-[color:var(--color-outline-variant)]/40 p-1 bg-[color:var(--color-surface-dim)]/80 shadow-inner">
-                    <button
-                      onClick={() => setViewMode('grid')}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase cursor-pointer transition-all ${viewMode === 'grid'
-                          ? 'bg-gradient-to-r from-[#ff6325] to-[#e04e13] text-white shadow-md shadow-[#ff6325]/25 font-black'
-                          : 'text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)]'
-                        }`}
-                    >
-                      <Grid size={13} />
-                      Grid
-                    </button>
-                    <button
-                      onClick={() => setViewMode('list')}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase cursor-pointer transition-all ${viewMode === 'list'
-                          ? 'bg-gradient-to-r from-[#ff6325] to-[#e04e13] text-white shadow-md shadow-[#ff6325]/25 font-black'
-                          : 'text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)]'
-                        }`}
-                    >
-                      <List size={13} />
-                      List
-                    </button>
-                    <button
-                      onClick={() => setViewMode('map')}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase cursor-pointer transition-all ${viewMode === 'map'
-                          ? 'bg-gradient-to-r from-[#ff6325] to-[#e04e13] text-white shadow-md shadow-[#ff6325]/25 font-black'
-                          : 'text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)]'
-                        }`}
-                    >
-                      <Map size={13} />
-                      Map
-                    </button>
+                        {/* 2. Check-in & Check-out Date Picker with Night Calculation */}
+                        <div className="lg:col-span-4 flex items-center gap-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 px-3 py-2 focus-within:border-[#033266] dark:focus-within:border-[#ff6325] focus-within:bg-white dark:focus-within:bg-slate-800 focus-within:ring-2 focus-within:ring-[#033266]/15 transition-all">
+                          <Calendar size={18} className="text-[#033266] dark:text-[#ff6325] shrink-0" />
+                          <div className="flex items-center gap-2 flex-1 text-xs">
+                            <div className="flex flex-col flex-1">
+                              <span className="text-[9px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400 leading-tight">Check-in</span>
+                              <input
+                                type="date"
+                                value={checkInDate}
+                                onChange={(e) => setCheckInDate(e.target.value)}
+                                className="bg-transparent text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer p-0"
+                              />
+                            </div>
+                            <div className="px-2 py-0.5 rounded-full bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] font-black text-[10px] shrink-0 border border-transparent dark:border-[#ff6325]/20">
+                              {(() => {
+                                try {
+                                  const diff = Math.ceil((new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) / (1000 * 60 * 60 * 24));
+                                  return diff > 0 ? `${diff}N` : '1N';
+                                } catch { return '1N'; }
+                              })()}
+                            </div>
+                            <div className="flex flex-col flex-1">
+                              <span className="text-[9px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400 leading-tight">Check-out</span>
+                              <input
+                                type="date"
+                                value={checkOutDate}
+                                onChange={(e) => setCheckOutDate(e.target.value)}
+                                className="bg-transparent text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer p-0"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 3. Guests & Rooms Selector with Child Ages and Pets */}
+                        <div className="lg:col-span-3 relative">
+                          <button
+                            type="button"
+                            onClick={() => setGuestDropdownOpen(!guestDropdownOpen)}
+                            className="w-full flex items-center justify-between rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 px-3.5 py-2 hover:border-[#033266] dark:hover:border-[#ff6325] hover:bg-white dark:hover:bg-slate-800 transition-all text-left"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Users size={18} className="text-[#033266] dark:text-[#ff6325] shrink-0" />
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400 leading-none mb-0.5">Guests & Rooms</span>
+                                <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
+                                  {adults + children} Guests • {rooms} Room{rooms > 1 ? 's' : ''}{pets || petCount > 0 ? ' • 🐾' : ''}
+                                </span>
+                              </div>
+                            </div>
+                            <ChevronDown size={14} className={`text-slate-400 transition-transform ${guestDropdownOpen ? 'rotate-180' : ''}`} />
+                          </button>
+
+                          {/* Guests Popover */}
+                          {guestDropdownOpen && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={() => setGuestDropdownOpen(false)} />
+                              <div className="absolute top-full right-0 mt-2 w-80 rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/15 shadow-2xl p-4 z-50 space-y-3.5">
+                                {/* Adults */}
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="text-xs font-bold text-slate-900 dark:text-white">Adults</p>
+                                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Ages 18 or above</p>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      disabled={adults <= 1}
+                                      onClick={() => setAdults(Math.max(1, adults - 1))}
+                                      className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs font-bold disabled:opacity-30 hover:border-[#033266] dark:hover:border-[#ff6325] cursor-pointer"
+                                    >
+                                      <Minus size={12} />
+                                    </button>
+                                    <span className="w-5 text-center text-xs font-bold text-slate-900 dark:text-white">{adults}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => setAdults(adults + 1)}
+                                      className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs font-bold hover:border-[#033266] dark:hover:border-[#ff6325] cursor-pointer"
+                                    >
+                                      <Plus size={12} />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Children */}
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="text-xs font-bold text-slate-900 dark:text-white">Children</p>
+                                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Ages 0 to 17</p>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      disabled={children <= 0}
+                                      onClick={() => {
+                                        const newCount = Math.max(0, children - 1);
+                                        setChildren(newCount);
+                                        setChildAges(prev => prev.slice(0, newCount));
+                                      }}
+                                      className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs font-bold disabled:opacity-30 hover:border-[#033266] dark:hover:border-[#ff6325] cursor-pointer"
+                                    >
+                                      <Minus size={12} />
+                                    </button>
+                                    <span className="w-5 text-center text-xs font-bold text-slate-900 dark:text-white">{children}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const newCount = children + 1;
+                                        setChildren(newCount);
+                                        setChildAges(prev => [...prev, 5]); // default age 5
+                                      }}
+                                      className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs font-bold hover:border-[#033266] dark:hover:border-[#ff6325] cursor-pointer"
+                                    >
+                                      <Plus size={12} />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Child Age Selectors */}
+                                {children > 0 && (
+                                  <div className="pt-2 border-t border-slate-100 dark:border-white/10 space-y-2">
+                                    <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                      Age of child at check-out
+                                    </p>
+                                    <div className="grid grid-cols-2 gap-2">
+                                      {Array.from({ length: children }).map((_, cIdx) => (
+                                        <div key={cIdx} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-xs">
+                                          <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">Child {cIdx + 1}</span>
+                                          <select
+                                            value={childAges[cIdx] || 5}
+                                            onChange={(e) => {
+                                              const newAges = [...childAges];
+                                              newAges[cIdx] = Number(e.target.value);
+                                              setChildAges(newAges);
+                                            }}
+                                            className="bg-transparent font-bold text-[#033266] dark:text-[#ff6325] outline-none cursor-pointer"
+                                          >
+                                            {Array.from({ length: 18 }, (_, a) => (
+                                              <option key={a} value={a} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">{a} yrs</option>
+                                            ))}
+                                          </select>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Rooms */}
+                                <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/10">
+                                  <div>
+                                    <p className="text-xs font-bold text-slate-900 dark:text-white">Rooms</p>
+                                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Total room units</p>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      disabled={rooms <= 1}
+                                      onClick={() => setRooms(Math.max(1, rooms - 1))}
+                                      className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs font-bold disabled:opacity-30 hover:border-[#033266] dark:hover:border-[#ff6325] cursor-pointer"
+                                    >
+                                      <Minus size={12} />
+                                    </button>
+                                    <span className="w-5 text-center text-xs font-bold text-slate-900 dark:text-white">{rooms}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => setRooms(rooms + 1)}
+                                      className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs font-bold hover:border-[#033266] dark:hover:border-[#ff6325] cursor-pointer"
+                                    >
+                                      <Plus size={12} />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Pet Friendly Toggle & Count */}
+                                <div className="pt-2 border-t border-slate-100 dark:border-white/10 space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <p className="text-xs font-bold text-slate-900 dark:text-white">Traveling with Pets?</p>
+                                      <p className="text-[10px] text-slate-500 dark:text-slate-400">Service animals & friendly stays</p>
+                                    </div>
+                                    <input
+                                      type="checkbox"
+                                      checked={pets || petCount > 0}
+                                      onChange={(e) => {
+                                        setPets(e.target.checked);
+                                        setPetCount(e.target.checked ? 1 : 0);
+                                      }}
+                                      className="w-4 h-4 rounded text-[#033266] dark:text-[#ff6325] accent-[#033266] dark:accent-[#ff6325] cursor-pointer"
+                                    />
+                                  </div>
+
+                                  {(pets || petCount > 0) && (
+                                    <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-xs">
+                                      <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">Number of pets</span>
+                                      <div className="flex items-center gap-2">
+                                        <button
+                                          type="button"
+                                          disabled={petCount <= 1}
+                                          onClick={() => setPetCount(Math.max(1, petCount - 1))}
+                                          className="w-5 h-5 rounded border border-slate-300 dark:border-white/10 text-slate-800 dark:text-white flex items-center justify-center text-xs"
+                                        >
+                                          -
+                                        </button>
+                                        <span className="font-bold text-xs text-slate-900 dark:text-white">{petCount}</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => setPetCount(petCount + 1)}
+                                          className="w-5 h-5 rounded border border-slate-300 dark:border-white/10 text-slate-800 dark:text-white flex items-center justify-center text-xs"
+                                        >
+                                          +
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => setGuestDropdownOpen(false)}
+                                  className="w-full py-2 bg-[#033266] dark:bg-[#ff6325] text-white rounded-xl text-xs font-bold hover:brightness-110 transition-colors cursor-pointer shadow-sm"
+                                >
+                                  Done
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* 4. Prominent Search Hotels CTA Button */}
+                        <div className="lg:col-span-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // Triggers filtering & smooth scroll to results
+                              const el = document.getElementById('hotel-results-anchor');
+                              el?.scrollIntoView({ behavior: 'smooth' });
+                            }}
+                            className="w-full py-3.5 bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] active:scale-95 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-1 cursor-pointer"
+                            title="Search Available Hotels"
+                          >
+                            <Search size={15} />
+                            <span className="hidden lg:inline">Search</span>
+                            <span className="lg:hidden">Search Hotels</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ── FACETED FILTER BAR (Brand Color #033266 / Dark Mode Adaptive) ── */}
+                    <div className="bg-white dark:bg-[#0f172a] rounded-xl border border-slate-200/80 dark:border-white/10 p-3 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mr-1 flex items-center gap-1">
+                          <SlidersHorizontal size={12} className="text-[#033266] dark:text-[#ff6325]" /> Filters:
+                        </span>
+
+                        {/* Price Filter Pill */}
+                        <div className="relative group">
+                          <select
+                            value={priceRange}
+                            onChange={(e) => setPriceRange(Number(e.target.value))}
+                            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 hover:border-[#033266] dark:hover:border-[#ff6325] outline-none cursor-pointer"
+                          >
+                            <option value={10000} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">All Prices</option>
+                            <option value={2000} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Under ₹2,000</option>
+                            <option value={3500} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Under ₹3,500</option>
+                            <option value={5000} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Under ₹5,000</option>
+                            <option value={7500} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Under ₹7,500</option>
+                          </select>
+                        </div>
+
+                        {/* Star Rating Filter */}
+                        <select
+                          value={minRating}
+                          onChange={(e) => setMinRating(Number(e.target.value))}
+                          className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 hover:border-[#033266] dark:hover:border-[#ff6325] outline-none cursor-pointer"
+                        >
+                          <option value={0} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">All Ratings</option>
+                          <option value={4.0} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">★ 4.0 &amp; Above</option>
+                          <option value={4.5} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">★ 4.5+ (Top Rated)</option>
+                          <option value={4.8} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">★ 4.8+ (Luxury)</option>
+                        </select>
+
+                        {/* Free Cancellation Toggle */}
+                        <button
+                          type="button"
+                          onClick={() => setFreeCancellationOnly(!freeCancellationOnly)}
+                          className={`px-3 py-1.5 rounded-lg border font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                            freeCancellationOnly
+                              ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-[#033266] dark:border-[#ff6325] shadow-xs'
+                              : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:border-[#033266] dark:hover:border-[#ff6325]'
+                          }`}
+                        >
+                          <span>Free Cancellation</span>
+                        </button>
+
+                        {/* Pet Friendly Quick Filter */}
+                        <button
+                          type="button"
+                          onClick={() => setPetFriendlyOnly(!petFriendlyOnly)}
+                          className={`px-3 py-1.5 rounded-lg border font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                            petFriendlyOnly || pets
+                              ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-[#033266] dark:border-[#ff6325] shadow-xs'
+                              : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:border-[#033266] dark:hover:border-[#ff6325]'
+                          }`}
+                        >
+                          <span>🐾 Pet Friendly</span>
+                        </button>
+
+                        {(priceRange < 10000 || minRating > 0 || freeCancellationOnly || petFriendlyOnly) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPriceRange(10000);
+                              setMinRating(0);
+                              setFreeCancellationOnly(false);
+                              setPetFriendlyOnly(false);
+                            }}
+                            className="text-xs text-red-500 font-bold hover:underline px-2 py-1"
+                          >
+                            Reset
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Right Sort Controls */}
+                      <div className="flex items-center gap-2 ml-auto">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sort:</span>
+                        <select
+                          value={sortBy}
+                          onChange={(e) => setSortBy(e.target.value)}
+                          className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-800 dark:text-white outline-none cursor-pointer hover:border-[#033266] dark:hover:border-[#ff6325]"
+                        >
+                          <option value="distance" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Recommended / Distance</option>
+                          <option value="price" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Price: Low to High</option>
+                          <option value="rating" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Guest Rating: High to Low</option>
+                          <option value="reviews" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Most Reviewed</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  /* ── STANDARD SINGLE SEARCH INPUT ROW (Other Categories) ── */
+                  <div className="flex flex-col sm:flex-row gap-2.5 items-center justify-between">
+                    <div className="relative flex-1 w-full flex items-center rounded-xl border border-[color:var(--color-outline-variant)]/40 bg-[color:var(--color-surface)] px-3.5 py-2.5 focus-within:border-[#0a3161] dark:focus-within:border-[#ff6325] focus-within:ring-2 focus-within:ring-[#0a3161]/15 dark:focus-within:ring-[#ff6325]/15 transition-all shadow-xs">
+                      <Search size={16} className="text-[#0a3161] dark:text-[#ff6325] mr-2.5 shrink-0" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder={`Search ${categoryName} by name, area, or service...`}
+                        className="w-full bg-transparent text-xs sm:text-sm font-medium text-[color:var(--color-on-surface)] placeholder-[color:var(--color-outline)] outline-none"
+                      />
+                      {searchQuery && (
+                        <button 
+                          onClick={() => setSearchQuery('')} 
+                          className="text-[color:var(--color-outline)] hover:text-[color:var(--color-on-surface)] text-xs p-1 cursor-pointer"
+                          title="Clear search"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end shrink-0">
+                      {/* Sort Selector */}
+                      <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[color:var(--color-surface)] border border-[color:var(--color-outline-variant)]/30">
+                        <SlidersHorizontal size={13} className="text-[#0a3161] dark:text-[#ff6325] shrink-0" />
+                        <select
+                          value={sortBy}
+                          onChange={(e) => setSortBy(e.target.value)}
+                          className="bg-transparent text-xs font-bold text-[color:var(--color-on-surface)] outline-none cursor-pointer"
+                        >
+                          {SORT_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value} className="bg-[color:var(--color-surface)] text-[color:var(--color-on-surface)] font-medium">
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Toggle for Grid / List */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setViewMode(viewMode === 'grid' ? 'list' : 'grid');
+                        }}
+                        className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface)] hover:border-[#0a3161] dark:hover:border-[#ff6325] text-xs font-extrabold text-[color:var(--color-on-surface)] transition-all cursor-pointer shadow-xs active:scale-95"
+                        title="Click to toggle view (Grid / List)"
+                      >
+                        {viewMode === 'grid' ? (
+                          <>
+                            <Grid size={14} className="text-[#0a3161] dark:text-[#ff6325]" />
+                            <span className="capitalize">Grid</span>
+                          </>
+                        ) : (
+                          <>
+                            <List size={14} className="text-[#0a3161] dark:text-[#ff6325]" />
+                            <span className="capitalize">List</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
               </div>
 
-              {viewMode === 'map' ? (
-                <div className="h-[520px] w-full rounded-3xl overflow-hidden border border-[color:var(--color-outline-variant)]/40 relative shadow-2xl">
-                  <MapComponent
-                    center={[latitude || 13.0827, longitude || 80.2707]}
-                    zoom={13}
-                    markers={filteredServices.map(svc => ({
-                      id: svc.id,
-                      name: svc.name,
-                      merchant: svc.merchant.name,
-                      lat: svc.merchant.latitude || (latitude || 13.0827),
-                      lng: svc.merchant.longitude || (longitude || 80.2707),
-                      emoji: '📍',
-                      category: categoryName,
-                      price: `₹${svc.basePrice}`,
-                      rating: svc.rating,
-                      linkUrl: `/service/${svc.id}`
-                    }))}
-                  />
-                </div>
-              ) : filteredServices.length === 0 ? (
-                <div className="col-span-full py-20 px-6 rounded-3xl border border-dashed border-[color:var(--color-outline-variant)]/60 bg-[color:var(--color-surface)]/60 backdrop-blur-md flex flex-col items-center justify-center text-center shadow-lg">
-                  <div className="h-16 w-16 bg-amber-400/10 border border-amber-400/20 rounded-2xl flex items-center justify-center mb-4 text-amber-400 shadow-inner">
+              <div id="hotel-results-anchor" className="scroll-mt-6">
+              {filteredServices.length === 0 ? (
+                <div className="col-span-full py-20 px-6 rounded-3xl border border-dashed border-slate-200 bg-white flex flex-col items-center justify-center text-center shadow-xs">
+                  <div className="h-16 w-16 bg-[#033266]/10 border border-[#033266]/20 rounded-2xl flex items-center justify-center mb-4 text-[#033266] shadow-inner">
                     <Search size={30} />
                   </div>
-                  <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">No {categoryName} found</h3>
-                  <p className="text-sm text-[var(--text-secondary)] max-w-md mx-auto leading-relaxed">
-                    There are no services available matching your criteria in {city} right now. Please explore other categories or check back soon.
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">No {categoryName} found</h3>
+                  <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+                    There are no services available matching your criteria in {city} right now. Please explore other categories or adjust your filters.
                   </p>
                 </div>
               ) : (
@@ -1846,7 +2342,13 @@ export default function ProviderDiscoveryPage() {
                         transition={{ delay: Math.min(i * 0.05, 0.4) }}
                         className="h-full"
                       >
-                        <Link href={`/${bookingType}/${category}/${m.id || m.slug || 'merchant'}`} className="block h-full">
+                        <Link 
+                          href={isHotelCategory 
+                            ? `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?checkIn=${checkInDate}&checkOut=${checkOutDate}&adults=${adults}&children=${children}&childAges=${encodeURIComponent(JSON.stringify(childAges))}&rooms=${rooms}&pets=${pets}&petCount=${petCount}` 
+                            : `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}`
+                          } 
+                          className="block h-full"
+                        >
                           <div className={`group relative flex flex-col h-full bg-[color:var(--color-surface)] rounded-3xl overflow-hidden border border-[color:var(--color-outline-variant)]/30 hover:border-[#ff6325]/50 hover:shadow-2xl hover:shadow-[#ff6325]/10 transition-all duration-300 cursor-pointer ${viewMode === 'list' ? 'sm:flex-row' : ''}`}>
                             {/* Image Header with Hover Zoom */}
                             <div className={`relative overflow-hidden bg-[color:var(--color-surface-dim)] shrink-0 ${viewMode === 'list' ? 'sm:w-80 h-52 sm:h-auto' : 'h-52 w-full'}`}>
@@ -1919,6 +2421,21 @@ export default function ProviderDiscoveryPage() {
                                   })}
                                 </div>
                               )}
+
+                              {/* Action Footer for Hotels */}
+                              {isHotelCategory && (
+                                <div className="mt-3 pt-3 border-t border-[color:var(--color-outline-variant)]/20 flex items-center justify-between">
+                                  <div>
+                                    <span className="text-[10px] text-[color:var(--color-outline)] font-bold uppercase tracking-wider block leading-tight">Starting from</span>
+                                    <span className="text-base font-black text-[#ff6325]">₹{group.minPrice || '2,499'}</span>
+                                    <span className="text-[10px] text-[color:var(--color-on-surface-variant)] font-medium"> / night</span>
+                                  </div>
+                                  <span className="px-3 py-1.5 rounded-xl bg-[#0a3161] dark:bg-[#ff6325] text-white text-xs font-bold group-hover:brightness-110 flex items-center gap-1 shadow-xs transition-all">
+                                    <span>View Rooms</span>
+                                    <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </Link>
@@ -1927,6 +2444,7 @@ export default function ProviderDiscoveryPage() {
                   })}
                 </div>
               )}
+              </div>
             </div>
           )}
         </div>

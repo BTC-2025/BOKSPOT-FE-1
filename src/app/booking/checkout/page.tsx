@@ -100,6 +100,8 @@ export default function CheckoutPage() {
       let ref = 'BK-';
       for (let i = 0; i < 6; i++) ref += chars.charAt(Math.floor(Math.random() * chars.length));
 
+      const bookingTime = selectedSlot.time || selectedSlot.timeStr || (selectedService.metadata?.hotelBooking?.stayMode === 'TRANSIT' ? selectedService.metadata.hotelBooking.transitSlot : 'Standard Check-in: 12:00 PM') || '12:00 PM';
+
       const newBooking = {
         id: String(Date.now()),
         ref,
@@ -109,7 +111,7 @@ export default function CheckoutPage() {
         merchantId: selectedService.merchantObj?.id || selectedService.merchantId || (typeof selectedService.merchant === 'string' ? selectedService.merchant : selectedService.merchant?.id) || '',
         category: selectedService.category?.name || selectedService.category || 'Default',
         date: selectedSlot.date,
-        time: selectedSlot.time,
+        time: bookingTime,
         amount: total,
         status: 'PENDING' as const,
         city: selectedService.city,
@@ -284,8 +286,10 @@ export default function CheckoutPage() {
                   <p className="text-sm font-extrabold text-gray-900 leading-tight">{formatDate(selectedSlot.date)}</p>
                 </div>
                 <div className="bg-[color:var(--color-primary)]/5 rounded-xl p-3 border border-[color:var(--color-primary)]/20">
-                  <p className="text-[10px] font-black text-[color:var(--color-primary)] uppercase tracking-wider mb-1">Time Slot</p>
-                  <p className="text-sm font-extrabold text-gray-900">{selectedSlot.time}</p>
+                  <p className="text-[10px] font-black text-[color:var(--color-primary)] uppercase tracking-wider mb-1">Time Slot / Check-in</p>
+                  <p className="text-sm font-extrabold text-gray-900">
+                    {selectedSlot.time || selectedSlot.timeStr || (selectedService?.metadata?.hotelBooking?.stayMode === 'TRANSIT' ? selectedService.metadata.hotelBooking.transitSlot : 'Check-in: 12:00 PM')}
+                  </p>
                 </div>
               </div>
             </div>

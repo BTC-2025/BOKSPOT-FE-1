@@ -385,185 +385,236 @@ export default function CategoriesPage() {
     };
   }).filter(group => group.subcategories.length > 0);
 
+  // Collect items strictly based on activeGroup or query
+  const allFilteredItems = visibleGroups.flatMap(group => 
+    group.subcategories.flatMap(sub => 
+      sub.items.map((it: any) => ({
+        ...it,
+        groupTitle: group.title,
+        groupIcon: group.icon,
+        subCategoryName: sub.name,
+      }))
+    )
+  );
+
+  // Bento Primary Highlights - ALL 9 Categories + "All" option
+  const BENTO_CATEGORIES = [
+    { title: 'All Services', tag: 'ALL', icon: 'apps', emoji: '✨', desc: 'Browse entire directory', border: 'hover:border-[#ff6325]/50', badge: `${allFilteredItems.length} Total` },
+    { title: 'Travel & Cabs', tag: 'Travel', icon: 'directions_car', emoji: '🚕', desc: 'Rides, flights & buses', border: 'hover:border-sky-500/50', badge: '10 Services' },
+    { title: 'Stay & Hotels', tag: 'Stay & Accomodation', icon: 'hotel', emoji: '🏨', desc: 'Resorts, villas & homestays', border: 'hover:border-amber-500/50', badge: '5 Types' },
+    { title: 'Sports & Turfs', tag: 'Sports', icon: 'sports_soccer', emoji: '⚽', desc: 'Football, cricket & courts', border: 'hover:border-emerald-500/50', badge: '7 Arenas' },
+    { title: 'Entertainment', tag: 'Entertainment', icon: 'movie', emoji: '🎬', desc: 'Cinema, concerts & events', border: 'hover:border-fuchsia-500/50', badge: '7 Shows' },
+    { title: 'Lifestyle & Spa', tag: 'Lifestyle Services', icon: 'spa', emoji: '💇', desc: 'Dining, wellness & beauty', border: 'hover:border-rose-500/50', badge: '9 Bookings' },
+    { title: 'Coworking & Office', tag: 'Business', icon: 'laptop_mac', emoji: '💼', desc: 'Desks, meeting & studios', border: 'hover:border-cyan-500/50', badge: '5 Workspaces' },
+    { title: 'Darshan & Pooja', tag: 'Religious Services', icon: 'account_balance', emoji: '🛕', desc: 'Temple darshan & pilgrimage', border: 'hover:border-orange-500/50', badge: '3 Passes' },
+    { title: 'Equipment Rentals', tag: 'Equipment Rentals', icon: 'shopping_bag', emoji: '🚲', desc: 'Bikes, cameras & audio', border: 'hover:border-yellow-500/50', badge: '5 Rentals' },
+    { title: 'Personal Services', tag: 'Personal Services', icon: 'pets', emoji: '🐶', desc: 'Pet groom, care & babysit', border: 'hover:border-purple-500/50', badge: '4 Services' },
+  ];
+
   return (
-    <main className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] transition-colors duration-300 relative overflow-hidden pb-20 pt-[80px] md:pt-[100px]">
-      {/* Ambient Luxury Glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-[#ff6325]/10 via-[#0a3161]/5 to-transparent blur-3xl pointer-events-none -z-10" />
-      <div className="absolute top-60 right-10 w-96 h-96 bg-[#ff6325]/5 rounded-full blur-3xl pointer-events-none -z-10" />
+    <main className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] transition-colors duration-300 relative overflow-hidden pb-16 pt-[64px] md:pt-[72px]">
+      {/* Ambient Backdrop */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-64 bg-gradient-to-b from-[#0a3161]/10 dark:from-[#ff6325]/10 via-[#0a3161]/5 to-transparent blur-3xl pointer-events-none -z-10" />
 
       <div className="mx-auto max-w-7xl px-4 md:px-8">
-        {/* Luxury Hero Header */}
-        <div className="pt-4 pb-6 border-b border-[color:var(--color-outline-variant)]/20">
+        
+        {/* ── BENTO TOP SECTION ─────────────────────────────────── */}
+        <div className="pt-3 pb-6 space-y-4">
+          
+          {/* Header Row */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-2 text-[11px] font-bold text-[#ff6325] uppercase tracking-wider mb-2.5 px-3 py-1 rounded-full bg-[#ff6325]/10 border border-[#ff6325]/20 backdrop-blur-md">
-                <Compass size={13} className="text-[#ff6325] animate-spin-slow" />
-                <span>Explore Directory</span>
+              <div className="inline-flex items-center gap-2 text-[10px] font-bold text-[#0a3161] dark:text-[#ff6325] uppercase tracking-wider mb-1.5 px-3 py-1 rounded-full bg-[#0a3161]/10 dark:bg-[#ff6325]/10 border border-[#0a3161]/20 dark:border-[#ff6325]/20">
+                <Compass size={12} className="text-[#0a3161] dark:text-[#ff6325]" />
+                <span>All Categories &amp; Services</span>
               </div>
-              <h1 className="text-3xl md:text-5xl font-black tracking-tight text-[color:var(--color-on-surface)] flex items-center gap-3">
-                All Categories
-                <Sparkles size={28} className="text-[#ff6325] hidden sm:inline-block animate-pulse" />
+              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[color:var(--color-on-surface)] flex items-center gap-3">
+                <span>Categories</span>
+                <span className="text-xs font-bold text-[color:var(--color-on-surface-variant)] px-2.5 py-0.5 rounded-full bg-[color:var(--color-surface-dim)] border border-[color:var(--color-outline-variant)]/30">
+                  {allFilteredItems.length} Services Listed
+                </span>
+                {activeGroup !== 'ALL' && (
+                  <span className="text-xs font-bold text-[#0a3161] dark:text-[#ff6325] px-2.5 py-0.5 rounded-full bg-[#0a3161]/10 dark:bg-[#ff6325]/10 border border-[#0a3161]/20 dark:border-[#ff6325]/20 flex items-center gap-1.5">
+                    <span>Active: {activeGroup}</span>
+                    <button 
+                      onClick={() => setActiveGroup('ALL')} 
+                      className="hover:opacity-75 ml-0.5 font-black text-xs cursor-pointer"
+                      title="Clear filter"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                )}
               </h1>
-              <p className="mt-2 text-sm text-[color:var(--color-on-surface-variant)] max-w-2xl font-normal leading-relaxed">
-                Discover seamless bookings across transport, luxury stays, entertainment, sports, and local lifestyle services.
+              <p className="text-xs text-[color:var(--color-on-surface-variant)] mt-1 font-medium">
+                Choose a category below to instantly filter all matching bookable slots &amp; verified providers.
               </p>
             </div>
 
-            {/* Quick search input */}
-            <div className="relative flex items-center w-full md:w-80 rounded-2xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface)]/80 backdrop-blur-md px-4 py-2.5 focus-within:border-[#ff6325] focus-within:ring-2 focus-within:ring-[#ff6325]/20 transition-all shadow-sm">
-              <Search size={16} className="text-[#ff6325] mr-2.5 shrink-0" />
+            {/* Quick Search */}
+            <div className="relative flex items-center w-full md:w-80 rounded-2xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface)]/80 backdrop-blur-md px-3.5 py-2.5 focus-within:border-[#0a3161] dark:focus-within:border-[#ff6325] focus-within:ring-2 focus-within:ring-[#0a3161]/20 dark:focus-within:ring-[#ff6325]/20 transition-all shadow-xs shrink-0">
+              <Search size={15} className="text-[#0a3161] dark:text-[#ff6325] mr-2 shrink-0" />
               <input
                 type="text"
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
-                placeholder="Search category or service..."
+                placeholder="Search any service, turf, cab, hotel..."
                 className="w-full bg-transparent text-xs text-[color:var(--color-on-surface)] placeholder-[color:var(--color-outline)] outline-none font-medium"
               />
               {searchFilter && (
-                <button onClick={() => setSearchFilter('')} className="text-xs text-[color:var(--color-outline)] hover:text-white transition-colors">
+                <button onClick={() => setSearchFilter('')} className="text-xs text-[color:var(--color-outline)] hover:text-[color:var(--color-on-surface)] transition-colors">
                   ✕
                 </button>
               )}
             </div>
           </div>
-        </div>
 
-        {/* Category Filter Pills (Sticky Bar) */}
-        <div className="sticky top-[42px] md:top-[48px] z-30 py-3.5 mb-8 -mx-4 px-4 md:-mx-8 md:px-8 overflow-x-auto flex gap-2.5 scrollbar-none scroll-smooth bg-[var(--bg-base)]/85 backdrop-blur-xl border-b border-[color:var(--color-outline-variant)]/20 shadow-sm">
-          {/* All button */}
-          <button
-            onClick={() => setActiveGroup('ALL')}
-            className={`px-4 py-2 rounded-full text-xs font-bold border transition-all cursor-pointer flex items-center gap-2 shrink-0 backdrop-blur-md ${
-              activeGroup === 'ALL'
-                ? 'bg-gradient-to-r from-[#ff6325] to-[#e04e13] text-white border-[#ff6325] shadow-md shadow-[#ff6325]/25 font-black scale-105'
-                : 'bg-[color:var(--color-surface)]/90 border-[color:var(--color-outline-variant)]/40 text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)] hover:border-[#ff6325]/40 hover:scale-[1.02] active:scale-95'
-            }`}
-          >
-            <span className="text-sm shrink-0">🌐</span>
-            <span className="whitespace-nowrap">All</span>
-          </button>
-          {SERVICE_GROUPS.map((group) => (
-            <button
-              key={group.title}
-              onClick={() => setActiveGroup(group.title)}
-              className={`px-4 py-2 rounded-full text-xs font-bold border transition-all cursor-pointer flex items-center gap-2 shrink-0 backdrop-blur-md ${
-                activeGroup === group.title
-                  ? 'bg-gradient-to-r from-[#ff6325] to-[#e04e13] text-white border-[#ff6325] shadow-md shadow-[#ff6325]/25 font-black scale-105'
-                  : 'bg-[color:var(--color-surface)]/90 border-[color:var(--color-outline-variant)]/40 text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)] hover:border-[#ff6325]/40 hover:scale-[1.02] active:scale-95'
-              }`}
-            >
-              <span className="text-sm shrink-0">{GROUP_EMOJIS[group.title] || '📍'}</span>
-              <span className="whitespace-nowrap">{group.title}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Categories Section Feed */}
-        <div className="space-y-14">
-          {visibleGroups.length === 0 ? (
-            <div className="py-24 text-center border border-dashed border-[color:var(--color-outline-variant)]/40 rounded-3xl bg-[color:var(--color-surface)]/50">
-              <p className="text-lg font-bold text-[color:var(--color-on-surface)]">No categories found matching "{searchFilter}"</p>
-              <p className="text-xs text-[color:var(--color-on-surface-variant)] mt-1">Try another search term or click "All" above.</p>
-            </div>
-          ) : visibleGroups.map((group) => {
-            const id = group.title.toLowerCase().replace(/\s+/g, '-');
-            const groupLink = getGroupHref(group.title);
-            
-            return (
-              <section
-                key={group.title}
-                id={id}
-                className="scroll-mt-36 text-left animate-fade-up border-b border-[color:var(--color-outline-variant)]/20 pb-12 last:border-0"
-              >
-                {/* Category Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-[#ff6325]/30 bg-[#ff6325]/10 text-[#ff6325] shadow-lg shadow-[#ff6325]/5">
-                      <span className="material-symbols-outlined text-[28px]">{group.icon}</span>
-                    </div>
-                    <div>
-                      <h2 className="text-xl md:text-2xl font-black text-[color:var(--color-on-surface)] tracking-tight">
-                        {group.title}
-                      </h2>
-                      <p className="mt-0.5 text-xs md:text-sm text-[color:var(--color-on-surface-variant)] font-normal">
-                        {group.description}
-                      </p>
-                    </div>
+          {/* ── BENTO BOX TILES GRID (Clean 5-column grid across 2 neat rows) ── */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 pt-1">
+            {BENTO_CATEGORIES.map((bento) => {
+              const isSelected = activeGroup === bento.tag;
+              return (
+                <button
+                  key={bento.title}
+                  onClick={() => setActiveGroup(isSelected && bento.tag !== 'ALL' ? 'ALL' : bento.tag)}
+                  className={`group relative p-3.5 rounded-2xl border text-left flex flex-col justify-between transition-all duration-200 cursor-pointer overflow-hidden min-h-[92px] ${
+                    isSelected 
+                      ? 'bg-gradient-to-br from-[#0a3161]/15 dark:from-[#ff6325]/20 via-[color:var(--color-surface-container)] to-[color:var(--color-surface)] border-[#0a3161] dark:border-[#ff6325] shadow-lg shadow-[#0a3161]/10 dark:shadow-[#ff6325]/15 scale-[1.02] ring-1 ring-[#0a3161]/40 dark:ring-[#ff6325]/50'
+                      : `bg-[color:var(--color-surface-container)]/70 hover:bg-[color:var(--color-surface-container)] border-[color:var(--color-outline-variant)]/30 ${bento.border} hover:-translate-y-0.5 shadow-xs`
+                  }`}
+                >
+                  <div className="flex items-center justify-between w-full mb-2">
+                    <span className="text-2xl filter drop-shadow-sm group-hover:scale-110 transition-transform">{bento.emoji}</span>
+                    <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0 ${
+                      isSelected 
+                        ? 'bg-[#0a3161] dark:bg-[#ff6325] text-white border-[#0a3161] dark:border-[#ff6325]' 
+                        : 'bg-[color:var(--color-surface)]/80 text-[color:var(--color-on-surface-variant)] border-[color:var(--color-outline-variant)]/40'
+                    }`}>
+                      {bento.badge}
+                    </span>
                   </div>
+                  <div>
+                    <h3 className={`font-black text-xs transition-colors leading-tight ${
+                      isSelected 
+                        ? 'text-[#0a3161] dark:text-[#ff6325]' 
+                        : 'text-[color:var(--color-on-surface)] group-hover:text-[#0a3161] dark:group-hover:text-[#ff6325]'
+                    }`}>
+                      {bento.title}
+                    </h3>
+                    <p className="text-[10px] text-[color:var(--color-on-surface-variant)] mt-0.5 line-clamp-1 font-medium">
+                      {bento.desc}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
 
-                  <Link 
-                    href={groupLink}
-                    className="inline-flex items-center gap-1.5 self-start sm:self-auto text-xs font-bold text-[#ff6325] hover:text-[#ff8452] hover:underline transition-colors group/link px-3 py-1.5 rounded-xl bg-[#ff6325]/10 border border-[#ff6325]/20"
+        </div>
+
+        {/* ── HIGH-SPEED DIRECTORY TABLE / LIST ─────────────────── */}
+        <div className="rounded-3xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-container)]/80 backdrop-blur-xl shadow-lg overflow-hidden">
+          
+          {/* Table Header Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between px-5 py-3.5 border-b border-[color:var(--color-outline-variant)]/20 bg-[color:var(--color-surface)]/60 gap-2">
+            <div className="flex items-center gap-2.5">
+              <span className="h-2 w-2 rounded-full bg-[#0a3161] dark:bg-[#ff6325] animate-pulse shrink-0" />
+              <h2 className="text-xs font-black uppercase tracking-wider text-[color:var(--color-on-surface)] flex items-center gap-2">
+                <span>Direct Booking Registry</span>
+                <span className="text-[10px] text-[color:var(--color-on-surface-variant)] font-normal normal-case">
+                  ({activeGroup === 'ALL' ? 'Showing all categories' : `Filtered by: ${activeGroup}`})
+                </span>
+              </h2>
+            </div>
+            {activeGroup !== 'ALL' && (
+              <button
+                onClick={() => setActiveGroup('ALL')}
+                className="text-[11px] font-bold text-[#0a3161] dark:text-[#ff6325] hover:underline cursor-pointer self-start sm:self-auto"
+              >
+                Reset Filter (Show All 54 Services) &rarr;
+              </button>
+            )}
+          </div>
+
+          {/* Desktop Table Headers (>= md) */}
+          <div className="hidden md:grid md:grid-cols-12 gap-3 px-5 py-2.5 text-[10px] font-black uppercase tracking-wider text-[color:var(--color-outline)] border-b border-[color:var(--color-outline-variant)]/10 bg-[color:var(--color-surface)]/30">
+            <span className="col-span-5">Service &amp; Category</span>
+            <span className="col-span-3">Features &amp; Highlights</span>
+            <span className="col-span-2">Starting Tariff</span>
+            <span className="col-span-2 text-right">Instant Action</span>
+          </div>
+
+          {/* High-Speed List Items */}
+          <div className="divide-y divide-[color:var(--color-outline-variant)]/15">
+            {allFilteredItems.length === 0 ? (
+              <div className="py-16 text-center text-xs text-[color:var(--color-on-surface-variant)]">
+                No matching service found for "{searchFilter}". Try another keyword.
+              </div>
+            ) : (
+              allFilteredItems.map((item: any) => {
+                const serviceHref = getHrefForCategoryItem(item.groupTitle, item.name);
+                const price = getServicePrice(item.name);
+                const subtitle = getServiceSubtitle(item.name);
+
+                return (
+                  <div
+                    key={`${item.groupTitle}-${item.name}`}
+                    className="flex flex-col md:grid md:grid-cols-12 gap-3 px-5 py-3 hover:bg-[color:var(--color-on-surface)]/[0.02] transition-colors items-center group"
                   >
-                    <span>View all in {group.title}</span>
-                    <ArrowRight size={13} className="group-hover/link:translate-x-0.5 transition-transform" />
-                  </Link>
-                </div>
-
-                {/* Subcategories Container */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {group.subcategories.map((subcat) => (
-                    <div 
-                      key={subcat.name} 
-                      className="bg-[color:var(--color-surface)] rounded-3xl p-6 shadow-md border border-[color:var(--color-outline-variant)]/30 hover:border-[#ff6325]/30 transition-all flex flex-col justify-between"
-                    >
-                      <div>
-                        {/* Subcategory title */}
-                        <div className="flex items-center justify-between mb-4 pb-2 border-b border-[color:var(--color-outline-variant)]/20">
-                          <h3 className="text-sm font-extrabold text-[color:var(--color-on-surface)] tracking-wide flex items-center gap-2">
-                            <span className="w-1.5 h-4 rounded-full bg-[#ff6325] inline-block" />
-                            {subcat.name}
+                    {/* Col 1: Icon + Name + Group */}
+                    <div className="w-full md:col-span-5 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 bg-[color:var(--color-surface-dim)] border border-[color:var(--color-outline-variant)]/30 relative">
+                        <img
+                          src={getServiceImage(item.name)}
+                          alt={item.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-black/20" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="font-extrabold text-xs text-[color:var(--color-on-surface)] group-hover:text-[#0a3161] dark:group-hover:text-[#ff6325] transition-colors truncate">
+                            {item.name}
                           </h3>
-                          <span className="text-[11px] font-bold text-[color:var(--color-on-surface-variant)] bg-[color:var(--color-surface-dim)] px-2.5 py-0.5 rounded-full border border-[color:var(--color-outline-variant)]/30">
-                            {subcat.items.length} {subcat.items.length === 1 ? 'service' : 'services'}
-                          </span>
+                          <span className="text-xs shrink-0">{item.emoji}</span>
                         </div>
-
-                        {/* Subcategory service cards grid */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-3.5 pt-1">
-                          {subcat.items.map((item) => {
-                            const serviceHref = getHrefForCategoryItem(group.title, item.name);
-                            const price = getServicePrice(item.name);
-                            return (
-                              <Link
-                                key={item.name}
-                                href={serviceHref}
-                                className="group relative flex flex-col rounded-2xl overflow-hidden bg-[color:var(--color-surface-dim)] border border-[color:var(--color-outline-variant)]/30 hover:border-[#ff6325]/60 hover:shadow-xl hover:shadow-[#ff6325]/10 transition-all duration-300"
-                              >
-                                {/* Image Container */}
-                                <div className="w-full h-28 relative overflow-hidden bg-[color:var(--color-surface-dim)]">
-                                  <img
-                                    src={getServiceImage(item.name)}
-                                    alt={item.name}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
-                                  />
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
-
-                                  {/* Price pill */}
-                                  <div className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-md bg-[#ff6325] text-white text-[9.5px] font-black shadow-md">
-                                    {price}
-                                  </div>
-                                </div>
-
-                                {/* Title & Emoji */}
-                                <div className="p-2.5 flex items-center justify-between gap-1">
-                                  <h4 className="font-bold text-xs text-[color:var(--color-on-surface)] group-hover:text-[#ff6325] line-clamp-1 transition-colors">
-                                    {item.name}
-                                  </h4>
-                                  <span className="text-xs shrink-0 group-hover:scale-110 transition-transform">{item.emoji}</span>
-                                </div>
-                              </Link>
-                            );
-                          })}
-                        </div>
+                        <p className="text-[10px] text-[color:var(--color-on-surface-variant)] font-medium truncate mt-0.5">
+                          {item.groupTitle} &bull; {item.subCategoryName}
+                        </p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </section>
-            );
-          })}
+
+                    {/* Col 2: Subtitle / Highlights */}
+                    <div className="w-full md:col-span-3 flex items-center gap-2 text-[11px] text-[color:var(--color-on-surface-variant)]">
+                      <span className="text-amber-500 font-black text-xs">★ 4.9</span>
+                      <span className="truncate">{subtitle}</span>
+                    </div>
+
+                    {/* Col 3: Price Tag */}
+                    <div className="w-full md:col-span-2 flex items-center">
+                      <span className="text-xs font-black text-[color:var(--color-on-surface)] px-2.5 py-1 rounded-lg bg-[color:var(--color-surface)] border border-[color:var(--color-outline-variant)]/30">
+                        {price}
+                      </span>
+                    </div>
+
+                    {/* Col 4: Book CTA Button */}
+                    <div className="w-full md:col-span-2 flex items-center justify-end">
+                      <Link
+                        href={serviceHref}
+                        className="w-full md:w-auto px-4 py-2 rounded-xl bg-gradient-to-r from-[#0a3161] to-[#124b8f] dark:from-[#ff6325] dark:to-[#e04e13] hover:brightness-110 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md shadow-[#0a3161]/20 dark:shadow-[#ff6325]/20 active:scale-95 transition-all cursor-pointer"
+                      >
+                        <span>Book Slot</span>
+                        <ArrowRight size={13} />
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
+
       </div>
     </main>
   );

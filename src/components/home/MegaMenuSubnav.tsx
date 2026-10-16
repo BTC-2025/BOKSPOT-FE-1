@@ -463,7 +463,7 @@ export function MegaMenuSubnav() {
               </kbd>
             </div>
 
-            {/* Right Tools: Become Vendor, Support, Settings */}
+            {/* Right Tools: Become Vendor */}
             <div className="flex items-center gap-2.5 pl-2 pr-1 ml-auto shrink-0 border-l border-[color:var(--color-outline-variant)]/20">
               <Link
                 href="/vendor/register"
@@ -473,24 +473,6 @@ export function MegaMenuSubnav() {
                   <span className="material-symbols-outlined text-[13px]">storefront</span>
                 </div>
                 <span className="text-white text-[10px] font-black tracking-widest select-none">BECOME VENDOR</span>
-              </Link>
-
-              <Link
-                href="/support"
-                className="h-9 w-9 rounded-full border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-container-high)]/70 flex items-center justify-center text-[color:var(--color-on-surface-variant)] hover:text-[#0a3161] dark:hover:text-[#ff6325] hover:border-[#0a3161]/40 dark:hover:border-[#ff6325]/40 hover:scale-105 transition-all shrink-0 shadow-sm"
-                aria-label="Help & Support"
-                title="24/7 Concierge Support"
-              >
-                <span className="material-symbols-outlined text-[18px]">support_agent</span>
-              </Link>
-
-              <Link
-                href="/profile"
-                className="h-9 w-9 rounded-full border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-container-high)]/70 flex items-center justify-center text-[color:var(--color-on-surface-variant)] hover:text-[#ff6325] hover:border-[#ff6325]/40 hover:scale-105 transition-all shrink-0 shadow-sm"
-                aria-label="Settings"
-                title="Profile & Appearance Settings"
-              >
-                <span className="material-symbols-outlined text-[18px]">settings</span>
               </Link>
             </div>
           </motion.div>
@@ -532,26 +514,6 @@ export function MegaMenuSubnav() {
                 <span className="material-symbols-outlined text-[12px]">storefront</span>
               </div>
               <span className="text-white text-[9.5px] font-black tracking-wider select-none">BECOME VENDOR</span>
-            </Link>
-
-            {/* 3. Support Icon Button */}
-            <Link
-              href="/support"
-              className="h-8 w-8 rounded-full border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-container-high)]/70 flex items-center justify-center text-[color:var(--color-on-surface-variant)] hover:text-[#0a3161] dark:hover:text-[#ff6325] hover:border-[#0a3161]/40 dark:hover:border-[#ff6325]/40 hover:scale-105 transition-all shrink-0 shadow-xs"
-              aria-label="Help & Support"
-              title="24/7 Concierge Support"
-            >
-              <span className="material-symbols-outlined text-[16px]">support_agent</span>
-            </Link>
-
-            {/* 4. Settings Icon Button */}
-            <Link
-              href="/profile"
-              className="h-8 w-8 rounded-full border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-container-high)]/70 flex items-center justify-center text-[color:var(--color-on-surface-variant)] hover:text-[#0a3161] dark:hover:text-[#ff6325] hover:border-[#0a3161]/40 dark:hover:border-[#ff6325]/40 hover:scale-105 transition-all shrink-0 shadow-xs"
-              aria-label="Settings"
-              title="Profile & Appearance Settings"
-            >
-              <span className="material-symbols-outlined text-[16px]">settings</span>
             </Link>
 
             {/* Separator */}

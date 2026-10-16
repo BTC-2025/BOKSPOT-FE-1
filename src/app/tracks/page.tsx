@@ -7,7 +7,7 @@ import {
   CheckCircle2, Clock, MapPin, XCircle,
   Train, Bus, Plane, Car, Navigation, Compass,
   Calendar, ChevronRight,
-  Shield, Hotel, Coffee, Zap, User, Mail, Phone, Building2
+  Shield, Hotel, Coffee, Zap, User, Mail, Phone, Building2, Key, QrCode, DoorClosed, Lock, Unlock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBookingFlowStore, useUserStore } from '../../lib/store';
@@ -92,18 +92,20 @@ function TracksContent() {
   const [selectedMode, setSelectedMode] = useState('');
   const [pnr, setPnr] = useState('');
   const [liveStatuses, setLiveStatuses] = useState<Record<string, string>>({});
-  const [activeFilter, setActiveFilter] = useState<'ALL' | 'PENDING' | 'CONFIRMED' | 'CANCELLED'>('ALL');
+  const [remoteMetadata, setRemoteMetadata] = useState<Record<string, { keycardIssued?: boolean; roomNumber?: string }>>({});
+  const [unlockedRooms, setUnlockedRooms] = useState<Record<string, boolean>>({});
+  const [activeFilter, setActiveFilter] = useState<'ALL' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED'>('ALL');
 
   const FILTERS = [
     { id: 'ALL',       label: 'All Bookings' },
-    { id: 'PENDING',   label: 'Active' },
-    { id: 'CONFIRMED', label: 'Completed' },
+    { id: 'ACTIVE',    label: 'Active' },
+    { id: 'COMPLETED', label: 'Completed' },
     { id: 'CANCELLED', label: 'Cancelled' },
   ];
 
   useEffect(() => { setMounted(true); }, []);
 
-  // Live poll backend for status updates
+  // Live poll backend for status updates & keycard issuance
   useEffect(() => {
     let cancelled = false;
     const poll = async () => {
@@ -114,8 +116,15 @@ function TracksContent() {
         const all: any[] = json?.data || json;
         if (Array.isArray(all) && !cancelled) {
           const map: Record<string, string> = {};
-          all.forEach((b: any) => { map[b.ref] = b.status; });
+          const metaMap: Record<string, { keycardIssued?: boolean; roomNumber?: string }> = {};
+          all.forEach((b: any) => { 
+            map[b.ref] = b.status; 
+            if (b.keycardIssued || b.roomNumber) {
+              metaMap[b.ref] = { keycardIssued: b.keycardIssued, roomNumber: b.roomNumber };
+            }
+          });
           setLiveStatuses(map);
+          setRemoteMetadata(metaMap);
         }
       } catch {}
     };
@@ -129,11 +138,23 @@ function TracksContent() {
   const mergedBookings = bookings.map(b => ({
     ...b,
     status: (liveStatuses[b.ref] || b.status) as any,
+    keycardIssued: remoteMetadata[b.ref]?.keycardIssued || (b as any).keycardIssued,
+    roomNumber: remoteMetadata[b.ref]?.roomNumber || (b as any).roomNumber,
   }));
 
-  const filteredBookings = mergedBookings.filter(b =>
-    activeFilter === 'ALL' || b.status === activeFilter
-  );
+  const filteredBookings = mergedBookings.filter(b => {
+    if (activeFilter === 'ALL') return true;
+    if (activeFilter === 'ACTIVE') {
+      return b.status === 'PENDING' || b.status === 'CONFIRMED' || b.status === 'CHECKED_IN';
+    }
+    if (activeFilter === 'COMPLETED') {
+      return b.status === 'COMPLETED';
+    }
+    if (activeFilter === 'CANCELLED') {
+      return b.status === 'CANCELLED';
+    }
+    return b.status === activeFilter;
+  });
 
   const handleCancel = async (booking: any) => {
     if (confirm(`Cancel reservation ${booking.ref}?`)) {
@@ -361,6 +382,79 @@ function TracksContent() {
                             <p className="text-[10px] text-[color:var(--color-on-surface-variant)] font-medium uppercase tracking-wider">
                               Placed on {formatDateTime(b.bookedAt)}
                             </p>
+                          </div>
+                        )}
+
+                        {/* ── Hotel Digital Keycard & Entry Pass Module ── */}
+                        {((b.category || '').toLowerCase().includes('hotel') || (b.serviceName || '').toLowerCase().includes('room') || b.keycardIssued) && (
+                          <div className="mt-3 p-3.5 rounded-2xl border border-[color:var(--color-primary)]/20 bg-gradient-to-br from-[color:var(--color-primary)]/5 via-transparent to-amber-500/5">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-1.5">
+                                <Key size={14} className="text-[color:var(--color-primary)]" />
+                                <span className="text-[11px] font-black uppercase tracking-wider text-[color:var(--color-on-surface)]">
+                                  {b.keycardIssued ? 'Digital Keycard Active' : 'Digital Room Access'}
+                                </span>
+                              </div>
+                              <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                                b.keycardIssued 
+                                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 animate-pulse'
+                                  : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                              }`}>
+                                {b.keycardIssued ? `Room ${b.roomNumber || 'Assigned'} Access` : 'Awaiting Reception Desk'}
+                              </span>
+                            </div>
+
+                            {b.keycardIssued ? (
+                              <div className="space-y-2">
+                                <p className="text-[11px] text-[color:var(--color-on-surface-variant)]">
+                                  Your NFC &amp; Smart RFID Key is active for <strong>Room {b.roomNumber || '102'}</strong>. Hold your phone near the door lock or tap below to unlock.
+                                </p>
+                                <div className="flex items-center gap-2 pt-1">
+                                  <button
+                                    onClick={() => {
+                                      setUnlockedRooms(prev => ({ ...prev, [b.ref]: true }));
+                                      setTimeout(() => {
+                                        setUnlockedRooms(prev => ({ ...prev, [b.ref]: false }));
+                                      }, 4000);
+                                    }}
+                                    className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm ${
+                                      unlockedRooms[b.ref]
+                                        ? 'bg-emerald-500 text-white shadow-emerald-500/30 scale-102'
+                                        : 'bg-[color:var(--color-primary)] text-white hover:opacity-90 active:scale-95'
+                                    }`}
+                                  >
+                                    {unlockedRooms[b.ref] ? (
+                                      <>
+                                        <Unlock size={14} />
+                                        <span>Door Unlocked! (Open Now)</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Lock size={14} />
+                                        <span>Tap to Unlock Room {b.roomNumber || ''}</span>
+                                      </>
+                                    )}
+                                  </button>
+                                  <Link
+                                    href={`/booking/track?ref=${b.ref}`}
+                                    className="p-2 bg-[color:var(--color-surface)] border border-[color:var(--color-outline-variant)]/40 rounded-xl text-[color:var(--color-on-surface)] hover:text-[color:var(--color-primary)] transition-colors"
+                                    title="View QR Entry Pass"
+                                  >
+                                    <QrCode size={16} />
+                                  </Link>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-between text-[11px] text-[color:var(--color-on-surface-variant)] pt-1">
+                                <span>Show Entry QR Pass at front desk to receive keycard.</span>
+                                <Link
+                                  href={`/booking/track?ref=${b.ref}`}
+                                  className="text-[color:var(--color-primary)] font-bold flex items-center gap-1 hover:underline"
+                                >
+                                  <QrCode size={12} /> View Entry Pass
+                                </Link>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>

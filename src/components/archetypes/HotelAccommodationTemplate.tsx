@@ -28,6 +28,7 @@ import {
   Minus,
   AlertCircle
 } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { useBookingFlowStore } from '@/lib/store';
 
 interface HotelAccommodationTemplateProps {
@@ -36,29 +37,38 @@ interface HotelAccommodationTemplateProps {
 
 export default function HotelAccommodationTemplate({ service }: HotelAccommodationTemplateProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setSelectedService, setSelectedSlot } = useBookingFlowStore();
 
   // Booking mode: Standard Multi-Night Stay vs Day-Use Transit (Hourly Refresh)
   const [stayMode, setStayMode] = useState<'NIGHTS' | 'TRANSIT'>('NIGHTS');
 
-  // Dates state for Multi-night stay
+  // Dates state for Multi-night stay (check query params first)
   const today = new Date();
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
   const formatDateYMD = (d: Date) => d.toISOString().split('T')[0];
 
-  const [checkInDate, setCheckInDate] = useState<string>(formatDateYMD(today));
-  const [checkOutDate, setCheckOutDate] = useState<string>(formatDateYMD(tomorrow));
+  const queryCheckIn = searchParams?.get('checkIn');
+  const queryCheckOut = searchParams?.get('checkOut');
+  const queryAdults = Number(searchParams?.get('adults'));
+  const queryChildren = Number(searchParams?.get('children'));
+  const queryRooms = Number(searchParams?.get('rooms'));
+  const queryPets = searchParams?.get('pets') === 'true';
+
+  const [checkInDate, setCheckInDate] = useState<string>(queryCheckIn || formatDateYMD(today));
+  const [checkOutDate, setCheckOutDate] = useState<string>(queryCheckOut || formatDateYMD(tomorrow));
 
   // Transit mode: selected slot
   const [transitSlot, setTransitSlot] = useState<string>('09:00 AM - 01:00 PM (4h)');
 
   // Guest popover state
   const [guestsOpen, setGuestsOpen] = useState(false);
-  const [roomsCount, setRoomsCount] = useState(1);
-  const [adultsCount, setAdultsCount] = useState(2);
-  const [childrenCount, setChildrenCount] = useState(0);
+  const [roomsCount, setRoomsCount] = useState(queryRooms > 0 ? queryRooms : 1);
+  const [adultsCount, setAdultsCount] = useState(queryAdults > 0 ? queryAdults : 2);
+  const [childrenCount, setChildrenCount] = useState(queryChildren >= 0 ? queryChildren : 0);
+  const [petsAllowed, setPetsAllowed] = useState(queryPets);
 
   // Selected room category and meal plan
   const [selectedRoomId, setSelectedRoomId] = useState<string>('room-deluxe');
@@ -187,6 +197,7 @@ export default function HotelAccommodationTemplate({ service }: HotelAccommodati
           rooms: roomsCount,
           adults: adultsCount,
           children: childrenCount,
+          pets: petsAllowed,
           roomType: selectedRoom.name,
           mealPlan: selectedMealPlan === 'EP' ? 'Room Only' : selectedMealPlan === 'CP' ? 'Free Buffet Breakfast' : 'Breakfast + Dinner Included',
           specialRequests,
@@ -416,7 +427,7 @@ export default function HotelAccommodationTemplate({ service }: HotelAccommodati
                   </span>
                   <div className="flex items-center gap-2 text-white font-bold text-sm">
                     <Users size={16} className="text-[#ff6325]" />
-                    <span>{roomsCount} Room, {adultsCount} Adults{childrenCount > 0 ? `, ${childrenCount} Kids` : ''}</span>
+                    <span>{roomsCount} Room, {adultsCount} Adults{childrenCount > 0 ? `, ${childrenCount} Kids` : ''}{petsAllowed ? ' • 🐾 Pets' : ''}</span>
                   </div>
                 </div>
                 <ChevronRight size={18} className={`text-slate-400 transition-transform ${guestsOpen ? 'rotate-90' : ''}`} />
@@ -497,9 +508,25 @@ export default function HotelAccommodationTemplate({ service }: HotelAccommodati
                       </div>
                     </div>
 
+                    {/* Travelling with Pets */}
+                    <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                      <div>
+                        <div className="font-bold text-sm text-white flex items-center gap-1.5">
+                          <span>🐾 Travelling with pets?</span>
+                        </div>
+                        <div className="text-[11px] text-slate-400">Pet-friendly accommodation</div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={petsAllowed}
+                        onChange={(e) => setPetsAllowed(e.target.checked)}
+                        className="w-4 h-4 rounded text-[#ff6325] accent-[#ff6325] cursor-pointer"
+                      />
+                    </div>
+
                     <button
                       onClick={() => setGuestsOpen(false)}
-                      className="w-full mt-2 py-2 bg-[#ff6325] hover:bg-[#e04e13] text-white rounded-xl text-xs font-bold transition-colors"
+                      className="w-full mt-2 py-2 bg-[#ff6325] hover:bg-[#e04e13] text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
                     >
                       Apply Guests
                     </button>

@@ -43,7 +43,7 @@ export default function DistrictServiceDetailPage() {
         if (active) {
           const mapped = {
             ...rawService,
-            price: parseFloat(rawService.basePrice) || rawService.price || 0,
+            price: parseFloat((rawService as any).basePrice) || (rawService as any).price || 0,
             merchant: rawService.merchant?.name || (typeof rawService.merchant === 'string' ? rawService.merchant : 'Venue'),
             category: rawService.category?.name || (typeof rawService.category === 'string' ? rawService.category : 'Category'),
           };

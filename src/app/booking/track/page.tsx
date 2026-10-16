@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useBookingFlowStore } from '../../../lib/store';
 import Link from 'next/link';
-import { CheckCircle2, XCircle, Clock, ArrowLeft, MapPin, Calendar, Download, Share2, Check, AlertCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, ArrowLeft, MapPin, Calendar, Download, Share2, Check, AlertCircle, Key, Lock, Unlock } from 'lucide-react';
 
 // ─── Status colour schemes ────────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -269,13 +269,46 @@ Show this at the reception counter.
         {/* QR code – shown once confirmed */}
         {status === 'CONFIRMED' && (
           <div className="rounded-3xl border-2 border-emerald-200 bg-white shadow-sm p-6 flex flex-col items-center animate-fade-in">
-            <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Entry QR Code</p>
+            <span className="text-[10px] font-black tracking-widest uppercase px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full mb-3">
+              Digital Entry Pass
+            </span>
             <img
               src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(booking.ref)}`}
               alt="QR Code"
               className="h-36 w-36 rounded-2xl border border-gray-100 shadow p-2 bg-white"
             />
-            <p className="text-xs text-gray-400 font-medium mt-3">Show at reception for entry</p>
+            <p className="text-xs text-gray-500 font-medium mt-3">Show at reception kiosk or front desk for physical verification</p>
+          </div>
+        )}
+
+        {/* Digital Room Keycard Access (Active when issued by front desk staff) */}
+        {booking?.keycardIssued && (
+          <div className="rounded-3xl border-2 border-[#ff6325]/30 bg-gradient-to-br from-[#ff6325]/5 via-white to-orange-50 shadow-md p-6 animate-fade-in space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-[#ff6325] text-white flex items-center justify-center shadow-sm">
+                  <Key size={18} />
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-sm text-gray-900">Digital Smart Keycard</h4>
+                  <p className="text-[11px] text-[#ff6325] font-bold">Room {booking.roomNumber || '102'} Door Access</p>
+                </div>
+              </div>
+              <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-700 border border-emerald-300 animate-pulse">
+                Active NFC Key
+              </span>
+            </div>
+
+            <p className="text-xs text-gray-600 leading-relaxed">
+              Your digital room key has been authorized by the front desk. Hold your mobile near Room {booking.roomNumber || '102'} smart lock or tap below.
+            </p>
+
+            <button
+              onClick={() => alert(`Room ${booking.roomNumber || '102'} door unlocked! Welcome in.`)}
+              className="w-full py-3 bg-gradient-to-r from-[#ff6325] to-[#ff8452] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md hover:opacity-95 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Unlock size={16} /> Tap to Unlock Room {booking.roomNumber || '102'}
+            </button>
           </div>
         )}
 

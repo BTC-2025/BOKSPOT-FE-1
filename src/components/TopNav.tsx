@@ -351,6 +351,22 @@ export function TopNav({
               </Link>
 
               <Link
+                href="/categories"
+                className={`flex items-center justify-center gap-1.5 px-4 py-1.5 text-[12px] font-black tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${pathname === '/categories'
+                    ? 'custom-nav-link-active'
+                    : 'custom-nav-link-inactive'
+                  }`}
+              >
+                {pathname === '/categories' && (
+                  <div
+                    className="absolute inset-0 rounded-full custom-nav-active-bg -z-10"
+                  />
+                )}
+                <span className="material-symbols-outlined text-[15px]">grid_view</span>
+                <span>Categories</span>
+              </Link>
+
+              <Link
                 href="/tracks"
                 className={`flex items-center justify-center gap-1.5 px-4 py-1.5 text-[12px] font-black tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${pathname === '/tracks'
                     ? 'custom-nav-link-active'
@@ -362,8 +378,8 @@ export function TopNav({
                     className="absolute inset-0 rounded-full custom-nav-active-bg -z-10"
                   />
                 )}
-                <span className="material-symbols-outlined text-[15px]">receipt_long</span>
-                <span>My Bookings</span>
+                <span className="material-symbols-outlined text-[15px]">route</span>
+                <span>Tracks</span>
                 {Array.isArray(bookings) && bookings.length > 0 && (
                   <span className="h-2 w-2 rounded-full bg-[#ff6325] animate-pulse" />
                 )}
@@ -558,14 +574,32 @@ export function TopNav({
                       </p>
 
                       {/* Manage your account Button */}
-                      <Link
-                        href="/profile"
-                        onClick={() => setProfileOpen(false)}
-                        className="mt-3.5 px-5 py-2 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-[13px] font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2 transition-all shadow-sm active:scale-98 cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-[16px] text-slate-600 dark:text-slate-300">manage_accounts</span>
-                        <span>Manage your account</span>
-                      </Link>
+                      <div className="flex items-center gap-2 mt-3.5 w-full">
+                        <Link
+                          href="/profile"
+                          onClick={() => setProfileOpen(false)}
+                          className="flex-1 py-2 px-3 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-[12px] font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-98 cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-[15px] text-slate-600 dark:text-slate-300">manage_accounts</span>
+                          <span>Account</span>
+                        </Link>
+                        <Link
+                          href="/support"
+                          onClick={() => setProfileOpen(false)}
+                          className="p-2 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center transition-all shadow-xs active:scale-95 cursor-pointer"
+                          title="Support Concierge"
+                        >
+                          <span className="material-symbols-outlined text-[16px] text-[#ff6325]">support_agent</span>
+                        </Link>
+                        <Link
+                          href="/profile#profile-settings"
+                          onClick={() => setProfileOpen(false)}
+                          className="p-2 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center transition-all shadow-xs active:scale-95 cursor-pointer"
+                          title="Settings"
+                        >
+                          <span className="material-symbols-outlined text-[16px] text-slate-600 dark:text-slate-300">settings</span>
+                        </Link>
+                      </div>
                     </div>
 
                     {/* Theme Selector (Appearance) */}

@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   User, Mail, Phone, Camera, Bell, Shield, LogOut, 
-  Award, Sparkles, Check, CheckCircle2, Sliders, ShieldCheck, Heart, MapPin 
+  Award, Sparkles, Check, CheckCircle2, Sliders, ShieldCheck, Heart, MapPin,
+  Headphones, Settings, ChevronRight
 } from 'lucide-react';
+import Link from 'next/link';
 import { useUserStore, useUIStore } from '../../lib/store';
 import { compressImage } from '../../lib/imageUtils';
 
@@ -256,8 +258,53 @@ export default function ProfilePage() {
                 </div>
               </div>
 
+              {/* Quick Actions: Support Concierge & App Settings Tiles */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 my-6 relative z-10">
+                {/* 1. Support Concierge Tile */}
+                <Link
+                  href="/support"
+                  className="group p-4 rounded-2xl bg-[color:var(--color-surface)]/80 hover:bg-[color:var(--color-surface)] border border-[color:var(--color-outline-variant)]/30 hover:border-[#ff6325]/40 transition-all flex items-center justify-between shadow-xs hover:shadow-md hover:-translate-y-0.5"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0a3161] to-[#1557bf] dark:from-[#ff6325]/20 dark:to-[#ff8452]/20 text-white dark:text-[#ff6325] flex items-center justify-center shadow-xs">
+                      <Headphones size={20} />
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-xs text-[color:var(--color-on-surface)] group-hover:text-[#ff6325] transition-colors">
+                        24/7 Support Concierge
+                      </h4>
+                      <p className="text-[10px] text-[color:var(--color-on-surface-variant)] mt-0.5">
+                        Raise complaints &amp; live chat support
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight size={15} className="text-[color:var(--color-outline)] group-hover:translate-x-1 group-hover:text-[#ff6325] transition-all" />
+                </Link>
+
+                {/* 2. Settings Tile */}
+                <a
+                  href="#profile-settings"
+                  className="group p-4 rounded-2xl bg-[color:var(--color-surface)]/80 hover:bg-[color:var(--color-surface)] border border-[color:var(--color-outline-variant)]/30 hover:border-[#ff6325]/40 transition-all flex items-center justify-between shadow-xs hover:shadow-md hover:-translate-y-0.5"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 dark:bg-white/10 text-white flex items-center justify-center shadow-xs">
+                      <Settings size={20} />
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-xs text-[color:var(--color-on-surface)] group-hover:text-[#ff6325] transition-colors">
+                        Account &amp; App Settings
+                      </h4>
+                      <p className="text-[10px] text-[color:var(--color-on-surface-variant)] mt-0.5">
+                        Preferences, appearance &amp; security
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight size={15} className="text-[color:var(--color-outline)] group-hover:translate-x-1 group-hover:text-[#ff6325] transition-all" />
+                </a>
+              </div>
+
               {/* Profile Details Form */}
-              <div className="relative z-10">
+              <div id="profile-settings" className="relative z-10 scroll-mt-24">
                 <h2 className="text-base font-bold text-[color:var(--color-on-surface)] mb-5 flex items-center gap-2">
                   <User size={18} className="text-[color:var(--color-primary)]" />
                   <span>Personal Credentials</span>

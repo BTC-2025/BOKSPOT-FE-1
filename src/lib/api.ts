@@ -21,6 +21,8 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+import { MOCK_SERVICES } from './mockData';
+
 // ---- Category Mappings & Mock Generators ----
 const SLUG_TO_CATEGORY: Record<string, string> = {
   // Travel & Transport
@@ -459,7 +461,7 @@ export const api = {
           id: mockFound.id,
           name: mockFound.name,
           slug: mockFound.id,
-          description: mockFound.description || '',
+          description: (mockFound as any).description || mockFound.name,
           shortDescription: mockFound.name,
           serviceType: mockFound.category,
           basePrice: String(mockFound.price),

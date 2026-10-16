@@ -141,10 +141,7 @@ export default function HomePage() {
 
       <main className="page-content px-4 md:px-8 lg:pr-8">
         <div className="mx-auto w-full">
-          {/* Row 1: Mega-Menu Subnav & High-Speed Service Jump Capsule */}
-          <MegaMenuSubnav />
-
-          {/* Row 2: Ad Banner */}
+          {/* Row 1: Ad Banner */}
           <AdBanner />
 
           {/* Row 3: Shortcuts Dock */}
