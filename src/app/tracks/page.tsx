@@ -105,6 +105,8 @@ function TracksContent() {
 
   useEffect(() => { setMounted(true); }, []);
 
+  const [remoteBookings, setRemoteBookings] = useState<any[]>([]);
+
   // Live poll backend for status updates & keycard issuance
   useEffect(() => {
     let cancelled = false;
@@ -115,6 +117,7 @@ function TracksContent() {
         const json = await res.json();
         const all: any[] = json?.data || json;
         if (Array.isArray(all) && !cancelled) {
+          setRemoteBookings(all);
           const map: Record<string, string> = {};
           const metaMap: Record<string, { keycardIssued?: boolean; roomNumber?: string }> = {};
           all.forEach((b: any) => { 
@@ -135,7 +138,15 @@ function TracksContent() {
 
   if (!mounted) return null;
 
-  const mergedBookings = bookings.map(b => ({
+  // Merge store bookings with any backend synced bookings that aren't yet in local storage
+  const combinedAllBookings = [...bookings];
+  remoteBookings.forEach((rb: any) => {
+    if (!combinedAllBookings.some(b => b.ref === rb.ref || b.id === rb.id)) {
+      combinedAllBookings.push(rb);
+    }
+  });
+
+  const mergedBookings = combinedAllBookings.map(b => ({
     ...b,
     status: (liveStatuses[b.ref] || b.status) as any,
     keycardIssued: remoteMetadata[b.ref]?.keycardIssued || (b as any).keycardIssued,

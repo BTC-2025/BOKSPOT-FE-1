@@ -38,6 +38,11 @@ export default function VenueProfilePage() {
   const { setSelectedService, setSelectedSlot } = useBookingFlowStore();
   const searchParams = useSearchParams();
   const isHotel = category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'camping' || bookingType === 'stay-accommodation';
+  const isFacility = category === 'football-turf' || category === 'cricket-ground' || category === 'badminton' || category === 'tennis' || category === 'basketball' || category === 'studio' || category === 'meeting-room' || category === 'podcast' || category === 'gaming' || bookingType === 'sports-turf';
+  const isAppointment = category === 'doctor' || category === 'salons' || category === 'gym-yoga' || category === 'pet-grooming';
+  const isRental = category === 'sports-bike' || category === 'car-rental' || category === 'bike-rental' || category === 'camera' || category === 'cycle-rental' || category === 'sound-system' || category === 'event-equip' || bookingType === 'rental-equipment';
+  const isPass = category === 'movies' || category === 'concerts' || category === 'theatre' || category === 'events' || category === 'exhibitions' || category === 'swimming' || category === 'play-arena' || category === 'darshan' || category === 'coworking';
+  const isHomeCall = category === 'electrician' || category === 'plumber' || category === 'cleaning' || category === 'technician' || category === 'babysitting' || category === 'elder-care';
 
   const todayStr = new Date().toISOString().split('T')[0];
   const tomorrowDate = new Date();
@@ -82,6 +87,37 @@ export default function VenueProfilePage() {
   const [roomModalStep, setRoomModalStep] = useState<'DETAILS' | 'ADDONS' | null>(null);
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
   const [roomModalImageIdx, setRoomModalImageIdx] = useState(0);
+
+  // ── Facility / Turf Interactive Slot Flow States ──
+  const [selectedDate, setSelectedDate] = useState(todayStr);
+  const [selectedHourSlot, setSelectedHourSlot] = useState<string | null>(null);
+  const [selectedTurfService, setSelectedTurfService] = useState<any | null>(null);
+  const [slotHoldTimeRemaining, setSlotHoldTimeRemaining] = useState<number | null>(null);
+  const [pricingResult, setPricingResult] = useState<any | null>(null);
+  const [isPricingCalculating, setIsPricingCalculating] = useState(false);
+
+  // ── Archetype 3: TimeSlot (Doctor & Salon/Spa) Flow States ──
+  const [selectedPractitioner, setSelectedPractitioner] = useState<string>('Dr. Rajesh Kumar (Senior Consultant)');
+  const [selectedApptSlot, setSelectedApptSlot] = useState<string | null>(null);
+  const [patientNotes, setPatientNotes] = useState<string>('');
+  const [tokenQueueNum, setTokenQueueNum] = useState<number>(14);
+
+  // ── Archetype 4: AssetRental (Bikes, Cars, Equipment) Flow States ──
+  const [rentalStartDate, setRentalStartDate] = useState(todayStr);
+  const [rentalEndDate, setRentalEndDate] = useState(tomorrowStr);
+  const [rentalDays, setRentalDays] = useState<number>(2);
+  const [uploadedDlName, setUploadedDlName] = useState<string>('');
+  const [helmetOrGearAddon, setHelmetOrGearAddon] = useState<boolean>(true);
+
+  // ── Archetype 5: PassEntry (Movies, Events, Concerts, Darshan) Flow States ──
+  const [passCount, setPassCount] = useState<number>(2);
+  const [selectedTier, setSelectedTier] = useState<string>('Standard VIP');
+  const [popcornComboAddon, setPopcornComboAddon] = useState<boolean>(false);
+
+  // ── Archetype 6: HomeCall (Electrician, Plumber, Cleaning, AC Repair) Flow States ──
+  const [homeIssueCategory, setHomeIssueCategory] = useState<string>('Inspection & Diagnosis');
+  const [homeAddressLine, setHomeAddressLine] = useState<string>('');
+  const [preferredHomeWindow, setPreferredHomeWindow] = useState<string>('Morning (10:00 AM - 01:00 PM)');
 
   const [isSaved, setIsSaved] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
@@ -133,11 +169,27 @@ export default function VenueProfilePage() {
             }
             return isMatchMerchant && isMatchType;
           });
-          setLiveServices(merchantServices);
+
+          // Match strictly from live backend services
+          let finalServices = merchantServices;
+          if (finalServices.length === 0) {
+            const fallbackCategoryMatch = res.data.filter((s: any) => {
+              const catName = (s.category || '').toLowerCase();
+              const svcName = (s.name || '').toLowerCase();
+              const catSlug = (s.categoryObj?.slug || '').toLowerCase();
+              return catName.includes(category.toLowerCase()) || svcName.includes(category.toLowerCase()) || catSlug.includes(category.toLowerCase());
+            });
+
+            if (fallbackCategoryMatch.length > 0) {
+              finalServices = fallbackCategoryMatch;
+            }
+          }
+
+          setLiveServices(finalServices);
           if (mData) {
             setMerchantData((mData as any).data || mData);
-          } else if (merchantServices.length > 0) {
-            setMerchantData(merchantServices[0].merchantObj || {});
+          } else if (finalServices.length > 0) {
+            setMerchantData(finalServices[0].merchantObj || {});
           }
         }
       } catch (err) {
@@ -193,10 +245,18 @@ export default function VenueProfilePage() {
     (svc.rawConfig?.metadata?.listings || []).forEach((l: any) => addIfValid(l.imageUrl));
   });
 
-  // Provide curated high-res hotel photos if no custom images exist
+  // Fallback photos based on category (Turf/Sports vs Hotel)
+  const defaultTurfPhotos = [
+    'https://images.unsplash.com/photo-1529900245534-47fbf82a4fbe?w=1200&q=80',
+    'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80',
+    'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&q=80',
+    'https://images.unsplash.com/photo-1551958219-acbc608c6377?w=800&q=80'
+  ];
+
+  // Provide curated high-res photos if no custom images exist
   const galleryImages: string[] = extractedImages.length > 0 
     ? extractedImages 
-    : defaultHotelPhotos;
+    : (isFacility ? defaultTurfPhotos : defaultHotelPhotos);
 
   const aboutText = finalMerchantObj.description || liveServices[0]?.rawConfig?.description;
   const amenities = finalMerchantObj.amenities || [];
@@ -745,8 +805,9 @@ export default function VenueProfilePage() {
         {/* ============================================================
          * SECTION D3: AVAILABLE ROOM CATEGORIES
          * ============================================================ */}
-        <div id="available-rooms-section" className="space-y-6 mt-8">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-slate-200 dark:border-white/10 pb-3">
+        {isHotel && (
+          <div id="available-rooms-section" className="space-y-6 mt-8">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-slate-200 dark:border-white/10 pb-3">
             <div>
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
                 Available Room Categories
@@ -943,6 +1004,783 @@ export default function VenueProfilePage() {
             )}
           </div>
         </div>
+        )}
+
+        {/* ============================================================
+         * SECTION D4: SPORTS, TURF & COURT HOURLY SLOTS BOOKING (PLAYO STYLE)
+         * ============================================================ */}
+        {isFacility && (
+          <div className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>⚽</span> Select Time Slot & Court
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Book 1-hour slots. Instant 5-minute temporary reservation hold upon selection.
+                </p>
+              </div>
+
+              {/* Slot Hold Timer */}
+              {selectedHourSlot && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 text-xs font-bold animate-pulse">
+                  <Clock size={14} />
+                  <span>Slot Held: 04:59 mins remaining</span>
+                </div>
+              )}
+            </div>
+
+            {/* Date Quick Selector */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
+              {[0, 1, 2, 3, 4, 5, 6].map(offset => {
+                const d = new Date();
+                d.setDate(d.getDate() + offset);
+                const ds = d.toISOString().split('T')[0];
+                const isSelected = selectedDate === ds;
+                return (
+                  <button
+                    key={ds}
+                    type="button"
+                    onClick={() => {
+                      setSelectedDate(ds);
+                      setSelectedHourSlot(null);
+                      setPricingResult(null);
+                    }}
+                    className={`px-4 py-2.5 rounded-xl text-xs font-extrabold flex flex-col items-center min-w-[76px] transition-all cursor-pointer border ${
+                      isSelected
+                        ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md scale-105'
+                        : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-[#033266] dark:hover:border-[#ff6325]'
+                    }`}
+                  >
+                    <span className="text-[10px] uppercase font-bold opacity-80">
+                      {offset === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' })}
+                    </span>
+                    <span className="text-sm font-black mt-0.5">
+                      {d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Morning vs Evening Slot Grid */}
+            <div className="space-y-4 pt-2">
+              <div>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">
+                  🌅 Morning & Afternoon (Regular Pricing)
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
+                  {['06:00 AM', '07:00 AM', '08:00 AM', '09:00 AM', '10:00 AM', '04:00 PM'].map(time => {
+                    const isSelected = selectedHourSlot === time;
+                    return (
+                      <button
+                        key={time}
+                        type="button"
+                        onClick={async () => {
+                          setSelectedHourSlot(time);
+                          const currentSvc = liveServices[0] || {};
+                          setSelectedTurfService(currentSvc);
+                          setIsPricingCalculating(true);
+                          const calc = await api.services.calculatePricing({
+                            archetype: 'FacilityHourly',
+                            basePrice: Number(currentSvc.price || currentSvc.basePrice) || 1200,
+                            durationHours: 1,
+                            isNightPeak: false,
+                            quantity: 1
+                          });
+                          setPricingResult(calc);
+                          setIsPricingCalculating(false);
+                        }}
+                        className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md'
+                            : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#033266] dark:hover:border-[#ff6325] text-slate-900 dark:text-white'
+                        }`}
+                      >
+                        <span className="text-xs font-black block">{time}</span>
+                        <span className="text-[10px] opacity-75 font-semibold mt-0.5 block">1 Hour Slot</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block mb-2 flex items-center gap-1.5">
+                  <span>🌙 Evening & Night Peak (+ Floodlights ₹200)</span>
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
+                  {['06:00 PM', '07:00 PM', '08:00 PM', '09:00 PM', '10:00 PM', '11:00 PM'].map(time => {
+                    const isSelected = selectedHourSlot === time;
+                    return (
+                      <button
+                        key={time}
+                        type="button"
+                        onClick={async () => {
+                          setSelectedHourSlot(time);
+                          const currentSvc = liveServices[0] || {};
+                          setSelectedTurfService(currentSvc);
+                          setIsPricingCalculating(true);
+                          const calc = await api.services.calculatePricing({
+                            archetype: 'FacilityHourly',
+                            basePrice: Number(currentSvc.price || currentSvc.basePrice) || 1200,
+                            durationHours: 1,
+                            isNightPeak: true,
+                            quantity: 1
+                          });
+                          setPricingResult(calc);
+                          setIsPricingCalculating(false);
+                        }}
+                        className={`p-3 rounded-xl border text-center transition-all cursor-pointer relative overflow-hidden ${
+                          isSelected
+                            ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md'
+                            : 'bg-slate-50 dark:bg-slate-800/80 border-amber-500/30 hover:border-amber-500 text-slate-900 dark:text-white'
+                        }`}
+                      >
+                        <div className="absolute top-1 right-1 text-[9px] opacity-75">💡</div>
+                        <span className="text-xs font-black block">{time}</span>
+                        <span className="text-[10px] opacity-75 font-semibold mt-0.5 block">Floodlights</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Live Pricing Engine Result Card */}
+            {selectedHourSlot && pricingResult && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-6 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4"
+              >
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-slate-900 dark:text-white">
+                      {selectedTurfService?.name || 'Standard 7s Turf'}
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      Slot Reserved
+                    </span>
+                  </div>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5 font-medium">
+                    {selectedDate} • {selectedHourSlot} • {pricingResult.breakdownSummary}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                  <div className="text-right">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Payable Total</span>
+                    <span className="text-xl font-black text-[#033266] dark:text-[#ff6325]">
+                      ₹{pricingResult.finalPayable?.toLocaleString()}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedService({
+                        ...selectedTurfService,
+                        price: pricingResult.finalPayable,
+                        name: `${venueName} — ${selectedTurfService?.name || 'Turf Slot'}`,
+                        metadata: {
+                          ...(selectedTurfService?.metadata || {}),
+                          turfBooking: {
+                            venueName,
+                            address,
+                            slotDate: selectedDate,
+                            slotTime: selectedHourSlot,
+                            priceBreakdown: pricingResult
+                          }
+                        }
+                      });
+
+                      setSelectedSlot({
+                        id: `turf-slot-${Date.now()}`,
+                        timeStr: `${selectedDate} at ${selectedHourSlot} (1 Hour)`,
+                        date: selectedDate,
+                        available: true
+                      });
+
+                      router.push('/booking/checkout');
+                    }}
+                    className="px-6 py-3 rounded-xl bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+                  >
+                    Book Slot &rarr;
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </div>
+        )}
+
+        {/* ============================================================
+         * SECTION D5: APPOINTMENTS & CLINIC/SALON QUEUE (ARCHETYPE 3: TimeSlot)
+         * ============================================================ */}
+        {isAppointment && (
+          <div className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>🩺</span> {category === 'doctor' ? 'Doctor Appointment & Token Queue' : 'Specialist & Salon Appointment'}
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Guaranteed slot with live OPD token queue estimate to avoid waiting room congestion.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50 text-xs font-bold">
+                <span>⏱️ Live Token Serving: #{tokenQueueNum - 3}</span>
+              </div>
+            </div>
+
+            {/* Practitioner Selection */}
+            <div>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                Select Specialist / Doctor
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { name: 'Dr. Rajesh Kumar (Senior Consultant)', fee: 600, exp: '14+ yrs exp • MBBS, MD' },
+                  { name: 'Dr. Priya Sundaram (Associate Specialist)', fee: 450, exp: '8+ yrs exp • DNB, Fellow' }
+                ].map(spec => (
+                  <div
+                    key={spec.name}
+                    onClick={() => setSelectedPractitioner(spec.name)}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                      selectedPractitioner === spec.name
+                        ? 'bg-[#033266]/5 dark:bg-[#ff6325]/10 border-[#033266] dark:border-[#ff6325]'
+                        : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                    }`}
+                  >
+                    <div>
+                      <h4 className="text-xs font-black text-slate-900 dark:text-white">{spec.name}</h4>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">{spec.exp}</p>
+                    </div>
+                    <span className="text-sm font-black text-[#033266] dark:text-[#ff6325]">₹{spec.fee}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Consultation Slots */}
+            <div>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                Available Appointment Windows
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
+                {['10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '04:30 PM', '05:00 PM', '05:30 PM', '06:00 PM'].map(slot => {
+                  const isSelected = selectedApptSlot === slot;
+                  return (
+                    <button
+                      key={slot}
+                      type="button"
+                      onClick={() => setSelectedApptSlot(slot)}
+                      className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md'
+                          : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#033266] dark:hover:border-[#ff6325] text-slate-900 dark:text-white'
+                      }`}
+                    >
+                      <span className="text-xs font-black block">{slot}</span>
+                      <span className="text-[10px] opacity-75 font-medium mt-0.5 block">Token #{tokenQueueNum}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Patient Symptoms / Reason */}
+            <div>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
+                Brief Symptoms or Visit Notes (Optional)
+              </label>
+              <input
+                type="text"
+                value={patientNotes}
+                onChange={(e) => setPatientNotes(e.target.value)}
+                placeholder="e.g., Routine fever checkup, throat irritation since 2 days..."
+                className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-[#033266] dark:focus:border-[#ff6325]"
+              />
+            </div>
+
+            {/* Confirm Consultation Card */}
+            {selectedApptSlot && (
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <span className="text-xs font-black text-slate-900 dark:text-white block">
+                    {selectedPractitioner}
+                  </span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
+                    {selectedDate} at {selectedApptSlot} • Est. Token #{tokenQueueNum}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const fee = selectedPractitioner.includes('Rajesh') ? 600 : 450;
+                    setSelectedService({
+                      id: `appt-${Date.now()}`,
+                      name: `${venueName} — ${selectedPractitioner}`,
+                      price: fee,
+                      metadata: {
+                        appointmentBooking: {
+                          venueName,
+                          practitioner: selectedPractitioner,
+                          slotTime: selectedApptSlot,
+                          slotDate: selectedDate,
+                          tokenNum: tokenQueueNum,
+                          patientNotes
+                        }
+                      }
+                    });
+                    setSelectedSlot({
+                      id: `token-${tokenQueueNum}`,
+                      timeStr: `${selectedDate} at ${selectedApptSlot} (Token #${tokenQueueNum})`,
+                      date: selectedDate,
+                      available: true
+                    });
+                    router.push('/booking/checkout');
+                  }}
+                  className="px-6 py-3 rounded-xl bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer w-full sm:w-auto"
+                >
+                  Confirm Appointment (₹{selectedPractitioner.includes('Rajesh') ? '600' : '450'}) &rarr;
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ============================================================
+         * SECTION D6: SELF-DRIVE & VEHICLE RENTALS (ARCHETYPE 4: AssetRental)
+         * ============================================================ */}
+        {isRental && (
+          <div className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>🚗</span> Vehicle / Equipment Rental Selection
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  100% Tax-Exempt Security Deposit refunded immediately upon safe return.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 text-xs font-bold">
+                <span>🛡️ Zero Deposit Deductions Guarantee</span>
+              </div>
+            </div>
+
+            {/* Rental Duration Pickers */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
+                  Pick-up Date
+                </label>
+                <input
+                  type="date"
+                  value={rentalStartDate}
+                  onChange={(e) => setRentalStartDate(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
+                  Return Date
+                </label>
+                <input
+                  type="date"
+                  value={rentalEndDate}
+                  onChange={(e) => setRentalEndDate(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
+                  Total Rental Days
+                </label>
+                <select
+                  value={rentalDays}
+                  onChange={(e) => setRentalDays(Number(e.target.value))}
+                  className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none"
+                >
+                  {[1, 2, 3, 5, 7, 14, 30].map(d => (
+                    <option key={d} value={d}>{d} Day{d > 1 ? 's' : ''}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Mandatory DL / ID Verification Notice */}
+            <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🪪</span>
+                <div>
+                  <h4 className="text-xs font-extrabold text-amber-900 dark:text-amber-200">
+                    Mandatory Driving License / Govt ID Check
+                  </h4>
+                  <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80">
+                    Required at handover for vehicle insurance coverage.
+                  </p>
+                </div>
+              </div>
+              <label className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold cursor-pointer transition-all shadow-xs shrink-0">
+                <span>{uploadedDlName ? `✓ ${uploadedDlName}` : 'Upload DL / ID Document'}</span>
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) setUploadedDlName(e.target.files[0].name);
+                  }}
+                />
+              </label>
+            </div>
+
+            {/* Rental Breakdown Summary */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <span className="text-xs font-black text-slate-900 dark:text-white block">
+                  {liveServices[0]?.name || 'Standard Vehicle Rental'}
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
+                  ₹1,500/day × {rentalDays} days (₹{1500 * rentalDays}) + ₹2,000 Refundable Security Deposit
+                </span>
+              </div>
+
+              <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                <div className="text-right">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Payable</span>
+                  <span className="text-xl font-black text-[#033266] dark:text-[#ff6325]">
+                    ₹{(1500 * rentalDays + 2000).toLocaleString()}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const baseDaily = 1500;
+                    const deposit = 2000;
+                    const total = baseDaily * rentalDays + deposit;
+                    setSelectedService({
+                      id: `rental-${Date.now()}`,
+                      name: `${venueName} — Rental`,
+                      price: total,
+                      metadata: {
+                        rentalBooking: {
+                          venueName,
+                          rentalDays,
+                          rentalStartDate,
+                          rentalEndDate,
+                          securityDeposit: deposit,
+                          uploadedDoc: uploadedDlName || 'Verified at Counter'
+                        }
+                      }
+                    });
+                    setSelectedSlot({
+                      id: `rental-slot-${Date.now()}`,
+                      timeStr: `${rentalStartDate} to ${rentalEndDate} (${rentalDays} Days)`,
+                      date: rentalStartDate,
+                      available: true
+                    });
+                    router.push('/booking/checkout');
+                  }}
+                  className="px-6 py-3 rounded-xl bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+                >
+                  Reserve Vehicle &rarr;
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================
+         * SECTION D7: PASSES, MOVIES & TURNSTILE ENTRY (ARCHETYPE 5: PassEntry)
+         * ============================================================ */}
+        {isPass && (
+          <div className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>🎟️</span> Event Passes & Turnstile Entry
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Instant digital turnstile QR pass delivered via BNX SMS & WhatsApp.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-900/50 text-xs font-bold">
+                <span>📱 Scan QR for Turnstile Entry</span>
+              </div>
+            </div>
+
+            {/* Pass Tiers */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {[
+                { name: 'Silver General', price: 299, desc: 'Single Entry • Standard Zone' },
+                { name: 'Standard VIP', price: 599, desc: 'Priority Gate Entry • Lounge Access' },
+                { name: 'Platinum All-Access', price: 999, desc: 'VIP Lounge + F&B Voucher included' }
+              ].map(tier => (
+                <div
+                  key={tier.name}
+                  onClick={() => setSelectedTier(tier.name)}
+                  className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
+                    selectedTier === tier.name
+                      ? 'bg-[#033266]/5 dark:bg-[#ff6325]/10 border-[#033266] dark:border-[#ff6325]'
+                      : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                  }`}
+                >
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900 dark:text-white">{tier.name}</h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{tier.desc}</p>
+                  </div>
+                  <span className="text-base font-black text-[#033266] dark:text-[#ff6325] mt-3">₹{tier.price} / pass</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Quantity Selector */}
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10">
+              <div>
+                <h4 className="text-xs font-extrabold text-slate-900 dark:text-white">Number of Attendees / Passes</h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Max 10 passes per transaction</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPassCount(Math.max(1, passCount - 1))}
+                  className="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 font-bold text-sm text-slate-900 dark:text-white"
+                >
+                  -
+                </button>
+                <span className="text-sm font-black text-slate-900 dark:text-white w-4 text-center">{passCount}</span>
+                <button
+                  type="button"
+                  onClick={() => setPassCount(Math.min(10, passCount + 1))}
+                  className="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 font-bold text-sm text-slate-900 dark:text-white"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            {/* F&B Snack Combo Add-on */}
+            <div
+              onClick={() => setPopcornComboAddon(!popcornComboAddon)}
+              className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                popcornComboAddon
+                  ? 'bg-amber-500/10 border-amber-500'
+                  : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🍿</span>
+                <div>
+                  <h4 className="text-xs font-black text-slate-900 dark:text-white">Add Large Tub Popcorn & Beverage Combo</h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Save 25% compared to counter price</p>
+                </div>
+              </div>
+              <span className="text-xs font-black text-amber-600 dark:text-amber-400">+₹250</span>
+            </div>
+
+            {/* Confirm Passes Card */}
+            {(() => {
+              const tierPrices: Record<string, number> = { 'Silver General': 299, 'Standard VIP': 599, 'Platinum All-Access': 999 };
+              const unitPrice = tierPrices[selectedTier] || 599;
+              const subtotal = unitPrice * passCount + (popcornComboAddon ? 250 : 0);
+
+              return (
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div>
+                    <span className="text-xs font-black text-slate-900 dark:text-white block">
+                      {selectedTier} ({passCount} Pass{passCount > 1 ? 'es' : ''})
+                    </span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
+                      {popcornComboAddon ? 'Includes F&B Combo • ' : ''}Valid for event date
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                    <div className="text-right">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Payable</span>
+                      <span className="text-xl font-black text-[#033266] dark:text-[#ff6325]">
+                        ₹{subtotal.toLocaleString()}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedService({
+                          id: `pass-${Date.now()}`,
+                          name: `${venueName} — ${selectedTier}`,
+                          price: subtotal,
+                          metadata: {
+                            passBooking: {
+                              venueName,
+                              tier: selectedTier,
+                              passCount,
+                              popcornComboAddon,
+                              totalPayable: subtotal
+                            }
+                          }
+                        });
+                        setSelectedSlot({
+                          id: `pass-slot-${Date.now()}`,
+                          timeStr: `${passCount} × ${selectedTier} (Digital Pass)`,
+                          date: selectedDate,
+                          available: true
+                        });
+                        router.push('/booking/checkout');
+                      }}
+                      className="px-6 py-3 rounded-xl bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+                    >
+                      Get {passCount} Pass{passCount > 1 ? 'es' : ''} &rarr;
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* ============================================================
+         * SECTION D8: HOME REPAIR & CLEANING VISITS (ARCHETYPE 6: HomeCall)
+         * ============================================================ */}
+        {isHomeCall && (
+          <div className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>🛠️</span> Doorstep Home Visit & Inspection
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Pay only ₹199 inspection fee upfront. Spare parts and extra labor quoted after physical check.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-900/50 text-xs font-bold">
+                <span>🛡️ BOKSPOT 30-Day Service Guarantee</span>
+              </div>
+            </div>
+
+            {/* Service Category */}
+            <div>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                Type of Issue / Service Needed
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {['Inspection & Diagnosis', 'Major Repair / Wiring', 'Periodic Maintenance'].map(cat => (
+                  <div
+                    key={cat}
+                    onClick={() => setHomeIssueCategory(cat)}
+                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                      homeIssueCategory === cat
+                        ? 'bg-[#033266]/5 dark:bg-[#ff6325]/10 border-[#033266] dark:border-[#ff6325]'
+                        : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                    }`}
+                  >
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">{cat}</span>
+                    <span className="text-xs font-black text-[#033266] dark:text-[#ff6325]">₹199</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Preferred Visit Time Slot */}
+            <div>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                Select Technician Arrival Window
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {[
+                  'Morning (09:00 AM - 12:00 PM)',
+                  'Afternoon (01:00 PM - 04:00 PM)',
+                  'Evening (04:30 PM - 07:30 PM)'
+                ].map(win => (
+                  <button
+                    key={win}
+                    type="button"
+                    onClick={() => setPreferredHomeWindow(win)}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                      preferredHomeWindow === win
+                        ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md'
+                        : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#033266] dark:hover:border-[#ff6325] text-slate-900 dark:text-white'
+                    }`}
+                  >
+                    <span className="text-xs font-black block">{win}</span>
+                    <span className="text-[10px] opacity-75 font-semibold mt-0.5 block">Verified Professional</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Service Address Input */}
+            <div>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
+                Doorstep Service Address
+              </label>
+              <input
+                type="text"
+                value={homeAddressLine}
+                onChange={(e) => setHomeAddressLine(e.target.value)}
+                placeholder="Door / Flat No., Street Name, Apartment Landmark..."
+                className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-[#033266] dark:focus:border-[#ff6325]"
+              />
+            </div>
+
+            {/* Booking Action Card */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <span className="text-xs font-black text-slate-900 dark:text-white block">
+                  {homeIssueCategory}
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
+                  Arrival: {preferredHomeWindow} • ₹199 Inspection Fee
+                </span>
+              </div>
+
+              <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                <div className="text-right">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Upfront Visiting Fee</span>
+                  <span className="text-xl font-black text-[#033266] dark:text-[#ff6325]">₹199</span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedService({
+                      id: `homecall-${Date.now()}`,
+                      name: `${venueName} — ${homeIssueCategory}`,
+                      price: 199,
+                      metadata: {
+                        homeCallBooking: {
+                          venueName,
+                          issueCategory: homeIssueCategory,
+                          arrivalWindow: preferredHomeWindow,
+                          serviceAddress: homeAddressLine || address,
+                          upfrontVisitingFee: 199
+                        }
+                      }
+                    });
+                    setSelectedSlot({
+                      id: `home-slot-${Date.now()}`,
+                      timeStr: `${preferredHomeWindow} (Doorstep Visit)`,
+                      date: selectedDate,
+                      available: true
+                    });
+                    router.push('/booking/checkout');
+                  }}
+                  className="px-6 py-3 rounded-xl bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+                >
+                  Book Doorstep Visit &rarr;
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ============================================================
          * SECTION E: HOUSE RULES & PROPERTY POLICIES

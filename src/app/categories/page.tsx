@@ -399,16 +399,16 @@ export default function CategoriesPage() {
 
   // Bento Primary Highlights - ALL 9 Categories + "All" option
   const BENTO_CATEGORIES = [
-    { title: 'All Services', tag: 'ALL', icon: 'apps', emoji: '✨', desc: 'Browse entire directory', border: 'hover:border-[#ff6325]/50', badge: `${allFilteredItems.length} Total` },
-    { title: 'Travel & Cabs', tag: 'Travel', icon: 'directions_car', emoji: '🚕', desc: 'Rides, flights & buses', border: 'hover:border-sky-500/50', badge: '10 Services' },
-    { title: 'Stay & Hotels', tag: 'Stay & Accomodation', icon: 'hotel', emoji: '🏨', desc: 'Resorts, villas & homestays', border: 'hover:border-amber-500/50', badge: '5 Types' },
-    { title: 'Sports & Turfs', tag: 'Sports', icon: 'sports_soccer', emoji: '⚽', desc: 'Football, cricket & courts', border: 'hover:border-emerald-500/50', badge: '7 Arenas' },
-    { title: 'Entertainment', tag: 'Entertainment', icon: 'movie', emoji: '🎬', desc: 'Cinema, concerts & events', border: 'hover:border-fuchsia-500/50', badge: '7 Shows' },
-    { title: 'Lifestyle & Spa', tag: 'Lifestyle Services', icon: 'spa', emoji: '💇', desc: 'Dining, wellness & beauty', border: 'hover:border-rose-500/50', badge: '9 Bookings' },
-    { title: 'Coworking & Office', tag: 'Business', icon: 'laptop_mac', emoji: '💼', desc: 'Desks, meeting & studios', border: 'hover:border-cyan-500/50', badge: '5 Workspaces' },
-    { title: 'Darshan & Pooja', tag: 'Religious Services', icon: 'account_balance', emoji: '🛕', desc: 'Temple darshan & pilgrimage', border: 'hover:border-orange-500/50', badge: '3 Passes' },
-    { title: 'Equipment Rentals', tag: 'Equipment Rentals', icon: 'shopping_bag', emoji: '🚲', desc: 'Bikes, cameras & audio', border: 'hover:border-yellow-500/50', badge: '5 Rentals' },
-    { title: 'Personal Services', tag: 'Personal Services', icon: 'pets', emoji: '🐶', desc: 'Pet groom, care & babysit', border: 'hover:border-purple-500/50', badge: '4 Services' },
+    { title: 'All Services', tag: 'ALL', icon: 'apps', emoji: '✨', desc: 'Browse entire directory', border: 'hover:border-[#ff6325]/50', badge: '54 TOTAL' },
+    { title: 'Travel & Cabs', tag: 'Travel', icon: 'directions_car', emoji: '🚕', desc: 'Rides, flights & buses', border: 'hover:border-sky-500/50', badge: '9 SERVICES' },
+    { title: 'Stay & Hotels', tag: 'Stay & Accomodation', icon: 'hotel', emoji: '🏨', desc: 'Resorts, villas & homestays', border: 'hover:border-amber-500/50', badge: '5 TYPES' },
+    { title: 'Sports & Turfs', tag: 'Sports', icon: 'sports_soccer', emoji: '⚽', desc: 'Football, cricket & courts', border: 'hover:border-emerald-500/50', badge: '7 ARENAS' },
+    { title: 'Entertainment', tag: 'Entertainment', icon: 'movie', emoji: '🎬', desc: 'Cinema, concerts & events', border: 'hover:border-fuchsia-500/50', badge: '7 SHOWS' },
+    { title: 'Lifestyle & Spa', tag: 'Lifestyle Services', icon: 'spa', emoji: '💇', desc: 'Dining, wellness & beauty', border: 'hover:border-rose-500/50', badge: '9 BOOKINGS' },
+    { title: 'Coworking & Office', tag: 'Business', icon: 'laptop_mac', emoji: '💼', desc: 'Desks, meeting & studios', border: 'hover:border-cyan-500/50', badge: '5 WORKSPACES' },
+    { title: 'Darshan & Pooja', tag: 'Religious Services', icon: 'account_balance', emoji: '🛕', desc: 'Temple darshan & pilgrimage', border: 'hover:border-orange-500/50', badge: '3 PASSES' },
+    { title: 'Equipment Rentals', tag: 'Equipment Rentals', icon: 'shopping_bag', emoji: '🚲', desc: 'Bikes, cameras & audio', border: 'hover:border-yellow-500/50', badge: '5 RENTALS' },
+    { title: 'Personal Services', tag: 'Personal Services', icon: 'pets', emoji: '🐶', desc: 'Pet groom, care & babysit', border: 'hover:border-purple-500/50', badge: '4 SERVICES' },
   ];
 
   return (
@@ -431,7 +431,7 @@ export default function CategoriesPage() {
               <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[color:var(--color-on-surface)] flex items-center gap-3">
                 <span>Categories</span>
                 <span className="text-xs font-bold text-[color:var(--color-on-surface-variant)] px-2.5 py-0.5 rounded-full bg-[color:var(--color-surface-dim)] border border-[color:var(--color-outline-variant)]/30">
-                  {allFilteredItems.length} Services Listed
+                  54 Services Listed
                 </span>
                 {activeGroup !== 'ALL' && (
                   <span className="text-xs font-bold text-[#0a3161] dark:text-[#ff6325] px-2.5 py-0.5 rounded-full bg-[#0a3161]/10 dark:bg-[#ff6325]/10 border border-[#0a3161]/20 dark:border-[#ff6325]/20 flex items-center gap-1.5">

@@ -268,6 +268,41 @@ export const api = {
         meta: { total: 0, page: 1, limit: 10, totalPages: 1 }
       };
     },
+    calculatePricing: async (payload: any) => {
+      try {
+        const baseUrl = API_BASE;
+        const res = await fetch(`${baseUrl}/services/calculate-pricing`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          const body = await res.json();
+          return body.data?.data || body.data;
+        }
+      } catch (err) {
+        console.warn('Backend calculatePricing error, calculating locally:', err);
+      }
+      // Fallback local calculator if backend is offline
+      const qty = payload.quantity || 1;
+      const hours = payload.durationHours || 1;
+      const nights = payload.nights || 1;
+      const bp = payload.basePrice || 0;
+      let total = bp * qty;
+      if (payload.archetype === 'FacilityHourly') {
+        total = (bp * hours * qty) + (payload.isNightPeak ? 200 * hours : 0);
+      } else if (payload.archetype === 'OvernightStay') {
+        total = bp * nights * qty;
+      }
+      return {
+        baseTotal: total,
+        addonsTotal: 0,
+        securityDeposit: payload.securityDeposit || 0,
+        subtotal: total,
+        finalPayable: total + (payload.securityDeposit || 0),
+        multiplierText: `₹${bp}`
+      };
+    },
     byId: async (id: string) => {
       try {
         const controller = new AbortController();
