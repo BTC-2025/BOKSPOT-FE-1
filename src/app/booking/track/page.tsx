@@ -256,9 +256,15 @@ Show this at the reception counter.
               { label: 'Date', value: booking.date },
               { label: 'Time Slot', value: booking.time },
               { label: 'Customer', value: booking.customerName },
-              { label: 'Amount Paid', value: `₹${booking.amount?.toLocaleString()}`, bold: true },
+              { label: 'Total Booking Value', value: `₹${booking.amount?.toLocaleString()}` },
+              ...(booking.advancePaid && booking.balanceAtVenue > 0 ? [
+                { label: 'Advance Paid Online', value: `₹${booking.advancePaid?.toLocaleString()}`, bold: true },
+                { label: 'Balance Payable at Venue', value: `₹${booking.balanceAtVenue?.toLocaleString()}`, bold: true }
+              ] : [
+                { label: 'Amount Paid', value: `₹${(booking.amountPaidByLeader || booking.amount)?.toLocaleString()}`, bold: true }
+              ])
             ].map((row, i) => (
-              <div key={i} className={`flex justify-between items-center py-1 ${i < 5 ? 'border-b border-gray-100' : ''}`}>
+              <div key={i} className="flex justify-between items-center py-1 border-b border-gray-100 last:border-0">
                 <span className="text-gray-500 font-medium">{row.label}</span>
                 <span className={`font-bold ${row.bold ? config.textColor + ' text-base' : 'text-gray-900'}`}>{row.value}</span>
               </div>
@@ -266,18 +272,81 @@ Show this at the reception counter.
           </div>
         </div>
 
+        {/* ── District-Style Split with Friends Group Share Card ── */}
+        {booking?.isSplitEnabled && (
+          <div className="rounded-3xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/70 shadow-sm p-6 space-y-4 animate-fade-in">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-md shadow-indigo-600/30">
+                  👥
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm text-gray-900">Group Split Active ({booking.splitCount} Members)</h3>
+                  <p className="text-[11px] text-indigo-700 font-bold">Your Share Paid: ₹{booking.amountPaidByLeader || Math.round(booking.amount / booking.splitCount)}</p>
+                </div>
+              </div>
+              <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-800 border border-indigo-300">
+                Split Link
+              </span>
+            </div>
+
+            <p className="text-xs text-gray-600 leading-relaxed">
+              Your share has been paid and the slot is locked! Share this invite link with your friends so each person can pay their share:
+            </p>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                readOnly
+                value={typeof window !== 'undefined' ? `${window.location.origin}/booking/checkout?ref=${booking.ref}&split=true` : `https://bokspot.com/split/${booking.ref}`}
+                className="flex-1 bg-white border border-indigo-200 rounded-xl px-3 py-2 text-xs font-mono text-gray-700 select-all"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const url = typeof window !== 'undefined' ? `${window.location.origin}/booking/checkout?ref=${booking.ref}&split=true` : `https://bokspot.com/split/${booking.ref}`;
+                  navigator.clipboard.writeText(url);
+                  alert("Split payment link copied to clipboard! Share it on WhatsApp with your friends.");
+                }}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow cursor-pointer transition-all"
+              >
+                Copy Link
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* QR code – shown once confirmed */}
         {status === 'CONFIRMED' && (
-          <div className="rounded-3xl border-2 border-emerald-200 bg-white shadow-sm p-6 flex flex-col items-center animate-fade-in">
-            <span className="text-[10px] font-black tracking-widest uppercase px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full mb-3">
-              Digital Entry Pass
-            </span>
+          <div className="rounded-3xl border-2 border-emerald-200 bg-white shadow-sm p-6 flex flex-col items-center animate-fade-in relative overflow-hidden">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-[10px] font-black tracking-widest uppercase px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">
+                Digital Turnstile Pass
+              </span>
+              <span className="text-[10px] font-black tracking-widest uppercase px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full font-mono">
+                PNR: {booking.ref?.replace('BK-', 'PNR-')}
+              </span>
+            </div>
+            
             <img
               src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(booking.ref)}`}
               alt="QR Code"
               className="h-36 w-36 rounded-2xl border border-gray-100 shadow p-2 bg-white"
             />
-            <p className="text-xs text-gray-500 font-medium mt-3">Show at reception kiosk or front desk for physical verification</p>
+            
+            {/* Barcode Strip */}
+            <div className="mt-4 w-full max-w-[260px] py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-col items-center">
+              <div className="w-full flex items-center justify-between gap-1 h-8 opacity-80">
+                {[4, 2, 5, 1, 3, 2, 4, 1, 6, 2, 3, 5, 2, 4, 1, 3, 2, 5, 1, 4, 2, 3, 1, 4].map((w, idx) => (
+                  <div key={idx} className="bg-slate-800 h-full rounded-xs" style={{ width: `${w * 2}px` }} />
+                ))}
+              </div>
+              <span className="font-mono text-[10px] text-slate-500 font-bold mt-1 tracking-widest">*{booking.ref}*</span>
+            </div>
+
+            <p className="text-xs text-gray-500 font-medium mt-3 text-center">
+              Hold this QR code or Barcode to the turnstile / conductor scanner for instant gate admittance
+            </p>
           </div>
         )}
 
@@ -316,17 +385,69 @@ Show this at the reception counter.
         <div className="flex gap-3">
           <button
             onClick={handleDownload}
-            className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl border-2 ${config.borderColor} font-bold text-sm ${config.textColor} hover:opacity-80 transition-all`}
+            className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl border-2 ${config.borderColor} font-bold text-sm ${config.textColor} hover:opacity-80 transition-all cursor-pointer`}
           >
             <Download size={16} /> Save Ticket
           </button>
           <button
             onClick={handleShare}
-            className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl border-2 ${config.borderColor} font-bold text-sm ${config.textColor} hover:opacity-80 transition-all`}
+            className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl border-2 ${config.borderColor} font-bold text-sm ${config.textColor} hover:opacity-80 transition-all cursor-pointer`}
           >
             {copied ? <><Check size={16} /> Copied!</> : <><Share2 size={16} /> Share</>}
           </button>
         </div>
+
+        {/* ── Cancellation & Refund SLA Policy Button ── */}
+        {status !== 'CANCELLED' && status !== 'COMPLETED' && (
+          <div className="pt-2">
+            <button
+              onClick={async () => {
+                const cat = (booking.category || '').toLowerCase();
+                let policyMessage = '';
+                let refundPercent = 100;
+
+                if (['buses', 'flights', 'trains', 'movies', 'concerts', 'theatre', 'events'].includes(cat)) {
+                  policyMessage = 'STRICTLY NON-REFUNDABLE: Under PassEntry policy, tickets/passes are non-refundable once barcode/PNR is generated. Event cancellation provides 100% refund.';
+                  refundPercent = 0;
+                } else if (cat.includes('turf') || cat.includes('cricket') || cat.includes('court') || cat.includes('football')) {
+                  policyMessage = 'PARTIAL REFUND SLA: Turf cancellation allows 70% refund when cancelled >4 hours prior. 30% advance is forfeited as slot collision hold.';
+                  refundPercent = 70;
+                } else if (cat.includes('hotel') || cat.includes('resort') || cat.includes('stay') || cat.includes('villa')) {
+                  policyMessage = 'FREE CANCELLATION: 100% full refund available when cancelled 24 hours prior to standard check-in time.';
+                  refundPercent = 100;
+                } else {
+                  policyMessage = 'STANDARD SLA: Free cancellation with 100% refund available prior to technician/specialist dispatch.';
+                  refundPercent = 100;
+                }
+
+                const refundAmount = Math.round((booking.amount || 0) * (refundPercent / 100));
+                const confirmCancel = window.confirm(
+                  `${policyMessage}\n\nExpected Refund: ₹${refundAmount.toLocaleString()} (${refundPercent}% of ₹${booking.amount})\n\nDo you wish to confirm cancellation?`
+                );
+
+                if (confirmCancel) {
+                  try {
+                    const updated = { ...booking, status: 'CANCELLED' as const };
+                    setRemoteBooking(updated);
+                    updateBooking?.(booking.id, { status: 'CANCELLED' });
+
+                    await fetch('/api/v1/bookings/sync', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(updated),
+                    });
+                    alert(`Booking cancelled successfully. Refund of ₹${refundAmount} initiated.`);
+                  } catch (err) {
+                    alert('Cancelled locally. Syncing back to server...');
+                  }
+                }
+              }}
+              className="w-full py-3 rounded-2xl border border-red-200 bg-red-50/50 hover:bg-red-50 text-red-600 font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2"
+            >
+              Cancel Booking & Request SLA Refund
+            </button>
+          </div>
+        )}
 
         {/* Navigate to bookings */}
         <Link

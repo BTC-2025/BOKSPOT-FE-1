@@ -19,7 +19,7 @@ const DUMMY_SLOTS = [
   { id: 'slot-8', timeStr: '4:00 PM - 5:00 PM', available: true, remaining: 5 },
 ];
 
-export default function DistrictServiceDetailPage() {
+export default function BokspotServiceDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
