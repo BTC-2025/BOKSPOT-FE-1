@@ -277,78 +277,210 @@ Show this at the reception counter.
           <div className="rounded-3xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/70 shadow-sm p-6 space-y-4 animate-fade-in">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-md shadow-indigo-600/30">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold text-base shadow-md shadow-indigo-600/30">
                   👥
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-sm text-gray-900">Group Split Active ({booking.splitCount} Members)</h3>
-                  <p className="text-[11px] text-indigo-700 font-bold">Your Share Paid: ₹{booking.amountPaidByLeader || Math.round(booking.amount / booking.splitCount)}</p>
+                  <h3 className="font-extrabold text-sm text-gray-900">
+                    Group Split ({booking.splitPaidMembers || (booking.splitPayments?.length || 1)}/{booking.splitCount || 2} Paid)
+                  </h3>
+                  <p className="text-[11px] text-indigo-700 font-bold">
+                    Per Head: ₹{(booking.splitPerPerson || Math.round(booking.amount / (booking.splitCount || 2))).toLocaleString()}
+                  </p>
                 </div>
               </div>
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-800 border border-indigo-300">
-                Split Link
+              <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                (booking.splitPaidMembers || (booking.splitPayments?.length || 1)) >= (booking.splitCount || 2)
+                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                  : 'bg-indigo-100 text-indigo-800 border-indigo-300'
+              }`}>
+                {(booking.splitPaidMembers || (booking.splitPayments?.length || 1)) >= (booking.splitCount || 2) ? '✓ Fully Paid' : 'Split Active'}
               </span>
             </div>
 
-            <p className="text-xs text-gray-600 leading-relaxed">
-              Your share has been paid and the slot is locked! Share this invite link with your friends so each person can pay their share:
-            </p>
-
-            <div className="flex gap-2">
-              <input
-                type="text"
-                readOnly
-                value={typeof window !== 'undefined' ? `${window.location.origin}/booking/checkout?ref=${booking.ref}&split=true` : `https://bokspot.com/split/${booking.ref}`}
-                className="flex-1 bg-white border border-indigo-200 rounded-xl px-3 py-2 text-xs font-mono text-gray-700 select-all"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  const url = typeof window !== 'undefined' ? `${window.location.origin}/booking/checkout?ref=${booking.ref}&split=true` : `https://bokspot.com/split/${booking.ref}`;
-                  navigator.clipboard.writeText(url);
-                  alert("Split payment link copied to clipboard! Share it on WhatsApp with your friends.");
-                }}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow cursor-pointer transition-all"
-              >
-                Copy Link
-              </button>
+            {/* Split Progress Bar */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-[11px] font-bold">
+                <span className="text-gray-600">Payment Progress</span>
+                <span className="text-indigo-700 font-mono">
+                  {booking.splitPaidMembers || (booking.splitPayments?.length || 1)} of {booking.splitCount || 2} Members
+                </span>
+              </div>
+              <div className="w-full h-2.5 bg-indigo-100 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.min(100, (((booking.splitPaidMembers || (booking.splitPayments?.length || 1)) / (booking.splitCount || 2)) * 100))}%`
+                  }}
+                />
+              </div>
             </div>
+
+            {/* Share Link Input */}
+            <div className="space-y-2 pt-1">
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Share this direct payment invite link with your friends. Each friend can click and pay their share instantly:
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={typeof window !== 'undefined' ? `${window.location.origin}/split/pay?ref=${booking.ref}` : `https://bokspot.com/split/pay?ref=${booking.ref}`}
+                  className="flex-1 bg-white border border-indigo-200 rounded-xl px-3 py-2 text-xs font-mono text-gray-700 select-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = typeof window !== 'undefined' ? `${window.location.origin}/split/pay?ref=${booking.ref}` : `https://bokspot.com/split/pay?ref=${booking.ref}`;
+                    navigator.clipboard.writeText(url);
+                    alert("Split payment link copied to clipboard! Share it with your friends.");
+                  }}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow cursor-pointer transition-all"
+                >
+                  Copy Link
+                </button>
+              </div>
+            </div>
+
+            {/* Member Payment Status Pills */}
+            <div className="space-y-1.5 pt-2 border-t border-indigo-100">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Participant Status</span>
+              {(booking.splitPayments || [
+                { name: booking.customerName || 'You', role: 'LEADER', status: 'PAID', amount: booking.amountPaidByLeader || (booking.amount / (booking.splitCount || 2)) }
+              ]).map((p: any, idx: number) => (
+                <div key={idx} className="flex items-center justify-between p-2 rounded-xl bg-white border border-indigo-100 text-xs">
+                  <span className="font-bold text-gray-800 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    {p.name} {p.role === 'LEADER' ? '(Initiator)' : ''}
+                  </span>
+                  <span className="font-mono font-bold text-emerald-600">✓ Paid ₹{p.amount?.toLocaleString()}</span>
+                </div>
+              ))}
+
+              {/* Unpaid pending count */}
+              {(booking.splitPaidMembers || (booking.splitPayments?.length || 1)) < (booking.splitCount || 2) && (
+                <div className="p-2 rounded-xl bg-amber-50 border border-amber-200/80 text-xs flex items-center justify-between text-amber-800">
+                  <span className="font-medium flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                    {(booking.splitCount || 2) - (booking.splitPaidMembers || (booking.splitPayments?.length || 1))} Remaining Member(s)
+                  </span>
+                  <span className="font-mono font-bold">Waiting for payment</span>
+                </div>
+              )}
+            </div>
+
+            {/* Safety Fallback Actions: Cover Remaining OR Cancel & Instant Refund */}
+            {(booking.splitPaidMembers || (booking.splitPayments?.length || 1)) < (booking.splitCount || 2) && (
+              <div className="pt-3 border-t border-indigo-100 space-y-2">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Split Controls</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!confirm('Would you like to pay the remaining share yourself and confirm this booking immediately?')) return;
+                      const remainingAmt = (booking.amount || 0) - (booking.amountPaidByLeader || (booking.amount / 2));
+                      const updatedBooking = {
+                        ...booking,
+                        splitPaidMembers: booking.splitCount || 2,
+                        status: 'CONFIRMED',
+                        amountPaidByLeader: booking.amount,
+                      };
+                      await fetch('/api/v1/bookings/sync', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updatedBooking),
+                      });
+                      setRemoteBooking(updatedBooking);
+                      alert('Remaining balance cleared! Booking confirmed.');
+                    }}
+                    className="p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all text-center cursor-pointer"
+                  >
+                    Pay Remaining Myself
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!confirm('Are you sure you want to cancel? Your paid share will be 100% refunded immediately to your account.')) return;
+                      const updatedBooking = {
+                        ...booking,
+                        status: 'CANCELLED',
+                        cancellationReason: 'Cancelled by user due to split timeout / friend delay',
+                      };
+                      await fetch('/api/v1/bookings/sync', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updatedBooking),
+                      });
+                      setRemoteBooking(updatedBooking);
+                      alert('Booking cancelled. 100% full refund initiated to your original payment method!');
+                    }}
+                    className="p-2.5 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-bold text-xs transition-all text-center cursor-pointer"
+                  >
+                    Cancel & Refund 100%
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
         {/* QR code – shown once confirmed */}
-        {status === 'CONFIRMED' && (
-          <div className="rounded-3xl border-2 border-emerald-200 bg-white shadow-sm p-6 flex flex-col items-center animate-fade-in relative overflow-hidden">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-[10px] font-black tracking-widest uppercase px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">
-                Digital Turnstile Pass
-              </span>
-              <span className="text-[10px] font-black tracking-widest uppercase px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full font-mono">
-                PNR: {booking.ref?.replace('BK-', 'PNR-')}
-              </span>
-            </div>
-            
-            <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(booking.ref)}`}
-              alt="QR Code"
-              className="h-36 w-36 rounded-2xl border border-gray-100 shadow p-2 bg-white"
-            />
-            
-            {/* Barcode Strip */}
-            <div className="mt-4 w-full max-w-[260px] py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-col items-center">
-              <div className="w-full flex items-center justify-between gap-1 h-8 opacity-80">
-                {[4, 2, 5, 1, 3, 2, 4, 1, 6, 2, 3, 5, 2, 4, 1, 3, 2, 5, 1, 4, 2, 3, 1, 4].map((w, idx) => (
-                  <div key={idx} className="bg-slate-800 h-full rounded-xs" style={{ width: `${w * 2}px` }} />
-                ))}
-              </div>
-              <span className="font-mono text-[10px] text-slate-500 font-bold mt-1 tracking-widest">*{booking.ref}*</span>
-            </div>
+        {status === 'CONFIRMED' && (() => {
+          const cat = (booking.category || '').toLowerCase();
+          const svc = (booking.serviceName || '').toLowerCase();
+          const isStay = cat.includes('resort') || cat.includes('hotel') || cat.includes('stay') || cat.includes('villa') || svc.includes('resort') || svc.includes('hotel');
+          const isTransit = cat.includes('flight') || cat.includes('train') || cat.includes('bus') || cat.includes('metro');
 
-            <p className="text-xs text-gray-500 font-medium mt-3 text-center">
-              Hold this QR code or Barcode to the turnstile / conductor scanner for instant gate admittance
-            </p>
-          </div>
-        )}
+          const badgeTitle = isStay 
+            ? 'Fast Check-In Pass' 
+            : isTransit 
+            ? 'Digital Boarding Pass' 
+            : 'Digital Entry Pass';
+
+          const refLabel = isTransit 
+            ? `PNR: ${booking.ref?.replace('BK-', 'PNR-')}` 
+            : `REF: ${booking.ref}`;
+
+          const helpText = isStay 
+            ? 'Present this QR code or Reference ID at the resort reception for instant key handover' 
+            : isTransit 
+            ? 'Hold this QR code or Barcode to the turnstile / conductor scanner for instant boarding' 
+            : 'Present this QR code or Reference ID at the venue gate for instant check-in';
+
+          return (
+            <div className="rounded-3xl border-2 border-emerald-200 bg-white shadow-sm p-6 flex flex-col items-center animate-fade-in relative overflow-hidden">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-[10px] font-black tracking-widest uppercase px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">
+                  {badgeTitle}
+                </span>
+                <span className="text-[10px] font-black tracking-widest uppercase px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full font-mono">
+                  {refLabel}
+                </span>
+              </div>
+              
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(booking.ref)}`}
+                alt="QR Code"
+                className="h-36 w-36 rounded-2xl border border-gray-100 shadow p-2 bg-white"
+              />
+              
+              {/* Barcode Strip */}
+              <div className="mt-4 w-full max-w-[260px] py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-col items-center">
+                <div className="w-full flex items-center justify-between gap-1 h-8 opacity-80">
+                  {[4, 2, 5, 1, 3, 2, 4, 1, 6, 2, 3, 5, 2, 4, 1, 3, 2, 5, 1, 4, 2, 3, 1, 4].map((w, idx) => (
+                    <div key={idx} className="bg-slate-800 h-full rounded-xs" style={{ width: `${w * 2}px` }} />
+                  ))}
+                </div>
+                <span className="font-mono text-[10px] text-slate-500 font-bold mt-1 tracking-widest">*{booking.ref}*</span>
+              </div>
+
+              <p className="text-xs text-gray-500 font-medium mt-3 text-center">
+                {helpText}
+              </p>
+            </div>
+          );
+        })()}
 
         {/* Digital Room Keycard Access (Active when issued by front desk staff) */}
         {booking?.keycardIssued && (
@@ -398,7 +530,7 @@ Show this at the reception counter.
         </div>
 
         {/* ── Cancellation & Refund SLA Policy Button ── */}
-        {status !== 'CANCELLED' && status !== 'COMPLETED' && (
+        {status !== 'CANCELLED' && (status as string) !== 'COMPLETED' && (
           <div className="pt-2">
             <button
               onClick={async () => {

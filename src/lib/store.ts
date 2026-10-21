@@ -206,12 +206,12 @@ export const useBookingFlowStore = create<BookingFlowState>()((set, get) => ({
   fetchBookings: async () => {
     try {
       const res = await axios.get(`${API_BASE}/bookings/sync`);
-      if (res.data && Array.isArray(res.data)) {
-        set({ bookings: res.data });
+      const list = Array.isArray(res.data?.data) ? res.data.data : (Array.isArray(res.data) ? res.data : []);
+      if (list && list.length > 0) {
+        set({ bookings: list });
       }
     } catch (error) {
       console.error("Error fetching bookings:", error);
-      set({ bookings: [] });
     }
   },
 

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Map, Clock, CheckCircle2, ChevronRight, ChevronLeft, Info, ShieldCheck, Search, Users, Utensils, X, Calendar, Bed, Star, Heart, Check, MapPin } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useLocationStore, useBookingFlowStore } from '@/lib/store';
+import { BokspotLoader } from '@/components/ui/BokspotLoader';
 
 const CATEGORY_NAMES: Record<string, string> = {
   // Travel & Transport
@@ -207,7 +208,12 @@ export default function VenueProfilePage() {
   const address = liveServices.length > 0 ? (liveServices[0].merchantObj?.address || `${city || 'Chennai'}`) : '';
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center"><div className="animate-pulse flex flex-col items-center"><div className="w-12 h-12 border-4 border-[color:var(--color-primary)] border-t-transparent rounded-full animate-spin mb-4"></div><p>Loading Venue...</p></div></div>;
+    const isHotel = category === 'resorts' || category === 'hotels' || category === 'villas' || category === 'hostels' || category === 'camping';
+    return (
+      <BokspotLoader 
+        message={isHotel ? `Loading ${category === 'resorts' ? 'Resort' : category === 'villas' ? 'Villa' : category === 'hotels' ? 'Hotel' : 'Stay'} details...` : 'Loading Venue details...'} 
+      />
+    );
   }
 
   if (liveServices.length === 0) {
@@ -230,8 +236,8 @@ export default function VenueProfilePage() {
   const extractedImages: string[] = [];
   const addIfValid = (url: any) => {
     if (typeof url === 'string' && url.trim().length > 0 && !extractedImages.includes(url)) {
-      // Do not include UI screenshots or system placeholders as hotel photos
-      if (!url.startsWith('blob:') && !url.includes('screenshot') && !url.includes('data:image')) {
+      // Do not include temporary object blobs or UI screenshots
+      if (!url.startsWith('blob:') && !url.includes('screenshot')) {
         extractedImages.push(url.trim());
       }
     }
@@ -241,7 +247,9 @@ export default function VenueProfilePage() {
   liveServices.forEach((svc: any) => {
     addIfValid(svc.imageUrl);
     addIfValid(svc.image);
+    (svc.images || []).forEach(addIfValid);
     (svc.metadata?.images || []).forEach(addIfValid);
+    (svc.rawConfig?.images || []).forEach(addIfValid);
     (svc.rawConfig?.metadata?.listings || []).forEach((l: any) => addIfValid(l.imageUrl));
   });
 
@@ -926,11 +934,30 @@ export default function VenueProfilePage() {
                         {/* Inclusions & Business Perks Badges */}
                         <div className="flex flex-wrap gap-1.5 pt-1 text-[11px]">
                           {perks.length > 0 ? (
-                            perks.map((perk: string, pIdx: number) => (
-                              <span key={pIdx} className="px-2.5 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 font-bold border border-amber-200 dark:border-amber-900/50 flex items-center gap-1">
-                                🎁 {perk}
-                              </span>
-                            ))
+                            perks.map((perk: string, pIdx: number) => {
+                              const cleanPerk = (perk || '')
+                                .replace(/([a-z])([A-Z])/g, '$1 $2')
+                                .replace(/Freelaunch/i, 'Free Lunch')
+                                .replace(/freedinner/i, 'Free Dinner')
+                                .replace(/Freewifi/i, 'Free Wi-Fi')
+                                .replace(/smarttv/i, 'Smart TV')
+                                .replace(/balconyview/i, 'Balcony View')
+                                .replace(/oceanview/i, 'Ocean View')
+                                .replace(/seaview/i, 'Sea View')
+                                .replace(/swimmingpool/i, 'Swimming Pool')
+                                .replace(/ComplimentorbuffetBreakfast/i, 'Complimentary Buffet Breakfast')
+                                .replace(/buffetbreakfast/i, 'Buffet Breakfast')
+                                .replace(/breakfast/i, 'Breakfast')
+                                .replace(/firecamp/i, 'Fire Camp')
+                                .replace(/waterbottle/i, 'Water Bottle')
+                                .trim();
+                              const formattedPerk = cleanPerk.charAt(0).toUpperCase() + cleanPerk.slice(1);
+                              return (
+                                <span key={pIdx} className="px-2.5 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 font-bold border border-amber-200 dark:border-amber-900/50 flex items-center gap-1">
+                                  🎁 {formattedPerk}
+                                </span>
+                              );
+                            })
                           ) : (
                             <>
                               <span className="px-2.5 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-900/50 flex items-center gap-1">
@@ -941,11 +968,23 @@ export default function VenueProfilePage() {
                               </span>
                             </>
                           )}
-                          {roomAmenities.slice(0, 2).map((am: string, aIdx: number) => (
-                            <span key={aIdx} className="px-2.5 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium border border-slate-200 dark:border-white/10">
-                              {am}
-                            </span>
-                          ))}
+                          {roomAmenities.slice(0, 3).map((am: string, aIdx: number) => {
+                            const cleanAm = (am || '')
+                              .replace(/([a-z])([A-Z])/g, '$1 $2')
+                              .replace(/balconyview/i, 'Balcony View')
+                              .replace(/oceanview/i, 'Ocean View')
+                              .replace(/seaview/i, 'Sea View')
+                              .replace(/smarttv/i, 'Smart TV')
+                              .replace(/freewifi/i, 'Free Wi-Fi')
+                              .replace(/swimmingpool/i, 'Swimming Pool')
+                              .trim();
+                            const formattedAmenity = cleanAm.charAt(0).toUpperCase() + cleanAm.slice(1);
+                            return (
+                              <span key={aIdx} className="px-2.5 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium border border-slate-200 dark:border-white/10">
+                                {formattedAmenity}
+                              </span>
+                            );
+                          })}
                         </div>
                       </div>
 
@@ -972,10 +1011,58 @@ export default function VenueProfilePage() {
                           <button
                             type="button"
                             onClick={() => {
-                              setActiveRoomService(svc);
-                              setRoomModalStep('DETAILS');
-                              setSelectedAddonIds([]);
-                              setRoomModalImageIdx(0);
+                              const roomListings = svc.rawConfig?.metadata?.listings || svc.metadata?.listings || [];
+                              const roomMeta = roomListings[0]?.metadata || svc.metadata || {};
+                              const rawAddons = roomMeta.addons || svc.metadata?.addons || svc.addOns || [];
+                              const partnerListingAddons = Array.isArray(rawAddons) ? rawAddons : [];
+
+                              // If room has add-ons configured by merchant, show add-ons step; otherwise direct checkout!
+                              if (partnerListingAddons.length > 0) {
+                                setActiveRoomService(svc);
+                                setRoomModalStep('ADDONS');
+                                setSelectedAddonIds([]);
+                                setRoomModalImageIdx(0);
+                              } else {
+                                // Direct checkout with room
+                                const roomPrice = Number(svc.price || svc.basePrice || roomListings[0]?.price) || 2500;
+                                const roomTotal = roomPrice * nights * rooms;
+                                const slotStr = `${checkIn} to ${checkOut} (${nights} Night${nights > 1 ? 's' : ''}) • ${adults + children} Guests • ${rooms} Room${rooms > 1 ? 's' : ''}`;
+
+                                setSelectedService({
+                                  ...svc,
+                                  price: roomTotal,
+                                  name: `${venueName} — ${svc.name || 'Room'}`,
+                                  metadata: {
+                                    ...(svc.metadata || {}),
+                                    hotelBooking: {
+                                      venueName,
+                                      address,
+                                      roomType: svc.name,
+                                      checkIn,
+                                      checkOut,
+                                      nights,
+                                      rooms,
+                                      adults,
+                                      children,
+                                      childAges,
+                                      pets,
+                                      petCount,
+                                      selectedAddons: [],
+                                      pricePerNight: roomPrice,
+                                      totalPrice: roomTotal
+                                    }
+                                  }
+                                });
+
+                                setSelectedSlot({
+                                  id: `hotel-stay-${Date.now()}`,
+                                  timeStr: slotStr,
+                                  date: checkIn,
+                                  available: true
+                                });
+
+                                router.push('/booking/checkout');
+                              }
                             }}
                             className="px-5 py-2.5 bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] active:scale-95 text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center justify-center gap-1.5"
                           >
@@ -1894,6 +1981,7 @@ export default function VenueProfilePage() {
                   src={galleryImages[currentImageIdx]} 
                   alt="Gallery image" 
                   className="max-w-full max-h-[70vh] object-contain rounded-xl shadow-2xl"
+                  onError={(e) => { e.currentTarget.src = defaultHotelPhotos[currentImageIdx % defaultHotelPhotos.length]; }}
                 />
               </div>
 
@@ -1914,7 +2002,12 @@ export default function VenueProfilePage() {
                     onClick={() => setCurrentImageIdx(idx)}
                     className={`relative w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden flex-shrink-0 transition-all ${currentImageIdx === idx ? 'ring-2 ring-white scale-105 opacity-100' : 'opacity-50 hover:opacity-100'}`}
                   >
-                    <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
+                    <img 
+                      src={img} 
+                      alt={`Thumbnail ${idx + 1}`} 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => { e.currentTarget.src = defaultHotelPhotos[idx % defaultHotelPhotos.length]; }}
+                    />
                   </button>
                 ))}
               </div>
@@ -1987,51 +2080,18 @@ export default function VenueProfilePage() {
                   ];
 
                   // Check if hotel partner has custom add-ons saved in this listing
-                  const partnerListingAddons = Array.isArray(roomMeta.addons) ? roomMeta.addons : [];
+                  const rawAddons = roomMeta.addons || activeRoomService.metadata?.addons || activeRoomService.addOns || [];
+                  const partnerListingAddons = Array.isArray(rawAddons) ? rawAddons : [];
                   
-                  // Curated hotel add-ons available for this room merged with business partner add-ons
-                  const availableAddonsList = [
-                    ...partnerListingAddons.map((pa: any, pIdx: number) => ({
-                      id: `custom-addon-${pIdx}`,
-                      name: pa.name,
-                      desc: 'Custom enhancement offered directly by hotel partner',
-                      price: Number(pa.price) || 0,
-                      tag: 'Partner Exclusive',
-                      icon: '✨'
-                    })),
-                    {
-                      id: 'addon-breakfast',
-                      name: 'Daily Chef Buffet Breakfast',
-                      desc: 'Full morning spread at hotel restaurant for all guests',
-                      price: 350 * nights * (adults + children),
-                      tag: 'Most Popular',
-                      icon: '🍳'
-                    },
-                    {
-                      id: 'addon-early-checkin',
-                      name: 'Guaranteed Early Check-in (10:00 AM)',
-                      desc: 'Early room readiness with welcome beverage on arrival',
-                      price: 499,
-                      tag: 'Convenience',
-                      icon: '🕒'
-                    },
-                    {
-                      id: 'addon-airport-pickup',
-                      name: 'Private Sedan Airport / Station Pickup',
-                      desc: 'Chauffeur driven AC cab directly to hotel lobby',
-                      price: 799,
-                      tag: 'Stress-free',
-                      icon: '🚗'
-                    },
-                    {
-                      id: 'addon-cake',
-                      name: 'Celebration Bouquet & Cake Setup',
-                      desc: 'Fresh flower arrangement & Dutch chocolate cake in room',
-                      price: 599,
-                      tag: 'Special Occasion',
-                      icon: '🎂'
-                    }
-                  ];
+                  // ONLY show add-ons created directly by the business merchant (No dummy/template duplicates)
+                  const availableAddonsList = partnerListingAddons.map((pa: any, pIdx: number) => ({
+                    id: `custom-addon-${pIdx}`,
+                    name: typeof pa === 'string' ? pa : (pa.name || 'Custom Add-on'),
+                    desc: pa.desc || 'Optional enhancement offered directly by host',
+                    price: Number(pa.price || pa.cost || 0),
+                    tag: 'Included Choice',
+                    icon: '✨'
+                  }));
 
                   const addonsTotalSum = selectedAddonIds.reduce((sum, id) => {
                     const found = availableAddonsList.find(a => a.id === id);
@@ -2129,32 +2189,92 @@ export default function VenueProfilePage() {
                           <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
                             Included In This Room
                           </h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-800 dark:text-slate-200">
-                            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50 font-semibold">
-                              <CheckCircle2 size={15} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                              <span>Free High-Speed Wi-Fi</span>
-                            </div>
-                            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50 font-semibold">
-                              <CheckCircle2 size={15} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                              <span>Free Cancellation (up to 24h before)</span>
-                            </div>
-                            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10">
-                              <CheckCircle2 size={15} className="text-[#033266] dark:text-[#ff6325] shrink-0" />
-                              <span>Private Attached Bathroom</span>
-                            </div>
-                            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10">
-                              <CheckCircle2 size={15} className="text-[#033266] dark:text-[#ff6325] shrink-0" />
-                              <span>Fresh Linens & Bath Toiletries</span>
-                            </div>
-                            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10">
-                              <CheckCircle2 size={15} className="text-[#033266] dark:text-[#ff6325] shrink-0" />
-                              <span>Drinking Water & Electric Kettle</span>
-                            </div>
-                            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10">
-                              <CheckCircle2 size={15} className="text-[#033266] dark:text-[#ff6325] shrink-0" />
-                              <span>Daily Housekeeping & Assistance</span>
-                            </div>
-                          </div>
+                          {(() => {
+                            const rawPerks: string[] = Array.isArray(roomMeta.perks) ? roomMeta.perks : [];
+                            const rawAmenities: string[] = Array.isArray(roomMeta.amenities) ? roomMeta.amenities : [];
+                            
+                            // Formatting helper for camelCase/tight strings like "balconyview" -> "Balcony View", "smartTV" -> "Smart TV"
+                            const formatPerkName = (str: string) => {
+                              if (!str) return '';
+                              const formatted = str
+                                .replace(/([a-z])([A-Z])/g, '$1 $2')
+                                .replace(/Freelaunch/i, 'Free Lunch')
+                                .replace(/freedinner/i, 'Free Dinner')
+                                .replace(/Freewifi/i, 'Free Wi-Fi')
+                                .replace(/smarttv/i, 'Smart TV')
+                                .replace(/balconyview/i, 'Balcony View')
+                                .replace(/oceanview/i, 'Ocean View')
+                                .replace(/seaview/i, 'Sea View')
+                                .replace(/swimmingpool/i, 'Swimming Pool')
+                                .replace(/ComplimentorbuffetBreakfast/i, 'Complimentary Buffet Breakfast')
+                                .replace(/buffetbreakfast/i, 'Buffet Breakfast')
+                                .replace(/firecamp/i, 'Fire Camp')
+                                .replace(/waterbottle/i, 'Water Bottle')
+                                .trim();
+                              return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+                            };
+
+                            const dynamicPerks = rawPerks.map(p => ({
+                              label: formatPerkName(p),
+                              isFreeHighlight: true,
+                            }));
+
+                            const dynamicAmenities = rawAmenities.map(a => ({
+                              label: formatPerkName(a),
+                              isFreeHighlight: false,
+                            }));
+
+                            const extraFeatures: { label: string; isFreeHighlight: boolean }[] = [];
+                            if (roomMeta.bathroomType) {
+                              extraFeatures.push({
+                                label: `Private Attached Bathroom (${roomMeta.bathroomType.trim()})`,
+                                isFreeHighlight: false,
+                              });
+                            }
+                            if (roomMeta.bedType) {
+                              extraFeatures.push({
+                                label: `${roomMeta.bedType.trim()} Bed Setup`,
+                                isFreeHighlight: false,
+                              });
+                            }
+
+                            const allInclusions = [...dynamicPerks, ...dynamicAmenities, ...extraFeatures];
+
+                            // Fallback if merchant didn't add any perks or amenities
+                            const displayList = allInclusions.length > 0 ? allInclusions : [
+                              { label: 'Free High-Speed Wi-Fi', isFreeHighlight: true },
+                              { label: 'Free Cancellation (up to 24h before)', isFreeHighlight: true },
+                              { label: 'Private Attached Bathroom', isFreeHighlight: false },
+                              { label: 'Fresh Linens & Bath Toiletries', isFreeHighlight: false },
+                              { label: 'Drinking Water & Electric Kettle', isFreeHighlight: false },
+                              { label: 'Daily Housekeeping & Assistance', isFreeHighlight: false },
+                            ];
+
+                            return (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-800 dark:text-slate-200">
+                                {displayList.map((item, idx) => (
+                                  <div
+                                    key={idx}
+                                    className={`flex items-center gap-2 p-2.5 rounded-lg border font-semibold ${
+                                      item.isFreeHighlight
+                                        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/50'
+                                        : 'bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-white/10'
+                                    }`}
+                                  >
+                                    <CheckCircle2
+                                      size={15}
+                                      className={`shrink-0 ${
+                                        item.isFreeHighlight
+                                          ? 'text-emerald-600 dark:text-emerald-400'
+                                          : 'text-[#033266] dark:text-[#ff6325]'
+                                      }`}
+                                    />
+                                    <span>{item.label}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          })()}
                         </div>
 
                         {/* Selected Dates Review Banner */}
@@ -2198,64 +2318,71 @@ export default function VenueProfilePage() {
 
                         {/* Add-ons List */}
                         <div className="space-y-2.5">
-                          {availableAddonsList.map(addon => {
-                            const isSelected = selectedAddonIds.includes(addon.id);
-                            return (
-                              <div
-                                key={addon.id}
-                                onClick={() => {
-                                  setSelectedAddonIds(prev =>
-                                    prev.includes(addon.id)
-                                      ? prev.filter(x => x !== addon.id)
-                                      : [...prev, addon.id]
-                                  );
-                                }}
-                                className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                                  isSelected
-                                    ? 'bg-[#033266]/5 dark:bg-[#ff6325]/10 border-[#033266] dark:border-[#ff6325] shadow-xs'
-                                    : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
-                                }`}
-                              >
-                                <div className="flex items-start gap-3 min-w-0">
-                                  <span className="text-2xl shrink-0 p-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10">
-                                    {addon.icon}
-                                  </span>
-                                  <div className="min-w-0">
-                                    <div className="flex items-center gap-2">
-                                      <h5 className="font-extrabold text-xs text-slate-900 dark:text-white truncate">
-                                        {addon.name}
-                                      </h5>
-                                      {addon.tag && (
-                                        <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border border-[#033266]/20 dark:border-[#ff6325]/30">
-                                          {addon.tag}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                                      {addon.desc}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                <div className="flex items-center gap-3 shrink-0">
-                                  <div className="text-right">
-                                    <span className="text-xs font-black text-slate-900 dark:text-white block">
-                                      +₹{addon.price.toLocaleString()}
+                          {availableAddonsList.length === 0 ? (
+                            <div className="p-6 text-center rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400">
+                              <p className="text-xs font-semibold">No additional paid upgrades configured for this room.</p>
+                              <p className="text-[11px] mt-1 text-slate-400">You can proceed directly to checkout.</p>
+                            </div>
+                          ) : (
+                            availableAddonsList.map(addon => {
+                              const isSelected = selectedAddonIds.includes(addon.id);
+                              return (
+                                <div
+                                  key={addon.id}
+                                  onClick={() => {
+                                    setSelectedAddonIds(prev =>
+                                      prev.includes(addon.id)
+                                        ? prev.filter(x => x !== addon.id)
+                                        : [...prev, addon.id]
+                                    );
+                                  }}
+                                  className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                                    isSelected
+                                      ? 'bg-[#033266]/5 dark:bg-[#ff6325]/10 border-[#033266] dark:border-[#ff6325] shadow-xs'
+                                      : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                                  }`}
+                                >
+                                  <div className="flex items-start gap-3 min-w-0">
+                                    <span className="text-2xl shrink-0 p-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10">
+                                      {addon.icon}
                                     </span>
+                                    <div className="min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <h5 className="font-extrabold text-xs text-slate-900 dark:text-white truncate">
+                                          {addon.name}
+                                        </h5>
+                                        {addon.tag && (
+                                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border border-[#033266]/20 dark:border-[#ff6325]/30">
+                                            {addon.tag}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                                        {addon.desc}
+                                      </p>
+                                    </div>
                                   </div>
-                                  <div
-                                    className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
-                                      isSelected
-                                        ? 'bg-[#033266] dark:bg-[#ff6325] border-[#033266] dark:border-[#ff6325] text-white'
-                                        : 'border-slate-300 dark:border-white/20 bg-white dark:bg-slate-700'
-                                    }`}
-                                  >
-                                    {isSelected && <Check size={12} />}
+
+                                  <div className="flex items-center gap-3 shrink-0">
+                                    <div className="text-right">
+                                      <span className="text-xs font-black text-slate-900 dark:text-white block">
+                                        +₹{addon.price.toLocaleString()}
+                                      </span>
+                                    </div>
+                                    <div
+                                      className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+                                        isSelected
+                                          ? 'bg-[#033266] dark:bg-[#ff6325] border-[#033266] dark:border-[#ff6325] text-white'
+                                          : 'border-slate-300 dark:border-white/20 bg-white dark:bg-slate-700'
+                                      }`}
+                                    >
+                                      {isSelected && <Check size={12} />}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            })
+                          )}
                         </div>
 
                         {/* Live Total Calculation Preview */}
@@ -2361,15 +2488,17 @@ export default function VenueProfilePage() {
                       onClick={() => {
                         // Proceed to Checkout with Selected Addons included
                         const roomListings = activeRoomService.rawConfig?.metadata?.listings || activeRoomService.metadata?.listings || [];
+                        const roomMeta = roomListings[0]?.metadata || activeRoomService.metadata || {};
                         const roomPrice = Number(activeRoomService.price || activeRoomService.basePrice || roomListings[0]?.price) || 2500;
                         const roomTotal = roomPrice * nights * rooms;
 
-                        const availableAddonsList = [
-                          { id: 'addon-breakfast', name: 'Daily Chef Buffet Breakfast', price: 350 * nights * (adults + children) },
-                          { id: 'addon-early-checkin', name: 'Guaranteed Early Check-in (10:00 AM)', price: 499 },
-                          { id: 'addon-airport-pickup', name: 'Private Sedan Airport Pickup', price: 799 },
-                          { id: 'addon-cake', name: 'Celebration Bouquet & Cake Setup', price: 599 }
-                        ];
+                        const rawAddons = roomMeta.addons || activeRoomService.metadata?.addons || activeRoomService.addOns || [];
+                        const partnerListingAddons = Array.isArray(rawAddons) ? rawAddons : [];
+                        const availableAddonsList = partnerListingAddons.map((pa: any, pIdx: number) => ({
+                          id: `custom-addon-${pIdx}`,
+                          name: typeof pa === 'string' ? pa : (pa.name || 'Custom Add-on'),
+                          price: Number(pa.price || pa.cost || 0),
+                        }));
 
                         const chosenAddons = availableAddonsList.filter(a => selectedAddonIds.includes(a.id));
                         const addonsTotalSum = chosenAddons.reduce((sum, a) => sum + a.price, 0);

@@ -142,7 +142,21 @@ export default function CheckoutPage() {
         balanceAtVenue,
         isSplitEnabled,
         splitCount: isSplitEnabled ? splitCount : 1,
+        splitPerPerson: isSplitEnabled ? amountToPayNow : total,
         amountPaidByLeader: amountToPayNow,
+        splitPaidMembers: isSplitEnabled ? 1 : 1,
+        splitExpiresAt: isSplitEnabled ? new Date(Date.now() + 20 * 60 * 1000).toISOString() : undefined, // 20 mins escrow window
+        splitPayments: isSplitEnabled ? [
+          {
+            id: `p-${Date.now()}`,
+            name: name,
+            phone: phone,
+            amount: amountToPayNow,
+            paidAt: new Date().toISOString(),
+            role: 'LEADER',
+            status: 'PAID'
+          }
+        ] : undefined,
       };
 
       // Save locally

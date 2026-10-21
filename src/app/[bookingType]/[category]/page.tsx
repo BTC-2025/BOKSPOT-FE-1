@@ -1820,7 +1820,7 @@ export default function ProviderDiscoveryPage() {
                                   setSearchQuery(e.target.value);
                                   setShowAutocomplete(true);
                                 }}
-                                placeholder="City, locality, landmark or hotel name..."
+                                placeholder={`City, locality, landmark or ${category === 'resorts' ? 'Resort' : category === 'villas' ? 'Villa' : category === 'hotels' ? 'Hotel' : 'Property'} name...`}
                                 className="w-full bg-transparent text-xs sm:text-sm font-semibold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none"
                               />
                             </div>
@@ -1842,7 +1842,7 @@ export default function ProviderDiscoveryPage() {
                               <div className="fixed inset-0 z-40" onClick={() => setShowAutocomplete(false)} />
                               <div className="absolute top-full left-0 mt-1.5 w-full bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl p-2 z-50 max-h-64 overflow-y-auto">
                                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1.5">
-                                  Popular Localities & Hotels
+                                  Popular Localities & {category === 'resorts' ? 'Resorts' : category === 'villas' ? 'Villas' : category === 'hotels' ? 'Hotels' : 'Properties'}
                                 </div>
                                 {[
                                   { label: `${city || 'Chennai'} Central`, type: 'City Hub', icon: '📍' },

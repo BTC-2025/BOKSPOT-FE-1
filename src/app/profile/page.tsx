@@ -10,6 +10,7 @@ import {
 import Link from 'next/link';
 import { useUserStore, useUIStore } from '../../lib/store';
 import { compressImage } from '../../lib/imageUtils';
+import { BokspotLoader } from '../../components/ui/BokspotLoader';
 
 const AVATAR_PRESETS = [
   { id: 'jetsetter', label: 'Jetsetter', emoji: '✈️', color: 'from-amber-400 to-yellow-600' },
@@ -91,11 +92,7 @@ export default function ProfilePage() {
   }, [mounted]);
 
   if (!mounted) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-[color:var(--color-surface)]">
-        <div className="h-8 w-8 border-4 border-[color:var(--color-primary)] border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <BokspotLoader message="Loading Profile..." />;
   }
 
   // Handle local photo upload

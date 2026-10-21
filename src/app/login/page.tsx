@@ -8,6 +8,7 @@ import {
   User, Mail, Phone, Lock, Sparkles, ArrowRight, 
   CheckCircle2, AlertCircle, RefreshCw, KeyRound
 } from 'lucide-react';
+import { BokspotLoader } from '../../components/ui/BokspotLoader';
 import { useUserStore } from '../../lib/store';
 
 const GOOGLE_ACCOUNTS = [
@@ -46,11 +47,7 @@ export default function LoginPage() {
   }, []);
 
   if (!mounted) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-[color:var(--color-surface)]">
-        <div className="h-8 w-8 border-4 border-[color:var(--color-primary)] border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <BokspotLoader message="Initializing Login..." />;
   }
 
   // Handle local credential submission
