@@ -3,12 +3,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-/* AI tab removed per product decision */
 const NAV_ITEMS = [
   { href: '/',           icon: 'home',      label: 'Home'       },
   { href: '/categories', icon: 'grid_view', label: 'Categories' },
-  { href: '/tracks', icon: 'route',     label: 'Tracks'     },
-  { href: '/profile',    icon: 'person',    label: 'Profile'    },
+  { href: '/bookings',   icon: 'calendar_month', label: 'Bookings'   },
+  { href: '/profile',    icon: 'person',       label: 'Profile'    },
 ];
 
 export function BottomNav() {
@@ -26,7 +25,11 @@ export function BottomNav() {
     >
       <div className="flex justify-around items-center h-[66px] max-w-md mx-auto px-2">
         {NAV_ITEMS.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = item.href === '/'
+            ? (pathname === '/' || pathname === '/home' || pathname.startsWith('/home/'))
+            : item.href === '/booking'
+              ? (pathname === '/booking' || pathname === '/bookings' || pathname === '/tracks' || pathname.startsWith('/booking/') || pathname.startsWith('/split'))
+              : pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}

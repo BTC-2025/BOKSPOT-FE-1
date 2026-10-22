@@ -66,7 +66,7 @@ export default function EventTemplate({ service }: EventTemplateProps) {
       tickets: ticketDetails.map((t: any) => ({ ...t, qty: quantities[t.id] }))
     });
     setAttendeeCount(totalTickets);
-    router.push('/checkout');
+    router.push('/booking/checkout');
   };
 
   return (

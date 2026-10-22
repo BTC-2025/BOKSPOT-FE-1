@@ -20,6 +20,7 @@ const TRANSPORT_MODES = [
 ];
 
 const STATUS_STYLE: Record<string, { badge: string; dot: string; label: string }> = {
+  SPLIT_PENDING: { badge: 'bg-indigo-50 text-indigo-700 border border-indigo-200', dot: 'bg-indigo-500 animate-pulse', label: 'Split In Progress' },
   PENDING:   { badge: 'bg-amber-50 text-amber-700 border border-amber-200',   dot: 'bg-amber-400 animate-pulse', label: 'Pending' },
   CONFIRMED: { badge: 'bg-emerald-50 text-emerald-700 border border-emerald-200', dot: 'bg-emerald-500 animate-pulse', label: 'Confirmed' },
   CANCELLED: { badge: 'bg-red-50 text-red-600 border border-red-200',         dot: 'bg-red-400',             label: 'Cancelled' },
@@ -89,6 +90,10 @@ function TracksContent() {
   const { bookings, cancelBooking } = useBookingFlowStore();
   const { user } = useUserStore();
   const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    router.replace('/booking');
+  }, [router]);
   const [selectedMode, setSelectedMode] = useState('');
   const [pnr, setPnr] = useState('');
   const [liveStatuses, setLiveStatuses] = useState<Record<string, string>>({});
@@ -139,24 +144,47 @@ function TracksContent() {
   if (!mounted) return null;
 
   // Merge store bookings with any backend synced bookings that aren't yet in local storage
-  const combinedAllBookings = [...bookings];
-  remoteBookings.forEach((rb: any) => {
-    if (!combinedAllBookings.some(b => b.ref === rb.ref || b.id === rb.id)) {
-      combinedAllBookings.push(rb);
+  // Remote synced bookings from backend take precedence so friends' payments and updated statuses reflect immediately
+  const combinedAllBookings = remoteBookings.length > 0
+    ? remoteBookings.map((rb: any) => {
+        const local = bookings.find(b => b.ref === rb.ref || b.id === rb.id);
+        return { ...(local || {}), ...rb };
+      })
+    : [...bookings];
+
+  // Also include any local bookings that haven't hit the server yet
+  bookings.forEach((b: any) => {
+    if (!combinedAllBookings.some((cb: any) => cb.ref === b.ref || cb.id === b.id)) {
+      combinedAllBookings.push(b);
     }
   });
 
-  const mergedBookings = combinedAllBookings.map(b => ({
-    ...b,
-    status: (liveStatuses[b.ref] || b.status) as any,
-    keycardIssued: remoteMetadata[b.ref]?.keycardIssued || (b as any).keycardIssued,
-    roomNumber: remoteMetadata[b.ref]?.roomNumber || (b as any).roomNumber,
-  }));
+  const mergedBookings = combinedAllBookings.map(b => {
+    const splitPaidCount = b?.isSplitEnabled
+      ? (Array.isArray(b.splitPayments)
+          ? b.splitPayments.filter((s: any) => s.status === 'PAID').length
+          : (typeof b.splitPaidMembers === 'number' ? b.splitPaidMembers : 0))
+      : 0;
+    const isSplitComplete = !b?.isSplitEnabled || splitPaidCount >= (b?.splitCount || 2);
+    const rawStatus = (liveStatuses[b.ref] || b.status) as any;
+    const resolvedStatus = (b?.isSplitEnabled && !isSplitComplete)
+      ? 'SPLIT_PENDING'
+      : (rawStatus === 'SPLIT_PENDING' && isSplitComplete ? 'CONFIRMED' : rawStatus);
+
+    return {
+      ...b,
+      status: resolvedStatus,
+      splitPaidCount,
+      isSplitComplete,
+      keycardIssued: remoteMetadata[b.ref]?.keycardIssued || (b as any).keycardIssued,
+      roomNumber: remoteMetadata[b.ref]?.roomNumber || (b as any).roomNumber,
+    };
+  });
 
   const filteredBookings = mergedBookings.filter(b => {
     if (activeFilter === 'ALL') return true;
     if (activeFilter === 'ACTIVE') {
-      return b.status === 'PENDING' || b.status === 'CONFIRMED' || b.status === 'CHECKED_IN';
+      return b.status === 'SPLIT_PENDING' || b.status === 'PENDING' || b.status === 'CONFIRMED' || b.status === 'CHECKED_IN';
     }
     if (activeFilter === 'COMPLETED') {
       return b.status === 'COMPLETED';
@@ -342,7 +370,7 @@ function TracksContent() {
                         </span>
                         <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${st.badge}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
-                          {st.label}
+                          {b.status === 'SPLIT_PENDING' ? `Split In Progress (${b.splitPaidCount || 0}/${b.splitCount || 2})` : st.label}
                         </span>
                       </div>
 

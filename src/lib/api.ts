@@ -211,8 +211,12 @@ export const api = {
         clearTimeout(timeoutId);
         if (res.ok) {
           const body = await res.json();
-          // Map Prisma Backend output to the frontend interface
-          const servicesArray = body.data?.data || [];
+          // Map Backend output (whether { data: [...] } or { data: { data: [...] } } or array)
+          const servicesArray = Array.isArray(body)
+            ? body
+            : Array.isArray(body.data)
+            ? body.data
+            : body.data?.data || [];
           const mappedServices = servicesArray.map((srv: any) => ({
             id: srv.id,
             name: srv.name,

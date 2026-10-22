@@ -42,8 +42,13 @@ const CATEGORY_NAMES: Record<string, string> = {
 
   // Stay & Accommodation
   hotels: 'Hotel Booking',
+  hotel: 'Hotel Booking',
+  stayhotel: 'Hotel Booking',
+  'stay-hotel': 'Hotel Booking',
   resorts: 'Resort Booking',
+  resort: 'Resort Booking',
   villas: 'Homestay / Villa',
+  villa: 'Homestay / Villa',
   hostels: 'Hostel Booking',
   camping: 'Camping Booking',
 
@@ -1521,14 +1526,16 @@ function TurfsBookingView({ categoryName, city }: any) {
  * ============================================================================ */
 export default function ProviderDiscoveryPage() {
   const params = useParams();
-  const bookingType = params?.bookingType as string;
-  const category = params?.category as string;
+  const bookingType = (params?.bookingType as string) || 'stay-accommodation';
+  const rawCategory = params?.category as string;
+  const effectiveCategory = rawCategory === 'stayhotel' || rawCategory === 'stay-hotel' || rawCategory === 'hotel' ? 'hotels' : (rawCategory === 'resort' ? 'resorts' : (rawCategory === 'villa' ? 'villas' : rawCategory));
+  const category = effectiveCategory;
   const { city, latitude, longitude } = useLocationStore();
   const [sortBy, setSortBy] = useState('distance');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const isHotelCategory = category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'camping' || bookingType === 'stay-accommodation';
+  const isHotelCategory = category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'camping' || bookingType === 'stay-accommodation' || bookingType === 'home';
   const [hotelDestination, setHotelDestination] = useState('');
   const [checkInDate, setCheckInDate] = useState(() => {
     const d = new Date();
@@ -1551,7 +1558,7 @@ export default function ProviderDiscoveryPage() {
   const [showAutocomplete, setShowAutocomplete] = useState(false);
 
   // Faceted Filters State (Sidebar / Bar)
-  const [priceRange, setPriceRange] = useState<number>(10000); // Max price ceiling
+  const [priceRange, setPriceRange] = useState<number>(50000); // Max price ceiling
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<string[]>([]);
   const [minRating, setMinRating] = useState<number>(0);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
@@ -1656,9 +1663,19 @@ export default function ProviderDiscoveryPage() {
 
   // Handle local search & Unified Intelligent Filtering
   const filteredServices = sortedServices.filter((s: any) => {
-    // Price range filter
+    // Hotel & Stay Strict Category Guard: Filter out Sports, Turfs, Dining, Transit
+    if (isHotelCategory) {
+      const sCat = (s.category?.name || s.category?.slug || s.category || '').toLowerCase();
+      const sName = (s.name || '').toLowerCase();
+      const mName = (s.merchant?.name || s.merchantName || '').toLowerCase();
+      const isTurfOrSports = sCat.includes('turf') || sCat.includes('sport') || sCat.includes('cricket') || sCat.includes('badminton') || 
+                             sName.includes('turf') || sName.includes('court') || mName.includes('turf');
+      if (isTurfOrSports) return false;
+    }
+
+    // Price range filter (only apply if user explicitly reduced it from default 50000)
     const itemPrice = parseFloat(s.basePrice || s.price || '0');
-    if (priceRange && itemPrice > 0 && itemPrice > priceRange) return false;
+    if (priceRange && priceRange < 50000 && itemPrice > 0 && itemPrice > priceRange) return false;
 
     // Minimum rating filter
     if (minRating > 0 && (s.rating || 0) < minRating) return false;
@@ -2138,11 +2155,11 @@ export default function ProviderDiscoveryPage() {
                             onChange={(e) => setPriceRange(Number(e.target.value))}
                             className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 hover:border-[#033266] dark:hover:border-[#ff6325] outline-none cursor-pointer"
                           >
-                            <option value={10000} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">All Prices</option>
-                            <option value={2000} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Under ₹2,000</option>
+                            <option value={50000} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">All Prices</option>
                             <option value={3500} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Under ₹3,500</option>
-                            <option value={5000} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Under ₹5,000</option>
                             <option value={7500} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Under ₹7,500</option>
+                            <option value={15000} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Under ₹15,000</option>
+                            <option value={30000} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Under ₹30,000</option>
                           </select>
                         </div>
 

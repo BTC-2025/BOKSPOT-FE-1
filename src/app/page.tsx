@@ -306,7 +306,7 @@ export default function HomePage() {
                       { label: 'Home Experience', href: '/' },
                       { label: 'All Booking Categories', href: '/categories' },
                       { label: 'Live GPS Radar Maps', href: '/maps' },
-                      { label: 'Concierge Booking Tracks', href: '/tracks' },
+                      { label: 'Concierge Booking Tracks', href: '/bookings' },
                       { label: 'Verified Partner Portal', href: '/vendor/register' }
                     ].map((link) => (
                       <li key={link.label}>

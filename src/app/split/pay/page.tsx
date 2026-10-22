@@ -9,6 +9,7 @@ function SplitPayContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const ref = searchParams.get('ref');
+  const slotKey = searchParams.get('slot'); // e.g. 'slot-1', 'slot-2'
 
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -32,6 +33,14 @@ function SplitPayContent() {
       if (found) {
         setBooking(found);
 
+        // Pre-fill name if slot already has a designated friend label
+        if (slotKey && Array.isArray(found.splitPayments)) {
+          const targeted = found.splitPayments.find((s: any) => s.linkKey === slotKey);
+          if (targeted && targeted.name && !targeted.name.startsWith('Friend ')) {
+            setGuestName(prev => prev || targeted.name);
+          }
+        }
+
         // Calculate remaining seconds if expiresAt exists
         if (found.splitExpiresAt) {
           const rem = Math.max(0, Math.floor((new Date(found.splitExpiresAt).getTime() - Date.now()) / 1000));
@@ -49,7 +58,7 @@ function SplitPayContent() {
     fetchBooking();
     const interval = setInterval(fetchBooking, 4000);
     return () => clearInterval(interval);
-  }, [ref]);
+  }, [ref, slotKey]);
 
   // Timer countdown
   useEffect(() => {
@@ -79,23 +88,66 @@ function SplitPayContent() {
     setPaying(true);
     const shareAmt = booking.splitPerPerson || Math.round((booking.amount || 0) / (booking.splitCount || 2));
 
-    const updatedSplits = [...(booking.splitPayments || [])];
-    updatedSplits.push({
-      id: `p-${Date.now()}`,
-      name: guestName.trim(),
-      phone: guestPhone.trim(),
-      amount: shareAmt,
-      paidAt: new Date().toISOString(),
-      role: 'MEMBER',
-      status: 'PAID',
-    });
+    let updatedSplits: any[] = [];
+    if (Array.isArray(booking.splitPayments) && booking.splitPayments.length > 0) {
+      // Find the slot targeted by this link or the first unpaid slot
+      let targetIdx = slotKey ? booking.splitPayments.findIndex((s: any) => s.linkKey === slotKey) : -1;
+      if (targetIdx === -1) {
+        targetIdx = booking.splitPayments.findIndex((s: any) => s.status !== 'PAID');
+      }
 
-    const isAllPaid = updatedSplits.length >= (booking.splitCount || 2);
+      updatedSplits = booking.splitPayments.map((slot: any, idx: number) => {
+        if (idx === targetIdx) {
+          return {
+            ...slot,
+            name: guestName.trim(),
+            phone: guestPhone.trim(),
+            amount: shareAmt,
+            paidAt: new Date().toISOString(),
+            status: 'PAID',
+          };
+        }
+        return slot;
+      });
+
+      // If no pre-created slots matched, append as new member
+      if (targetIdx === -1) {
+        updatedSplits.push({
+          id: `p-${Date.now()}`,
+          name: guestName.trim(),
+          phone: guestPhone.trim(),
+          amount: shareAmt,
+          paidAt: new Date().toISOString(),
+          role: 'MEMBER',
+          status: 'PAID',
+        });
+      }
+    } else {
+      updatedSplits = [
+        {
+          id: `p-${Date.now()}`,
+          name: guestName.trim(),
+          phone: guestPhone.trim(),
+          amount: shareAmt,
+          paidAt: new Date().toISOString(),
+          role: 'MEMBER',
+          status: 'PAID',
+        }
+      ];
+    }
+
+    const paidCount = updatedSplits.filter((s: any) => s.status === 'PAID').length;
+    const totalPaidSoFar = updatedSplits
+      .filter((s: any) => s.status === 'PAID')
+      .reduce((sum: number, s: any) => sum + (s.amount || shareAmt), 0);
+    const isAllPaid = paidCount >= (booking.splitCount || 2);
 
     const updatedBooking = {
       ...booking,
       splitPayments: updatedSplits,
-      splitPaidMembers: updatedSplits.length,
+      splitPaidMembers: paidCount,
+      advancePaid: totalPaidSoFar,
+      amountPaidByLeader: totalPaidSoFar,
       status: isAllPaid ? 'CONFIRMED' : 'SPLIT_PENDING',
     };
 
@@ -230,38 +282,55 @@ function SplitPayContent() {
 
           {/* Members Status List */}
           <div className="space-y-2 mb-6">
-            <span className="text-[10px] uppercase font-bold text-slate-500 block">Members Status</span>
+            <span className="text-[10px] uppercase font-bold text-slate-500 block">
+              Individual Shares ({booking.splitPayments?.length || booking.splitCount || 2} Slots)
+            </span>
             {(booking.splitPayments || [
               { name: leadName, role: 'LEADER', status: 'PAID', amount: shareAmount }
-            ]).map((p: any, idx: number) => (
-              <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/40 border border-slate-800/80 text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-indigo-600/30 text-indigo-400 font-bold flex items-center justify-center text-[10px]">
-                    {p.name?.charAt(0) || 'U'}
+            ]).map((slot: any, idx: number) => {
+              const isPaid = slot.status === 'PAID';
+              const isTargeted = slotKey && slot.linkKey === slotKey;
+              return (
+                <div 
+                  key={idx} 
+                  className={`flex items-center justify-between p-2.5 rounded-xl border text-xs transition-all ${
+                    isPaid
+                      ? 'bg-slate-950/40 border-slate-800/80'
+                      : isTargeted
+                      ? 'bg-indigo-950/50 border-indigo-500/60 ring-1 ring-indigo-500/30'
+                      : 'bg-slate-950/20 border-dashed border-slate-800'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className={`w-6 h-6 rounded-full font-bold flex items-center justify-center text-[10px] ${
+                      isPaid 
+                        ? 'bg-emerald-600/30 text-emerald-400' 
+                        : isTargeted
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}>
+                      {slot.slotIndex || idx + 1}
+                    </div>
+                    <div>
+                      <span className={`font-bold ${isTargeted ? 'text-indigo-300' : 'text-slate-200'}`}>
+                        {slot.name || `Friend ${slot.slotIndex || idx + 1}`}
+                      </span>
+                      {slot.role === 'LEADER' && <span className="ml-1 text-[9px] text-indigo-400 font-extrabold uppercase">(Organizer)</span>}
+                      {isTargeted && !isPaid && <span className="ml-1.5 text-[9px] text-indigo-400 font-bold bg-indigo-500/20 px-1.5 py-0.5 rounded">You are paying this share</span>}
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-bold text-slate-200">{p.name}</span>
-                    {p.role === 'LEADER' && <span className="ml-1 text-[9px] text-indigo-400 font-extrabold uppercase">(Booker)</span>}
-                  </div>
+                  {isPaid ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                      <CheckCircle2 size={10} /> Paid ₹{(slot.amount || shareAmount)?.toLocaleString()}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-amber-500/80">
+                      Pending ₹{(slot.amount || shareAmount)?.toLocaleString()}
+                    </span>
+                  )}
                 </div>
-                <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                  <CheckCircle2 size={10} /> Paid ₹{p.amount?.toLocaleString()}
-                </span>
-              </div>
-            ))}
-
-            {/* Pending Slots */}
-            {Array.from({ length: Math.max(0, (booking.splitCount || 2) - (booking.splitPayments?.length || 1)) }).map((_, idx) => (
-              <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/20 border border-dashed border-slate-800 text-xs text-slate-500">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-slate-800 text-slate-500 font-bold flex items-center justify-center text-[10px]">
-                    ?
-                  </div>
-                  <span>Friend {idx + 2} (Pending)</span>
-                </div>
-                <span className="text-[10px] font-bold text-amber-500/80">Pending ₹{shareAmount?.toLocaleString()}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Payment Form */}

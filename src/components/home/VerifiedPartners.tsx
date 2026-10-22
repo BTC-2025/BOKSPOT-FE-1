@@ -59,7 +59,7 @@ export function VerifiedPartners() {
       tag: 'Private Beach',
       perks: 'Infinity Pool • Sunset Dinners • Spa Access',
       startingPrice: '₹5,800/night',
-      link: '/stay-accommodation/hotels',
+      link: '/home/hotels',
       goldPartner: true,
     },
   ];

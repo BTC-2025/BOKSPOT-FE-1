@@ -22,11 +22,11 @@ export const AVAILABLE_SHORTCUTS: Shortcut[] = [
   { id: 'car-rental', label: 'Self-Drive Car Rental', icon: 'directions_car', actionType: 'link', actionTarget: '/travel-transport/car-rental' },
 
   // Stay & Accommodation
-  { id: 'hotels', label: 'Hotel Booking', icon: 'hotel', actionType: 'link', actionTarget: '/stay-accommodation/hotels' },
+  { id: 'hotels', label: 'Hotel Booking', icon: 'hotel', actionType: 'link', actionTarget: '/home/hotels' },
   { id: 'resorts', label: 'Resort Booking', icon: 'beach_access', actionType: 'link', actionTarget: '/stay-accommodation/resorts' },
   { id: 'villas', label: 'Homestay / Villa', icon: 'home', actionType: 'link', actionTarget: '/stay-accommodation/villas' },
   { id: 'hostels', label: 'Hostel Booking', icon: 'bed', actionType: 'link', actionTarget: '/stay-accommodation/hostels' },
-  { id: 'camping', label: 'Camping Booking', icon: 'tent', actionType: 'link', actionTarget: '/stay-accommodation/camping' },
+  { id: 'camping', label: 'Camping Booking', icon: 'camping', actionType: 'link', actionTarget: '/stay-accommodation/camping' },
 
   // Entertainment & Events
   { id: 'movies', label: 'Cinema / Movie Tickets', icon: 'movie', actionType: 'link', actionTarget: '/entertainment-events/movies' },

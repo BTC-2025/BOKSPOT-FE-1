@@ -8,6 +8,21 @@ import { CheckCircle2, XCircle, Clock, ArrowLeft, MapPin, Calendar, Download, Sh
 
 // ─── Status colour schemes ────────────────────────────────────────────────────
 const STATUS_CONFIG = {
+  SPLIT_PENDING: {
+    gradient: 'from-indigo-600 via-indigo-500 to-purple-600',
+    bgGradient: 'from-indigo-50 via-slate-50 to-purple-100',
+    borderColor: 'border-indigo-300',
+    textColor: 'text-indigo-700',
+    iconBg: 'bg-indigo-100',
+    pulseColor: 'bg-indigo-500',
+    icon: Clock,
+    iconColor: 'text-indigo-600',
+    title: 'Group Split in Progress 👥',
+    subtitle: 'Share split payment link with your friends to lock in this booking!',
+    badge: '👥 Awaiting Friends Payment',
+    badgeColor: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+    showPulse: true,
+  },
   PENDING: {
     gradient: 'from-[#ff6325] via-[#ff8452] to-[#e04e13]',
     bgGradient: 'from-orange-50 via-slate-50 to-orange-100',
@@ -69,7 +84,20 @@ function TrackingPageContent() {
   // Prefer remote (most up-to-date) status
   const booking = remoteBooking || localBooking;
 
-  const status: keyof typeof STATUS_CONFIG = (booking?.status as any) || 'PENDING';
+  // Accurately compute how many members have actually paid in group split
+  const splitPaidCount = booking?.isSplitEnabled
+    ? (Array.isArray(booking.splitPayments)
+        ? booking.splitPayments.filter((s: any) => s.status === 'PAID').length
+        : (typeof booking.splitPaidMembers === 'number' ? booking.splitPaidMembers : 0))
+    : 0;
+  const isSplitComplete = !booking?.isSplitEnabled || splitPaidCount >= (booking?.splitCount || 2);
+
+  // If group split is active and not everyone has paid yet, force SPLIT_PENDING status
+  const rawStatus = (booking?.status as any) || 'PENDING';
+  const status: keyof typeof STATUS_CONFIG = (booking?.isSplitEnabled && !isSplitComplete)
+    ? 'SPLIT_PENDING'
+    : (rawStatus === 'SPLIT_PENDING' && isSplitComplete ? 'CONFIRMED' : rawStatus);
+
   const config = STATUS_CONFIG[status] || STATUS_CONFIG.PENDING;
   const Icon = config.icon;
 
@@ -87,9 +115,14 @@ function TrackingPageContent() {
         const found = (Array.isArray(all) ? all : []).find((b: any) => b.ref === ref);
         if (found && !cancelled) {
           setRemoteBooking(found);
-          // Sync status back to local store
-          if (localBooking && found.status !== localBooking.status) {
-            updateBooking?.(found.id, { status: found.status });
+          // Sync full remote booking object back to local store
+          if (localBooking) {
+            updateBooking?.(found.id, {
+              status: found.status,
+              splitPaidMembers: found.splitPaidMembers,
+              splitPayments: found.splitPayments,
+              amountPaidByLeader: found.amountPaidByLeader,
+            });
           }
         }
       } catch (e) {
@@ -202,35 +235,36 @@ Show this at the reception counter.
             <div
               className={`absolute left-0 top-4 h-0.5 bg-gradient-to-r ${config.gradient} z-0 transition-all duration-700`}
               style={{
-                width: status === 'PENDING' ? '33%' : status === 'CONFIRMED' ? '100%' : '66%',
+                width: status === 'SPLIT_PENDING' ? '33%' : status === 'PENDING' ? '66%' : status === 'CONFIRMED' ? '100%' : '66%',
               }}
             />
 
             {[
-              { label: 'Payment Done', done: true },
               {
-                label: 'Venue Accepted',
-                done: status === 'CONFIRMED',
-                active: status === 'PENDING',
+                label: status === 'SPLIT_PENDING' ? 'Your Share Paid' : 'Payment Done',
+                done: true
+              },
+              {
+                label: status === 'SPLIT_PENDING' ? 'Group Share Completion' : 'Venue Accepted',
+                done: status === 'CONFIRMED' || (status === 'PENDING' && !booking?.isSplitEnabled),
+                active: status === 'SPLIT_PENDING' || status === 'PENDING',
                 failed: status === 'CANCELLED',
               },
-              { label: 'All Set!', done: status === 'CONFIRMED', failed: status === 'CANCELLED' },
+              { label: 'Booking Locked', done: status === 'CONFIRMED', failed: status === 'CANCELLED' },
             ].map((step, i) => (
               <div key={i} className="flex flex-col items-center gap-1.5 z-10">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black border-2 transition-all duration-500 ${
-                  step.failed
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black border-2 transition-all duration-500 ${step.failed
                     ? 'bg-red-100 border-red-400 text-red-600'
                     : step.done
-                    ? `bg-gradient-to-br ${config.gradient} border-white text-white shadow-md`
-                    : step.active
-                    ? 'bg-white border-amber-400 text-amber-600 animate-pulse shadow'
-                    : 'bg-white border-gray-200 text-gray-400'
-                }`}>
+                      ? `bg-gradient-to-br ${config.gradient} border-white text-white shadow-md`
+                      : step.active
+                        ? 'bg-white border-amber-400 text-amber-600 animate-pulse shadow'
+                        : 'bg-white border-gray-200 text-gray-400'
+                  }`}>
                   {step.failed ? '✕' : step.done ? '✓' : i + 1}
                 </div>
-                <span className={`text-[9px] font-bold text-center leading-tight ${
-                  step.failed ? 'text-red-500' : step.done ? config.textColor : 'text-gray-400'
-                }`}>
+                <span className={`text-[9px] font-bold text-center leading-tight ${step.failed ? 'text-red-500' : step.done ? config.textColor : 'text-gray-400'
+                  }`}>
                   {step.label}
                 </span>
               </div>
@@ -260,8 +294,20 @@ Show this at the reception counter.
               ...(booking.advancePaid && booking.balanceAtVenue > 0 ? [
                 { label: 'Advance Paid Online', value: `₹${booking.advancePaid?.toLocaleString()}`, bold: true },
                 { label: 'Balance Payable at Venue', value: `₹${booking.balanceAtVenue?.toLocaleString()}`, bold: true }
+              ] : booking.isSplitEnabled ? [
+                { 
+                  label: 'Amount Paid', 
+                  value: `₹${(booking.amountPaidByLeader !== undefined ? booking.amountPaidByLeader : (booking.splitInitiatorPaysNow ? booking.splitPerPerson : 0))?.toLocaleString()}`, 
+                  bold: true 
+                },
+                ...(splitPaidCount < (booking.splitCount || 2) ? [
+                  { 
+                    label: 'Pending From Friends', 
+                    value: `₹${Math.max(0, (booking.amount || 0) - (booking.amountPaidByLeader !== undefined ? booking.amountPaidByLeader : (booking.splitInitiatorPaysNow ? booking.splitPerPerson : 0))).toLocaleString()}` 
+                  }
+                ] : [])
               ] : [
-                { label: 'Amount Paid', value: `₹${(booking.amountPaidByLeader || booking.amount)?.toLocaleString()}`, bold: true }
+                { label: 'Amount Paid', value: `₹${(booking.amountPaidByLeader !== undefined ? booking.amountPaidByLeader : booking.amount)?.toLocaleString()}`, bold: true }
               ])
             ].map((row, i) => (
               <div key={i} className="flex justify-between items-center py-1 border-b border-gray-100 last:border-0">
@@ -282,19 +328,18 @@ Show this at the reception counter.
                 </div>
                 <div>
                   <h3 className="font-extrabold text-sm text-gray-900">
-                    Group Split ({booking.splitPaidMembers || (booking.splitPayments?.length || 1)}/{booking.splitCount || 2} Paid)
+                    Group Split ({splitPaidCount}/{booking.splitCount || 2} Paid)
                   </h3>
                   <p className="text-[11px] text-indigo-700 font-bold">
                     Per Head: ₹{(booking.splitPerPerson || Math.round(booking.amount / (booking.splitCount || 2))).toLocaleString()}
                   </p>
                 </div>
               </div>
-              <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
-                (booking.splitPaidMembers || (booking.splitPayments?.length || 1)) >= (booking.splitCount || 2)
+              <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${isSplitComplete
                   ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
                   : 'bg-indigo-100 text-indigo-800 border-indigo-300'
-              }`}>
-                {(booking.splitPaidMembers || (booking.splitPayments?.length || 1)) >= (booking.splitCount || 2) ? '✓ Fully Paid' : 'Split Active'}
+                }`}>
+                {isSplitComplete ? '✓ Fully Paid' : 'Split Active'}
               </span>
             </div>
 
@@ -303,74 +348,112 @@ Show this at the reception counter.
               <div className="flex justify-between text-[11px] font-bold">
                 <span className="text-gray-600">Payment Progress</span>
                 <span className="text-indigo-700 font-mono">
-                  {booking.splitPaidMembers || (booking.splitPayments?.length || 1)} of {booking.splitCount || 2} Members
+                  {splitPaidCount} of {booking.splitCount || 2} Members
                 </span>
               </div>
               <div className="w-full h-2.5 bg-indigo-100 rounded-full overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full transition-all duration-500"
                   style={{
-                    width: `${Math.min(100, (((booking.splitPaidMembers || (booking.splitPayments?.length || 1)) / (booking.splitCount || 2)) * 100))}%`
+                    width: `${Math.min(100, ((splitPaidCount / (booking.splitCount || 2)) * 100))}%`
                   }}
                 />
               </div>
             </div>
 
-            {/* Share Link Input */}
-            <div className="space-y-2 pt-1">
-              <p className="text-xs text-gray-600 leading-relaxed">
-                Share this direct payment invite link with your friends. Each friend can click and pay their share instantly:
-              </p>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={typeof window !== 'undefined' ? `${window.location.origin}/split/pay?ref=${booking.ref}` : `https://bokspot.com/split/pay?ref=${booking.ref}`}
-                  className="flex-1 bg-white border border-indigo-200 rounded-xl px-3 py-2 text-xs font-mono text-gray-700 select-all"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    const url = typeof window !== 'undefined' ? `${window.location.origin}/split/pay?ref=${booking.ref}` : `https://bokspot.com/split/pay?ref=${booking.ref}`;
-                    navigator.clipboard.writeText(url);
-                    alert("Split payment link copied to clipboard! Share it with your friends.");
-                  }}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow cursor-pointer transition-all"
-                >
-                  Copy Link
-                </button>
+            {/* Distinct Individual Split Links (Link 1, Link 2...) */}
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold text-gray-800">
+                  Individual Payment Links ({booking.splitCount || 2} Links)
+                </span>
+                <span className="text-[10px] text-gray-500 font-medium">1 unique link per person</span>
               </div>
-            </div>
 
-            {/* Member Payment Status Pills */}
-            <div className="space-y-1.5 pt-2 border-t border-indigo-100">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Participant Status</span>
-              {(booking.splitPayments || [
-                { name: booking.customerName || 'You', role: 'LEADER', status: 'PAID', amount: booking.amountPaidByLeader || (booking.amount / (booking.splitCount || 2)) }
-              ]).map((p: any, idx: number) => (
-                <div key={idx} className="flex items-center justify-between p-2 rounded-xl bg-white border border-indigo-100 text-xs">
-                  <span className="font-bold text-gray-800 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    {p.name} {p.role === 'LEADER' ? '(Initiator)' : ''}
-                  </span>
-                  <span className="font-mono font-bold text-emerald-600">✓ Paid ₹{p.amount?.toLocaleString()}</span>
-                </div>
-              ))}
+              <div className="space-y-2">
+                {(booking.splitPayments || Array.from({ length: booking.splitCount || 2 }).map((_, i) => ({
+                  slotIndex: i + 1,
+                  linkKey: `slot-${i + 1}`,
+                  name: `Friend ${i + 1}`,
+                  amount: booking.splitPerPerson || Math.round(booking.amount / (booking.splitCount || 2)),
+                  status: i === 0 && booking.amountPaidByLeader > 0 ? 'PAID' : 'PENDING'
+                }))).map((slot: any, idx: number) => {
+                  const slotNum = slot.slotIndex || idx + 1;
+                  const linkKey = slot.linkKey || `slot-${slotNum}`;
+                  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://bokspot.com';
+                  const individualUrl = `${baseUrl}/split/pay?ref=${booking.ref}&slot=${linkKey}`;
+                  const isPaid = slot.status === 'PAID';
+                  const shareText = encodeURIComponent(
+                    `Hey ${slot.name || 'Friend'}! Here is your individual link to pay your share of ₹${(slot.amount || booking.splitPerPerson)?.toLocaleString()} for our booking at ${booking.merchantName || 'Bokspot'}:\n${individualUrl}`
+                  );
 
-              {/* Unpaid pending count */}
-              {(booking.splitPaidMembers || (booking.splitPayments?.length || 1)) < (booking.splitCount || 2) && (
-                <div className="p-2 rounded-xl bg-amber-50 border border-amber-200/80 text-xs flex items-center justify-between text-amber-800">
-                  <span className="font-medium flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                    {(booking.splitCount || 2) - (booking.splitPaidMembers || (booking.splitPayments?.length || 1))} Remaining Member(s)
-                  </span>
-                  <span className="font-mono font-bold">Waiting for payment</span>
-                </div>
-              )}
+                  return (
+                    <div
+                      key={idx}
+                      className={`p-3 rounded-2xl border transition-all ${isPaid
+                          ? 'bg-emerald-50/60 border-emerald-200'
+                          : 'bg-white border-indigo-100 shadow-sm hover:border-indigo-300'
+                        }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-6 h-6 rounded-lg flex items-center justify-center font-mono font-bold text-xs ${isPaid ? 'bg-emerald-600 text-white' : 'bg-indigo-100 text-indigo-700'
+                            }`}>
+                            {slotNum}
+                          </span>
+                          <div>
+                            <span className="font-extrabold text-xs text-gray-900 block">
+                              Link {slotNum}: {slot.name || `Friend ${slotNum}`} {slot.role === 'LEADER' ? '(Organizer)' : ''}
+                            </span>
+                            <span className="text-[10px] text-gray-500 font-mono">
+                              Share: ₹{(slot.amount || booking.splitPerPerson)?.toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${isPaid
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : 'bg-amber-100 text-amber-800 border-amber-300'
+                          }`}>
+                          {isPaid ? '✓ Paid' : '⏳ Pending'}
+                        </span>
+                      </div>
+
+                      {/* Link Actions */}
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          readOnly
+                          value={individualUrl}
+                          className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-1.5 text-[11px] font-mono text-gray-600 truncate select-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(individualUrl);
+                            alert(`Link ${slotNum} copied to clipboard! Share it with ${slot.name || `Friend ${slotNum}`}.`);
+                          }}
+                          className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer transition-all shrink-0"
+                        >
+                          Copy
+                        </button>
+                        <a
+                          href={`https://wa.me/?text=${shareText}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all shrink-0 flex items-center gap-1"
+                        >
+                          <span>💬</span> WhatsApp
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Safety Fallback Actions: Cover Remaining OR Cancel & Instant Refund */}
-            {(booking.splitPaidMembers || (booking.splitPayments?.length || 1)) < (booking.splitCount || 2) && (
+            {splitPaidCount < (booking.splitCount || 2) && (
               <div className="pt-3 border-t border-indigo-100 space-y-2">
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Split Controls</span>
                 <div className="grid grid-cols-2 gap-2">
@@ -432,21 +515,21 @@ Show this at the reception counter.
           const isStay = cat.includes('resort') || cat.includes('hotel') || cat.includes('stay') || cat.includes('villa') || svc.includes('resort') || svc.includes('hotel');
           const isTransit = cat.includes('flight') || cat.includes('train') || cat.includes('bus') || cat.includes('metro');
 
-          const badgeTitle = isStay 
-            ? 'Fast Check-In Pass' 
-            : isTransit 
-            ? 'Digital Boarding Pass' 
-            : 'Digital Entry Pass';
+          const badgeTitle = isStay
+            ? 'Fast Check-In Pass'
+            : isTransit
+              ? 'Digital Boarding Pass'
+              : 'Digital Entry Pass';
 
-          const refLabel = isTransit 
-            ? `PNR: ${booking.ref?.replace('BK-', 'PNR-')}` 
+          const refLabel = isTransit
+            ? `PNR: ${booking.ref?.replace('BK-', 'PNR-')}`
             : `REF: ${booking.ref}`;
 
-          const helpText = isStay 
-            ? 'Present this QR code or Reference ID at the resort reception for instant key handover' 
-            : isTransit 
-            ? 'Hold this QR code or Barcode to the turnstile / conductor scanner for instant boarding' 
-            : 'Present this QR code or Reference ID at the venue gate for instant check-in';
+          const helpText = isStay
+            ? 'Present this QR code or Reference ID at the resort reception for instant key handover'
+            : isTransit
+              ? 'Hold this QR code or Barcode to the turnstile / conductor scanner for instant boarding'
+              : 'Present this QR code or Reference ID at the venue gate for instant check-in';
 
           return (
             <div className="rounded-3xl border-2 border-emerald-200 bg-white shadow-sm p-6 flex flex-col items-center animate-fade-in relative overflow-hidden">
@@ -458,13 +541,13 @@ Show this at the reception counter.
                   {refLabel}
                 </span>
               </div>
-              
+
               <img
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(booking.ref)}`}
                 alt="QR Code"
                 className="h-36 w-36 rounded-2xl border border-gray-100 shadow p-2 bg-white"
               />
-              
+
               {/* Barcode Strip */}
               <div className="mt-4 w-full max-w-[260px] py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-col items-center">
                 <div className="w-full flex items-center justify-between gap-1 h-8 opacity-80">
@@ -482,36 +565,49 @@ Show this at the reception counter.
           );
         })()}
 
-        {/* Digital Room Keycard Access (Active when issued by front desk staff) */}
-        {booking?.keycardIssued && (
-          <div className="rounded-3xl border-2 border-[#ff6325]/30 bg-gradient-to-br from-[#ff6325]/5 via-white to-orange-50 shadow-md p-6 animate-fade-in space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-xl bg-[#ff6325] text-white flex items-center justify-center shadow-sm">
-                  <Key size={18} />
+        {/* Digital Room Keycard Access (Only for Hotel and Hostel; Not applicable for Camping) */}
+        {booking?.keycardIssued && (() => {
+          const categoryLower = (booking.category || '').toLowerCase();
+          const merchantLower = (booking.merchantName || '').toLowerCase();
+          const isCamp = categoryLower.includes('camp') || merchantLower.includes('camp') || (booking.roomNumber || '').startsWith('T-') || (booking.roomNumber || '').startsWith('D-') || (booking.roomNumber || '').startsWith('P-');
+          if (isCamp) return null; // Camping does not use digital NFC door keycard
+
+          const isHostel = categoryLower.includes('hostel') || merchantLower.includes('hostel') || (booking.roomNumber || '').startsWith('B-');
+          const unitTitle = isHostel ? 'Dorm & Locker Digital Key' : 'Digital Smart Keycard';
+          const unitPrefix = isHostel ? 'Bed / Locker' : 'Room';
+          const badgeText = 'Active NFC Key';
+          const unitNumber = booking.roomNumber || '102';
+
+          return (
+            <div className="rounded-3xl border-2 border-[#ff6325]/30 bg-gradient-to-br from-[#ff6325]/5 via-white to-orange-50 shadow-md p-6 animate-fade-in space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-9 h-9 rounded-xl bg-[#ff6325] text-white flex items-center justify-center shadow-sm">
+                    <Key size={18} />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-sm text-gray-900">{unitTitle}</h4>
+                    <p className="text-[11px] text-[#ff6325] font-bold">{unitPrefix} {unitNumber} Door Access</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-extrabold text-sm text-gray-900">Digital Smart Keycard</h4>
-                  <p className="text-[11px] text-[#ff6325] font-bold">Room {booking.roomNumber || '102'} Door Access</p>
-                </div>
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-700 border border-emerald-300 animate-pulse">
+                  {badgeText}
+                </span>
               </div>
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-700 border border-emerald-300 animate-pulse">
-                Active NFC Key
-              </span>
+
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Your digital key has been authorized by the front desk. Hold your mobile near {unitPrefix} {unitNumber} smart lock or tap below.
+              </p>
+
+              <button
+                onClick={() => alert(`${unitPrefix} ${unitNumber} door unlocked! Welcome in.`)}
+                className="w-full py-3 bg-gradient-to-r from-[#ff6325] to-[#ff8452] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md hover:opacity-95 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Unlock size={16} /> Tap to Unlock {unitPrefix} {unitNumber}
+              </button>
             </div>
-
-            <p className="text-xs text-gray-600 leading-relaxed">
-              Your digital room key has been authorized by the front desk. Hold your mobile near Room {booking.roomNumber || '102'} smart lock or tap below.
-            </p>
-
-            <button
-              onClick={() => alert(`Room ${booking.roomNumber || '102'} door unlocked! Welcome in.`)}
-              className="w-full py-3 bg-gradient-to-r from-[#ff6325] to-[#ff8452] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md hover:opacity-95 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Unlock size={16} /> Tap to Unlock Room {booking.roomNumber || '102'}
-            </button>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Action buttons */}
         <div className="flex gap-3">
@@ -583,7 +679,7 @@ Show this at the reception counter.
 
         {/* Navigate to bookings */}
         <Link
-          href="/tracks"
+          href="/bookings"
           className={`block w-full py-4 rounded-2xl text-center font-extrabold text-white text-sm bg-gradient-to-r ${config.gradient} shadow-lg hover:opacity-90 transition-all`}
         >
           View All My Bookings

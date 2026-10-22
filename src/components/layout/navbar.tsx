@@ -45,7 +45,7 @@ export function Navbar() {
           <Link href="/maps" className="rounded-lg px-3 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors flex items-center gap-1">
             <MapPin className="h-4 w-4" /> Nearby
           </Link>
-          <Link href="/tracks" className="rounded-lg px-3 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors flex items-center gap-1">
+          <Link href="/bookings" className="rounded-lg px-3 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors flex items-center gap-1">
             <Calendar className="h-4 w-4" /> My Bookings
           </Link>
           <button className="relative rounded-lg p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors">
@@ -84,7 +84,7 @@ export function Navbar() {
               {[
                 { href: '/search', icon: Search, label: 'Explore' },
                 { href: '/maps', icon: MapPin, label: 'Nearby' },
-                { href: '/tracks', icon: Calendar, label: 'My Bookings' },
+                { href: '/booking', icon: Calendar, label: 'My Bookings' },
                 { href: '/profile', icon: User, label: 'Profile' },
               ].map((item) => (
                 <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}

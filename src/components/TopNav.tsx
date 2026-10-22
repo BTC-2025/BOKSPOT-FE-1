@@ -134,19 +134,19 @@ export function TopNav({
     const UNIVERSAL_ITEMS: SearchableService[] = [
       ...ALL_SEARCHABLE_SERVICES,
       { name: 'Profile Settings', emoji: '⚙️', groupTitle: 'Account & Settings', href: '/profile' },
-      { name: 'My Bookings', emoji: '📅', groupTitle: 'Account & Settings', href: '/tracks' },
+      { name: 'My Bookings', emoji: '📅', groupTitle: 'Account & Settings', href: '/booking' },
       { name: 'Wishlist', emoji: '❤️', groupTitle: 'Shopping', href: '/wishlist' },
       { name: 'Cart', emoji: '🛍️', groupTitle: 'Shopping', href: '/cart' },
       { name: 'Home', emoji: '🏠', groupTitle: 'Navigation', href: '/' },
       { name: 'Categories', emoji: '📂', groupTitle: 'Navigation', href: '/categories' },
-      { name: 'Tracks', emoji: '🗺️', groupTitle: 'Navigation', href: '/tracks' },
+      { name: 'Bookings', emoji: '🎟️', groupTitle: 'Navigation', href: '/booking' },
       { name: 'Become a Vendor', emoji: '🏪', groupTitle: 'Business', href: '/vendor/register' },
       { name: 'Help & Support', emoji: '🎧', groupTitle: 'Support', href: '/support' },
       ...bookings.map((b: any) => ({
         name: `Booking: ${b.serviceName || b.item || 'Booking'}`,
         emoji: '🎟️',
         groupTitle: `My Bookings - ${b.merchantName || b.merchant || 'Merchant'}`,
-        href: '/tracks'
+        href: '/booking'
       }))
     ];
 
@@ -334,56 +334,54 @@ export function TopNav({
           {/* Center Column: Floating Luxury Segmented Dock */}
           <div className="hidden lg:flex flex-none justify-center">
             <nav className="custom-nav-capsule shadow-lg relative flex items-center p-1">
-              <Link
-                href="/"
-                className={`flex items-center justify-center gap-1.5 px-4 py-1.5 text-[12px] font-black tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${pathname === '/'
-                    ? 'custom-nav-link-active'
-                    : 'custom-nav-link-inactive'
-                  }`}
-              >
-                {pathname === '/' && (
-                  <div
-                    className="absolute inset-0 rounded-full custom-nav-active-bg -z-10"
-                  />
-                )}
-                <span className="material-symbols-outlined text-[15px]">home</span>
-                <span>Home</span>
-              </Link>
+              {(() => {
+                const isHomeActive = pathname === '/' || pathname === '/home' || pathname.startsWith('/home/');
+                const isCategoriesActive = pathname === '/categories' || pathname.startsWith('/service') || pathname.startsWith('/venue');
+                const isBookingsActive = pathname === '/bookings' || pathname === '/bookings' || pathname === '/tracks' || pathname.startsWith('/bookings/') || pathname.startsWith('/split');
 
-              <Link
-                href="/categories"
-                className={`flex items-center justify-center gap-1.5 px-4 py-1.5 text-[12px] font-black tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${pathname === '/categories'
-                    ? 'custom-nav-link-active'
-                    : 'custom-nav-link-inactive'
-                  }`}
-              >
-                {pathname === '/categories' && (
-                  <div
-                    className="absolute inset-0 rounded-full custom-nav-active-bg -z-10"
-                  />
-                )}
-                <span className="material-symbols-outlined text-[15px]">grid_view</span>
-                <span>Categories</span>
-              </Link>
+                return (
+                  <>
+                    <Link
+                      href="/"
+                      className={`flex items-center justify-center px-4.5 py-1.5 text-[12px] font-black tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${
+                        isHomeActive ? 'custom-nav-link-active' : 'custom-nav-link-inactive'
+                      }`}
+                    >
+                      {isHomeActive && (
+                        <div className="absolute inset-0 rounded-full custom-nav-active-bg -z-10" />
+                      )}
+                      <span>Home</span>
+                    </Link>
 
-              <Link
-                href="/tracks"
-                className={`flex items-center justify-center gap-1.5 px-4 py-1.5 text-[12px] font-black tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${pathname === '/tracks'
-                    ? 'custom-nav-link-active'
-                    : 'custom-nav-link-inactive'
-                  }`}
-              >
-                {pathname === '/tracks' && (
-                  <div
-                    className="absolute inset-0 rounded-full custom-nav-active-bg -z-10"
-                  />
-                )}
-                <span className="material-symbols-outlined text-[15px]">route</span>
-                <span>Tracks</span>
-                {Array.isArray(bookings) && bookings.length > 0 && (
-                  <span className="h-2 w-2 rounded-full bg-[#ff6325] animate-pulse" />
-                )}
-              </Link>
+                    <Link
+                      href="/categories"
+                      className={`flex items-center justify-center px-4.5 py-1.5 text-[12px] font-black tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${
+                        isCategoriesActive ? 'custom-nav-link-active' : 'custom-nav-link-inactive'
+                      }`}
+                    >
+                      {isCategoriesActive && (
+                        <div className="absolute inset-0 rounded-full custom-nav-active-bg -z-10" />
+                      )}
+                      <span>Categories</span>
+                    </Link>
+
+                    <Link
+                      href="/bookings"
+                      className={`flex items-center justify-center gap-1.5 px-4.5 py-1.5 text-[12px] font-black tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${
+                        isBookingsActive ? 'custom-nav-link-active' : 'custom-nav-link-inactive'
+                      }`}
+                    >
+                      {isBookingsActive && (
+                        <div className="absolute inset-0 rounded-full custom-nav-active-bg -z-10" />
+                      )}
+                      <span>Bookings</span>
+                      {Array.isArray(bookings) && bookings.length > 0 && (
+                        <span className="h-2 w-2 rounded-full bg-[#ff6325] animate-pulse" />
+                      )}
+                    </Link>
+                  </>
+                );
+              })()}
             </nav>
           </div>
 

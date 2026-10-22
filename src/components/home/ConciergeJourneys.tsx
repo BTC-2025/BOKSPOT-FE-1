@@ -115,7 +115,7 @@ export function ConciergeJourneys() {
             </p>
           </div>
           <Link
-            href="/tracks"
+            href="/bookings"
             className="group flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-bold text-[color:var(--color-primary)] hover:bg-[color:var(--color-primary)]/10 border border-[color:var(--color-primary)]/20 transition-all duration-300"
           >
             <span>Live Board</span>
@@ -134,7 +134,7 @@ export function ConciergeJourneys() {
           <div className="flex gap-4 overflow-visible py-2 animate-marquee relative z-10">
             {[...activeJourneys, ...activeJourneys, ...activeJourneys].map((journey, index) => (
               <Link
-                href={journey.link || '/tracks'}
+                href={journey.link || '/booking'}
                 key={`${journey.id}-${index}`}
                 className="w-[235px] shrink-0 group/card flex flex-col rounded-[22px] bg-[color:var(--color-surface-container-high)]/70 hover:bg-[color:var(--color-surface-container)] border border-[color:var(--color-outline-variant)]/30 hover:border-[color:var(--color-primary)]/40 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1.5 overflow-hidden"
               >

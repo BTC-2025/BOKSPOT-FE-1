@@ -124,7 +124,7 @@ Thank you for booking with BETA!
           </button>
         </div>
 
-        <Link href="/tracks" className="mt-4 block w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 py-3.5 font-bold text-white hover:from-indigo-600 hover:to-purple-700 transition-all shadow-md shadow-indigo-500/10">
+        <Link href="/bookings" className="mt-4 block w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 py-3.5 font-bold text-white hover:from-indigo-600 hover:to-purple-700 transition-all shadow-md shadow-indigo-500/10">
           View My Bookings
         </Link>
       </div>

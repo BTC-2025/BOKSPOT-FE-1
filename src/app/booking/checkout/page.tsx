@@ -23,7 +23,8 @@ export default function CheckoutPage() {
   // District App Style: Group / Split Billing State
   const [isSplitEnabled, setIsSplitEnabled] = useState(false);
   const [splitCount, setSplitCount] = useState(2);
-  const [splitPayerNames, setSplitPayerNames] = useState<string[]>(['You', 'Friend 1']);
+  const [splitPayerNames, setSplitPayerNames] = useState<string[]>(['You (Organizer)', 'Friend 2']);
+  const [splitInitiatorPaysNow, setSplitInitiatorPaysNow] = useState(true);
 
   // Payment Timing & Mode: 100% Online vs Partial Advance + Venue Pay
   const [payMode, setPayMode] = useState<'FULL_ONLINE' | 'PARTIAL_ADVANCE'>('FULL_ONLINE');
@@ -93,7 +94,10 @@ export default function CheckoutPage() {
   const balanceAtVenue = payMode === 'PARTIAL_ADVANCE' ? total - advanceAmount : 0;
 
   // Split Billing calculation
-  const amountToPayNow = isSplitEnabled ? Math.round(advanceAmount / splitCount) : advanceAmount;
+  const splitPerPersonAmt = isSplitEnabled ? Math.round(advanceAmount / splitCount) : advanceAmount;
+  const amountToPayNow = isSplitEnabled 
+    ? (splitInitiatorPaysNow ? splitPerPersonAmt : 0)
+    : advanceAmount;
 
   const formatDate = (dateStr: string) => {
     try {
@@ -117,6 +121,22 @@ export default function CheckoutPage() {
 
       const bookingTime = selectedSlot.time || selectedSlot.timeStr || (selectedService.metadata?.hotelBooking?.stayMode === 'TRANSIT' ? selectedService.metadata.hotelBooking.transitSlot : 'Standard Check-in: 12:00 PM') || '12:00 PM';
 
+      // Generate distinct slots for each member (e.g. Link 1, Link 2...)
+      const splitSlots = isSplitEnabled ? Array.from({ length: splitCount }).map((_, idx) => {
+        const isLeaderPaid = idx === 0 && splitInitiatorPaysNow;
+        return {
+          id: `p-${Date.now()}-${idx + 1}`,
+          slotIndex: idx + 1,
+          linkKey: `slot-${idx + 1}`,
+          name: isLeaderPaid ? name : (splitPayerNames[idx] || `Friend ${idx + 1}`),
+          phone: isLeaderPaid ? phone : undefined,
+          amount: splitPerPersonAmt,
+          paidAt: isLeaderPaid ? new Date().toISOString() : undefined,
+          role: idx === 0 ? 'LEADER' : 'MEMBER',
+          status: isLeaderPaid ? 'PAID' : 'PENDING'
+        };
+      }) : undefined;
+
       const newBooking = {
         id: String(Date.now()),
         ref,
@@ -128,7 +148,7 @@ export default function CheckoutPage() {
         date: selectedSlot.date,
         time: bookingTime,
         amount: total,
-        status: 'PENDING' as const,
+        status: (isSplitEnabled && (!splitInitiatorPaysNow || splitCount > 1) ? 'SPLIT_PENDING' : 'PENDING') as any,
         city: selectedService.city,
         durationMinutes: selectedService.duration,
         customerName: name,
@@ -142,21 +162,12 @@ export default function CheckoutPage() {
         balanceAtVenue,
         isSplitEnabled,
         splitCount: isSplitEnabled ? splitCount : 1,
-        splitPerPerson: isSplitEnabled ? amountToPayNow : total,
+        splitPerPerson: isSplitEnabled ? splitPerPersonAmt : total,
         amountPaidByLeader: amountToPayNow,
-        splitPaidMembers: isSplitEnabled ? 1 : 1,
+        splitPaidMembers: isSplitEnabled ? (splitInitiatorPaysNow ? 1 : 0) : 1,
+        splitInitiatorPaysNow,
         splitExpiresAt: isSplitEnabled ? new Date(Date.now() + 20 * 60 * 1000).toISOString() : undefined, // 20 mins escrow window
-        splitPayments: isSplitEnabled ? [
-          {
-            id: `p-${Date.now()}`,
-            name: name,
-            phone: phone,
-            amount: amountToPayNow,
-            paidAt: new Date().toISOString(),
-            role: 'LEADER',
-            status: 'PAID'
-          }
-        ] : undefined,
+        splitPayments: splitSlots,
       };
 
       // Save locally
@@ -351,7 +362,7 @@ export default function CheckoutPage() {
                       type="text"
                       value={name}
                       onChange={e => setName(e.target.value)}
-                      placeholder="e.g. Vinoth Kumar"
+                      placeholder="e.g. Vishnu Kumar KR"
                       className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm font-medium text-gray-900 focus:outline-none focus:border-[color:var(--color-primary)] focus:bg-white focus:ring-2 focus:ring-[color:var(--color-primary)]/20 transition-all"
                     />
                   </div>
@@ -398,7 +409,14 @@ export default function CheckoutPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setIsSplitEnabled(!isSplitEnabled)}
+                  onClick={() => {
+                    const next = !isSplitEnabled;
+                    setIsSplitEnabled(next);
+                    if (next) {
+                      // Group split bills must be 100% online escrow payments
+                      setPayMode('FULL_ONLINE');
+                    }
+                  }}
                   className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
                     isSplitEnabled ? 'bg-indigo-600' : 'bg-gray-200'
                   }`}
@@ -410,9 +428,61 @@ export default function CheckoutPage() {
               </div>
 
               {isSplitEnabled && (
-                <div className="pt-3 border-t border-indigo-100 space-y-3 animate-fade-in">
-                  <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-indigo-100">
-                    <span className="text-xs font-bold text-gray-700">Number of People in Group</span>
+                <div className="pt-3 border-t border-indigo-100 space-y-3.5 animate-fade-in">
+                  {/* Mode Selection: Pay 1 Share vs Generate All Links */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSplitInitiatorPaysNow(false)}
+                      className={`p-3 rounded-xl border-2 text-left transition-all ${
+                        !splitInitiatorPaysNow
+                          ? 'border-indigo-600 bg-white shadow-sm ring-2 ring-indigo-600/10'
+                          : 'border-gray-200 bg-gray-50/50 hover:bg-white'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-black text-indigo-950 flex items-center gap-1.5">
+                          🔗 Generate {splitCount} Links
+                        </span>
+                        {!splitInitiatorPaysNow && <span className="w-2 h-2 rounded-full bg-indigo-600" />}
+                      </div>
+                      <p className="text-[11px] text-gray-500 leading-tight">
+                        You pay ₹0 now. 1 unique link per friend generated to share & collect.
+                      </p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSplitInitiatorPaysNow(true)}
+                      className={`p-3 rounded-xl border-2 text-left transition-all ${
+                        splitInitiatorPaysNow
+                          ? 'border-indigo-600 bg-white shadow-sm ring-2 ring-indigo-600/10'
+                          : 'border-gray-200 bg-gray-50/50 hover:bg-white'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-black text-indigo-950 flex items-center gap-1.5">
+                          💳 Pay My Share Now
+                        </span>
+                        {splitInitiatorPaysNow && <span className="w-2 h-2 rounded-full bg-indigo-600" />}
+                      </div>
+                      <p className="text-[11px] text-gray-500 leading-tight">
+                        Pay ₹{splitPerPersonAmt.toLocaleString()} now. Remaining {splitCount - 1} links shared with friends.
+                      </p>
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between bg-white p-3.5 rounded-xl border border-indigo-100">
+                    <div>
+                      <span className="text-xs font-bold text-gray-800 block">
+                        {splitInitiatorPaysNow ? 'Total Group Members (You + Friends)' : 'Total People in Group'}
+                      </span>
+                      <span className="text-[11px] text-gray-400">
+                        {splitInitiatorPaysNow 
+                          ? `Total bill divided by ${splitCount} (You + ${splitCount - 1} friend${splitCount - 1 > 1 ? 's' : ''})`
+                          : `Total bill will be divided into ${splitCount} equal shares`}
+                      </span>
+                    </div>
                     <div className="flex items-center gap-3">
                       <button
                         type="button"
@@ -422,76 +492,103 @@ export default function CheckoutPage() {
                             setSplitPayerNames(p => p.slice(0, -1));
                           }
                         }}
-                        className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 font-black text-sm flex items-center justify-center cursor-pointer"
+                        className={`w-8 h-8 rounded-lg font-black text-sm flex items-center justify-center transition-colors ${
+                          splitCount <= 2 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 cursor-pointer'
+                        }`}
+                        title="Split requires at least 2 people"
                       >
                         -
                       </button>
-                      <span className="font-black text-indigo-700 text-sm font-mono">{splitCount} People</span>
+                      <div className="text-center min-w-[70px]">
+                        <span className="font-black text-indigo-700 text-sm font-mono block">{splitCount} People</span>
+                        {splitInitiatorPaysNow && (
+                          <span className="text-[9px] text-indigo-500 font-bold block uppercase tracking-wider">
+                            You + {splitCount - 1} friend{splitCount - 1 > 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
                       <button
                         type="button"
                         onClick={() => {
                           if (splitCount < 10) {
                             setSplitCount(s => s + 1);
-                            setSplitPayerNames(p => [...p, `Friend ${p.length}`]);
+                            setSplitPayerNames(p => [...p, `Friend ${p.length + 1}`]);
                           }
                         }}
-                        className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 font-black text-sm flex items-center justify-center cursor-pointer"
+                        className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-black text-sm flex items-center justify-center cursor-pointer transition-colors"
                       >
                         +
                       </button>
                     </div>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-200/60 flex items-center justify-between text-xs">
-                    <span className="font-bold text-indigo-900">Your Share Now:</span>
-                    <span className="font-black text-base text-indigo-700 font-mono">₹{amountToPayNow.toLocaleString()}</span>
+                  <div className="p-3.5 rounded-xl bg-indigo-50/80 border border-indigo-200/60 flex items-center justify-between text-xs">
+                    <div>
+                      <span className="font-bold text-indigo-900 block">
+                        {!splitInitiatorPaysNow ? 'Amount to Pay Now (Organizer):' : 'Your Share Due Now (1 Person):'}
+                      </span>
+                      <span className="text-[11px] text-indigo-600">
+                        {!splitInitiatorPaysNow 
+                          ? `₹${splitPerPersonAmt.toLocaleString()} per person across ${splitCount} unique links`
+                          : `₹${splitPerPersonAmt.toLocaleString()} per person • Remaining ${splitCount - 1} link${splitCount - 1 > 1 ? 's' : ''} for friends`}
+                      </span>
+                    </div>
+                    <span className="font-black text-xl text-indigo-700 font-mono">
+                      ₹{amountToPayNow.toLocaleString()}
+                    </span>
                   </div>
-                  <p className="text-[11px] text-gray-500 leading-tight">
-                    💡 You pay your share (₹{amountToPayNow}) now to lock the slot. An invite link will be issued on the tracking page to share with your group!
-                  </p>
+
+                  <div className="bg-indigo-500/5 p-3 rounded-xl border border-indigo-500/10 text-[11px] text-indigo-900 leading-relaxed flex items-start gap-2">
+                    <span className="text-sm">⚡</span>
+                    <span>
+                      Each person will get their own <strong>Individual Link (Link 1, Link 2...)</strong> with 20 minutes escrow hold to finish payment.
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* ── Payment Timing: 100% Online vs Pay at Venue ── */}
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-3">
-              <h2 className="font-extrabold text-sm text-gray-900 flex items-center gap-2">
-                <span>⏱️</span> Payment Timing & Venue Pay Mode
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setPayMode('FULL_ONLINE')}
-                  className={`p-3.5 rounded-xl border-2 text-left transition-all cursor-pointer ${
-                    payMode === 'FULL_ONLINE'
-                      ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]/5 shadow-sm'
-                      : 'border-gray-100 hover:border-gray-200'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-bold text-xs text-gray-900">100% Online Payment</span>
-                    {payMode === 'FULL_ONLINE' && <Check size={14} className="text-[color:var(--color-primary)]" />}
-                  </div>
-                  <p className="text-[11px] text-gray-500 leading-tight">Instant barcode / turnstile pass issued immediately.</p>
-                </button>
+            {/* ── Payment Timing: 100% Online vs Pay at Venue (Hidden when Split is enabled, as Split is always 100% online) ── */}
+            {!isSplitEnabled && (
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-3">
+                <h2 className="font-extrabold text-sm text-gray-900 flex items-center gap-2">
+                  <span>⏱️</span> Payment Timing & Venue Pay Mode
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPayMode('FULL_ONLINE')}
+                    className={`p-3.5 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                      payMode === 'FULL_ONLINE'
+                        ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]/5 shadow-sm'
+                        : 'border-gray-100 hover:border-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-bold text-xs text-gray-900">100% Online Payment</span>
+                      {payMode === 'FULL_ONLINE' && <Check size={14} className="text-[color:var(--color-primary)]" />}
+                    </div>
+                    <p className="text-[11px] text-gray-500 leading-tight">Instant barcode / turnstile pass issued immediately.</p>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => setPayMode('PARTIAL_ADVANCE')}
-                  className={`p-3.5 rounded-xl border-2 text-left transition-all cursor-pointer ${
-                    payMode === 'PARTIAL_ADVANCE'
-                      ? 'border-amber-500 bg-amber-50/60 shadow-sm'
-                      : 'border-gray-100 hover:border-gray-200'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-bold text-xs text-gray-900">30% Advance + Venue Pay</span>
-                    {payMode === 'PARTIAL_ADVANCE' && <Check size={14} className="text-amber-600" />}
-                  </div>
-                  <p className="text-[11px] text-gray-500 leading-tight">Pay ₹{Math.round(total * 0.3).toLocaleString()} now, remaining ₹{Math.round(total * 0.7).toLocaleString()} at venue.</p>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setPayMode('PARTIAL_ADVANCE')}
+                    className={`p-3.5 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                      payMode === 'PARTIAL_ADVANCE'
+                        ? 'border-amber-500 bg-amber-50/60 shadow-sm'
+                        : 'border-gray-100 hover:border-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-bold text-xs text-gray-900">30% Advance + Venue Pay</span>
+                      {payMode === 'PARTIAL_ADVANCE' && <Check size={14} className="text-amber-600" />}
+                    </div>
+                    <p className="text-[11px] text-gray-500 leading-tight">Pay ₹{Math.round(total * 0.3).toLocaleString()} now, remaining ₹{Math.round(total * 0.7).toLocaleString()} at venue.</p>
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* ── Payment Method ── */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
@@ -594,16 +691,28 @@ export default function CheckoutPage() {
                     <div className="p-2.5 rounded-xl bg-indigo-50 border border-indigo-200/60 space-y-1 text-xs">
                       <div className="flex justify-between font-bold text-indigo-900">
                         <span>Split ({splitCount} people):</span>
-                        <span>₹{amountToPayNow.toLocaleString()} / person</span>
+                        <span>₹{splitPerPersonAmt.toLocaleString()} / person</span>
+                      </div>
+                      <div className="flex justify-between text-indigo-700 text-[11px]">
+                        <span>Organizer Upfront Due:</span>
+                        <span className="font-bold">₹{amountToPayNow.toLocaleString()}</span>
                       </div>
                     </div>
                   )}
 
                   <div className="flex justify-between items-center pt-2 border-t border-gray-100">
-                    <span className="font-black text-gray-900 text-sm">Amount to Pay Now:</span>
-                    <span className="font-black text-2xl text-[color:var(--color-primary)]">₹{amountToPayNow.toLocaleString()}</span>
+                    <span className="font-black text-gray-900 text-sm">
+                      {isSplitEnabled && !splitInitiatorPaysNow ? 'Amount to Pay Now:' : 'Amount to Pay Now:'}
+                    </span>
+                    <span className="font-black text-2xl text-[color:var(--color-primary)]">
+                      {isSplitEnabled && !splitInitiatorPaysNow ? '₹0' : `₹${amountToPayNow.toLocaleString()}`}
+                    </span>
                   </div>
-                  <p className="text-xs text-gray-400 text-right">Inclusive of all taxes</p>
+                  <p className="text-xs text-gray-400 text-right">
+                    {isSplitEnabled && !splitInitiatorPaysNow
+                      ? 'No advance payment needed. Generate links & collect.'
+                      : 'Inclusive of all taxes'}
+                  </p>
                 </div>
               </div>
 
@@ -623,6 +732,8 @@ export default function CheckoutPage() {
                     <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Processing...</>
                   ) : timeLeft === 0 ? (
                     'Session Expired'
+                  ) : isSplitEnabled && !splitInitiatorPaysNow ? (
+                    <><span className="text-lg">👥</span> Generate {splitCount} Split Links & Hold Slot</>
                   ) : (
                     <><Shield size={18} /> Pay ₹{amountToPayNow.toLocaleString()} & Lock Slot</>
                   )}

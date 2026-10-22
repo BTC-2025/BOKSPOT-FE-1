@@ -33,12 +33,13 @@ export default function VenueProfilePage() {
   const params = useParams();
   const router = useRouter();
   const bookingType = params?.bookingType as string;
-  const category = params?.category as string;
+  const rawCategory = params?.category as string;
+  const category = rawCategory === 'stayhotel' || rawCategory === 'stay-hotel' || rawCategory === 'hotel' ? 'hotels' : (rawCategory === 'resort' ? 'resorts' : (rawCategory === 'villa' ? 'villas' : rawCategory));
   const merchantId = params?.merchantId as string;
   const { city } = useLocationStore();
   const { setSelectedService, setSelectedSlot } = useBookingFlowStore();
   const searchParams = useSearchParams();
-  const isHotel = category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'camping' || bookingType === 'stay-accommodation';
+  const isHotel = category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'camping' || bookingType === 'stay-accommodation' || bookingType === 'home';
   const isFacility = category === 'football-turf' || category === 'cricket-ground' || category === 'badminton' || category === 'tennis' || category === 'basketball' || category === 'studio' || category === 'meeting-room' || category === 'podcast' || category === 'gaming' || bookingType === 'sports-turf';
   const isAppointment = category === 'doctor' || category === 'salons' || category === 'gym-yoga' || category === 'pet-grooming';
   const isRental = category === 'sports-bike' || category === 'car-rental' || category === 'bike-rental' || category === 'camera' || category === 'cycle-rental' || category === 'sound-system' || category === 'event-equip' || bookingType === 'rental-equipment';
@@ -716,9 +717,9 @@ export default function VenueProfilePage() {
                 <button
                   type="button"
                   onClick={() => setIsAboutExpanded(!isAboutExpanded)}
-                  className="mt-2 text-xs font-bold text-[#033266] dark:text-[#ff6325] hover:underline cursor-pointer flex items-center gap-1"
+                  className="mt-2.5 text-xs font-bold text-[#033266] dark:text-[#ff6325] hover:opacity-80 cursor-pointer inline-flex items-center gap-1 transition-opacity"
                 >
-                  <span>{isAboutExpanded ? 'Show less' : 'Read more &rarr;'}</span>
+                  <span>{isAboutExpanded ? 'Show less ↑' : 'Read more →'}</span>
                 </button>
               )}
             </div>

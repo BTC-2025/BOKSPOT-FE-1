@@ -36,7 +36,7 @@ export function WeekendEscapes() {
       badgeIcon: 'wb_sunny',
       image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop&q=80',
       highlights: 'Private Courtyard • Cyclist Paradise • Promenade 5 mins',
-      link: '/stay-accommodation/hotels',
+      link: '/home/hotels',
     },
     {
       id: 'we-2',
@@ -54,7 +54,7 @@ export function WeekendEscapes() {
       badgeIcon: 'waves',
       image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&auto=format&fit=crop&q=80',
       highlights: 'Beach Access • Seafood Buffet • Sunset Bar',
-      link: '/stay-accommodation/hotels',
+      link: '/home/hotels',
     },
     {
       id: 'we-3',
@@ -72,7 +72,7 @@ export function WeekendEscapes() {
       badgeIcon: 'landscape',
       image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&auto=format&fit=crop&q=80',
       highlights: 'Bonfire & BBQ • Mountain View Trek • Bird Watching',
-      link: '/stay-accommodation/hotels',
+      link: '/home/hotels',
     },
     {
       id: 'we-4',
@@ -90,7 +90,7 @@ export function WeekendEscapes() {
       badgeIcon: 'diamond',
       image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&auto=format&fit=crop&q=80',
       highlights: 'Private Plunge Pool • Chef on Request • Stargazing Deck',
-      link: '/stay-accommodation/hotels',
+      link: '/home/hotels',
     },
     {
       id: 'we-5',
@@ -108,7 +108,7 @@ export function WeekendEscapes() {
       badgeIcon: 'spa',
       image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
       highlights: 'Organic Tea Factory Tour • Fireplace • British High Tea',
-      link: '/stay-accommodation/hotels',
+      link: '/home/hotels',
     },
   ];
 

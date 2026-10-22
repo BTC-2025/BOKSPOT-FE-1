@@ -20,9 +20,9 @@ export const useUserStore = create<UserState>()(
   persist(
     (set) => ({
       user: {
-        username: 'vinothkumar',
-        fullName: 'vinothkumar',
-        email: 'gmvinoth@bnxmail.com',
+        username: 'vishnukumarkr',
+        fullName: 'Vishnu Kumar KR',
+        email: 'vishnukumarkr@bnxmail.com',
         phone: '+91 99887 76655',
         address: '',
         emoji: '🧑',
@@ -54,7 +54,7 @@ export interface PersistedBooking {
   date: string;
   time: string;
   amount: number;
-  status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'CHECKED_IN';
+  status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'CHECKED_IN' | 'SPLIT_PENDING';
   city?: string;
   durationMinutes?: number;
   customerName?: string;
@@ -63,6 +63,27 @@ export interface PersistedBooking {
   notes?: string;
   otp?: string;
   bookedAt?: string;
+  paymentMethod?: string;
+  payMode?: string;
+  advancePaid?: number;
+  balanceAtVenue?: number;
+  isSplitEnabled?: boolean;
+  splitCount?: number;
+  splitPerPerson?: number;
+  amountPaidByLeader?: number;
+  splitPaidMembers?: number;
+  splitInitiatorPaysNow?: boolean;
+  splitPayments?: Array<{
+    id?: string;
+    slotIndex?: number;
+    linkKey?: string;
+    name: string;
+    phone?: string;
+    amount: number;
+    paidAt?: string;
+    role: string;
+    status: string;
+  }>;
 }
 
 export interface PersistedMerchant {
@@ -137,7 +158,7 @@ interface BookingFlowState {
   setBookingResult: (result: any) => void;
   fetchBookings: () => Promise<void>;
   addBooking: (booking: PersistedBooking) => Promise<void>;
-  updateBooking: (bookingId: string, updates: Partial<PersistedBooking>) => Promise<void>;
+  updateBooking: (bookingId: string, updates: Partial<PersistedBooking>, syncToBackend?: boolean) => Promise<void>;
   cancelBooking: (bookingId: string) => Promise<void>;
   completeBooking: (bookingId: string) => Promise<void>;
   addService: (service: MockService) => void;
@@ -226,21 +247,23 @@ export const useBookingFlowStore = create<BookingFlowState>()((set, get) => ({
     }
   },
 
-  updateBooking: async (bookingId, updates) => {
-    try {
-      const current = get().bookings.find(b => b.id === bookingId);
-      if (current) {
-        const updated = { ...current, ...updates };
-        await axios.post(`${API_BASE}/bookings/sync`, updated);
-      }
-    } catch (error) {
-      console.error("Failed to update booking to DB", error);
-    }
+  updateBooking: async (bookingId, updates, syncToBackend = false) => {
     set((state) => ({
       bookings: state.bookings.map((b) =>
         b.id === bookingId ? { ...b, ...updates } : b
       ),
     }));
+    if (syncToBackend) {
+      try {
+        const current = get().bookings.find(b => b.id === bookingId);
+        if (current) {
+          const updated = { ...current, ...updates };
+          await axios.post(`${API_BASE}/bookings/sync`, updated);
+        }
+      } catch (error) {
+        console.error("Failed to update booking to DB", error);
+      }
+    }
   },
 
   cancelBooking: async (bookingId) => {
