@@ -437,14 +437,30 @@ Show this at the reception counter.
                         >
                           Copy
                         </button>
-                        <a
-                          href={`https://wa.me/?text=${shareText}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all shrink-0 flex items-center gap-1"
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const rawShareText = `Hey ${slot.name || 'Friend'}! Here is your individual link to pay your share of ₹${(slot.amount || booking.splitPerPerson)?.toLocaleString()} for our booking at ${booking.merchantName || 'Bokspot'}:\n${individualUrl}`;
+                            if (navigator.share) {
+                              try {
+                                await navigator.share({
+                                  title: `Bokspot Split Share for ${slot.name || 'Friend'}`,
+                                  text: rawShareText,
+                                  url: individualUrl,
+                                });
+                              } catch (err) {
+                                // User dismissed or fallback
+                              }
+                            } else {
+                              // Fallback opens WhatsApp Web / App directly
+                              window.open(`https://wa.me/?text=${shareText}`, '_blank');
+                            }
+                          }}
+                          className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all shrink-0 flex items-center gap-1.5 cursor-pointer"
                         >
-                          <span>💬</span> WhatsApp
-                        </a>
+                          <Share2 size={13} />
+                          <span>Share</span>
+                        </button>
                       </div>
                     </div>
                   );

@@ -18,6 +18,7 @@ function SplitPayContent() {
   const [guestPhone, setGuestPhone] = useState('');
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [hasInitializedName, setHasInitializedName] = useState(false);
 
   // Load booking by ref
   const fetchBooking = async () => {
@@ -33,12 +34,16 @@ function SplitPayContent() {
       if (found) {
         setBooking(found);
 
-        // Pre-fill name if slot already has a designated friend label
-        if (slotKey && Array.isArray(found.splitPayments)) {
+        // Pre-fill name ONLY ONCE on initial load, and only if it's a real name (not placeholder like "You (Organizer)" or "Friend ")
+        if (!hasInitializedName && slotKey && Array.isArray(found.splitPayments)) {
           const targeted = found.splitPayments.find((s: any) => s.linkKey === slotKey);
-          if (targeted && targeted.name && !targeted.name.startsWith('Friend ')) {
-            setGuestName(prev => prev || targeted.name);
+          if (targeted && targeted.name) {
+            const isPlaceholder = targeted.name.includes('Organizer') || targeted.name.startsWith('Friend ') || targeted.name.toLowerCase() === 'you';
+            if (!isPlaceholder) {
+              setGuestName(targeted.name);
+            }
           }
+          setHasInitializedName(true);
         }
 
         // Calculate remaining seconds if expiresAt exists
