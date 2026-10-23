@@ -140,73 +140,66 @@ export default function HomePage() {
       <ActionModalManager />
 
       <main className="page-content px-4 md:px-8 lg:pr-8">
-        <div className="mx-auto w-full">
-          {/* Row 1: Ad Banner */}
-          <AdBanner />
+        <div className="mx-auto w-full space-y-4">
+          {/* Row 1: Ad Banner with Integrated Shortcuts Panel */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <AdBanner />
+          </motion.div>
 
-          {/* Row 3: Shortcuts Dock */}
-          <section className="mb-10">
-            <div className="flex items-center justify-between mb-3 px-1">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#ff6325] animate-pulse" />
-                <h3 className="text-xs font-black uppercase tracking-wider text-[color:var(--color-outline)]">Quick Actions Dock</h3>
-              </div>
-              <span className="text-[11px] font-semibold text-[color:var(--color-outline)] hidden sm:inline">Tap any service for instant booking flow</span>
-            </div>
+          {/* Row 2: Carousel Sections (Recommended & Trending) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-40px" }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <CarouselSections />
+          </motion.div>
 
-            <div className="flex flex-wrap items-center gap-3 p-2 rounded-[24px] bg-[color:var(--color-surface-container)]/30 border border-[color:var(--color-outline-variant)]/20 backdrop-blur-xl shadow-lg">
-              {Array.isArray(activeShortcuts) && activeShortcuts.length > 0 ? (
-                activeShortcuts.slice(0, 7).map(id => AVAILABLE_SHORTCUTS.find(s => s.id === id)).filter(Boolean).map(shortcut => {
-                  if (!shortcut) return null;
-                  const handleAction = () => {
-                    if (shortcut.actionType === 'modal') {
-                      openActionModal(shortcut.actionTarget);
-                    } else {
-                      window.location.href = shortcut.actionTarget;
-                    }
-                  };
-                  return (
-                    <button
-                      key={shortcut.id}
-                      onClick={handleAction}
-                      className="group h-11 px-5 rounded-2xl border border-[color:var(--color-outline-variant)]/25 bg-[color:var(--color-surface-container)]/70 hover:border-[#ff6325]/50 hover:bg-[color:var(--color-surface-container-high)] hover:scale-[1.03] active:scale-[0.97] transition-all flex items-center gap-2.5 cursor-pointer text-xs font-extrabold text-[color:var(--color-on-surface)] shadow-sm hover:shadow-[0_4px_16px_rgba(255,99,37,0.15)]"
-                    >
-                      <div className="w-6 h-6 rounded-lg bg-[#ff6325]/10 group-hover:bg-[#ff6325] text-[#ff6325] group-hover:text-white flex items-center justify-center transition-colors">
-                        <span className="material-symbols-outlined text-[15px]">{shortcut.icon}</span>
-                      </div>
-                      <span className="tracking-wide">{shortcut.label}</span>
-                    </button>
-                  );
-                })
-              ) : (
-                <span className="text-xs text-[color:var(--color-outline)] italic mr-2 pl-3">No shortcuts added yet.</span>
-              )}
+          {/* Row 3: Concierge Live Board */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-40px" }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <ConciergeJourneys />
+            <div className="h-px bg-[color:var(--color-outline-variant)]/20 my-6 w-full" />
+          </motion.div>
 
-              {/* Manage Dock Shortcuts Button */}
-              <button
-                onClick={() => setShortcutModalOpen(true)}
-                className="h-11 px-4.5 rounded-2xl border-2 border-dashed border-[#ff6325]/40 bg-[#ff6325]/[0.04] hover:border-[#ff6325] hover:bg-[#ff6325]/10 hover:scale-[1.03] active:scale-[0.97] transition-all flex items-center gap-2 cursor-pointer text-xs font-black text-[#ff6325]"
-              >
-                <div className="w-5 h-5 rounded-full bg-[#ff6325]/15 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[14px]">add</span>
-                </div>
-                <span>Customize Dock</span>
-              </button>
-            </div>
-          </section>
+          {/* Row 4: Weekend Getaways & Escapes */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-40px" }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <WeekendEscapes />
+          </motion.div>
 
-          <CarouselSections />
+          {/* Row 5: Verified Venues & Partners */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-40px" }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <VerifiedPartners />
+          </motion.div>
 
-          <ConciergeJourneys />
-          <div className="h-px bg-[color:var(--color-outline-variant)]/20 my-8 w-full" />
-
-          {/* Weekend Getaways & Escapes from Chennai */}
-          <WeekendEscapes />
-
-          {/* World-Class Verified Arenas & Top-Rated Partners */}
-          <VerifiedPartners />
-
-          <NearbyRadar />
+          {/* Row 6: Live Radar Map */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-40px" }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <NearbyRadar />
+          </motion.div>
             {/* Row 7: Detailed Luxury Footer */}
             <footer className="mt-20 border border-[color:var(--color-outline-variant)]/25 bg-[color:var(--color-surface-container)]/70 backdrop-blur-2xl pt-14 pb-20 px-6 sm:px-10 lg:px-14 rounded-[36px] shadow-[0_20px_50px_rgba(0,0,0,0.06)] relative overflow-hidden text-left">
               {/* Subtle ambient luxury mesh */}

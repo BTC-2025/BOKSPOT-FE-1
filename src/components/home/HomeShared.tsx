@@ -116,10 +116,11 @@ export function WishlistButton({ item }: { item?: any }) {
           });
         }
       }}
-      className="absolute top-2.5 right-2.5 bg-white/90 backdrop-blur w-7 h-7 flex items-center justify-center rounded-full z-20 shadow-sm transition-all"
+      aria-label="Wishlist"
+      className="absolute top-2.5 right-2.5 w-7 h-7 flex items-center justify-center rounded-full z-20 backdrop-blur-xl bg-white/85 dark:bg-black/60 border border-white/40 dark:border-white/15 shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:scale-110 active:scale-90 transition-all duration-300 cursor-pointer"
     >
       <span 
-        className={`material-symbols-outlined text-[15px] transition-colors duration-300 ${wished ? 'text-red-500' : 'text-gray-400'}`}
+        className={`material-symbols-outlined text-[15px] transition-all duration-300 ${wished ? 'text-rose-500 scale-110' : 'text-slate-600 dark:text-slate-300'}`}
         style={{ fontVariationSettings: wished ? "'FILL' 1" : "'FILL' 0" }}
       >
         favorite

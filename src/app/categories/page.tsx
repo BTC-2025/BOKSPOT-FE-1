@@ -424,17 +424,17 @@ export default function CategoriesPage() {
           {/* Header Row */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-2 text-[10px] font-bold text-[#0a3161] dark:text-[#ff6325] uppercase tracking-wider mb-1.5 px-3 py-1 rounded-full bg-[#0a3161]/10 dark:bg-[#ff6325]/10 border border-[#0a3161]/20 dark:border-[#ff6325]/20">
-                <Compass size={12} className="text-[#0a3161] dark:text-[#ff6325]" />
+              <div className="inline-flex items-center gap-2 text-[10px] font-black text-[color:var(--color-primary)] uppercase tracking-widest mb-2 px-3 py-1 rounded-full bg-[color:var(--color-primary)]/10 border border-[color:var(--color-primary)]/20 shadow-2xs">
+                <Compass size={13} className="text-[color:var(--color-primary)] animate-spin-slow" />
                 <span>All Categories &amp; Services</span>
               </div>
-              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[color:var(--color-on-surface)] flex items-center gap-3">
+              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[color:var(--color-on-surface)] flex items-center gap-3">
                 <span>Categories</span>
-                <span className="text-xs font-bold text-[color:var(--color-on-surface-variant)] px-2.5 py-0.5 rounded-full bg-[color:var(--color-surface-dim)] border border-[color:var(--color-outline-variant)]/30">
+                <span className="text-xs font-bold text-[color:var(--color-outline)] px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 border border-black/5 dark:border-white/10">
                   54 Services Listed
                 </span>
                 {activeGroup !== 'ALL' && (
-                  <span className="text-xs font-bold text-[#0a3161] dark:text-[#ff6325] px-2.5 py-0.5 rounded-full bg-[#0a3161]/10 dark:bg-[#ff6325]/10 border border-[#0a3161]/20 dark:border-[#ff6325]/20 flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-[color:var(--color-primary)] px-2.5 py-0.5 rounded-full bg-[color:var(--color-primary)]/10 border border-[color:var(--color-primary)]/20 flex items-center gap-1.5 shadow-2xs">
                     <span>Active: {activeGroup}</span>
                     <button 
                       onClick={() => setActiveGroup('ALL')} 
@@ -446,30 +446,30 @@ export default function CategoriesPage() {
                   </span>
                 )}
               </h1>
-              <p className="text-xs text-[color:var(--color-on-surface-variant)] mt-1 font-medium">
+              <p className="text-xs text-[color:var(--color-outline)] mt-1 font-medium">
                 Choose a category below to instantly filter all matching bookable slots &amp; verified providers.
               </p>
             </div>
 
-            {/* Quick Search */}
-            <div className="relative flex items-center w-full md:w-80 rounded-2xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface)]/80 backdrop-blur-md px-3.5 py-2.5 focus-within:border-[#0a3161] dark:focus-within:border-[#ff6325] focus-within:ring-2 focus-within:ring-[#0a3161]/20 dark:focus-within:ring-[#ff6325]/20 transition-all shadow-xs shrink-0">
-              <Search size={15} className="text-[#0a3161] dark:text-[#ff6325] mr-2 shrink-0" />
+            {/* Quick Search (Apple Capsule Style) */}
+            <div className="relative flex items-center w-full md:w-80 rounded-2xl border border-black/10 dark:border-white/15 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl px-3.5 py-2.5 focus-within:border-[color:var(--color-primary)] focus-within:ring-2 focus-within:ring-[color:var(--color-primary)]/30 transition-all shadow-xs shrink-0">
+              <Search size={15} className="text-[color:var(--color-primary)] mr-2 shrink-0" />
               <input
                 type="text"
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
                 placeholder="Search any service, turf, cab, hotel..."
-                className="w-full bg-transparent text-xs text-[color:var(--color-on-surface)] placeholder-[color:var(--color-outline)] outline-none font-medium"
+                className="w-full bg-transparent text-xs text-[color:var(--color-on-surface)] placeholder-[color:var(--color-outline)]/60 outline-none font-medium"
               />
               {searchFilter && (
-                <button onClick={() => setSearchFilter('')} className="text-xs text-[color:var(--color-outline)] hover:text-[color:var(--color-on-surface)] transition-colors">
+                <button onClick={() => setSearchFilter('')} className="text-xs text-[color:var(--color-outline)] hover:text-[color:var(--color-on-surface)] transition-colors cursor-pointer">
                   ✕
                 </button>
               )}
             </div>
           </div>
 
-          {/* ── BENTO BOX TILES GRID (Clean 5-column grid across 2 neat rows) ── */}
+          {/* ── BENTO BOX TILES GRID (Apple Squircle Glassmorphism) ── */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 pt-1">
             {BENTO_CATEGORIES.map((bento) => {
               const isSelected = activeGroup === bento.tag;
@@ -477,18 +477,18 @@ export default function CategoriesPage() {
                 <button
                   key={bento.title}
                   onClick={() => setActiveGroup(isSelected && bento.tag !== 'ALL' ? 'ALL' : bento.tag)}
-                  className={`group relative p-3.5 rounded-2xl border text-left flex flex-col justify-between transition-all duration-200 cursor-pointer overflow-hidden min-h-[92px] ${
+                  className={`group relative p-3.5 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 cursor-pointer overflow-hidden min-h-[94px] backdrop-blur-xl ${
                     isSelected 
-                      ? 'bg-gradient-to-br from-[#0a3161]/15 dark:from-[#ff6325]/20 via-[color:var(--color-surface-container)] to-[color:var(--color-surface)] border-[#0a3161] dark:border-[#ff6325] shadow-lg shadow-[#0a3161]/10 dark:shadow-[#ff6325]/15 scale-[1.02] ring-1 ring-[#0a3161]/40 dark:ring-[#ff6325]/50'
-                      : `bg-[color:var(--color-surface-container)]/70 hover:bg-[color:var(--color-surface-container)] border-[color:var(--color-outline-variant)]/30 ${bento.border} hover:-translate-y-0.5 shadow-xs`
+                      ? 'bg-gradient-to-br from-[color:var(--color-primary)]/15 via-white dark:via-[#161c2b] to-white/80 dark:to-[#121722] border-[color:var(--color-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_12px_32px_rgba(0,0,0,0.5)] scale-[1.02] ring-1 ring-[color:var(--color-primary)]/40'
+                      : `bg-white/70 dark:bg-[#121722]/70 hover:bg-white dark:hover:bg-[#161c2b] border-black/5 dark:border-white/10 ${bento.border} hover:-translate-y-1 shadow-[0_2px_12px_rgba(0,0,0,0.02)]`
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-2">
                     <span className="text-2xl filter drop-shadow-sm group-hover:scale-110 transition-transform">{bento.emoji}</span>
-                    <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0 ${
+                    <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg border shrink-0 ${
                       isSelected 
-                        ? 'bg-[#0a3161] dark:bg-[#ff6325] text-white border-[#0a3161] dark:border-[#ff6325]' 
-                        : 'bg-[color:var(--color-surface)]/80 text-[color:var(--color-on-surface-variant)] border-[color:var(--color-outline-variant)]/40'
+                        ? 'bg-[color:var(--color-primary)] text-white border-[color:var(--color-primary)]' 
+                        : 'bg-black/5 dark:bg-white/10 text-[color:var(--color-outline)] border-black/5 dark:border-white/10 font-bold'
                     }`}>
                       {bento.badge}
                     </span>
@@ -496,12 +496,12 @@ export default function CategoriesPage() {
                   <div>
                     <h3 className={`font-black text-xs transition-colors leading-tight ${
                       isSelected 
-                        ? 'text-[#0a3161] dark:text-[#ff6325]' 
-                        : 'text-[color:var(--color-on-surface)] group-hover:text-[#0a3161] dark:group-hover:text-[#ff6325]'
+                        ? 'text-[color:var(--color-primary)]' 
+                        : 'text-[color:var(--color-on-surface)] group-hover:text-[color:var(--color-primary)]'
                     }`}>
                       {bento.title}
                     </h3>
-                    <p className="text-[10px] text-[color:var(--color-on-surface-variant)] mt-0.5 line-clamp-1 font-medium">
+                    <p className="text-[10px] text-[color:var(--color-outline)] mt-0.5 line-clamp-1 font-medium">
                       {bento.desc}
                     </p>
                   </div>
@@ -512,16 +512,16 @@ export default function CategoriesPage() {
 
         </div>
 
-        {/* ── HIGH-SPEED DIRECTORY TABLE / LIST ─────────────────── */}
-        <div className="rounded-3xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-container)]/80 backdrop-blur-xl shadow-lg overflow-hidden">
+        {/* ── HIGH-SPEED DIRECTORY TABLE / LIST (Apple Glass Card) ─────────────────── */}
+        <div className="rounded-[28px] border border-black/5 dark:border-white/10 bg-white/75 dark:bg-[#121722]/80 backdrop-blur-2xl shadow-[0_8px_30px_rgba(0,0,0,0.03)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.4)] overflow-hidden">
           
           {/* Table Header Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between px-5 py-3.5 border-b border-[color:var(--color-outline-variant)]/20 bg-[color:var(--color-surface)]/60 gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 border-b border-black/5 dark:border-white/10 bg-slate-50/60 dark:bg-slate-900/40 gap-2">
             <div className="flex items-center gap-2.5">
-              <span className="h-2 w-2 rounded-full bg-[#0a3161] dark:bg-[#ff6325] animate-pulse shrink-0" />
+              <span className="h-2 w-2 rounded-full bg-[color:var(--color-primary)] animate-pulse shrink-0" />
               <h2 className="text-xs font-black uppercase tracking-wider text-[color:var(--color-on-surface)] flex items-center gap-2">
                 <span>Direct Booking Registry</span>
-                <span className="text-[10px] text-[color:var(--color-on-surface-variant)] font-normal normal-case">
+                <span className="text-[10px] text-[color:var(--color-outline)] font-normal normal-case">
                   ({activeGroup === 'ALL' ? 'Showing all categories' : `Filtered by: ${activeGroup}`})
                 </span>
               </h2>
@@ -529,7 +529,7 @@ export default function CategoriesPage() {
             {activeGroup !== 'ALL' && (
               <button
                 onClick={() => setActiveGroup('ALL')}
-                className="text-[11px] font-bold text-[#0a3161] dark:text-[#ff6325] hover:underline cursor-pointer self-start sm:self-auto"
+                className="text-[11px] font-bold text-[color:var(--color-primary)] hover:underline cursor-pointer self-start sm:self-auto"
               >
                 Reset Filter (Show All 54 Services) &rarr;
               </button>
@@ -537,7 +537,7 @@ export default function CategoriesPage() {
           </div>
 
           {/* Desktop Table Headers (>= md) */}
-          <div className="hidden md:grid md:grid-cols-12 gap-3 px-5 py-2.5 text-[10px] font-black uppercase tracking-wider text-[color:var(--color-outline)] border-b border-[color:var(--color-outline-variant)]/10 bg-[color:var(--color-surface)]/30">
+          <div className="hidden md:grid md:grid-cols-12 gap-3 px-6 py-2.5 text-[10px] font-black uppercase tracking-wider text-[color:var(--color-outline)] border-b border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02]">
             <span className="col-span-5">Service &amp; Category</span>
             <span className="col-span-3">Features &amp; Highlights</span>
             <span className="col-span-2">Starting Tariff</span>
@@ -559,41 +559,41 @@ export default function CategoriesPage() {
                 return (
                   <div
                     key={`${item.groupTitle}-${item.name}`}
-                    className="flex flex-col md:grid md:grid-cols-12 gap-3 px-5 py-3 hover:bg-[color:var(--color-on-surface)]/[0.02] transition-colors items-center group"
+                    className="flex flex-col md:grid md:grid-cols-12 gap-3 px-6 py-3.5 hover:bg-black/[0.02] dark:hover:bg-white/[0.03] transition-colors items-center group"
                   >
                     {/* Col 1: Icon + Name + Group */}
                     <div className="w-full md:col-span-5 flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 bg-[color:var(--color-surface-dim)] border border-[color:var(--color-outline-variant)]/30 relative">
+                      <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 bg-slate-900 border border-black/5 dark:border-white/10 relative shadow-2xs">
                         <img
                           src={getServiceImage(item.name)}
                           alt={item.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
                           loading="lazy"
                         />
-                        <div className="absolute inset-0 bg-black/20" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
-                          <h3 className="font-extrabold text-xs text-[color:var(--color-on-surface)] group-hover:text-[#0a3161] dark:group-hover:text-[#ff6325] transition-colors truncate">
+                          <h3 className="font-extrabold text-xs text-[color:var(--color-on-surface)] group-hover:text-[color:var(--color-primary)] transition-colors truncate">
                             {item.name}
                           </h3>
                           <span className="text-xs shrink-0">{item.emoji}</span>
                         </div>
-                        <p className="text-[10px] text-[color:var(--color-on-surface-variant)] font-medium truncate mt-0.5">
+                        <p className="text-[10px] text-[color:var(--color-outline)] font-medium truncate mt-0.5">
                           {item.groupTitle} &bull; {item.subCategoryName}
                         </p>
                       </div>
                     </div>
 
                     {/* Col 2: Subtitle / Highlights */}
-                    <div className="w-full md:col-span-3 flex items-center gap-2 text-[11px] text-[color:var(--color-on-surface-variant)]">
-                      <span className="text-amber-500 font-black text-xs">★ 4.9</span>
+                    <div className="w-full md:col-span-3 flex items-center gap-2 text-[11px] text-[color:var(--color-outline)] font-medium">
+                      <span className="text-amber-500 font-extrabold text-xs">★ 4.9</span>
                       <span className="truncate">{subtitle}</span>
                     </div>
 
                     {/* Col 3: Price Tag */}
                     <div className="w-full md:col-span-2 flex items-center">
-                      <span className="text-xs font-black text-[color:var(--color-on-surface)] px-2.5 py-1 rounded-lg bg-[color:var(--color-surface)] border border-[color:var(--color-outline-variant)]/30">
+                      <span className="text-xs font-extrabold text-[color:var(--color-on-surface)] px-2.5 py-1 rounded-xl bg-slate-100/80 dark:bg-slate-900/80 border border-black/5 dark:border-white/10 shadow-2xs">
                         {price}
                       </span>
                     </div>
@@ -602,7 +602,7 @@ export default function CategoriesPage() {
                     <div className="w-full md:col-span-2 flex items-center justify-end">
                       <Link
                         href={serviceHref}
-                        className="w-full md:w-auto px-4 py-2 rounded-xl bg-gradient-to-r from-[#0a3161] to-[#124b8f] dark:from-[#ff6325] dark:to-[#e04e13] hover:brightness-110 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md shadow-[#0a3161]/20 dark:shadow-[#ff6325]/20 active:scale-95 transition-all cursor-pointer"
+                        className="w-full md:w-auto px-4 py-2 rounded-xl bg-[color:var(--color-primary)] hover:brightness-110 active:scale-95 text-white font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md shadow-[color:var(--color-primary)]/20 transition-all cursor-pointer"
                       >
                         <span>Book Slot</span>
                         <ArrowRight size={13} />

@@ -331,55 +331,62 @@ export function TopNav({
 
           </div>
 
-          {/* Center Column: Floating Luxury Segmented Dock */}
+          {/* Center Column: Floating Luxury Segmented Dock (Instant Apple Fluid Switch) */}
           <div className="hidden lg:flex flex-none justify-center">
             <nav className="custom-nav-capsule shadow-lg relative flex items-center p-1">
               {(() => {
                 const isHomeActive = pathname === '/' || pathname === '/home' || pathname.startsWith('/home/');
                 const isCategoriesActive = pathname === '/categories' || pathname.startsWith('/service') || pathname.startsWith('/venue');
-                const isBookingsActive = pathname === '/bookings' || pathname === '/bookings' || pathname === '/tracks' || pathname.startsWith('/bookings/') || pathname.startsWith('/split');
+                const isBookingsActive = pathname === '/bookings' || pathname === '/tracks' || pathname.startsWith('/bookings/') || pathname.startsWith('/split');
+
+                const currentActiveId = isHomeActive ? 'home' : isCategoriesActive ? 'categories' : isBookingsActive ? 'bookings' : 'home';
+
+                const navItems = [
+                  { label: 'Home', href: '/', id: 'home' },
+                  { label: 'Categories', href: '/categories', id: 'categories' },
+                  { 
+                    label: 'Bookings', 
+                    href: '/bookings', 
+                    id: 'bookings',
+                    hasBadge: Array.isArray(bookings) && bookings.length > 0 
+                  },
+                ];
 
                 return (
-                  <>
-                    <Link
-                      href="/"
-                      className={`flex items-center justify-center px-4.5 py-1.5 text-[12px] font-black tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${
-                        isHomeActive ? 'custom-nav-link-active' : 'custom-nav-link-inactive'
-                      }`}
-                    >
-                      {isHomeActive && (
-                        <div className="absolute inset-0 rounded-full custom-nav-active-bg -z-10" />
-                      )}
-                      <span>Home</span>
-                    </Link>
+                  <div className="flex items-center relative">
+                    {navItems.map((item) => {
+                      const isActive = currentActiveId === item.id;
 
-                    <Link
-                      href="/categories"
-                      className={`flex items-center justify-center px-4.5 py-1.5 text-[12px] font-black tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${
-                        isCategoriesActive ? 'custom-nav-link-active' : 'custom-nav-link-inactive'
-                      }`}
-                    >
-                      {isCategoriesActive && (
-                        <div className="absolute inset-0 rounded-full custom-nav-active-bg -z-10" />
-                      )}
-                      <span>Categories</span>
-                    </Link>
-
-                    <Link
-                      href="/bookings"
-                      className={`flex items-center justify-center gap-1.5 px-4.5 py-1.5 text-[12px] font-black tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link ${
-                        isBookingsActive ? 'custom-nav-link-active' : 'custom-nav-link-inactive'
-                      }`}
-                    >
-                      {isBookingsActive && (
-                        <div className="absolute inset-0 rounded-full custom-nav-active-bg -z-10" />
-                      )}
-                      <span>Bookings</span>
-                      {Array.isArray(bookings) && bookings.length > 0 && (
-                        <span className="h-2 w-2 rounded-full bg-[#ff6325] animate-pulse" />
-                      )}
-                    </Link>
-                  </>
+                      return (
+                        <Link
+                          key={item.id}
+                          href={item.href}
+                          scroll={false}
+                          className={`flex items-center justify-center gap-1.5 px-5 py-1.5 text-[12px] font-black tracking-wide relative z-10 custom-nav-link select-none transition-colors duration-150 ${
+                            isActive ? 'custom-nav-link-active' : 'custom-nav-link-inactive'
+                          }`}
+                        >
+                          {isActive && (
+                            <motion.div
+                              layoutId="apple-nav-active-pill"
+                              className="absolute inset-0 rounded-full custom-nav-active-bg -z-10"
+                              style={{ willChange: 'transform' }}
+                              transition={{
+                                type: 'spring',
+                                stiffness: 500,
+                                damping: 38,
+                                mass: 0.5,
+                              }}
+                            />
+                          )}
+                          <span>{item.label}</span>
+                          {item.hasBadge && (
+                            <span className="h-1.5 w-1.5 rounded-full bg-[#ff6325] animate-pulse" />
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
                 );
               })()}
             </nav>

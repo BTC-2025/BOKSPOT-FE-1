@@ -92,32 +92,31 @@ export function CarouselSections() {
               <Link
                 key={item.id}
                 href={item.link}
-                className="w-[285px] sm:w-[300px] lg:w-[calc(25%-14px)] shrink-0 group flex flex-col snap-start"
+                className="w-[240px] sm:w-[260px] lg:w-[calc(25%-12px)] shrink-0 group flex flex-col snap-start"
               >
-                <div className="relative bg-[color:var(--color-surface-container)] rounded-[24px] overflow-hidden border border-[color:var(--color-outline-variant)]/30 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_36px_rgba(0,0,0,0.12)] hover:border-[color:var(--color-primary)]/40 transition-all duration-500 flex flex-col h-[360px] hover:-translate-y-1.5">
+                <div className="relative bg-[color:var(--color-surface)] dark:bg-[color:var(--color-surface-container)] rounded-[22px] overflow-hidden border border-[color:var(--color-outline-variant)]/30 dark:border-white/[0.08] shadow-[0_4px_16px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)] hover:shadow-[0_14px_30px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_16px_36px_rgba(0,0,0,0.4)] hover:border-[color:var(--color-primary)]/40 transition-all duration-400 flex flex-col h-[300px] hover:-translate-y-1">
                   
                   {/* Image Section */}
-                  <div className="relative h-[200px] w-full overflow-hidden bg-slate-800">
+                  <div className="relative h-[155px] w-full overflow-hidden bg-slate-900">
                     <img
                       src={item.image}
                       alt={item.title}
                       loading="lazy"
                       onError={(e: any) => {
-                        // High-reliability fallback image if any unsplash id fails
                         e.currentTarget.src = 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop&q=80';
                       }}
-                      className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
+                      className="w-full h-full object-cover group-hover:scale-106 transition-transform duration-500 ease-out"
                     />
                     
                     {/* Modern gradient scrim */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/30 pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-black/25 pointer-events-none" />
 
                     {/* Category pill - Top Left */}
                     {item.category && (
-                      <div className="absolute top-3 left-3 z-10">
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md bg-black/60 text-white/95 border border-white/20 shadow-sm flex items-center gap-1">
+                      <div className="absolute top-2.5 left-2.5 z-10">
+                        <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider backdrop-blur-xl bg-black/55 text-white/95 border border-white/20 shadow-sm flex items-center gap-1">
                           {item.badgeIcon && (
-                            <span className="material-symbols-outlined text-[12px] text-amber-300">
+                            <span className="material-symbols-outlined text-[11px] text-amber-300">
                               {item.badgeIcon}
                             </span>
                           )}
@@ -130,19 +129,19 @@ export function CarouselSections() {
                     <WishlistButton item={item} />
 
                     {/* Bottom Row on Image: Deal Badge & Price Pill */}
-                    <div className="absolute bottom-3 inset-x-3 z-10 flex items-center justify-between gap-2 pointer-events-none">
+                    <div className="absolute bottom-2.5 inset-x-2.5 z-10 flex items-center justify-between gap-1.5 pointer-events-none">
                       {/* Deal badge */}
                       {item.badge ? (
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md shadow-md border border-white/25 flex items-center gap-1 ${item.badgeBg}`}>
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider backdrop-blur-xl shadow-sm border border-white/20 flex items-center gap-1 ${item.badgeBg}`}>
                           {item.badge}
                         </span>
                       ) : <span />}
 
-                      {/* Floating Glass Price Chip */}
-                      <div className="flex items-baseline gap-1.5 px-3 py-1 rounded-xl backdrop-blur-md bg-black/80 border border-white/25 text-white shadow-lg">
-                        <span className="text-[13px] font-black tracking-tight">{item.price}</span>
+                      {/* Floating Apple Glass Price Chip */}
+                      <div className="flex items-baseline gap-1 px-2.5 py-0.5 rounded-lg backdrop-blur-xl bg-black/75 border border-white/20 text-white shadow-md">
+                        <span className="text-[12px] font-black tracking-tight">{item.price}</span>
                         {item.originalPrice && (
-                          <span className="text-[10px] text-white/60 line-through font-semibold">
+                          <span className="text-[9px] text-white/60 line-through font-semibold">
                             {item.originalPrice}
                           </span>
                         )}
@@ -151,16 +150,16 @@ export function CarouselSections() {
                   </div>
 
                   {/* Card Content Section */}
-                  <div className="p-4 flex-1 flex flex-col justify-between bg-[color:var(--color-surface-container)]">
+                  <div className="p-3 flex-1 flex flex-col justify-between bg-[color:var(--color-surface-container)]">
                     <div>
                       {/* Title */}
-                      <h3 className="font-extrabold text-[14px] leading-snug text-[color:var(--color-on-surface)] line-clamp-1 group-hover:text-[color:var(--color-primary)] transition-colors">
+                      <h3 className="font-extrabold text-[13px] leading-snug text-[color:var(--color-on-surface)] line-clamp-1 group-hover:text-[color:var(--color-primary)] transition-colors">
                         {item.title}
                       </h3>
 
                       {/* Location */}
-                      <div className="flex items-center gap-1.5 text-[11px] text-[color:var(--color-outline)] font-medium mt-1.5">
-                        <span className="material-symbols-outlined text-[13px] text-[color:var(--color-primary)] shrink-0">
+                      <div className="flex items-center gap-1 text-[10px] text-[color:var(--color-outline)] font-medium mt-1">
+                        <span className="material-symbols-outlined text-[12px] text-[color:var(--color-primary)] shrink-0">
                           location_on
                         </span>
                         <span className="truncate">{item.location}</span>
@@ -168,22 +167,22 @@ export function CarouselSections() {
                     </div>
 
                     {/* Bottom Metadata & Booking Action */}
-                    <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-[color:var(--color-outline-variant)]/25">
+                    <div className="flex items-center justify-between pt-2 mt-1.5 border-t border-[color:var(--color-outline-variant)]/20">
                       {/* Rating pill */}
-                      <div className="flex items-center gap-1.5 bg-amber-500/10 dark:bg-amber-500/15 px-2.5 py-1 rounded-full border border-amber-500/20">
-                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                        <span className="text-[11px] font-black text-amber-600 dark:text-amber-400">
+                      <div className="flex items-center gap-1 bg-amber-500/10 dark:bg-amber-500/15 px-2 py-0.5 rounded-full border border-amber-500/20">
+                        <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                        <span className="text-[10px] font-black text-amber-600 dark:text-amber-400">
                           {item.ratingScore}
                         </span>
-                        <span className="text-[10px] text-[color:var(--color-outline)] font-medium hidden sm:inline">
+                        <span className="text-[9px] text-[color:var(--color-outline)] font-medium hidden sm:inline">
                           ({item.usersCount})
                         </span>
                       </div>
 
                       {/* Book CTA pill */}
-                      <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-[color:var(--color-primary)]/10 text-[color:var(--color-primary)] group-hover:bg-[color:var(--color-primary)] group-hover:text-white transition-all duration-300 font-bold text-[11px] shadow-sm">
+                      <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[color:var(--color-primary)]/10 text-[color:var(--color-primary)] group-hover:bg-[color:var(--color-primary)] group-hover:text-white transition-all duration-300 font-bold text-[10px] shadow-xs">
                         <span>Book Slot</span>
-                        <span className="material-symbols-outlined text-[13px] group-hover:translate-x-0.5 transition-transform">
+                        <span className="material-symbols-outlined text-[12px] group-hover:translate-x-0.5 transition-transform">
                           arrow_forward
                         </span>
                       </div>
@@ -202,35 +201,33 @@ export function CarouselSections() {
         const sec = EXPLORE_SECTIONS.find(s => s.id === 'trending');
         if (!sec) return null;
         return (
-          <section className="mb-14 text-left relative">
-            {/* Top Header with Fire Icon and Quick Stats */}
-            <div className="flex items-end justify-between mb-6 pb-3 border-b border-[color:var(--color-outline-variant)]/20">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#ff6325] to-amber-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/25">
-                  <span className="material-symbols-outlined text-[20px]">local_fire_department</span>
+          <section className="mb-10 text-left relative">
+            {/* Top Header with Fire Icon and Quick Stats matching Recommended For You */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-orange-500/15 text-orange-500">
+                    <span className="material-symbols-outlined text-[16px]">local_fire_department</span>
+                  </span>
+                  <h2 className="text-[19px] sm:text-[20px] font-black text-[color:var(--color-on-surface)] tracking-tight">
+                    {sec.title}
+                  </h2>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-orange-500/15 text-orange-500 border border-orange-500/30">
+                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-ping" />
+                    Live Now
+                  </span>
                 </div>
-                <div>
-                  <div className="flex items-center gap-2.5">
-                    <h2 className="text-2xl font-black text-[color:var(--color-on-surface)] tracking-tight">
-                      {sec.title}
-                    </h2>
-                    <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-orange-500/15 text-orange-500 border border-orange-500/30">
-                      <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-ping" />
-                      Live Now
-                    </span>
-                  </div>
-                  <p className="text-[13px] text-[color:var(--color-outline)] font-medium mt-0.5">
-                    {sec.description} • Real-time bookings in your city
-                  </p>
-                </div>
+                <p className="text-[12px] mt-1 text-[color:var(--color-outline)] font-medium">
+                  {sec.description} • Real-time bookings in your city
+                </p>
               </div>
 
               <Link 
                 href={sec.href} 
-                className="group flex items-center gap-1.5 px-4 py-2 rounded-full text-[12px] font-bold text-[color:var(--color-primary)] hover:bg-[color:var(--color-primary)]/10 border border-[color:var(--color-primary)]/20 transition-all duration-300"
+                className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold text-[color:var(--color-primary)] hover:bg-[color:var(--color-primary)]/10 border border-[color:var(--color-primary)]/20 transition-all duration-300"
               >
                 <span>View All Trending</span>
-                <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                <span className="material-symbols-outlined text-[14px] group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
               </Link>
             </div>
 
@@ -262,12 +259,12 @@ export function CarouselSections() {
                     <Link
                       key={item.id}
                       href={item.link}
-                      className="w-[290px] sm:w-[310px] shrink-0 snap-start group flex flex-col"
+                      className="w-[245px] sm:w-[260px] shrink-0 snap-start group flex flex-col"
                     >
-                      <div className="relative bg-[#161c2b]/90 rounded-[28px] overflow-hidden border border-white/[0.08] hover:border-orange-500/50 shadow-[0_8px_25px_rgba(0,0,0,0.4)] hover:shadow-[0_20px_45px_rgba(249,115,22,0.18)] transition-all duration-500 flex flex-col h-[380px] hover:-translate-y-2">
+                      <div className="relative bg-[color:var(--color-surface)] dark:bg-[#161c2b]/95 rounded-[22px] overflow-hidden border border-[color:var(--color-outline-variant)]/25 dark:border-white/[0.08] hover:border-orange-500/50 shadow-[0_4px_16px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_14px_35px_rgba(249,115,22,0.15)] transition-all duration-400 flex flex-col h-[310px] hover:-translate-y-1">
                         
                         {/* Image Section */}
-                        <div className="relative h-[215px] w-full shrink-0 overflow-hidden bg-slate-900">
+                        <div className="relative h-[160px] w-full shrink-0 overflow-hidden bg-slate-900">
                           <img
                             src={item.image}
                             alt={item.title}
@@ -275,13 +272,13 @@ export function CarouselSections() {
                             onError={(e: any) => {
                               e.currentTarget.src = 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop&q=80';
                             }}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                            className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-[#161c2b] via-transparent to-black/35 pointer-events-none" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/35 pointer-events-none" />
                           
                           {/* Rank Ribbon Badge (#1, #2, #3) */}
-                          <div className="absolute top-3.5 left-3.5 z-10 flex items-center gap-2">
-                            <span className="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider backdrop-blur-md bg-gradient-to-r from-orange-500 to-rose-600 text-white shadow-lg shadow-orange-500/40 flex items-center gap-1.5">
+                          <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md bg-gradient-to-r from-orange-500 to-rose-600 text-white shadow-md shadow-orange-500/30 flex items-center gap-1">
                               <span>#{idx + 1} Trending</span>
                             </span>
                           </div>
@@ -290,53 +287,53 @@ export function CarouselSections() {
                           <WishlistButton item={item} />
 
                           {/* Image Footer: Category & Price Tag */}
-                          <div className="absolute bottom-3 inset-x-3.5 z-10 flex items-center justify-between gap-2 pointer-events-none">
+                          <div className="absolute bottom-2.5 inset-x-2.5 z-10 flex items-center justify-between gap-1.5 pointer-events-none">
                             {item.badge ? (
-                              <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider backdrop-blur-md shadow-md border border-white/20 flex items-center gap-1 ${item.badgeBg || 'bg-rose-500 text-white'}`}>
+                              <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider backdrop-blur-md shadow-sm border border-white/20 flex items-center gap-1 ${item.badgeBg || 'bg-rose-500 text-white'}`}>
                                 {item.badge}
                               </span>
                             ) : <span />}
 
-                            <div className="flex items-baseline gap-1 px-3 py-1 rounded-xl backdrop-blur-xl bg-slate-900/90 border border-orange-500/30 text-white shadow-xl">
-                              <span className="text-[14px] font-black tracking-tight text-orange-400">{item.price}</span>
+                            <div className="flex items-baseline gap-0.5 px-2.5 py-0.5 rounded-lg backdrop-blur-xl bg-slate-900/90 border border-orange-500/30 text-white shadow-md">
+                              <span className="text-[12px] font-black tracking-tight text-orange-400">{item.price}</span>
                             </div>
                           </div>
                         </div>
 
                         {/* Card Info Body */}
-                        <div className="p-4 flex-1 flex flex-col justify-between bg-[#161c2b]">
+                        <div className="p-3 flex-1 flex flex-col justify-between bg-[color:var(--color-surface)] dark:bg-[#161c2b]">
                           <div>
-                            <div className="flex items-start justify-between gap-2">
-                              <h3 className="font-black text-[15px] leading-snug text-white line-clamp-1 group-hover:text-orange-400 transition-colors">
+                            <div className="flex items-start justify-between gap-1.5">
+                              <h3 className="font-black text-[13px] leading-snug text-[color:var(--color-on-surface)] dark:text-white line-clamp-1 group-hover:text-orange-500 transition-colors">
                                 {item.title}
                               </h3>
                               <div className="flex text-amber-400 shrink-0">
                                 {[...Array(item.stars || 5)].map((_, i) => (
-                                  <Star key={i} className="w-3 h-3 fill-current" />
+                                  <Star key={i} className="w-2.5 h-2.5 fill-current" />
                                 ))}
                               </div>
                             </div>
 
-                            <p className="text-[12px] text-slate-400 mt-1.5 flex items-center gap-1.5 font-medium truncate">
-                              <span className="material-symbols-outlined text-[14px] text-orange-400 shrink-0">location_on</span>
+                            <p className="text-[11px] text-[color:var(--color-outline)] mt-1 flex items-center gap-1 font-medium truncate">
+                              <span className="material-symbols-outlined text-[13px] text-orange-500 shrink-0">location_on</span>
                               <span className="truncate">{item.location}</span>
                             </p>
                           </div>
 
-                          <div className="flex items-center justify-between pt-3 mt-2 border-t border-white/[0.06]">
-                            <div className="flex items-center gap-1.5 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
-                              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                              <span className="text-[11px] font-black text-amber-400">
+                          <div className="flex items-center justify-between pt-2 mt-1 border-t border-[color:var(--color-outline-variant)]/20 dark:border-white/[0.06]">
+                            <div className="flex items-center gap-1 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
+                              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                              <span className="text-[10px] font-black text-amber-600 dark:text-amber-400">
                                 {item.ratingScore}
                               </span>
-                              <span className="text-[10px] text-slate-400 font-medium">
+                              <span className="text-[9px] text-[color:var(--color-outline)] font-medium">
                                 ({item.usersCount})
                               </span>
                             </div>
 
-                            <div className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-orange-500 to-rose-600 text-white group-hover:brightness-110 transition-all font-extrabold text-[11px] shadow-md shadow-orange-500/25">
+                            <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-orange-500 to-rose-600 text-white group-hover:brightness-110 transition-all font-bold text-[10px] shadow-sm">
                               <span>Instant Book</span>
-                              <span className="material-symbols-outlined text-[13px] group-hover:translate-x-0.5 transition-transform">
+                              <span className="material-symbols-outlined text-[11px] group-hover:translate-x-0.5 transition-transform">
                                 bolt
                               </span>
                             </div>
@@ -356,36 +353,32 @@ export function CarouselSections() {
         const sec = EXPLORE_SECTIONS.find(s => s.id === 'events');
         if (!sec) return null;
         return (
-          <section className="mb-12 text-left">
-            {/* Outer Container with Dark Emerald Slate Mesh & Ticket Cutout Vibes */}
-            <div className="bg-gradient-to-br from-[#0c1a1a]/95 via-[#0d161a]/90 to-[#0a1217]/95 rounded-[36px] p-6 sm:p-8 shadow-[0_16px_50px_rgba(16,185,129,0.06)] border border-emerald-500/20 backdrop-blur-2xl relative overflow-hidden">
+          <section className="mb-10 text-left">
+            {/* Outer Container with Light/Dark Adaptive Mesh */}
+            <div className="bg-[color:var(--color-surface-container)] rounded-[28px] p-5 sm:p-6 shadow-[0_8px_30px_rgba(16,185,129,0.06)] border border-[color:var(--color-outline-variant)]/30 backdrop-blur-2xl relative overflow-hidden">
               {/* Ambient Emerald/Cyan Glow Core */}
               <div 
-                className="absolute -right-20 -top-20 w-96 h-96 rounded-full opacity-20 pointer-events-none blur-[100px]"
+                className="absolute -right-20 -top-20 w-96 h-96 rounded-full opacity-15 pointer-events-none blur-[100px]"
                 style={{ background: 'radial-gradient(circle, #10b981 0%, #06b6d4 60%, transparent 80%)' }}
               />
-              <div 
-                className="absolute -left-20 -bottom-20 w-80 h-80 rounded-full opacity-15 pointer-events-none blur-[90px]"
-                style={{ background: 'radial-gradient(circle, #14b8a6 0%, transparent 70%)' }}
-              />
 
-              {/* Section Header with Ticket Pass Styling */}
-              <div className="flex items-center justify-between mb-7 relative z-10">
-                <div className="flex items-center gap-3.5">
-                  <span className="flex items-center justify-center w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/30">
-                    <span className="material-symbols-outlined text-[22px]">confirmation_number</span>
+              {/* Section Header with Standardized Styling */}
+              <div className="flex items-center justify-between mb-5 relative z-10">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-500">
+                    <span className="material-symbols-outlined text-[16px]">confirmation_number</span>
                   </span>
                   <div>
-                    <div className="flex items-center gap-2.5">
-                      <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-[19px] sm:text-[20px] font-black text-[color:var(--color-on-surface)] tracking-tight">
                         {sec.title}
                       </h2>
-                      <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                        <span className="material-symbols-outlined text-[12px]">calendar_today</span>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                        <span className="material-symbols-outlined text-[11px]">calendar_today</span>
                         This Weekend
                       </span>
                     </div>
-                    <p className="text-[12px] mt-0.5 text-slate-400 font-medium">
+                    <p className="text-[12px] mt-0.5 text-[color:var(--color-outline)] font-medium">
                       {sec.description}
                     </p>
                   </div>
@@ -393,10 +386,10 @@ export function CarouselSections() {
 
                 <Link 
                   href={sec.href} 
-                  className="group flex items-center gap-2 px-4 py-2 rounded-full text-[12px] font-extrabold text-white bg-white/[0.06] hover:bg-emerald-500/20 border border-white/10 hover:border-emerald-500/40 transition-all duration-300"
+                  className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold text-[color:var(--color-primary)] hover:bg-[color:var(--color-primary)]/10 border border-[color:var(--color-primary)]/20 transition-all duration-300"
                 >
                   <span>All Events</span>
-                  <span className="material-symbols-outlined text-[15px] text-emerald-400 group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                  <span className="material-symbols-outlined text-[14px] text-[color:var(--color-primary)] group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
                 </Link>
               </div>
 
@@ -428,13 +421,13 @@ export function CarouselSections() {
                     <Link
                       key={item.id}
                       href={item.link}
-                      className="w-[310px] sm:w-[335px] shrink-0 snap-start group flex flex-col"
+                      className="w-[260px] sm:w-[280px] shrink-0 snap-start group flex flex-col"
                     >
                       {/* Ticket Card Architecture with Perforated Look & Pass Entry Pill */}
-                      <div className="relative bg-[#101c1c]/90 rounded-[28px] overflow-hidden border border-emerald-500/25 hover:border-emerald-400/60 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_20px_45px_rgba(16,185,129,0.18)] transition-all duration-500 flex flex-col h-[395px] hover:-translate-y-2">
+                      <div className="relative bg-[color:var(--color-surface)] dark:bg-[#101c1c]/90 rounded-[22px] overflow-hidden border border-emerald-500/25 hover:border-emerald-400/60 shadow-[0_4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_6px_25px_rgba(0,0,0,0.4)] hover:shadow-[0_16px_36px_rgba(16,185,129,0.15)] transition-all duration-400 flex flex-col h-[320px] hover:-translate-y-1">
                         
                         {/* Wide Image Header */}
-                        <div className="relative h-[200px] w-full shrink-0 overflow-hidden bg-slate-950">
+                        <div className="relative h-[155px] w-full shrink-0 overflow-hidden bg-slate-950">
                           <img
                             src={item.image}
                             alt={item.title}
@@ -442,14 +435,14 @@ export function CarouselSections() {
                             onError={(e: any) => {
                               e.currentTarget.src = 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop&q=80';
                             }}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out brightness-90"
+                            className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out brightness-95"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-[#101c1c] via-transparent to-black/40 pointer-events-none" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
                           <WishlistButton item={item} />
                           
                           {/* Event Category Tag */}
-                          <div className="absolute top-3.5 left-3.5 z-10 flex items-center gap-2">
-                            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest backdrop-blur-md bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 shadow-lg flex items-center gap-1.5">
+                          <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5">
+                            <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 shadow-sm flex items-center gap-1">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                               PASS ENTRY
                             </span>
@@ -457,54 +450,54 @@ export function CarouselSections() {
 
                           {/* Event Badge */}
                           {item.badge && (
-                            <div className="absolute bottom-3 left-3.5 z-10">
-                              <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider backdrop-blur-md shadow-md border border-white/20 flex items-center gap-1 ${item.badgeBg}`}>
+                            <div className="absolute bottom-2.5 left-2.5 z-10">
+                              <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider backdrop-blur-md shadow-sm border border-white/20 flex items-center gap-1 ${item.badgeBg}`}>
                                 {item.badge}
                               </span>
                             </div>
                           )}
 
                           {/* Ticket Price Chip */}
-                          <div className="absolute bottom-3 right-3.5 z-10 flex items-baseline gap-1 px-3 py-1 rounded-xl backdrop-blur-xl bg-slate-950/90 border border-emerald-500/40 text-emerald-300 shadow-xl">
-                            <span className="text-[10px] text-slate-400 font-bold">From</span>
-                            <span className="text-[14px] font-black tracking-tight">{item.price}</span>
+                          <div className="absolute bottom-2.5 right-2.5 z-10 flex items-baseline gap-0.5 px-2.5 py-0.5 rounded-lg backdrop-blur-xl bg-slate-950/90 border border-emerald-500/40 text-emerald-300 shadow-md">
+                            <span className="text-[9px] text-slate-400 font-bold">From</span>
+                            <span className="text-[12px] font-black tracking-tight">{item.price}</span>
                           </div>
                         </div>
 
                         {/* Ticket Perforation Dashed Line */}
-                        <div className="relative flex items-center justify-between px-3 py-1 bg-[#101c1c]">
-                          <div className="w-4 h-4 rounded-full bg-[#0c1a1a] -ml-5 border-r border-emerald-500/20" />
+                        <div className="relative flex items-center justify-between px-3 py-0.5 bg-[color:var(--color-surface)] dark:bg-[#101c1c]">
+                          <div className="w-3 h-3 rounded-full bg-[color:var(--color-surface-container)] -ml-4 border-r border-emerald-500/30" />
                           <div className="flex-1 border-b border-dashed border-emerald-500/30 mx-2" />
-                          <div className="w-4 h-4 rounded-full bg-[#0c1a1a] -mr-5 border-l border-emerald-500/20" />
+                          <div className="w-3 h-3 rounded-full bg-[color:var(--color-surface-container)] -mr-4 border-l border-emerald-500/30" />
                         </div>
 
                         {/* Ticket Lower Half Content */}
-                        <div className="p-4 flex-1 flex flex-col justify-between bg-[#101c1c]">
+                        <div className="p-3 flex-1 flex flex-col justify-between bg-[color:var(--color-surface)] dark:bg-[#101c1c]">
                           <div>
-                            <div className="flex items-start justify-between gap-2">
-                              <h3 className="font-black text-[15px] leading-snug text-white line-clamp-1 group-hover:text-emerald-400 transition-colors">
+                            <div className="flex items-start justify-between gap-1.5">
+                              <h3 className="font-black text-[13px] leading-snug text-[color:var(--color-on-surface)] line-clamp-1 group-hover:text-emerald-500 transition-colors">
                                 {item.title}
                               </h3>
-                              <span className="text-[11px] font-black px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
+                              <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
                                 ⭐ {item.ratingScore}
                               </span>
                             </div>
 
-                            <p className="text-[12px] text-slate-400 mt-1.5 flex items-center gap-1.5 font-medium truncate">
-                              <span className="material-symbols-outlined text-[14px] text-emerald-400 shrink-0">stadium</span>
+                            <p className="text-[11px] text-[color:var(--color-outline)] mt-1 flex items-center gap-1 font-medium truncate">
+                              <span className="material-symbols-outlined text-[13px] text-emerald-500 shrink-0">stadium</span>
                               <span className="truncate">{item.location}</span>
                             </p>
                           </div>
 
-                          <div className="flex items-center justify-between pt-3 mt-1">
-                            <div className="flex items-center gap-2 text-[11px] text-emerald-400/90 font-bold">
-                              <span className="material-symbols-outlined text-[15px]">qr_code_scanner</span>
-                              <span>Scan at Turnstile</span>
+                          <div className="flex items-center justify-between pt-2 mt-0.5">
+                            <div className="flex items-center gap-1.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                              <span className="material-symbols-outlined text-[13px]">qr_code_scanner</span>
+                              <span>Turnstile Pass</span>
                             </div>
 
-                            <div className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 group-hover:brightness-110 transition-all font-black text-[11px] shadow-lg shadow-emerald-500/25">
+                            <div className="flex items-center gap-1 px-3 py-1 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 group-hover:brightness-110 transition-all font-black text-[10px] shadow-sm">
                               <span>Get Pass</span>
-                              <span className="material-symbols-outlined text-[13px] group-hover:translate-x-0.5 transition-transform">
+                              <span className="material-symbols-outlined text-[12px] group-hover:translate-x-0.5 transition-transform">
                                 confirmation_number
                               </span>
                             </div>

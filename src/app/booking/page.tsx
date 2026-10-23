@@ -186,79 +186,115 @@ function TracksContent() {
     <main className="page-content px-4 md:px-8 lg:pr-8 min-h-screen">
       <div className="mx-auto max-w-5xl py-8 sm:py-12 space-y-10">
 
-        {/* ── Header ────────────────────────────────────────────── */}
-        <div>
-          <h1 className="text-3xl md:text-4xl font-black text-[color:var(--color-on-surface)] tracking-tight">
-            Track your bookings<br className="hidden sm:block" /> and live activity
+        {/* ── Apple Inspired Header ────────────────────────────────────────────── */}
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full backdrop-blur-xl bg-black/5 dark:bg-white/10 border border-black/5 dark:border-white/10 text-[10px] font-black uppercase tracking-widest text-[color:var(--color-primary)] shadow-2xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+            Live Activity Dashboard
+          </div>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-[color:var(--color-on-surface)] tracking-tight">
+            Track your bookings &amp; live activity
           </h1>
-          <p className="mt-2 text-[color:var(--color-on-surface-variant)] text-sm md:text-base max-w-xl">
-            Keep an eye on reservations, service progress, and important transit updates from one clean dashboard.
+          <p className="text-[color:var(--color-on-surface-variant)] text-sm md:text-base max-w-xl font-normal leading-relaxed">
+            Keep an eye on reservations, service progress, and real-time transit updates from one unified Apple-grade control center.
           </p>
         </div>
 
-        {/* ── 1. Real-Time Travel Tracker ───────────────────────── */}
+        {/* ── 1. Real-Time Travel Tracker (Apple Frosted Glass Canvas) ───────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-[color:var(--color-surface-container)]/60 backdrop-blur-xl border border-[color:var(--color-outline-variant)]/30 rounded-3xl p-6 shadow-sm"
+          className="rounded-[28px] p-6 sm:p-7 border border-black/5 dark:border-white/10 bg-white/75 dark:bg-[#121722]/80 backdrop-blur-2xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.4)] relative overflow-hidden"
         >
-          <div className="flex items-center gap-2 mb-4">
-            <Compass size={18} className="text-[color:var(--color-primary)]" />
-            <h2 className="font-extrabold text-[color:var(--color-on-surface)] text-base">Real-Time Travel Tracker</h2>
-          </div>
-          <p className="text-xs text-[color:var(--color-on-surface-variant)] mb-5">
-            Select a travel classification, input your PNR reference or ticket identifier, and hook into real-time satellite updates.
-          </p>
+          {/* Subtle ambient light glow */}
+          <div 
+            className="absolute -right-20 -top-20 w-72 h-72 rounded-full opacity-10 pointer-events-none blur-3xl"
+            style={{ background: 'radial-gradient(circle, var(--color-primary), #3b82f6)' }}
+          />
 
-          {/* Transport Mode Selector */}
-          <p className="text-[10px] font-black uppercase tracking-widest text-[color:var(--color-on-surface-variant)] mb-3">Transportation Mode</p>
-          <div className="flex gap-2 mb-5">
-            {TRANSPORT_MODES.map(({ id, icon: Icon, label }) => (
-              <button
-                key={id}
-                onClick={() => setSelectedMode(id)}
-                title={label}
-                className={`w-11 h-11 rounded-2xl flex items-center justify-center border transition-all duration-200 ${
-                  selectedMode === id
-                    ? 'bg-[color:var(--color-primary)] text-white border-[color:var(--color-primary)] scale-110 shadow-md'
-                    : 'bg-[color:var(--color-surface)] border-[color:var(--color-outline-variant)]/30 text-[color:var(--color-on-surface-variant)] hover:border-[color:var(--color-primary)]/40'
-                }`}
-              >
-                <Icon size={18} />
-              </button>
-            ))}
+          <div className="flex items-center justify-between mb-4 relative z-10">
+            <div className="flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-xl bg-[color:var(--color-primary)]/10 text-[color:var(--color-primary)] flex items-center justify-center border border-[color:var(--color-primary)]/20 shadow-xs">
+                <Compass size={17} className="animate-spin-slow" />
+              </span>
+              <div>
+                <h2 className="font-extrabold text-[color:var(--color-on-surface)] text-base tracking-tight">
+                  Real-Time Travel Tracker
+                </h2>
+                <p className="text-xs text-[color:var(--color-outline)] font-medium">
+                  Select a mode, enter your PNR or booking identifier, and hook into live radar feeds.
+                </p>
+              </div>
+            </div>
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              GPS Live
+            </span>
+          </div>
+
+          {/* Transport Mode Selector (Apple Segmented Style) */}
+          <div className="my-5 relative z-10">
+            <p className="text-[10px] font-black uppercase tracking-widest text-[color:var(--color-outline)] mb-2.5">
+              Transportation Mode
+            </p>
+            <div className="inline-flex p-1 rounded-2xl bg-slate-100/80 dark:bg-slate-900/60 border border-black/5 dark:border-white/10 gap-1.5 shadow-inner">
+              {TRANSPORT_MODES.map(({ id, icon: Icon, label }) => {
+                const isActive = selectedMode === id;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setSelectedMode(id)}
+                    title={label}
+                    className={`px-4 py-2 rounded-xl flex items-center gap-2 text-xs font-bold transition-all duration-300 cursor-pointer ${
+                      isActive
+                        ? 'bg-[color:var(--color-primary)] text-white shadow-md scale-102'
+                        : 'text-[color:var(--color-outline)] hover:text-[color:var(--color-on-surface)] hover:bg-white/60 dark:hover:bg-white/10'
+                    }`}
+                  >
+                    <Icon size={15} />
+                    <span>{label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* PNR Input + Find Button */}
-          <p className="text-[10px] font-black uppercase tracking-widest text-[color:var(--color-on-surface-variant)] mb-2">PNR / Ticket / Reference</p>
-          <div className="flex gap-3">
-            <input
-              type="text"
-              value={pnr}
-              onChange={e => setPnr(e.target.value)}
-              placeholder="e.g., Booking CAB-8291"
-              className="flex-1 px-4 py-3 rounded-2xl border border-[color:var(--color-outline-variant)]/40 bg-[color:var(--color-surface)] text-[color:var(--color-on-surface)] text-sm font-medium placeholder:text-[color:var(--color-on-surface-variant)]/50 focus:outline-none focus:ring-2 focus:ring-[color:var(--color-primary)]/30"
-            />
-            <button
-              onClick={() => pnr && router.push(`/booking/track?ref=${pnr}`)}
-              className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-[color:var(--color-primary)] text-white font-bold text-sm hover:opacity-90 active:scale-95 transition-all shadow-md"
-            >
-              <Navigation size={16} />
-              Find & Track
-            </button>
+          <div className="relative z-10">
+            <p className="text-[10px] font-black uppercase tracking-widest text-[color:var(--color-outline)] mb-2">
+              PNR / Ticket / Reference
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2.5">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  value={pnr}
+                  onChange={e => setPnr(e.target.value)}
+                  placeholder="e.g., Booking CAB-8291, PNR 847291"
+                  className="w-full px-4 py-3 rounded-2xl border border-black/10 dark:border-white/15 bg-white dark:bg-slate-900/90 text-[color:var(--color-on-surface)] text-sm font-medium placeholder:text-[color:var(--color-outline)]/60 focus:outline-none focus:ring-2 focus:ring-[color:var(--color-primary)]/40 shadow-xs transition-all"
+                />
+              </div>
+              <button
+                onClick={() => pnr && router.push(`/booking/track?ref=${pnr}`)}
+                className="flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-[color:var(--color-primary)] hover:brightness-110 active:scale-95 text-white font-extrabold text-sm transition-all shadow-md cursor-pointer"
+              >
+                <Navigation size={15} />
+                <span>Find &amp; Track</span>
+              </button>
+            </div>
           </div>
 
-          {/* Stats Row */}
-          <div className="grid grid-cols-3 gap-4 mt-6 pt-5 border-t border-[color:var(--color-outline-variant)]/20">
+          {/* Apple Stat Pods Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6 pt-5 border-t border-black/5 dark:border-white/10 relative z-10">
             {[
-              { label: 'Recent Bookings', value: `${mergedBookings.filter(b => b.status === 'PENDING').length} active items`, sub: 'Track ongoing and upcoming reservations' },
-              { label: 'Live Updates',    value: 'Realtime status',   sub: 'Monitor booking and service changes' },
-              { label: 'Saved Trails',    value: `${mergedBookings.filter(b => b.status === 'CONFIRMED').length} journeys`,        sub: 'Keep track of frequent destinations' },
+              { label: 'Active Reservations', value: `${mergedBookings.filter(b => b.status === 'PENDING' || b.status === 'CONFIRMED').length} active items`, sub: 'Real-time verified status' },
+              { label: 'Live Telemetry',    value: 'Satellite Sync Active', sub: 'Monitoring slot changes' },
+              { label: 'Completed Trails',  value: `${mergedBookings.filter(b => b.status === 'COMPLETED').length} journeys`, sub: 'Archived booking logs' },
             ].map(s => (
-              <div key={s.label} className="bg-[color:var(--color-surface)]/60 rounded-2xl p-4 border border-[color:var(--color-outline-variant)]/20">
-                <p className="text-[9px] font-black uppercase tracking-widest text-[color:var(--color-on-surface-variant)] mb-1">{s.label}</p>
-                <p className="font-black text-[color:var(--color-on-surface)] text-sm">{s.value}</p>
-                <p className="text-[10px] text-[color:var(--color-on-surface-variant)] mt-0.5">{s.sub}</p>
+              <div key={s.label} className="bg-white/60 dark:bg-white/[0.04] rounded-2xl p-3.5 border border-black/5 dark:border-white/10 shadow-2xs">
+                <p className="text-[9px] font-black uppercase tracking-widest text-[color:var(--color-outline)] mb-0.5">{s.label}</p>
+                <p className="font-extrabold text-[color:var(--color-on-surface)] text-sm">{s.value}</p>
+                <p className="text-[10px] text-[color:var(--color-outline)] mt-0.5 font-medium">{s.sub}</p>
               </div>
             ))}
           </div>
@@ -270,23 +306,23 @@ function TracksContent() {
             <h2 className="font-black text-xl text-[color:var(--color-on-surface)]">My Bookings</h2>
           </div>
 
-          {/* Filter Tabs */}
-          <div className="flex bg-[color:var(--color-surface-container)]/60 backdrop-blur-xl p-1.5 rounded-2xl border border-[color:var(--color-outline-variant)]/30 w-full overflow-x-auto no-scrollbar shadow-sm mb-5">
+          {/* Filter Tabs (Apple Segmented Bar) */}
+          <div className="flex bg-slate-100/80 dark:bg-slate-900/60 backdrop-blur-xl p-1 rounded-2xl border border-black/5 dark:border-white/10 w-full overflow-x-auto no-scrollbar shadow-inner mb-6">
             {FILTERS.map(f => (
               <button
                 key={f.id}
                 onClick={() => setActiveFilter(f.id as any)}
-                className={`relative px-5 py-2.5 text-sm font-bold rounded-xl whitespace-nowrap transition-all duration-300 flex-1 ${
+                className={`relative px-5 py-2 text-xs font-bold rounded-xl whitespace-nowrap transition-all duration-300 flex-1 cursor-pointer ${
                   activeFilter === f.id
                     ? 'text-white'
-                    : 'text-[color:var(--color-on-surface-variant)] hover:text-[color:var(--color-on-surface)]'
+                    : 'text-[color:var(--color-outline)] hover:text-[color:var(--color-on-surface)]'
                 }`}
               >
                 {activeFilter === f.id && (
                   <motion.div
                     layoutId="filter-pill"
-                    className="absolute inset-0 bg-[color:var(--color-primary)] rounded-xl shadow-lg"
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    className="absolute inset-0 bg-[color:var(--color-primary)] rounded-xl shadow-md"
+                    transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                   />
                 )}
                 <span className="relative z-10">{f.label}</span>
@@ -295,14 +331,14 @@ function TracksContent() {
           </div>
 
           {filteredBookings.length === 0 ? (
-            <div className="bg-[color:var(--color-surface-container)]/60 border border-[color:var(--color-outline-variant)]/20 rounded-3xl p-10 text-center">
-              <Calendar size={36} className="mx-auto mb-3 text-[color:var(--color-on-surface-variant)]/40" />
-              <p className="font-bold text-[color:var(--color-on-surface)]">
-                {activeFilter === 'ALL' ? 'No bookings yet' : `No ${activeFilter.toLowerCase()} bookings`}
+            <div className="bg-white/70 dark:bg-[color:var(--color-surface-container)]/70 backdrop-blur-xl border border-black/5 dark:border-white/10 rounded-[28px] p-12 text-center shadow-xs">
+              <Calendar size={36} className="mx-auto mb-3 text-[color:var(--color-outline)]/40" />
+              <p className="font-extrabold text-[color:var(--color-on-surface)]">
+                {activeFilter === 'ALL' ? 'No active bookings found' : `No ${activeFilter.toLowerCase()} reservations`}
               </p>
-              <p className="text-xs text-[color:var(--color-on-surface-variant)] mt-1">Your upcoming reservations will appear here.</p>
+              <p className="text-xs text-[color:var(--color-outline)] mt-1 font-medium">Your upcoming reservations and passes will appear here.</p>
               {activeFilter === 'ALL' && (
-                <Link href="/categories" className="inline-block mt-4 px-5 py-2.5 bg-[color:var(--color-primary)] text-white rounded-2xl text-sm font-bold hover:opacity-90 transition-opacity">
+                <Link href="/categories" className="inline-block mt-4 px-5 py-2.5 bg-[color:var(--color-primary)] text-white rounded-2xl text-xs font-bold hover:brightness-110 active:scale-95 transition-all shadow-md">
                   Browse Services
                 </Link>
               )}
@@ -334,7 +370,7 @@ function TracksContent() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ delay: i * 0.05 }}
-                      className="bg-[color:var(--color-surface-container)]/60 backdrop-blur-xl border border-[color:var(--color-outline-variant)]/30 rounded-3xl p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group"
+                      className="bg-white/75 dark:bg-[#121722]/80 backdrop-blur-2xl border border-black/5 dark:border-white/10 rounded-[24px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.3)] hover:shadow-xl hover:-translate-y-1 transition-all group"
                     >
                       {/* Status + Ref */}
                       <div className="flex items-center justify-between mb-3">
@@ -504,14 +540,16 @@ function TracksContent() {
           )}
         </div>
 
-        {/* ── 3. Connected Services & Add-ons ──────────────────── */}
+        {/* ── 3. Connected Services & Add-ons (Apple Carousel Grid) ──────────────────── */}
         <div>
           <div className="mb-5">
-            <span className="text-[10px] font-black uppercase tracking-widest text-[color:var(--color-primary)] border border-[color:var(--color-primary)]/30 bg-[color:var(--color-primary)]/5 px-3 py-1 rounded-full">
+            <span className="text-[10px] font-black uppercase tracking-widest text-[color:var(--color-primary)] border border-[color:var(--color-primary)]/20 bg-[color:var(--color-primary)]/10 px-3 py-1 rounded-full shadow-2xs">
               Transit Essentials
             </span>
-            <h2 className="font-black text-2xl text-[color:var(--color-on-surface)] mt-3">Connected Services &amp; Add-ons</h2>
-            <p className="text-sm text-[color:var(--color-on-surface-variant)] mt-1 max-w-xl">
+            <h2 className="font-extrabold text-2xl text-[color:var(--color-on-surface)] mt-3 tracking-tight">
+              Connected Services &amp; Add-ons
+            </h2>
+            <p className="text-sm text-[color:var(--color-outline)] mt-1 max-w-xl font-normal leading-relaxed">
               Maximize comfort and security on your journey. Complete your itinerary with pre-booked transfers, accommodations, lounge passes, or protection plans.
             </p>
           </div>
@@ -525,21 +563,24 @@ function TracksContent() {
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.07 }}
-                  className="bg-[color:var(--color-surface-container)]/60 backdrop-blur-xl border border-[color:var(--color-outline-variant)]/20 rounded-3xl p-5 flex flex-col gap-3 hover:shadow-lg hover:-translate-y-1 transition-all group"
+                  className="bg-white/70 dark:bg-[#121722]/80 backdrop-blur-2xl border border-black/5 dark:border-white/10 rounded-[24px] p-5 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.3)] hover:shadow-xl hover:-translate-y-1 transition-all group"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className={`w-10 h-10 rounded-2xl bg-gradient-to-br ${addon.color} flex items-center justify-center shadow-sm`}>
-                      <Icon size={18} className="text-white" />
+                  <div>
+                    <div className="flex items-start justify-between mb-3.5">
+                      <div className={`w-10 h-10 rounded-2xl bg-gradient-to-br ${addon.color} flex items-center justify-center shadow-md`}>
+                        <Icon size={18} className="text-white" />
+                      </div>
+                      <span className="text-[10px] font-black uppercase text-[color:var(--color-outline)] tracking-wider">
+                        Quick Add
+                      </span>
                     </div>
-                    <span className="text-[9px] font-black uppercase text-[color:var(--color-on-surface-variant)] tracking-wider opacity-50">⊕</span>
-                  </div>
-                  <div className="flex-1">
                     <h3 className="font-extrabold text-[color:var(--color-on-surface)] text-sm">{addon.title}</h3>
-                    <p className="text-[11px] text-[color:var(--color-on-surface-variant)] mt-1 leading-relaxed">{addon.desc}</p>
+                    <p className="text-[11px] text-[color:var(--color-outline)] mt-1 leading-relaxed font-medium">{addon.desc}</p>
                   </div>
-                  <div className="flex items-center justify-between mt-1">
-                    <span className="text-xs font-black text-[color:var(--color-on-surface-variant)]">Starts at <span className="text-[color:var(--color-on-surface)]">{addon.price}</span></span>
-                    <button className="px-3 py-1.5 bg-[color:var(--color-primary)] text-white rounded-xl text-[10px] font-black tracking-wide hover:opacity-90 active:scale-95 transition-all">
+
+                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-black/5 dark:border-white/10">
+                    <span className="text-xs font-black text-[color:var(--color-outline)]">From <span className="text-[color:var(--color-on-surface)] font-extrabold">{addon.price}</span></span>
+                    <button className="px-3.5 py-1.5 bg-[color:var(--color-primary)] hover:brightness-110 active:scale-95 text-white rounded-xl text-[10px] font-extrabold tracking-wide transition-all shadow-xs cursor-pointer">
                       {addon.cta}
                     </button>
                   </div>

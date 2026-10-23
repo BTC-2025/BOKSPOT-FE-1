@@ -83,6 +83,17 @@ export const AVAILABLE_SHORTCUTS: Shortcut[] = [
   { id: 'event-organizer', label: 'Event Organizer Booking', icon: 'cake', actionType: 'link', actionTarget: '/personal-misc/event-organizer' },
 ];
 
+export const DEFAULT_8_SHORTCUTS = [
+  'buses',
+  'trains',
+  'flights',
+  'hotels',
+  'movies',
+  'football-turf',
+  'dining',
+  'cabs',
+];
+
 export const SUBNAV_CATEGORIES = [
   { id: 'travel-transport', label: 'Travel & Transport', emoji: '✈️', href: '/travel-transport' },
   { id: 'stay-accommodation', label: 'Stay & Accommodation', emoji: '🏨', href: '/stay-accommodation' },
@@ -115,7 +126,7 @@ interface ShortcutState {
 export const useShortcutStore = create<ShortcutState>()(
   persist(
     (set, get) => ({
-      activeShortcuts: ['flights', 'hotels', 'buses'], // Default starting shortcuts
+      activeShortcuts: DEFAULT_8_SHORTCUTS, // 8 Default shortcuts out-of-the-box
       shortcutModalOpen: false,
       activeActionModal: null,
       
@@ -127,7 +138,7 @@ export const useShortcutStore = create<ShortcutState>()(
         if (isActive) {
           return { activeShortcuts: state.activeShortcuts.filter(s => s !== id) };
         } else {
-          if (state.activeShortcuts.length >= 6) {
+          if (state.activeShortcuts.length >= 8) {
             return {};
           }
           return { activeShortcuts: [...state.activeShortcuts, id] };

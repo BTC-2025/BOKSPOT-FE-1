@@ -14,8 +14,8 @@ export function SubnavManagerModal() {
   if (!mounted || !subnavModalOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSubnavModalOpen(false)}></div>
+    <div className="fixed inset-0 z-[10005] flex items-center justify-center p-4 pt-16 sm:pt-20">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={() => setSubnavModalOpen(false)}></div>
       
       <div className="relative w-full max-w-lg bg-[color:var(--color-surface-container)] rounded-2xl shadow-2xl border border-[color:var(--color-outline)]/10 overflow-hidden flex flex-col max-h-[85vh]">
         <div className="p-6 border-b border-[color:var(--color-outline)]/10 flex justify-between items-center">

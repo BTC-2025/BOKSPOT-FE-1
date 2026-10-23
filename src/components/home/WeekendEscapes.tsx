@@ -184,12 +184,12 @@ export function WeekendEscapes() {
               <Link
                 key={item.id}
                 href={item.link}
-                className="w-[295px] sm:w-[320px] shrink-0 snap-start group flex flex-col"
+                className="w-[250px] sm:w-[270px] shrink-0 snap-start group flex flex-col"
               >
-                <div className="relative bg-[color:var(--color-surface-container-high)]/60 rounded-[24px] overflow-hidden border border-[color:var(--color-outline-variant)]/30 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_16px_36px_rgba(0,0,0,0.12)] hover:border-[color:var(--color-primary)]/40 transition-all duration-500 flex flex-col h-[380px] hover:-translate-y-1.5">
+                <div className="relative bg-[color:var(--color-surface-container-high)]/60 rounded-[20px] overflow-hidden border border-[color:var(--color-outline-variant)]/25 shadow-[0_4px_16px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_28px_rgba(0,0,0,0.1)] hover:border-[color:var(--color-primary)]/40 transition-all duration-400 flex flex-col h-[310px] hover:-translate-y-1">
                   
                   {/* Image Section */}
-                  <div className="relative h-[200px] w-full shrink-0 overflow-hidden bg-slate-800">
+                  <div className="relative h-[155px] w-full shrink-0 overflow-hidden bg-slate-800">
                     <img
                       src={item.image}
                       alt={item.title}
@@ -198,14 +198,14 @@ export function WeekendEscapes() {
                         e.currentTarget.src =
                           'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80';
                       }}
-                      className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
+                      className="w-full h-full object-cover group-hover:scale-106 transition-transform duration-500 ease-out"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/25 pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-black/20 pointer-events-none" />
 
                     {/* Category Pill Top Left */}
-                    <div className="absolute top-3 left-3 z-10">
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md bg-black/60 text-white/95 border border-white/20 shadow-sm flex items-center gap-1">
-                        <Sparkles className="w-3 h-3 text-amber-300" />
+                    <div className="absolute top-2.5 left-2.5 z-10">
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider backdrop-blur-md bg-black/60 text-white/95 border border-white/20 shadow-sm flex items-center gap-1">
+                        <Sparkles className="w-2.5 h-2.5 text-amber-300" />
                         <span>{item.category}</span>
                       </span>
                     </div>
@@ -214,21 +214,21 @@ export function WeekendEscapes() {
                     <WishlistButton item={item} />
 
                     {/* Drive Distance Pill Bottom Left */}
-                    <div className="absolute bottom-3 left-3 z-10 flex items-center gap-1.5">
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold backdrop-blur-md bg-black/75 text-white/90 border border-white/20 flex items-center gap-1 shadow-md">
-                        <Car className="w-3 h-3 text-sky-300" />
+                    <div className="absolute bottom-2.5 left-2.5 z-10 flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold backdrop-blur-md bg-black/75 text-white/90 border border-white/20 flex items-center gap-1 shadow-sm">
+                        <Car className="w-2.5 h-2.5 text-sky-300" />
                         <span>{item.driveTime}</span>
                       </span>
-                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider backdrop-blur-md shadow-md border border-white/20 ${item.tagColor}`}>
+                      <span className={`px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider backdrop-blur-md shadow-sm border border-white/20 ${item.tagColor}`}>
                         {item.tag}
                       </span>
                     </div>
 
                     {/* Price Tag Bottom Right */}
-                    <div className="absolute bottom-3 right-3 z-10 flex items-baseline gap-1.5 px-3 py-1 rounded-xl backdrop-blur-md bg-black/80 border border-white/25 text-white shadow-lg">
-                      <span className="text-[13px] font-black tracking-tight">{item.price}</span>
+                    <div className="absolute bottom-2.5 right-2.5 z-10 flex items-baseline gap-1 px-2.5 py-0.5 rounded-lg backdrop-blur-md bg-black/80 border border-white/20 text-white shadow-md">
+                      <span className="text-[12px] font-black tracking-tight">{item.price}</span>
                       {item.originalPrice && (
-                        <span className="text-[10px] text-white/60 line-through font-semibold">
+                        <span className="text-[9px] text-white/60 line-through font-semibold">
                           {item.originalPrice}
                         </span>
                       )}
@@ -236,41 +236,41 @@ export function WeekendEscapes() {
                   </div>
 
                   {/* Card Content Section */}
-                  <div className="p-4 flex-1 flex flex-col justify-between bg-[color:var(--color-surface-container)]">
+                  <div className="p-3 flex-1 flex flex-col justify-between bg-[color:var(--color-surface-container)]">
                     <div>
                       {/* Title */}
-                      <h3 className="font-extrabold text-[14px] leading-snug text-[color:var(--color-on-surface)] line-clamp-1 group-hover:text-[color:var(--color-primary)] transition-colors">
+                      <h3 className="font-extrabold text-[13px] leading-snug text-[color:var(--color-on-surface)] line-clamp-1 group-hover:text-[color:var(--color-primary)] transition-colors">
                         {item.title}
                       </h3>
 
                       {/* Location & Distance */}
-                      <div className="flex items-center gap-1 text-[11px] text-[color:var(--color-outline)] font-medium mt-1">
-                        <MapPin className="w-3.5 h-3.5 text-[color:var(--color-primary)] shrink-0" />
+                      <div className="flex items-center gap-1 text-[10px] text-[color:var(--color-outline)] font-medium mt-1">
+                        <MapPin className="w-3 h-3 text-[color:var(--color-primary)] shrink-0" />
                         <span className="truncate">{item.destination}</span>
-                        <span className="text-[10px] text-[color:var(--color-outline)]/70">({item.distance})</span>
+                        <span className="text-[9px] text-[color:var(--color-outline)]/70">({item.distance})</span>
                       </div>
 
                       {/* Highlights */}
-                      <p className="text-[10px] text-[color:var(--color-outline)] font-medium mt-2 line-clamp-1 border-t border-[color:var(--color-outline-variant)]/15 pt-2">
+                      <p className="text-[9px] text-[color:var(--color-outline)] font-medium mt-1.5 line-clamp-1 border-t border-[color:var(--color-outline-variant)]/15 pt-1">
                         {item.highlights}
                       </p>
                     </div>
 
                     {/* Bottom Rating & CTA */}
-                    <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-[color:var(--color-outline-variant)]/25">
-                      <div className="flex items-center gap-1.5 bg-amber-500/10 dark:bg-amber-500/15 px-2.5 py-0.5 rounded-full border border-amber-500/20">
-                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                        <span className="text-[11px] font-black text-amber-600 dark:text-amber-400">
+                    <div className="flex items-center justify-between pt-2 mt-1 border-t border-[color:var(--color-outline-variant)]/20">
+                      <div className="flex items-center gap-1 bg-amber-500/10 dark:bg-amber-500/15 px-2 py-0.5 rounded-full border border-amber-500/20">
+                        <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                        <span className="text-[10px] font-black text-amber-600 dark:text-amber-400">
                           {item.rating}
                         </span>
-                        <span className="text-[10px] text-[color:var(--color-outline)] font-medium hidden sm:inline">
+                        <span className="text-[9px] text-[color:var(--color-outline)] font-medium hidden sm:inline">
                           ({item.reviews})
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-[color:var(--color-primary)]/10 text-[color:var(--color-primary)] group-hover:bg-[color:var(--color-primary)] group-hover:text-white transition-all duration-300 font-bold text-[11px] shadow-sm">
+                      <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[color:var(--color-primary)]/10 text-[color:var(--color-primary)] group-hover:bg-[color:var(--color-primary)] group-hover:text-white transition-all duration-300 font-bold text-[10px] shadow-xs">
                         <span>Book Stay</span>
-                        <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                        <ArrowRight className="w-2.5 h-2.5 group-hover:translate-x-0.5 transition-transform" />
                       </div>
                     </div>
 
