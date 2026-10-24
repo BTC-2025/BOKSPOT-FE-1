@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
-import { Search, Heart, ShoppingBag, Sparkles, MapPin, Map, X, User, Sun, Moon, Laptop } from 'lucide-react';
+import { Search, Heart, ShoppingBag, Sparkles, MapPin, Map, X, User, Sun, Moon, Laptop, Headset, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLocationStore, useUIStore, useUserStore, useCartStore, useWishlistStore, useBookingFlowStore } from '../lib/store';
 import { LiveClock } from './LiveClock';
@@ -100,6 +100,52 @@ export function TopNav({
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+
+  // Scroll behavior:
+  // - Downward scroll: hide all headers
+  // - Upward scroll: main header appears first
+  // - Top of page (scroll <= 60px): both main and secondary header appear
+  const [isMainHeaderVisible, setIsMainHeaderVisible] = useState(true);
+  const [isSecondaryHeaderVisible, setIsSecondaryHeaderVisible] = useState(true);
+  const lastScrollYRef = useRef(0);
+
+  useEffect(() => {
+    let ticking = false;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          if (currentScrollY <= 40) {
+            // At the top of page: both main and secondary headers are visible
+            setIsMainHeaderVisible(true);
+            setIsSecondaryHeaderVisible(true);
+          } else {
+            const scrollDelta = currentScrollY - lastScrollYRef.current;
+            if (scrollDelta > 10) {
+              // Scrolling DOWN: hide both headers
+              setIsMainHeaderVisible(false);
+              setIsSecondaryHeaderVisible(false);
+            } else if (scrollDelta < -8) {
+              // Scrolling UP: reveal ONLY main header while scrolling, secondary remains hidden until reaching top
+              setIsMainHeaderVisible(true);
+              setIsSecondaryHeaderVisible(false);
+            }
+          }
+
+          lastScrollYRef.current = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -304,7 +350,12 @@ export function TopNav({
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 custom-navbar transition-all duration-300" style={{ zIndex: 9999 }}>
+      <header 
+        className={`fixed top-0 left-0 right-0 custom-navbar transition-transform duration-300 ease-in-out ${
+          isMainHeaderVisible ? 'translate-y-0' : '-translate-y-full'
+        }`} 
+        style={{ zIndex: 9999 }}
+      >
         <div className="flex justify-between items-center w-full pl-6 lg:pl-12 pr-0 py-1.5 lg:py-2 max-w-full">
           {/* Left Column: Logo & Brand + Location Selector (Desktop) */}
           <div className="flex-1 flex justify-start items-center gap-6">
@@ -331,7 +382,7 @@ export function TopNav({
 
           </div>
 
-          {/* Center Column: Floating Luxury Segmented Dock (Instant Apple Fluid Switch) */}
+          {/* Center Column: Floating Segmented Dock (Instant Fluid Switch) */}
           <div className="hidden lg:flex flex-none justify-center">
             <nav className="custom-nav-capsule shadow-lg relative flex items-center p-1">
               {(() => {
@@ -368,7 +419,7 @@ export function TopNav({
                         >
                           {isActive && (
                             <motion.div
-                              layoutId="apple-nav-active-pill"
+                              layoutId="fluid-nav-active-pill"
                               className="absolute inset-0 rounded-full custom-nav-active-bg -z-10"
                               style={{ willChange: 'transform' }}
                               transition={{
@@ -579,30 +630,14 @@ export function TopNav({
                       </p>
 
                       {/* Manage your account Button */}
-                      <div className="flex items-center gap-2 mt-3.5 w-full">
+                      <div className="flex items-center mt-3.5 w-full">
                         <Link
                           href="/profile"
                           onClick={() => setProfileOpen(false)}
-                          className="flex-1 py-2 px-3 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-[12px] font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-98 cursor-pointer"
+                          className="w-full py-2 px-4 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-[12px] font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-98 cursor-pointer"
                         >
                           <span className="material-symbols-outlined text-[15px] text-slate-600 dark:text-slate-300">manage_accounts</span>
-                          <span>Account</span>
-                        </Link>
-                        <Link
-                          href="/support"
-                          onClick={() => setProfileOpen(false)}
-                          className="p-2 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center transition-all shadow-xs active:scale-95 cursor-pointer"
-                          title="Support Concierge"
-                        >
-                          <span className="material-symbols-outlined text-[16px] text-[#ff6325]">support_agent</span>
-                        </Link>
-                        <Link
-                          href="/profile#profile-settings"
-                          onClick={() => setProfileOpen(false)}
-                          className="p-2 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center transition-all shadow-xs active:scale-95 cursor-pointer"
-                          title="Settings"
-                        >
-                          <span className="material-symbols-outlined text-[16px] text-slate-600 dark:text-slate-300">settings</span>
+                          <span>Manage Account</span>
                         </Link>
                       </div>
                     </div>
@@ -734,6 +769,73 @@ export function TopNav({
             >
               <img src="/utility-icon.png?v=3" alt="Utilities" className="w-[22px] h-[22px] object-contain" />
             </button>
+          </div>
+        </div>
+
+        {/* Secondary Subnav Bar (Appears when at the very top of page; hidden during middle scrolling) */}
+        <div 
+          className={`w-full overflow-hidden transition-all duration-300 ease-in-out ${
+            isSecondaryHeaderVisible 
+              ? 'max-h-14 opacity-100' 
+              : 'max-h-0 opacity-0 pointer-events-none'
+          }`}
+        >
+          <div className="w-full secondary-subnav-bar px-4 lg:px-8 py-1.5 flex items-center justify-between text-xs select-none">
+            {/* Left Side: High-intent booking shortcuts */}
+            <div className="flex items-center gap-1.5 md:gap-2.5 overflow-x-auto custom-scrollbar scrollbar-none py-0.5">
+              <Link
+                href="/#today-slots"
+                className="subnav-pill flex items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-semibold whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                <span className="text-amber-400">⚡</span>
+                <span>Today's Slots</span>
+              </Link>
+
+              <Link
+                href="/#weekend-deals"
+                className="subnav-pill flex items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-semibold whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                <span className="text-rose-400">🔥</span>
+                <span>Weekend Deals</span>
+              </Link>
+
+              <Link
+                href="/#near-me"
+                className="subnav-pill flex items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-semibold whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                <span className="text-emerald-400">📍</span>
+                <span>Near Me</span>
+              </Link>
+
+              <Link
+                href="/#top-rated"
+                className="hidden md:flex subnav-pill items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-semibold whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                <span className="text-yellow-400">⭐</span>
+                <span>Top Rated</span>
+              </Link>
+            </div>
+
+            {/* Right Side: Support and Settings (As requested by user) */}
+            <div className="flex items-center gap-2 sm:gap-3 pl-3 shrink-0">
+              <Link
+                href="/support"
+                className="subnav-pill flex items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-semibold shrink-0"
+                title="Customer Support & Help Desk"
+              >
+                <Headset className="w-3.5 h-3.5 text-white/90 shrink-0" />
+                <span>Support</span>
+              </Link>
+
+              <Link
+                href="/profile#profile-settings"
+                className="subnav-pill flex items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-semibold shrink-0"
+                title="App Settings & Preferences"
+              >
+                <Settings className="w-3.5 h-3.5 text-white/90 shrink-0" />
+                <span>Settings</span>
+              </Link>
+            </div>
           </div>
         </div>
       </header>

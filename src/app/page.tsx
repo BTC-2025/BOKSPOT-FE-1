@@ -17,8 +17,8 @@ import { ConciergeJourneys } from '../components/home/ConciergeJourneys';
 import { WeekendEscapes } from '../components/home/WeekendEscapes';
 import { VerifiedPartners } from '../components/home/VerifiedPartners';
 import { NearbyRadar } from '../components/home/NearbyRadar';
-import { ShortcutsDock } from '../components/home/ShortcutsDock';
 import { AdBanner } from '../components/home/AdBanner';
+import { HorizontalQuickShortcuts } from '../components/home/HorizontalQuickShortcuts';
 import { MegaMenuSubnav } from '../components/home/MegaMenuSubnav';
 import { CategoryCard, SectionHeader, StatCard, WishlistButton, CartAddButton } from '../components/home/HomeShared';
 import { CITY_COORDINATES, EXPLORE_SECTIONS, RECOMMENDED_ITEMS, CONCIERGE_JOURNEYS_POOL, MOCK_ADS, MOCK_ACTIVITIES, getCombinedConciergePool } from '../lib/homeData';
@@ -141,8 +141,9 @@ export default function HomePage() {
 
       <main className="page-content px-4 md:px-8 lg:pr-8">
         <div className="mx-auto w-full space-y-4">
-          {/* Row 1: Ad Banner with Integrated Shortcuts Panel */}
+          {/* Row 1: Ad Banner with Smart Slot Finder */}
           <motion.div
+            id="today-slots"
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
@@ -150,8 +151,18 @@ export default function HomePage() {
             <AdBanner />
           </motion.div>
 
+          {/* Row 1.5: Quick Access Shortcuts (Horizontal Row below banner) */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <HorizontalQuickShortcuts />
+          </motion.div>
+
           {/* Row 2: Carousel Sections (Recommended & Trending) */}
           <motion.div
+            id="top-rated"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-40px" }}
@@ -173,6 +184,7 @@ export default function HomePage() {
 
           {/* Row 4: Weekend Getaways & Escapes */}
           <motion.div
+            id="weekend-deals"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-40px" }}
@@ -193,6 +205,7 @@ export default function HomePage() {
 
           {/* Row 6: Live Radar Map */}
           <motion.div
+            id="near-me"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-40px" }}

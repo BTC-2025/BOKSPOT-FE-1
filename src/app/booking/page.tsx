@@ -21,10 +21,10 @@ const TRANSPORT_MODES = [
 
 const STATUS_STYLE: Record<string, { badge: string; dot: string; label: string }> = {
   SPLIT_PENDING: { badge: 'bg-indigo-50 text-indigo-700 border border-indigo-200', dot: 'bg-indigo-500 animate-pulse', label: 'Split In Progress' },
-  PENDING:   { badge: 'bg-amber-50 text-amber-700 border border-amber-200',   dot: 'bg-amber-400 animate-pulse', label: 'Pending' },
+  PENDING: { badge: 'bg-amber-50 text-amber-700 border border-amber-200', dot: 'bg-amber-400 animate-pulse', label: 'Pending' },
   CONFIRMED: { badge: 'bg-emerald-50 text-emerald-700 border border-emerald-200', dot: 'bg-emerald-500 animate-pulse', label: 'Confirmed' },
-  CANCELLED: { badge: 'bg-red-50 text-red-600 border border-red-200',         dot: 'bg-red-400',             label: 'Cancelled' },
-  COMPLETED: { badge: 'bg-blue-50 text-blue-700 border border-blue-200',      dot: 'bg-blue-500',            label: 'Completed' },
+  CANCELLED: { badge: 'bg-red-50 text-red-600 border border-red-200', dot: 'bg-red-400', label: 'Cancelled' },
+  COMPLETED: { badge: 'bg-blue-50 text-blue-700 border border-blue-200', dot: 'bg-blue-500', label: 'Completed' },
 };
 
 const ADD_ONS = [
@@ -98,8 +98,8 @@ function TracksContent() {
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED'>('ALL');
 
   const FILTERS = [
-    { id: 'ALL',       label: 'All Bookings' },
-    { id: 'ACTIVE',    label: 'Active' },
+    { id: 'ALL', label: 'All Bookings' },
+    { id: 'ACTIVE', label: 'Active' },
     { id: 'COMPLETED', label: 'Completed' },
     { id: 'CANCELLED', label: 'Cancelled' },
   ];
@@ -121,8 +121,8 @@ function TracksContent() {
           setRemoteBookings(all);
           const map: Record<string, string> = {};
           const metaMap: Record<string, { keycardIssued?: boolean; roomNumber?: string }> = {};
-          all.forEach((b: any) => { 
-            map[b.ref] = b.status; 
+          all.forEach((b: any) => {
+            map[b.ref] = b.status;
             if (b.keycardIssued || b.roomNumber) {
               metaMap[b.ref] = { keycardIssued: b.keycardIssued, roomNumber: b.roomNumber };
             }
@@ -130,7 +130,7 @@ function TracksContent() {
           setLiveStatuses(map);
           setRemoteMetadata(metaMap);
         }
-      } catch {}
+      } catch { }
     };
     poll();
     const id = setInterval(poll, 3000);
@@ -178,15 +178,15 @@ function TracksContent() {
           body: JSON.stringify({ ...booking, status: 'CANCELLED' }),
         });
         setLiveStatuses(prev => ({ ...prev, [booking.ref]: 'CANCELLED' }));
-      } catch {}
+      } catch { }
     }
   };
 
   return (
     <main className="page-content px-4 md:px-8 lg:pr-8 min-h-screen">
-      <div className="mx-auto max-w-5xl py-8 sm:py-12 space-y-10">
+      <div className="mx-auto max-w-5xl pt-3 pb-12 sm:pt-4 sm:pb-12 space-y-8">
 
-        {/* ── Apple Inspired Header ────────────────────────────────────────────── */}
+        {/* ── Executive Inspired Header ────────────────────────────────────────────── */}
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full backdrop-blur-xl bg-black/5 dark:bg-white/10 border border-black/5 dark:border-white/10 text-[10px] font-black uppercase tracking-widest text-[color:var(--color-primary)] shadow-2xs">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
@@ -207,7 +207,7 @@ function TracksContent() {
           className="rounded-[28px] p-6 sm:p-7 border border-black/5 dark:border-white/10 bg-white/75 dark:bg-[#121722]/80 backdrop-blur-2xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.4)] relative overflow-hidden"
         >
           {/* Subtle ambient light glow */}
-          <div 
+          <div
             className="absolute -right-20 -top-20 w-72 h-72 rounded-full opacity-10 pointer-events-none blur-3xl"
             style={{ background: 'radial-gradient(circle, var(--color-primary), #3b82f6)' }}
           />
@@ -245,11 +245,10 @@ function TracksContent() {
                     key={id}
                     onClick={() => setSelectedMode(id)}
                     title={label}
-                    className={`px-4 py-2 rounded-xl flex items-center gap-2 text-xs font-bold transition-all duration-300 cursor-pointer ${
-                      isActive
+                    className={`px-4 py-2 rounded-xl flex items-center gap-2 text-xs font-bold transition-all duration-300 cursor-pointer ${isActive
                         ? 'bg-[color:var(--color-primary)] text-white shadow-md scale-102'
                         : 'text-[color:var(--color-outline)] hover:text-[color:var(--color-on-surface)] hover:bg-white/60 dark:hover:bg-white/10'
-                    }`}
+                      }`}
                   >
                     <Icon size={15} />
                     <span>{label}</span>
@@ -288,8 +287,8 @@ function TracksContent() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6 pt-5 border-t border-black/5 dark:border-white/10 relative z-10">
             {[
               { label: 'Active Reservations', value: `${mergedBookings.filter(b => b.status === 'PENDING' || b.status === 'CONFIRMED').length} active items`, sub: 'Real-time verified status' },
-              { label: 'Live Telemetry',    value: 'Satellite Sync Active', sub: 'Monitoring slot changes' },
-              { label: 'Completed Trails',  value: `${mergedBookings.filter(b => b.status === 'COMPLETED').length} journeys`, sub: 'Archived booking logs' },
+              { label: 'Live Telemetry', value: 'Satellite Sync Active', sub: 'Monitoring slot changes' },
+              { label: 'Completed Trails', value: `${mergedBookings.filter(b => b.status === 'COMPLETED').length} journeys`, sub: 'Archived booking logs' },
             ].map(s => (
               <div key={s.label} className="bg-white/60 dark:bg-white/[0.04] rounded-2xl p-3.5 border border-black/5 dark:border-white/10 shadow-2xs">
                 <p className="text-[9px] font-black uppercase tracking-widest text-[color:var(--color-outline)] mb-0.5">{s.label}</p>
@@ -312,11 +311,10 @@ function TracksContent() {
               <button
                 key={f.id}
                 onClick={() => setActiveFilter(f.id as any)}
-                className={`relative px-5 py-2 text-xs font-bold rounded-xl whitespace-nowrap transition-all duration-300 flex-1 cursor-pointer ${
-                  activeFilter === f.id
+                className={`relative px-5 py-2 text-xs font-bold rounded-xl whitespace-nowrap transition-all duration-300 flex-1 cursor-pointer ${activeFilter === f.id
                     ? 'text-white'
                     : 'text-[color:var(--color-outline)] hover:text-[color:var(--color-on-surface)]'
-                }`}
+                  }`}
               >
                 {activeFilter === f.id && (
                   <motion.div
@@ -348,14 +346,14 @@ function TracksContent() {
               <AnimatePresence mode="popLayout">
                 {filteredBookings.map((b: any, i) => {
                   const st = STATUS_STYLE[b.status] || STATUS_STYLE.PENDING;
-                  
+
                   const formatDate = (iso: string) => {
                     if (!iso) return '';
                     try {
                       return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
                     } catch { return iso; }
                   };
-                  
+
                   const formatDateTime = (iso: string) => {
                     if (!iso) return '';
                     try {
@@ -389,7 +387,7 @@ function TracksContent() {
                           <div>
                             <h2 className="font-black text-[color:var(--color-on-surface)] text-xl leading-tight mb-0.5">{b.merchantName}</h2>
                             <p className="text-[11px] text-[color:var(--color-on-surface-variant)] opacity-80 flex items-center gap-1 mb-2">
-                              <MapPin size={10}/> {b.merchantAddress || b.city || 'No Address Provided'}
+                              <MapPin size={10} /> {b.merchantAddress || b.city || 'No Address Provided'}
                             </p>
                           </div>
                         </div>
@@ -409,20 +407,20 @@ function TracksContent() {
 
                       {/* Details Grid */}
                       <div className="grid grid-cols-1 gap-2 mt-4 pt-2">
-                        
+
                         {/* User Info */}
                         <div className="flex items-start gap-2">
                           <User size={12} className="text-[color:var(--color-on-surface-variant)] mt-0.5 shrink-0" />
                           <div className="text-xs text-[color:var(--color-on-surface-variant)] font-medium flex flex-col gap-0.5">
                             <span className="font-bold text-[color:var(--color-on-surface)]">{b.customerName || user?.fullName || 'N/A'}</span>
                             <div className="flex flex-wrap items-center gap-x-2">
-                              {b.customerEmail && <span className="flex items-center gap-1"><Mail size={10}/> {b.customerEmail}</span>}
-                              {b.customerPhone && <span className="flex items-center gap-1"><Phone size={10}/> {b.customerPhone}</span>}
+                              {b.customerEmail && <span className="flex items-center gap-1"><Mail size={10} /> {b.customerEmail}</span>}
+                              {b.customerPhone && <span className="flex items-center gap-1"><Phone size={10} /> {b.customerPhone}</span>}
                             </div>
-                            <span className="opacity-80 flex items-center gap-1 mt-0.5"><MapPin size={10}/> {b.customerAddress || user?.address || 'No Address Provided'}</span>
+                            <span className="opacity-80 flex items-center gap-1 mt-0.5"><MapPin size={10} /> {b.customerAddress || user?.address || 'No Address Provided'}</span>
                           </div>
                         </div>
-                        
+
                         {/* Booked At Info */}
                         {b.bookedAt && (
                           <div className="flex items-start gap-2 mt-1">
@@ -443,11 +441,10 @@ function TracksContent() {
                                   {b.keycardIssued ? 'Digital Keycard Active' : 'Digital Room Access'}
                                 </span>
                               </div>
-                              <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
-                                b.keycardIssued 
+                              <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${b.keycardIssued
                                   ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 animate-pulse'
                                   : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30'
-                              }`}>
+                                }`}>
                                 {b.keycardIssued ? `Room ${b.roomNumber || 'Assigned'} Access` : 'Awaiting Reception Desk'}
                               </span>
                             </div>
@@ -465,11 +462,10 @@ function TracksContent() {
                                         setUnlockedRooms(prev => ({ ...prev, [b.ref]: false }));
                                       }, 4000);
                                     }}
-                                    className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm ${
-                                      unlockedRooms[b.ref]
+                                    className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm ${unlockedRooms[b.ref]
                                         ? 'bg-emerald-500 text-white shadow-emerald-500/30 scale-102'
                                         : 'bg-[color:var(--color-primary)] text-white hover:opacity-90 active:scale-95'
-                                    }`}
+                                      }`}
                                   >
                                     {unlockedRooms[b.ref] ? (
                                       <>
@@ -523,7 +519,7 @@ function TracksContent() {
                         </div>
                         {b.status === 'PENDING' && (
                           <div className="w-full flex justify-end">
-                            <button 
+                            <button
                               onClick={() => handleCancel(b)}
                               className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-all"
                             >

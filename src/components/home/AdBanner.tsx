@@ -3,11 +3,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { MOCK_ADS } from '../../lib/homeData';
-import { useShortcutStore, AVAILABLE_SHORTCUTS } from '../../store/useShortcutStore';
+import { SmartSlotFinder } from './SmartSlotFinder';
 
 export function AdBanner() {
   const [adIndex, setAdIndex] = useState(0);
-  const { activeShortcuts, setShortcutModalOpen, openActionModal } = useShortcutStore();
 
   // Advertisement auto-play rotation
   useEffect(() => {
@@ -17,26 +16,15 @@ export function AdBanner() {
     return () => clearInterval(timer);
   }, []);
 
-  const currentAd = MOCK_ADS[adIndex];
-
-  // Ensure exactly 8 active user shortcuts (pad from AVAILABLE_SHORTCUTS if user has fewer)
-  const userIds = Array.isArray(activeShortcuts) ? activeShortcuts : [];
-  const baseList = userIds.map(id => AVAILABLE_SHORTCUTS.find(s => s.id === id)).filter(Boolean) as typeof AVAILABLE_SHORTCUTS;
-  const paddingList = AVAILABLE_SHORTCUTS.filter(s => !userIds.includes(s.id));
-  const resolvedShortcuts = [...baseList, ...paddingList].slice(0, 8);
-
-  // Palette colors for icons
-  const ICON_COLORS = ['#10b981', '#ff6325', '#f59e0b', '#ec4899', '#3b82f6', '#06b6d4', '#8b5cf6', '#14b8a6'];
-
   return (
-    <div className="pt-3 md:pt-3.5 pb-5 w-full">
+    <div className="pt-3 md:pt-3.5 pb-2 w-full">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-5 items-stretch">
         
         {/* Left Hero Spotlight Sliding Carousel (~68% on Desktop) */}
         <section
           id="hero-featured-spotlight"
           aria-label="Featured Experiences"
-          className="lg:col-span-8 featured-spotlight-carousel w-full relative overflow-hidden rounded-[24px] md:rounded-[28px] shadow-xl border border-[color:var(--color-outline-variant)]/20 bg-black group min-h-[300px] md:min-h-[340px] flex flex-col justify-between"
+          className="lg:col-span-8 featured-spotlight-carousel w-full relative overflow-hidden rounded-[24px] md:rounded-[28px] shadow-xl border border-[color:var(--color-outline-variant)]/20 bg-black group min-h-[320px] md:min-h-[380px] flex flex-col justify-between"
         >
           {/* Ambient glow behind banner */}
           <div className="absolute -inset-1 bg-gradient-to-r from-[#0a3161]/25 via-transparent to-[#ff6325]/15 blur-lg opacity-60 pointer-events-none -z-10" />
@@ -144,80 +132,8 @@ export function AdBanner() {
           </div>
         </section>
 
-        {/* Right Hero Quick Access Shortcuts Panel (~32% on Desktop) */}
-        <section 
-          aria-label="Quick Access Shortcuts"
-          className="lg:col-span-4 rounded-[24px] md:rounded-[28px] border border-black/5 dark:border-white/10 bg-white/70 dark:bg-[#121722]/80 backdrop-blur-2xl p-3.5 md:p-4 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.4)] flex flex-col justify-between"
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between pb-2 mb-1.5 border-b border-[color:var(--color-outline-variant)]/20 shrink-0">
-            <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-[#ff6325] animate-ping" />
-              <h3 className="text-xs md:text-sm font-black tracking-tight text-[color:var(--color-on-surface)] flex items-center gap-1">
-                Quick Shortcuts
-              </h3>
-            </div>
-            <span className="text-[9px] uppercase font-bold tracking-wider text-[color:var(--color-outline)]">
-              Instant Access
-            </span>
-          </div>
-
-          {/* 2x4 Shortcuts Grid - 8 Compact items filling cleanly */}
-          <div className="grid grid-cols-2 grid-rows-4 gap-1.5 flex-1 my-0.5">
-            {resolvedShortcuts.map((item: any, idx: number) => {
-              const color = ICON_COLORS[idx % ICON_COLORS.length];
-              const handleAction = () => {
-                if (item.actionType === 'modal') {
-                  openActionModal(item.actionTarget);
-                } else {
-                  window.location.href = item.actionTarget;
-                }
-              };
-
-              return (
-                <button
-                  key={item.id || idx}
-                  onClick={handleAction}
-                  className="group relative px-2.5 py-1.5 rounded-xl border border-black/5 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] hover:bg-white dark:hover:bg-white/[0.09] hover:border-[#ff6325]/40 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-between shadow-xs hover:shadow-md text-left cursor-pointer h-full backdrop-blur-md"
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div 
-                      className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-2xs"
-                      style={{ backgroundColor: `${color}18`, color: color }}
-                    >
-                      <span className="material-symbols-outlined text-[15px]">{item.icon}</span>
-                    </div>
-                    <span className="text-[11px] font-bold text-[color:var(--color-on-surface)] group-hover:text-[#ff6325] transition-colors leading-tight truncate">
-                      {item.label}
-                    </span>
-                  </div>
-
-                  <span className="material-symbols-outlined text-[12px] text-[color:var(--color-outline)] group-hover:text-[#ff6325] group-hover:translate-x-0.5 transition-all shrink-0 ml-1">
-                    arrow_forward
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Bottom Action Bar */}
-          <div className="mt-2 pt-2.5 border-t border-[color:var(--color-outline-variant)]/20 flex items-center justify-between text-[11px] font-semibold text-[color:var(--color-outline)] shrink-0">
-            <button
-              onClick={() => setShortcutModalOpen(true)}
-              className="flex items-center gap-1.5 text-[#ff6325] hover:text-[#ea580c] font-bold cursor-pointer transition-colors"
-            >
-              <span className="material-symbols-outlined text-[14px]">tune</span>
-              <span>Customize Shortcuts</span>
-            </button>
-            <Link 
-              href="/categories" 
-              className="hover:text-[color:var(--color-on-surface)] transition-colors flex items-center gap-0.5 text-[11px] font-medium"
-            >
-              <span>54+ Categories</span>
-              <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-            </Link>
-          </div>
-        </section>
+        {/* Right Hero Smart Slot Finder Widget (~32% on Desktop) */}
+        <SmartSlotFinder />
 
       </div>
     </div>

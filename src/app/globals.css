@@ -456,13 +456,13 @@
    * On desktop (lg+), also shifts right of the SideNav.
    */
 .page-content {
-  padding-top: 58px;
+  padding-top: 110px;
   padding-bottom: var(--bottomnav-height);
   min-height: 100vh;
 }
 
 .page-content-with-sidenav {
-  padding-top: 58px;
+  padding-top: 110px;
   padding-bottom: var(--bottomnav-height);
   min-height: 100vh;
 }
@@ -471,7 +471,7 @@
 
   .page-content,
   .page-content-with-sidenav {
-    padding-top: 64px;
+    padding-top: 114px;
   }
 }
 
@@ -844,7 +844,7 @@
   color: rgba(255, 255, 255, 0.55) !important;
 }
 
-/* Light Mode Specific Legibility overrides inside Gold Navbar */
+/* Light Mode Specific Legibility overrides inside Navbar - Pure Crisp White */
 .light .custom-navbar,
 .light .custom-navbar a,
 .light .custom-navbar select,
@@ -855,26 +855,26 @@
 .light .custom-navbar .custom-nav-btn div,
 .light .custom-navbar .custom-nav-icon-container span,
 .light .custom-navbar .custom-nav-icon-btn {
-  color: #8B7000 !important;
+  color: #ffffff !important;
 }
 
 .light .custom-navbar svg:not(.lucide-sparkles) {
-  color: #8B7000 !important;
-  stroke: #8B7000 !important;
+  color: #ffffff !important;
+  stroke: #ffffff !important;
 }
 
 .light .custom-navbar input::placeholder {
-  color: rgba(139, 112, 0, 0.6) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
 }
 
 .light .custom-navbar .custom-nav-btn {
-  background-color: #fdf8e2 !important;
-  border: 1px solid rgba(139, 112, 0, 0.3) !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
 }
 
 .light .custom-navbar .custom-nav-btn:hover {
-  background-color: #f9f0ca !important;
-  border-color: rgba(139, 112, 0, 0.5) !important;
+  background-color: rgba(255, 99, 37, 0.25) !important;
+  border-color: rgba(255, 99, 37, 0.5) !important;
 }
 
 /* Button Styling (Matching Business App) */
@@ -1170,6 +1170,57 @@
 
 .custom-navbar .custom-nav-link-inactive:hover,
 .light .custom-navbar .custom-nav-link-inactive:hover {
+  color: #ffffff !important;
+}
+
+/* Secondary Subnav Bar (Amazon Style - Distinct Layer from Main Header) */
+.secondary-subnav-bar {
+  background: rgba(4, 16, 32, 0.94) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.25) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark .secondary-subnav-bar {
+  background: rgba(3, 9, 18, 0.96) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.light .secondary-subnav-bar {
+  background: #061c38 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.secondary-subnav-bar .subnav-pill {
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  transition: all 0.2s ease !important;
+}
+
+.secondary-subnav-bar .subnav-pill:hover {
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.18) !important;
+  border-color: rgba(255, 99, 37, 0.5) !important;
+}
+
+.secondary-subnav-bar .subnav-pill-action {
+  color: #ffffff !important;
+  background-color: rgba(255, 99, 37, 0.18) !important;
+  border: 1px solid rgba(255, 99, 37, 0.4) !important;
+  transition: all 0.2s ease !important;
+}
+
+.secondary-subnav-bar .subnav-pill-action:hover {
+  color: #ffffff !important;
+  background-color: rgba(255, 99, 37, 0.3) !important;
+  border-color: #ff6325 !important;
+}
+
+.secondary-subnav-bar .subnav-pill span,
+.secondary-subnav-bar .subnav-pill-action span,
+.secondary-subnav-bar a,
+.secondary-subnav-bar span {
   color: #ffffff !important;
 }
 

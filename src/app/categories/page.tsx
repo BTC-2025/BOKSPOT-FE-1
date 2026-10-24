@@ -49,14 +49,14 @@ const SERVICE_IMAGE_MAP: Record<string, string> = {
   'Cab / Taxi Booking': '/images/taxi_booking.jpg',
   'Bike Rental': 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=600&auto=format&fit=crop&q=80',
   'Self-Drive Car Rental': 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&auto=format&fit=crop&q=80',
-  
+
   // Stay
   'Hotel Booking': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop&q=80',
   'Resort Booking': 'https://images.unsplash.com/photo-1540553016722-983e48a2cd10?w=600&auto=format&fit=crop&q=80',
   'Homestay / Villa': 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=600&auto=format&fit=crop&q=80',
   'Hostel Booking': 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=600&auto=format&fit=crop&q=80',
   'Camping Booking': 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600&auto=format&fit=crop&q=80',
-  
+
   // Entertainment
   'Cinema / Movie Tickets': 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600&auto=format&fit=crop&q=80',
   'Theatre Shows': 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=600&auto=format&fit=crop&q=80',
@@ -65,7 +65,7 @@ const SERVICE_IMAGE_MAP: Record<string, string> = {
   'Exhibition Entry': '/images/exhibition.jpg',
   'Workshops / Classes': 'https://images.unsplash.com/photo-1513258496099-48168024aec0?w=600&auto=format&fit=crop&q=80',
   'Gaming Arena Booking': 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=600&auto=format&fit=crop&q=80',
-  
+
   // Sports
   'Football Turf': '/images/football.jpg',
   'Cricket Ground': 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=600&auto=format&fit=crop&q=80',
@@ -74,7 +74,7 @@ const SERVICE_IMAGE_MAP: Record<string, string> = {
   'Basketball Court': 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&auto=format&fit=crop&q=80',
   'Swimming Pool Slots': '/images/swimming.jpg',
   'Indoor Play Arena': 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=600&auto=format&fit=crop&q=80',
-  
+
   // Lifestyle
   'Restaurant Table Reservation': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&auto=format&fit=crop&q=80',
   'Salon / Spa Appointment': 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=600&auto=format&fit=crop&q=80',
@@ -85,26 +85,26 @@ const SERVICE_IMAGE_MAP: Record<string, string> = {
   'Cleaning Service': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&auto=format&fit=crop&q=80',
   'Technician Service': 'https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=600&auto=format&fit=crop&q=80',
   'Studio Booking': 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&auto=format&fit=crop&q=80',
-  
+
   // Business
   'Co-working Space': 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&auto=format&fit=crop&q=80',
   'Meeting Room': 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=600&auto=format&fit=crop&q=80',
   'Podcast Studio': 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=600&auto=format&fit=crop&q=80',
   'Conference Hall': 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&auto=format&fit=crop&q=80',
   'Training Sessions': 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&auto=format&fit=crop&q=80',
-  
+
   // Religious
   'Temple Darshan Booking': 'https://images.unsplash.com/photo-1561361058-c24cecae35ca?w=600&auto=format&fit=crop&q=80',
   'Pooja Slot Booking': '/images/pooja_category.jpg',
   'Pilgrimage Packages': 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=600&auto=format&fit=crop&q=80',
-  
+
   // Equipment Rentals
   'Cycle Rental': 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=600&auto=format&fit=crop&q=80',
   'Sports Bike Rental': 'https://images.unsplash.com/photo-1558981285-6f0c94958bb6?w=600&auto=format&fit=crop&q=80',
   'Camera Rental': 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&auto=format&fit=crop&q=80',
   'Sound System Rental': 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600&auto=format&fit=crop&q=80',
   'Event Equipment Rental': 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&auto=format&fit=crop&q=80',
-  
+
   // Personal Services
   'Pet Grooming Appointment': 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?w=600&auto=format&fit=crop&q=80',
   'Babysitting Service': 'https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?w=600&auto=format&fit=crop&q=80',
@@ -372,8 +372,8 @@ export default function CategoriesPage() {
     const query = searchFilter.toLowerCase();
     const filteredSubs = group.subcategories.map(sub => ({
       ...sub,
-      items: sub.items.filter(item => 
-        item.name.toLowerCase().includes(query) || 
+      items: sub.items.filter(item =>
+        item.name.toLowerCase().includes(query) ||
         group.title.toLowerCase().includes(query) ||
         sub.name.toLowerCase().includes(query)
       )
@@ -386,8 +386,8 @@ export default function CategoriesPage() {
   }).filter(group => group.subcategories.length > 0);
 
   // Collect items strictly based on activeGroup or query
-  const allFilteredItems = visibleGroups.flatMap(group => 
-    group.subcategories.flatMap(sub => 
+  const allFilteredItems = visibleGroups.flatMap(group =>
+    group.subcategories.flatMap(sub =>
       sub.items.map((it: any) => ({
         ...it,
         groupTitle: group.title,
@@ -412,15 +412,15 @@ export default function CategoriesPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] transition-colors duration-300 relative overflow-hidden pb-16 pt-[64px] md:pt-[72px]">
+    <main className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] transition-colors duration-300 relative overflow-hidden pb-16 pt-[110px] md:pt-[114px]">
       {/* Ambient Backdrop */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-64 bg-gradient-to-b from-[#0a3161]/10 dark:from-[#ff6325]/10 via-[#0a3161]/5 to-transparent blur-3xl pointer-events-none -z-10" />
 
       <div className="mx-auto max-w-7xl px-4 md:px-8">
-        
+
         {/* ── BENTO TOP SECTION ─────────────────────────────────── */}
         <div className="pt-3 pb-6 space-y-4">
-          
+
           {/* Header Row */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
@@ -436,8 +436,8 @@ export default function CategoriesPage() {
                 {activeGroup !== 'ALL' && (
                   <span className="text-xs font-bold text-[color:var(--color-primary)] px-2.5 py-0.5 rounded-full bg-[color:var(--color-primary)]/10 border border-[color:var(--color-primary)]/20 flex items-center gap-1.5 shadow-2xs">
                     <span>Active: {activeGroup}</span>
-                    <button 
-                      onClick={() => setActiveGroup('ALL')} 
+                    <button
+                      onClick={() => setActiveGroup('ALL')}
                       className="hover:opacity-75 ml-0.5 font-black text-xs cursor-pointer"
                       title="Clear filter"
                     >
@@ -477,28 +477,25 @@ export default function CategoriesPage() {
                 <button
                   key={bento.title}
                   onClick={() => setActiveGroup(isSelected && bento.tag !== 'ALL' ? 'ALL' : bento.tag)}
-                  className={`group relative p-3.5 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 cursor-pointer overflow-hidden min-h-[94px] backdrop-blur-xl ${
-                    isSelected 
+                  className={`group relative p-3.5 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 cursor-pointer overflow-hidden min-h-[94px] backdrop-blur-xl ${isSelected
                       ? 'bg-gradient-to-br from-[color:var(--color-primary)]/15 via-white dark:via-[#161c2b] to-white/80 dark:to-[#121722] border-[color:var(--color-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_12px_32px_rgba(0,0,0,0.5)] scale-[1.02] ring-1 ring-[color:var(--color-primary)]/40'
                       : `bg-white/70 dark:bg-[#121722]/70 hover:bg-white dark:hover:bg-[#161c2b] border-black/5 dark:border-white/10 ${bento.border} hover:-translate-y-1 shadow-[0_2px_12px_rgba(0,0,0,0.02)]`
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between w-full mb-2">
                     <span className="text-2xl filter drop-shadow-sm group-hover:scale-110 transition-transform">{bento.emoji}</span>
-                    <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg border shrink-0 ${
-                      isSelected 
-                        ? 'bg-[color:var(--color-primary)] text-white border-[color:var(--color-primary)]' 
+                    <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg border shrink-0 ${isSelected
+                        ? 'bg-[color:var(--color-primary)] text-white border-[color:var(--color-primary)]'
                         : 'bg-black/5 dark:bg-white/10 text-[color:var(--color-outline)] border-black/5 dark:border-white/10 font-bold'
-                    }`}>
+                      }`}>
                       {bento.badge}
                     </span>
                   </div>
                   <div>
-                    <h3 className={`font-black text-xs transition-colors leading-tight ${
-                      isSelected 
-                        ? 'text-[color:var(--color-primary)]' 
+                    <h3 className={`font-black text-xs transition-colors leading-tight ${isSelected
+                        ? 'text-[color:var(--color-primary)]'
                         : 'text-[color:var(--color-on-surface)] group-hover:text-[color:var(--color-primary)]'
-                    }`}>
+                      }`}>
                       {bento.title}
                     </h3>
                     <p className="text-[10px] text-[color:var(--color-outline)] mt-0.5 line-clamp-1 font-medium">
@@ -514,7 +511,7 @@ export default function CategoriesPage() {
 
         {/* ── HIGH-SPEED DIRECTORY TABLE / LIST (Apple Glass Card) ─────────────────── */}
         <div className="rounded-[28px] border border-black/5 dark:border-white/10 bg-white/75 dark:bg-[#121722]/80 backdrop-blur-2xl shadow-[0_8px_30px_rgba(0,0,0,0.03)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.4)] overflow-hidden">
-          
+
           {/* Table Header Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 border-b border-black/5 dark:border-white/10 bg-slate-50/60 dark:bg-slate-900/40 gap-2">
             <div className="flex items-center gap-2.5">
