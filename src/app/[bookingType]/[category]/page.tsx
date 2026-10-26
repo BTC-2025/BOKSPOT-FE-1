@@ -1755,13 +1755,13 @@ export default function ProviderDiscoveryPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] transition-colors duration-300 relative overflow-hidden">
+    <main className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] transition-colors duration-300 relative overflow-hidden pt-[98px] lg:pt-[104px]">
       {/* Ambient Luxury Background Glows */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-[#ff6325]/10 via-[#0a3161]/5 to-transparent blur-3xl pointer-events-none -z-10" />
       <div className="absolute top-40 right-10 w-72 h-72 bg-[#ff6325]/5 rounded-full blur-3xl pointer-events-none -z-10" />
 
       {/* Inline Breadcrumb */}
-      <div className="container-main flex items-center justify-between pt-6 pb-2">
+      <div className="container-main flex items-center justify-between pt-2 pb-1.5">
         <div className="flex items-center gap-3 min-w-0">
           <Link
             href={`/${bookingType}`}

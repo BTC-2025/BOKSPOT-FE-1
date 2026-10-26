@@ -828,7 +828,7 @@ export function TopNav({
               </Link>
 
               <Link
-                href="/profile#profile-settings"
+                href="/settings"
                 className="subnav-pill flex items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-semibold shrink-0"
                 title="App Settings & Preferences"
               >
@@ -994,7 +994,13 @@ export function TopNav({
           </div>
         </div>
       )}
-      <UtilityDrawer isOpen={utilityDrawerOpen} onClose={() => setUtilityDrawerOpen(false)} activeTab={activeUtilityTab} setActiveTab={setActiveUtilityTab} />
+      <UtilityDrawer 
+        isOpen={utilityDrawerOpen} 
+        onClose={() => setUtilityDrawerOpen(false)} 
+        activeTab={activeUtilityTab} 
+        setActiveTab={setActiveUtilityTab} 
+        isSecondaryHeaderVisible={isSecondaryHeaderVisible}
+      />
       <LocationSelectorModal isOpen={isLocationModalOpen} onClose={() => setIsLocationModalOpen(false)} />
     </>
   );

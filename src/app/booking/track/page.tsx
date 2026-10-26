@@ -184,7 +184,7 @@ Show this at the reception counter.
   }
 
   return (
-    <div className="min-h-screen transition-colors duration-700" style={{ background: 'white' }}>
+    <div className="min-h-screen transition-colors duration-700 pt-28 sm:pt-32" style={{ background: 'white' }}>
       {/* ── Gradient Header Banner ──────────────────────────────────────────── */}
       <div className={`relative bg-gradient-to-br ${config.gradient} overflow-hidden`}>
         {/* Decorative blobs */}

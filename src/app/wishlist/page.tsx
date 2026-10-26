@@ -45,7 +45,7 @@ export default function WishlistPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50/30 pt-[104px] pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50/30 pt-[104px] sm:pt-[110px] pb-24">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         
         {/* Header Section */}

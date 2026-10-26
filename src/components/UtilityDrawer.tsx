@@ -16,6 +16,7 @@ interface UtilityDrawerProps {
   isVendor?: boolean;
   activeTab?: 'calendar' | 'calc' | 'tasks' | 'contacts' | null;
   setActiveTab?: (tab: 'calendar' | 'calc' | 'tasks' | 'contacts' | null) => void;
+  isSecondaryHeaderVisible?: boolean;
 }
 
 interface CompareItem {
@@ -30,7 +31,8 @@ export function UtilityDrawer({
   onClose, 
   isVendor = false,
   activeTab: propActiveTab,
-  setActiveTab: propSetActiveTab
+  setActiveTab: propSetActiveTab,
+  isSecondaryHeaderVisible = false,
 }: UtilityDrawerProps) {
   const { bookings } = useBookingFlowStore();
   const [localActiveTab, setLocalActiveTab] = useState<'calendar' | 'calc' | 'tasks' | 'contacts' | null>(null);
@@ -293,7 +295,9 @@ export function UtilityDrawer({
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
           transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-          className="fixed right-0 top-16 bottom-0 z-[40] flex flex-row overflow-hidden border-l border-slate-200 dark:border-slate-850 shadow-2xl pointer-events-auto bg-slate-50 dark:bg-[#0b0e14]/90 backdrop-blur-md text-left"
+          className={`fixed right-0 bottom-0 z-[40] flex flex-row overflow-hidden border-l border-slate-200/80 dark:border-slate-800 shadow-2xl pointer-events-auto bg-white/95 dark:bg-[#0b0e14]/95 backdrop-blur-xl text-left transition-all duration-300 ${
+            isSecondaryHeaderVisible ? 'top-[96px] lg:top-[102px]' : 'top-[58px] lg:top-[64px]'
+          }`}
         >
           {/* Slide-out Left Content Panel (320px) */}
           <AnimatePresence mode="wait">
@@ -308,208 +312,141 @@ export function UtilityDrawer({
               >
                 {/* 1. CALENDAR TAB POPUP */}
                 {activeTab === 'calendar' && (
-                  <div className="h-full flex flex-col overflow-hidden text-slate-800 dark:text-slate-200 font-sans">
-                    {/* Header: Google Calendar style */}
-                    <div className="p-3 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-850 flex items-center justify-between shrink-0">
-                      <div>
-                        <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest block">
-                          CALENDAR
-                        </span>
-                        <div className="relative">
-                          <button
-                            onClick={() => setShowDatePicker(!showDatePicker)}
-                            className="flex items-center gap-1 text-[13px] font-black text-slate-800 dark:text-slate-100 hover:bg-slate-200/50 dark:hover:bg-slate-800 px-1.5 py-0.5 rounded transition-all mt-0.5 select-none"
-                          >
-                            <span>
-                              {selectedDate.toLocaleDateString('en-US', {
-                                weekday: 'short',
-                                day: 'numeric',
-                                month: 'short'
-                              })}
-                            </span>
-                            <ChevronDownIcon size={12} className="text-slate-500" />
-                          </button>
-
-                          {/* Mini Date Picker Dropdown */}
-                          {showDatePicker && (
-                            <div className="absolute left-0 mt-2 w-60 rounded-xl border border-slate-200 dark:border-slate-880 bg-white dark:bg-[#0b0e14] p-3 shadow-xl z-50 animate-fade-in">
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-[10px] font-bold text-slate-800 dark:text-slate-200">
-                                  {months[currentMonthDate.getMonth()]} {currentMonthDate.getFullYear()}
-                                </span>
-                                <div className="flex gap-0.5">
-                                  <button
-                                    onClick={() => navigateMonth('prev')}
-                                    className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white"
-                                  >
-                                    <ChevronLeft size={12} />
-                                  </button>
-                                  <button
-                                    onClick={() => navigateMonth('next')}
-                                    className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white"
-                                  >
-                                    <ChevronRight size={12} />
-                                  </button>
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-7 gap-0.5 text-center text-[8px] uppercase tracking-wider text-slate-400 font-extrabold mb-1">
-                                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, idx) => (
-                                  <div key={idx}>{d}</div>
-                                ))}
-                              </div>
-                              <div className="grid grid-cols-7 gap-0.5 text-center text-[10px] font-mono">
-                                {emptyCells.map((_, i) => (
-                                  <div key={`empty-${i}`} className="py-0.5" />
-                                ))}
-                                {daysArray.map((day) => {
-                                  const isSelected = selectedDate.getDate() === day &&
-                                    selectedDate.getMonth() === currentMonthDate.getMonth() &&
-                                    selectedDate.getFullYear() === currentMonthDate.getFullYear();
-                                  const isToday = new Date().getDate() === day &&
-                                    new Date().getMonth() === currentMonthDate.getMonth() &&
-                                    new Date().getFullYear() === currentMonthDate.getFullYear();
-                                  return (
-                                    <button
-                                      key={day}
-                                      onClick={() => {
-                                        const newD = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth(), day);
-                                        setSelectedDate(newD);
-                                        setShowDatePicker(false);
-                                      }}
-                                      className={`py-0.5 rounded-md transition-all cursor-pointer font-bold ${
-                                        isSelected
-                                          ? 'bg-blue-655 text-white shadow'
-                                          : isToday
-                                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                                          : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                      }`}
-                                    >
-                                      {day}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button className="p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">
-                          <ExternalLink size={13} />
-                        </button>
-                        <button
-                          onClick={() => setActiveTab(null)}
-                          className="p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"
-                        >
-                          <X size={13} />
-                        </button>
-                      </div>
+                  <div className="h-full flex flex-col overflow-y-auto custom-scrollbar text-slate-800 dark:text-slate-200 font-sans bg-[#fbfcfd] dark:bg-[#0b0e14]">
+                    {/* Header */}
+                    <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-white dark:bg-[#0e121a]">
+                      <h3 className="text-xs font-black tracking-widest text-[#0a192f] dark:text-white uppercase">
+                        CALENDAR
+                      </h3>
+                      <button
+                        onClick={() => setActiveTab(null)}
+                        className="w-7 h-7 rounded-xl bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-700 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                        title="Close"
+                      >
+                        <X size={14} />
+                      </button>
                     </div>
 
-                    {/* Subheader Toolbar */}
-                    <div className="px-3 py-1.5 border-b border-slate-200 dark:border-slate-850 flex items-center justify-between bg-white dark:bg-[#0b0e14] shrink-0 select-none">
-                      <div className="flex items-center gap-1.5">
+                    <div className="p-4 space-y-4">
+                      {/* Month Navigation Pill Card */}
+                      <div className="bg-white dark:bg-[#121722] rounded-2xl border border-slate-200/70 dark:border-slate-800 p-2.5 flex items-center justify-between shadow-2xs">
                         <button
-                          onClick={jumpToToday}
-                          className="px-2 py-0.5 text-[10.5px] font-bold border border-slate-200 dark:border-slate-800 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                          type="button"
+                          onClick={() => navigateMonth('prev')}
+                          className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer"
                         >
-                          Today
+                          <ChevronLeft size={16} />
                         </button>
-                        <div className="flex gap-0.5">
-                          <button
-                            onClick={() => navigateDay('prev')}
-                            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500"
-                          >
-                            <ChevronLeft size={13} />
-                          </button>
-                          <button
-                            onClick={() => navigateDay('next')}
-                            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500"
-                          >
-                            <ChevronRight size={13} />
-                          </button>
+
+                        <h4 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">
+                          {months[currentMonthDate.getMonth()]} {currentMonthDate.getFullYear()}
+                        </h4>
+
+                        <button
+                          type="button"
+                          onClick={() => navigateMonth('next')}
+                          className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer"
+                        >
+                          <ChevronRight size={16} />
+                        </button>
+                      </div>
+
+                      {/* Clean Month Grid Card */}
+                      <div className="bg-white dark:bg-[#121722] rounded-3xl border border-slate-200/70 dark:border-slate-800 p-4 shadow-2xs space-y-3">
+                        {/* Day of Week Headers */}
+                        <div className="grid grid-cols-7 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+                            <div key={d} className="py-1">{d}</div>
+                          ))}
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9.5px] font-semibold text-slate-400 font-mono">
-                          {getTimezoneOffsetString()}
-                        </span>
-                        <button className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
-                          <MoreVertical size={13} />
-                        </button>
-                      </div>
-                    </div>
 
-                    {/* Timeline Container */}
-                    <div className="flex-1 overflow-y-auto relative custom-scrollbar bg-slate-50/50 dark:bg-[#0d1017]/35">
-                      <div className="relative py-4" style={{ height: (endHour - startHour + 1) * hourHeight + 32 }}>
-                        {/* Render Hours rows */}
-                        {hoursArray.map((h, index) => {
-                          const topPos = index * hourHeight + 16;
-                          return (
-                            <div key={h} className="absolute left-0 right-0 flex items-start" style={{ top: topPos, height: hourHeight }}>
-                              <span className="w-12 text-right pr-2 text-[9px] font-bold text-slate-400 font-mono select-none">
-                                {formatHourLabel(h)}
-                              </span>
-                              <div className="flex-1 border-t border-slate-100 dark:border-slate-800/80 h-full relative" />
-                            </div>
-                          );
-                        })}
+                        {/* Calendar Day Numbers Grid */}
+                        <div className="grid grid-cols-7 gap-y-2 text-center text-xs">
+                          {emptyCells.map((_, i) => (
+                            <div key={`empty-${i}`} className="h-8" />
+                          ))}
+                          {daysArray.map((day) => {
+                            const isSelected = selectedDate.getDate() === day &&
+                              selectedDate.getMonth() === currentMonthDate.getMonth() &&
+                              selectedDate.getFullYear() === currentMonthDate.getFullYear();
+                            const isToday = new Date().getDate() === day &&
+                              new Date().getMonth() === currentMonthDate.getMonth() &&
+                              new Date().getFullYear() === currentMonthDate.getFullYear();
 
-                        {/* Render dynamic bookings blocks */}
-                        {dailyBookings.map((b) => {
-                          const decHour = parseTimeToDecimal(b.time);
-                          if (decHour < startHour || decHour > endHour) return null;
-                          const topPos = (decHour - startHour) * hourHeight + 16;
-                          const duration = 1.0; // Assume 1-hour slots
-                          const heightPos = duration * hourHeight - 2;
-
-                          return (
-                            <div
-                              key={b.id}
-                              style={{ top: topPos, height: heightPos }}
-                              className="absolute left-14 right-3 rounded-lg border border-blue-200 dark:border-blue-800/50 bg-blue-55/90 dark:bg-blue-955/40 p-2 shadow-xs flex flex-col justify-between hover:scale-[1.01] hover:shadow transition-all group overflow-hidden"
-                            >
-                              <div className="min-w-0">
-                                <p className="text-[10px] font-black text-blue-700 dark:text-blue-300 truncate leading-tight">
-                                  {b.merchantName}
-                                </p>
-                                <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 truncate leading-tight mt-0.5">
-                                  {b.serviceName}
-                                </p>
-                              </div>
-                              <span className="text-[8.5px] font-bold font-mono text-blue-600 dark:text-blue-400 bg-blue-100/60 dark:bg-blue-900/40 px-1 py-0.5 rounded w-max">
-                                {b.time}
-                              </span>
-                            </div>
-                          );
-                        })}
-
-                        {/* Live Red Time Indicator Line */}
-                        {(() => {
-                          const currHr = now.getHours() + now.getMinutes() / 60;
-                          const isSameDay = now.getDate() === selectedDate.getDate() &&
-                            now.getMonth() === selectedDate.getMonth() &&
-                            now.getFullYear() === selectedDate.getFullYear();
-
-                          if (isSameDay && currHr >= startHour && currHr <= endHour) {
-                            const topPos = (currHr - startHour) * hourHeight + 16;
                             return (
-                              <div className="absolute left-0 right-0 flex items-center z-10 pointer-events-none" style={{ top: topPos }}>
-                                <div className="w-12 text-right pr-2 select-none flex justify-end">
-                                  <span className="text-[8.5px] font-extrabold text-red-505 bg-red-50 dark:bg-red-955/80 px-1 rounded border border-red-505/10 font-mono">
-                                    {now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
-                                  </span>
-                                </div>
-                                <div className="flex-1 flex items-center relative">
-                                  <div className="h-2 w-2 rounded-full bg-red-500 -ml-1 shrink-0" />
-                                  <div className="flex-1 h-[1.5px] bg-red-500" />
-                                </div>
+                              <div key={day} className="flex items-center justify-center">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newD = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth(), day);
+                                    setSelectedDate(newD);
+                                  }}
+                                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all cursor-pointer ${
+                                    isSelected
+                                      ? 'bg-[#1557bf] text-white shadow-md shadow-blue-500/30'
+                                      : isToday
+                                      ? 'border border-[#1557bf] text-[#1557bf] dark:text-blue-400 font-extrabold'
+                                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                  }`}
+                                >
+                                  {day}
+                                </button>
                               </div>
                             );
-                          }
-                          return null;
-                        })()}
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Schedule for Selected Date Section */}
+                      <div className="space-y-2.5 pt-1">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                            SCHEDULE FOR {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()}
+                          </h4>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const title = prompt('Enter quick task or reminder for this day:');
+                              if (title && title.trim()) {
+                                setTasks((prev) => [...prev, { id: Math.random().toString(), text: title.trim(), completed: false }]);
+                              }
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                          >
+                            <Plus size={12} />
+                            <span>Add</span>
+                          </button>
+                        </div>
+
+                        {/* Events list / Empty State */}
+                        {dailyBookings.length > 0 ? (
+                          <div className="space-y-2">
+                            {dailyBookings.map((b) => (
+                              <div
+                                key={b.id}
+                                className="p-3 rounded-2xl bg-white dark:bg-[#121722] border border-blue-200 dark:border-blue-900/40 shadow-2xs flex items-center justify-between gap-3"
+                              >
+                                <div>
+                                  <h5 className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                                    {b.merchantName}
+                                  </h5>
+                                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                    {b.serviceName}
+                                  </p>
+                                </div>
+                                <span className="px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 text-[10px] font-bold font-mono shrink-0">
+                                  {b.time}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="p-6 rounded-2xl border-2 border-dashed border-slate-200/80 dark:border-slate-800 text-center flex items-center justify-center">
+                            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+                              No events, notes, or reminders for this day.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -951,108 +888,123 @@ export function UtilityDrawer({
             )}
           </AnimatePresence>
 
-          {/* Right Sidebar (50px wide) - Google side panel style */}
-          <div className="w-[50px] h-full flex flex-col items-center py-4 bg-slate-50 dark:bg-[#0b0e14]/90 backdrop-blur-md border-l border-slate-200 dark:border-slate-850 shrink-0 select-none">
-            {/* Logo placeholder at the top */}
-            <div className="h-6 w-6 rounded-md bg-blue-600/10 border border-blue-500/20 flex items-center justify-center mb-5 shrink-0 shadow-xs">
-              <Sparkles size={11} className="text-blue-500 animate-pulse" />
+          {/* Right Sidebar Rail (50px wide) - BokSpot Signature Glass Rail */}
+          <div className="w-[50px] h-full flex flex-col items-center py-4 bg-slate-50/80 dark:bg-[#0e121a]/95 backdrop-blur-xl border-l border-slate-200/80 dark:border-slate-800/80 shrink-0 select-none">
+            {/* Top Brand Badge */}
+            <div className="h-7 w-7 rounded-xl bg-gradient-to-br from-[#ff6325]/20 to-[#033266]/20 border border-[#ff6325]/30 flex items-center justify-center mb-5 shrink-0 shadow-2xs">
+              <Sparkles size={13} className="text-[#ff6325] animate-pulse" />
             </div>
 
             {/* List of active application icons stacked vertically */}
-            <div className="flex flex-col gap-4 items-center w-full">
+            <div className="flex flex-col gap-3.5 items-center w-full">
               {/* 1. Calendar circular button */}
               <button
                 type="button"
                 onClick={() => setActiveTab(activeTab === 'calendar' ? null : 'calendar')}
-                className="relative group focus:outline-hidden"
+                className="relative group focus:outline-hidden cursor-pointer"
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                <div className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all ${
                   activeTab === 'calendar'
-                    ? 'bg-blue-100 dark:bg-blue-900/50 border border-blue-600/40 text-blue-600 dark:text-blue-400 shadow-xs'
-                    : 'bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white shadow-xs'
+                    ? 'bg-gradient-to-br from-[#ff6325] to-[#ea580c] text-white shadow-[0_4px_12px_rgba(255,99,37,0.4)] scale-105'
+                    : 'bg-white dark:bg-[#161c27] hover:bg-orange-50/80 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-[#ff6325] hover:scale-105 shadow-2xs'
                 }`}>
-                  <div className="relative w-[18px] h-[18px] bg-blue-500 rounded-[3px] overflow-hidden flex flex-col items-center justify-center shadow-xs">
-                    <div className="w-full h-[5px] bg-blue-600 flex items-center justify-center" />
-                    <div className="flex-1 w-full bg-white flex items-center justify-center text-[7.5px] font-black text-blue-600 leading-none">
+                  <div className={`relative w-[18px] h-[18px] rounded-[4px] overflow-hidden flex flex-col items-center justify-center shadow-2xs ${
+                    activeTab === 'calendar' ? 'bg-white/20' : 'bg-[#ff6325]'
+                  }`}>
+                    <div className={`w-full h-[5px] ${activeTab === 'calendar' ? 'bg-white/40' : 'bg-[#d94e09]'}`} />
+                    <div className={`flex-1 w-full flex items-center justify-center text-[7.5px] font-black leading-none ${
+                      activeTab === 'calendar' ? 'text-white' : 'bg-white dark:bg-[#161c27] text-[#ff6325]'
+                    }`}>
                       {new Date().getDate()}
                     </div>
                   </div>
                 </div>
                 {/* Tooltip */}
-                <div className="absolute right-10 top-1/2 -translate-y-1/2 bg-slate-800 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                  Calendar
-                </div>
+                {!activeTab && (
+                  <div className="absolute right-12 top-1/2 -translate-y-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                    Calendar Schedule
+                  </div>
+                )}
               </button>
 
-              {/* 2. Keep / Calculator button */}
+              {/* 2. Calculator / Smart Split button */}
               <button
                 type="button"
                 onClick={() => setActiveTab(activeTab === 'calc' ? null : 'calc')}
-                className="relative group focus:outline-hidden"
+                className="relative group focus:outline-hidden cursor-pointer"
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                <div className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all ${
                   activeTab === 'calc'
-                    ? 'bg-amber-100 dark:bg-amber-900/50 border border-amber-500/40 text-amber-600 dark:text-amber-400 shadow-xs'
-                    : 'bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white shadow-xs'
+                    ? 'bg-gradient-to-br from-[#ff6325] to-[#ea580c] text-white shadow-[0_4px_12px_rgba(255,99,37,0.4)] scale-105'
+                    : 'bg-white dark:bg-[#161c27] hover:bg-orange-50/80 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-[#ff6325] hover:scale-105 shadow-2xs'
                 }`}>
-                  <Lightbulb size={13} className={activeTab === 'calc' ? 'text-amber-500' : 'text-amber-500/80'} />
+                  <Lightbulb size={16} className={activeTab === 'calc' ? 'text-white' : 'text-amber-500'} />
                 </div>
                 {/* Tooltip */}
-                <div className="absolute right-10 top-1/2 -translate-y-1/2 bg-slate-800 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                  Keep Calculator
-                </div>
+                {!activeTab && (
+                  <div className="absolute right-12 top-1/2 -translate-y-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                    Price &amp; Split Calc
+                  </div>
+                )}
               </button>
 
-              {/* 3. Tasks button */}
+              {/* 3. Tasks / Checklist button */}
               <button
                 type="button"
                 onClick={() => setActiveTab(activeTab === 'tasks' ? null : 'tasks')}
-                className="relative group focus:outline-hidden"
+                className="relative group focus:outline-hidden cursor-pointer"
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                <div className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all ${
                   activeTab === 'tasks'
-                    ? 'bg-blue-100 dark:bg-blue-900/50 border border-blue-600/40 text-blue-600 dark:text-blue-400 shadow-xs'
-                    : 'bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white shadow-xs'
+                    ? 'bg-gradient-to-br from-[#ff6325] to-[#ea580c] text-white shadow-[0_4px_12px_rgba(255,99,37,0.4)] scale-105'
+                    : 'bg-white dark:bg-[#161c27] hover:bg-orange-50/80 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-[#ff6325] hover:scale-105 shadow-2xs'
                 }`}>
-                  <CheckSquare size={13} className={activeTab === 'tasks' ? 'text-blue-600' : 'text-blue-500/85'} />
+                  <CheckSquare size={16} className={activeTab === 'tasks' ? 'text-white' : 'text-sky-500'} />
                 </div>
                 {/* Tooltip */}
-                <div className="absolute right-10 top-1/2 -translate-y-1/2 bg-slate-800 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                  Tasks
-                </div>
+                {!activeTab && (
+                  <div className="absolute right-12 top-1/2 -translate-y-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                    Quick Tasks
+                  </div>
+                )}
               </button>
 
-              {/* 4. Contacts button */}
+              {/* 4. Contacts / Hosts button */}
               <button
                 type="button"
                 onClick={() => setActiveTab(activeTab === 'contacts' ? null : 'contacts')}
-                className="relative group focus:outline-hidden"
+                className="relative group focus:outline-hidden cursor-pointer"
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                <div className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all ${
                   activeTab === 'contacts'
-                    ? 'bg-blue-100 dark:bg-blue-900/50 border border-blue-600/40 text-blue-600 dark:text-blue-400 shadow-xs'
-                    : 'bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white shadow-xs'
+                    ? 'bg-gradient-to-br from-[#ff6325] to-[#ea580c] text-white shadow-[0_4px_12px_rgba(255,99,37,0.4)] scale-105'
+                    : 'bg-white dark:bg-[#161c27] hover:bg-orange-50/80 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-[#ff6325] hover:scale-105 shadow-2xs'
                 }`}>
-                  <User size={13} className={activeTab === 'contacts' ? 'text-blue-600' : 'text-slate-500'} />
+                  <User size={16} className={activeTab === 'contacts' ? 'text-white' : 'text-indigo-500'} />
                 </div>
                 {/* Tooltip */}
-                <div className="absolute right-10 top-1/2 -translate-y-1/2 bg-slate-800 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                  Contacts
-                </div>
+                {!activeTab && (
+                  <div className="absolute right-12 top-1/2 -translate-y-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                    Host &amp; Support Contacts
+                  </div>
+                )}
               </button>
 
-              <hr className="w-6 border-t border-slate-200 dark:border-slate-800/80 my-1 shrink-0" />
+              <hr className="w-6 border-t border-slate-200 dark:border-slate-800 my-1 shrink-0" />
 
               {/* Plus button */}
               <button
                 type="button"
-                className="w-8 h-8 rounded-full bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all flex items-center justify-center relative group shadow-xs focus:outline-hidden"
+                onClick={() => setActiveTab(activeTab === 'calc' ? null : 'calc')}
+                className="w-8 h-8 rounded-xl bg-white dark:bg-[#161c27] hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-all flex items-center justify-center relative group shadow-2xs focus:outline-hidden cursor-pointer hover:scale-105"
               >
-                <Plus size={13} />
+                <Plus size={14} />
                 {/* Tooltip */}
-                <div className="absolute right-10 top-1/2 -translate-y-1/2 bg-slate-800 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                  Get Add-ons
-                </div>
+                {!activeTab && (
+                  <div className="absolute right-12 top-1/2 -translate-y-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                    New Utility Entry
+                  </div>
+                )}
               </button>
             </div>
 
@@ -1060,14 +1012,16 @@ export function UtilityDrawer({
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-450 hover:text-slate-600 dark:hover:text-slate-200 transition-all flex items-center justify-center mt-auto relative group shadow-xs focus:outline-hidden"
+              className="w-8 h-8 rounded-xl bg-white dark:bg-[#161c27] hover:bg-orange-50 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 text-slate-500 hover:text-[#ff6325] transition-all flex items-center justify-center mt-auto relative group shadow-2xs focus:outline-hidden cursor-pointer hover:scale-105"
               title="Close panel"
             >
-              <ChevronRight size={13} />
+              <ChevronRight size={15} />
               {/* Tooltip */}
-              <div className="absolute right-10 top-1/2 -translate-y-1/2 bg-slate-800 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                Hide panel
-              </div>
+              {!activeTab && (
+                <div className="absolute right-12 top-1/2 -translate-y-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                  Close Panel
+                </div>
+              )}
             </button>
           </div>
         </motion.div>

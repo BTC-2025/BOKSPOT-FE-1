@@ -76,7 +76,7 @@ export default function CartPage() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] pt-[104px] pb-24">
+    <div className="min-h-screen bg-[#F9FAFB] pt-[104px] sm:pt-[110px] pb-24">
       <div className="max-w-5xl mx-auto px-4 md:px-6">
 
         {/* Header */}

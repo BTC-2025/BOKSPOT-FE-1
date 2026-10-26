@@ -279,9 +279,9 @@ export default function VenueProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#090b10] text-slate-800 dark:text-slate-100 pb-32 transition-colors">
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#090b10] text-slate-800 dark:text-slate-100 pt-24 sm:pt-28 pb-32 transition-colors">
       {/* Top Sticky Navigation Bar */}
-      <div className="sticky top-0 z-40 bg-white/95 dark:bg-[#0f1219]/95 backdrop-blur-md border-b border-slate-200/90 dark:border-white/10 px-4 py-3 shadow-xs">
+      <div className="sticky top-[108px] z-40 bg-white/95 dark:bg-[#0f1219]/95 backdrop-blur-md border-b border-slate-200/90 dark:border-white/10 px-4 py-3 shadow-xs">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button 

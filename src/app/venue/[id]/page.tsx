@@ -80,7 +80,7 @@ export default function VenuePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
+    <div className="min-h-screen bg-slate-50 pt-28 sm:pt-32 pb-24">
       {/* Dynamic Header & Gallery */}
       <div className="relative h-[40vh] md:h-[55vh] w-full group">
         <div className="absolute inset-0 grid grid-cols-4 grid-rows-2 gap-1 md:gap-2 p-1 md:p-2 bg-black">

@@ -456,13 +456,13 @@
    * On desktop (lg+), also shifts right of the SideNav.
    */
 .page-content {
-  padding-top: 110px;
+  padding-top: 106px;
   padding-bottom: var(--bottomnav-height);
   min-height: 100vh;
 }
 
 .page-content-with-sidenav {
-  padding-top: 110px;
+  padding-top: 106px;
   padding-bottom: var(--bottomnav-height);
   min-height: 100vh;
 }
@@ -471,7 +471,7 @@
 
   .page-content,
   .page-content-with-sidenav {
-    padding-top: 114px;
+    padding-top: 110px;
   }
 }
 
@@ -1173,47 +1173,48 @@
   color: #ffffff !important;
 }
 
-/* Secondary Subnav Bar (Amazon Style - Distinct Layer from Main Header) */
+/* Secondary Subnav Bar (Distinct High-Contrast Layer from Main Blue Header) */
 .secondary-subnav-bar {
-  background: rgba(4, 16, 32, 0.94) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.25) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+  background: rgba(11, 15, 25, 0.96) !important;
+  border-top: 1px solid rgba(255, 99, 37, 0.3) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.4) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
 }
 
 .dark .secondary-subnav-bar {
-  background: rgba(3, 9, 18, 0.96) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+  background: rgba(8, 12, 20, 0.98) !important;
+  border-top: 1px solid rgba(255, 99, 37, 0.25) !important;
 }
 
 .light .secondary-subnav-bar {
-  background: #061c38 !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: #0f172a !important;
+  border-top: 1px solid rgba(255, 99, 37, 0.35) !important;
 }
 
 .secondary-subnav-bar .subnav-pill {
-  color: #ffffff !important;
-  background-color: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #f1f5f9 !important;
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   transition: all 0.2s ease !important;
 }
 
 .secondary-subnav-bar .subnav-pill:hover {
   color: #ffffff !important;
-  background-color: rgba(255, 255, 255, 0.18) !important;
-  border-color: rgba(255, 99, 37, 0.5) !important;
+  background-color: rgba(255, 255, 255, 0.14) !important;
+  border-color: rgba(255, 99, 37, 0.6) !important;
+  transform: translateY(-1px);
 }
 
 .secondary-subnav-bar .subnav-pill-action {
   color: #ffffff !important;
-  background-color: rgba(255, 99, 37, 0.18) !important;
-  border: 1px solid rgba(255, 99, 37, 0.4) !important;
+  background-color: rgba(255, 99, 37, 0.2) !important;
+  border: 1px solid rgba(255, 99, 37, 0.45) !important;
   transition: all 0.2s ease !important;
 }
 
 .secondary-subnav-bar .subnav-pill-action:hover {
   color: #ffffff !important;
-  background-color: rgba(255, 99, 37, 0.3) !important;
+  background-color: rgba(255, 99, 37, 0.35) !important;
   border-color: #ff6325 !important;
 }
 

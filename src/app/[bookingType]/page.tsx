@@ -244,7 +244,7 @@ export default function CategoryPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] transition-colors duration-300">
+    <main className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] transition-colors duration-300 pt-[98px] lg:pt-[104px]">
       {/* Hero banner */}
       <section>
         <div className={`bg-gradient-to-br ${data.gradient} relative overflow-hidden`}>
@@ -252,7 +252,7 @@ export default function CategoryPage() {
           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
           
           {/* Inline Breadcrumb */}
-          <div className="container-main relative z-10 pt-6 pb-2 flex items-center gap-4">
+          <div className="container-main relative z-10 pt-2 pb-1.5 flex items-center gap-4">
             <Link href="/categories" className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer">
               <ArrowLeft size={20} />
             </Link>

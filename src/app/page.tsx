@@ -144,6 +144,7 @@ export default function HomePage() {
           {/* Row 1: Ad Banner with Smart Slot Finder */}
           <motion.div
             id="today-slots"
+            className="relative z-30"
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
@@ -234,60 +235,68 @@ export default function HomePage() {
                         className="h-10 sm:h-12 object-contain" 
                       />
                     </Link>
-                    <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-[color:var(--color-primary)]/10 text-[color:var(--color-primary)] border border-[color:var(--color-primary)]/20">
-                      Super App
-                    </span>
                   </div>
                   <p className="text-[13px] text-[color:var(--color-outline)] font-medium max-w-md leading-relaxed">
-                    India&apos;s all-in-one luxury booking platform. Instant verified reservations for turf sports, private cinema screenings, express transit, retreats & healthcare.
+                    India&apos;s unified on-demand platform to discover, schedule, and instantly reserve verified slots across all services.
                   </p>
                 </div>
 
-                {/* Right: Newsletter Box */}
-                <div className="lg:col-span-6 flex flex-col sm:flex-row items-center justify-end gap-3">
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const email = (e.currentTarget.elements.namedItem('email') as HTMLInputElement).value;
-                      if (email) {
-                        alert(`Thank you for subscribing, ${email}!`);
-                        e.currentTarget.reset();
-                      }
-                    }}
-                    className="flex items-center w-full sm:max-w-md rounded-2xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-container-high)]/80 p-1.5 focus-within:border-[color:var(--color-primary)] shadow-sm backdrop-blur-md transition-all"
-                  >
-                    <input
-                      name="email"
-                      type="email"
-                      required
-                      placeholder="Enter your email for VIP drops & perks..."
-                      className="flex-1 bg-transparent border-none outline-none text-xs text-[color:var(--color-on-surface)] placeholder-[color:var(--color-outline)] px-3 py-2 font-medium"
-                    />
-                    <button
-                      type="submit"
-                      className="px-5 py-2.5 rounded-xl bg-[color:var(--color-primary)] text-white hover:opacity-90 active:scale-95 transition-all text-[11px] font-black uppercase tracking-wider shadow-md shrink-0 cursor-pointer"
+                {/* Right: Mobile App Download Badges (Real Production Standard) */}
+                <div className="lg:col-span-6 flex flex-col sm:flex-row items-start lg:items-center justify-start lg:justify-end gap-3">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[color:var(--color-outline)] hidden xl:inline">
+                    Experience on Mobile:
+                  </span>
+                  <div className="flex items-center gap-2.5">
+                    {/* Google Play */}
+                    <a
+                      href="#download-play"
+                      onClick={(e) => { e.preventDefault(); alert('BOKSPOT Android App arriving soon on Google Play Store!'); }}
+                      className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-105 active:scale-95 transition-all shadow-md group cursor-pointer"
+                      title="Download on Google Play"
                     >
-                      Subscribe
-                    </button>
-                  </form>
+                      <svg className="w-5 h-5 fill-current shrink-0 text-[#ff6325] dark:text-[#ff6325]" viewBox="0 0 24 24">
+                        <path d="M3.609 1.814L13.792 12 3.61 22.186a1.954 1.954 0 0 1-.22-.914V2.728c0-.334.078-.65.22-.914zM15.207 13.414l2.293 2.293-12.186 7.035 9.893-9.328zm0-2.828L5.314 1.258l12.186 7.035-2.293 2.293zm1.414 1.414l3.774 2.18c.99.571.99 1.503 0 2.074l-3.774 2.179-2.293-2.293 2.293-2.14z"/>
+                      </svg>
+                      <div className="text-left leading-none">
+                        <span className="text-[9px] uppercase tracking-wider opacity-70 block font-medium">Get it on</span>
+                        <span className="text-xs font-black tracking-tight block mt-0.5">Google Play</span>
+                      </div>
+                    </a>
+
+                    {/* App Store */}
+                    <a
+                      href="#download-apple"
+                      onClick={(e) => { e.preventDefault(); alert('BOKSPOT iOS App arriving soon on Apple App Store!'); }}
+                      className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-105 active:scale-95 transition-all shadow-md group cursor-pointer"
+                      title="Download on App Store"
+                    >
+                      <svg className="w-5 h-5 fill-current shrink-0 text-white dark:text-slate-900" viewBox="0 0 24 24">
+                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.38c.62-.75 1.04-1.8 0.93-2.85-.9.04-2 .6-2.65 1.35-.58.66-1.08 1.73-.95 2.76 1.01.08 2.05-.51 2.67-1.26z"/>
+                      </svg>
+                      <div className="text-left leading-none">
+                        <span className="text-[9px] uppercase tracking-wider opacity-70 block font-medium">Download on</span>
+                        <span className="text-xs font-black tracking-tight block mt-0.5">App Store</span>
+                      </div>
+                    </a>
+                  </div>
                 </div>
               </div>
 
               {/* Middle Grid: 4 Modern Navigation Columns */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-12 border-b border-[color:var(--color-outline-variant)]/20 relative z-10">
                 
-                {/* Column 1: Curated Verticals */}
+                {/* Column 1: Booking Categories */}
                 <div className="space-y-3.5">
                   <h4 className="text-[11px] uppercase tracking-widest font-black text-[color:var(--color-on-surface)]">
-                    Curated Verticals
+                    Explore Categories
                   </h4>
                   <ul className="space-y-2.5">
                     {[
-                      { label: 'FIFA 2-Star Turfs', href: '/sports-turf/football-turf' },
-                      { label: 'Laser IMAX Theatres', href: '/entertainment-events/movies' },
-                      { label: 'Executive Vande Bharat', href: '/travel-transport/trains' },
-                      { label: 'Boutique Seafront Villas', href: '/stay-accommodation/hotels' },
-                      { label: 'NABH Super Clinics', href: '/service/1' }
+                      { label: 'Sports & Turf Arenas', href: '/categories' },
+                      { label: 'Movie Theatres & Shows', href: '/categories' },
+                      { label: 'Hotels & Resort Stays', href: '/categories' },
+                      { label: 'Travel & Transport Cabs', href: '/categories' },
+                      { label: 'Wellness & Clinics', href: '/categories' }
                     ].map((link) => (
                       <li key={link.label}>
                         <Link
