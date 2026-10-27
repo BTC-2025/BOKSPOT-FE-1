@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowLeft, MapPin, Star, Share2, Heart, Check, Clock, Info, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, MapPin, Star, Share2, Heart, Check, Clock, Info, CheckCircle2, ShieldCheck, Bed, Sparkles } from 'lucide-react';
 import { api } from '../../../lib/api';
 import { useBookingFlowStore } from '../../../lib/store';
 
@@ -37,12 +37,19 @@ export default function VenuePage() {
             id: id,
             name: realMerchant.name || 'Venue Name',
             description: realMerchant.description || 'Welcome to our luxurious property. Enjoy your stay with premium amenities.',
+            phone: realMerchant.phone,
+            website: realMerchant.website,
+            address: realMerchant.address,
             gallery: (realMerchant.images && realMerchant.images.length > 0) ? realMerchant.images : [
               'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80',
               'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80',
               'https://images.unsplash.com/photo-1522771731478-44bc10b49cb3?w=800&q=80'
             ],
             thingsToKnow: (realMerchant.amenities && realMerchant.amenities.length > 0) ? realMerchant.amenities : ['Free WiFi', 'Parking', 'Air Conditioning'],
+            policies: realMerchant.metadata?.policies || [],
+            aroundProperty: realMerchant.metadata?.aroundProperty || [],
+            checkInTime: realMerchant.metadata?.checkInTime || '12:00 PM',
+            checkOutTime: realMerchant.metadata?.checkOutTime || '11:00 AM',
             rating: realMerchant.rating || 4.8,
             reviewCount: realMerchant.reviewCount || 0,
             location: `${realMerchant.city || 'City'}, ${(realMerchant as any).state || ''}`,
@@ -73,10 +80,14 @@ export default function VenuePage() {
     );
   }
 
-  const handleBookService = (service: any) => {
-    setSelectedService(service);
-    // Navigate to the specific archetype booking flow
-    router.push(`/service/${service.id}`);
+  const handleBookService = (categoryService: any, listing: any) => {
+    setSelectedService({
+      ...categoryService,
+      selectedListing: listing,
+      price: listing.basePrice || listing.price || categoryService.basePrice || categoryService.price,
+    });
+    // Navigate to the archetype booking flow with listing ID preselected
+    router.push(`/service/${categoryService.id}?listing=${listing.id}`);
   };
 
   return (
@@ -155,20 +166,55 @@ export default function VenuePage() {
               </p>
             </section>
 
-            <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
-              <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-                <CheckCircle2 className="text-emerald-500" /> Things to Know
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {merchant.thingsToKnow?.map((thing: string, idx: number) => (
-                  <div key={idx} className="flex items-start gap-3">
-                    <div className="mt-1 bg-emerald-50 p-1 rounded-full text-emerald-600">
-                      <Check size={14} strokeWidth={3} />
-                    </div>
-                    <span className="text-slate-700 font-medium">{thing}</span>
+            {/* Timings & Policies */}
+            <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                  <Clock className="text-[#ff6325]" /> Property Timings
+                </h2>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                    <span className="text-xs uppercase font-bold text-slate-400 block mb-1">Check-in</span>
+                    <span className="text-base font-extrabold text-slate-900">{merchant.checkInTime || '12:00 PM'}</span>
                   </div>
-                ))}
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                    <span className="text-xs uppercase font-bold text-slate-400 block mb-1">Check-out</span>
+                    <span className="text-base font-extrabold text-slate-900">{merchant.checkOutTime || '11:00 AM'}</span>
+                  </div>
+                </div>
               </div>
+
+              {merchant.policies && merchant.policies.length > 0 && (
+                <div className="pt-4 border-t border-slate-100">
+                  <h3 className="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
+                    <ShieldCheck className="text-blue-500" /> House Rules & Policies
+                  </h3>
+                  <div className="space-y-2.5">
+                    {merchant.policies.map((pol: string, idx: number) => (
+                      <div key={idx} className="flex items-start gap-2.5 text-sm text-slate-700 font-medium">
+                        <span className="text-[#ff6325] font-bold">•</span>
+                        <span>{pol}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {merchant.aroundProperty && merchant.aroundProperty.length > 0 && (
+                <div className="pt-4 border-t border-slate-100">
+                  <h3 className="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
+                    <MapPin className="text-amber-500" /> Nearby Landmarks
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {merchant.aroundProperty.map((item: any, idx: number) => (
+                      <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs font-bold text-slate-800">
+                        <span>📍 {item.name}</span>
+                        <span className="text-[#ff6325] bg-[#ff6325]/10 px-2 py-0.5 rounded-md font-extrabold">{item.distance}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </section>
           </div>
 
@@ -190,18 +236,74 @@ export default function VenuePage() {
                       {/* Listings under Category */}
                       {(categoryService.metadata?.listings || []).length > 0 ? (
                         <div className="space-y-4">
-                          {(categoryService.metadata?.listings || []).map((listing: any, lIdx: number) => (
-                            <div key={lIdx} className="group bg-slate-50 rounded-2xl p-4 border border-slate-100 hover:border-[#ff6325]/40 hover:shadow-md transition-all cursor-pointer" onClick={() => handleBookService(listing)}>
-                              <div className="flex justify-between items-start mb-2">
-                                <h5 className="font-bold text-slate-900 group-hover:text-[#ff6325] transition-colors">{listing.name}</h5>
-                                <span className="font-black text-slate-900">₹{listing.basePrice || listing.price || 0}</span>
+                          {(categoryService.metadata?.listings || []).map((listing: any, lIdx: number) => {
+                            const listingImg = listing.imageUrl || listing.image || listing.metadata?.gallery?.[0] || listing.images?.[0];
+                            const price = listing.basePrice || listing.price || 0;
+                            return (
+                              <div 
+                                key={lIdx} 
+                                className="group bg-slate-50 hover:bg-white rounded-2xl p-4 border border-slate-200/80 hover:border-[#ff6325] hover:shadow-lg transition-all duration-300 cursor-pointer space-y-3"
+                                onClick={() => handleBookService(categoryService, listing)}
+                              >
+                                {listingImg && (
+                                  <div className="w-full h-36 rounded-xl overflow-hidden relative bg-slate-200">
+                                    <img 
+                                      src={listingImg} 
+                                      alt={listing.name} 
+                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                                    />
+                                    {listing.metadata?.totalUnits && (
+                                      <span className="absolute top-2 right-2 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                        {listing.metadata.totalUnits} Units
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                                <div>
+                                  <div className="flex justify-between items-start gap-2 mb-1">
+                                    <h5 className="font-extrabold text-base text-slate-900 group-hover:text-[#ff6325] transition-colors leading-snug">
+                                      {listing.name}
+                                    </h5>
+                                    <div className="text-right shrink-0">
+                                      <span className="font-black text-lg text-slate-900">₹{price.toLocaleString()}</span>
+                                      <span className="block text-[10px] text-slate-400 font-semibold">per night</span>
+                                    </div>
+                                  </div>
+                                  {listing.description && (
+                                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                                      {listing.description}
+                                    </p>
+                                  )}
+                                </div>
+
+                                <div className="flex flex-wrap gap-1.5 pt-1">
+                                  {listing.bedType && (
+                                    <span className="text-[10px] font-bold bg-white text-slate-700 border border-slate-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                      <Bed size={10} className="text-[#ff6325]" /> {listing.bedType}
+                                    </span>
+                                  )}
+                                  {listing.maxGuests && (
+                                    <span className="text-[10px] font-bold bg-white text-slate-700 border border-slate-200 px-2 py-0.5 rounded-md">
+                                      👥 {listing.maxGuests} Guests
+                                    </span>
+                                  )}
+                                  {listing.sizeSqFt && (
+                                    <span className="text-[10px] font-bold bg-white text-slate-700 border border-slate-200 px-2 py-0.5 rounded-md">
+                                      📐 {listing.sizeSqFt} sq.ft
+                                    </span>
+                                  )}
+                                </div>
+
+                                <button 
+                                  type="button"
+                                  className="w-full py-2.5 bg-[#0a3161] group-hover:bg-[#ff6325] text-white rounded-xl font-bold text-xs transition-all shadow-sm flex items-center justify-center gap-2"
+                                >
+                                  <span>Book {listing.name}</span>
+                                  <span className="text-white/70">→</span>
+                                </button>
                               </div>
-                              <p className="text-sm text-slate-500 mb-4 line-clamp-2">{listing.description}</p>
-                              <button className="w-full py-2.5 bg-[#0a3161] hover:bg-[#ff6325] text-white rounded-xl font-bold transition-all shadow-sm">
-                                Book {listing.name}
-                              </button>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       ) : (
                         <p className="text-sm text-slate-400 italic">No options added yet in this category.</p>

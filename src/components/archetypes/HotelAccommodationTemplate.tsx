@@ -70,8 +70,13 @@ export default function HotelAccommodationTemplate({ service }: HotelAccommodati
   const [childrenCount, setChildrenCount] = useState(queryChildren >= 0 ? queryChildren : 0);
   const [petsAllowed, setPetsAllowed] = useState(queryPets);
 
+  const queryListing = searchParams?.get('listing');
+  const rawListings = service.metadata?.listings || service.rawConfig?.metadata?.listings || [];
+
   // Selected room category and meal plan
-  const [selectedRoomId, setSelectedRoomId] = useState<string>('room-deluxe');
+  const [selectedRoomId, setSelectedRoomId] = useState<string>(
+    queryListing || (rawListings.length > 0 ? (rawListings[0].id || 'room-0') : 'room-deluxe')
+  );
   const [selectedMealPlan, setSelectedMealPlan] = useState<'EP' | 'CP' | 'MAP'>('CP'); // CP = Breakfast included
 
   // Special requests
@@ -87,7 +92,6 @@ export default function HotelAccommodationTemplate({ service }: HotelAccommodati
   }, [checkInDate, checkOutDate]);
 
   // Hotel rooms data from metadata or curated luxury options
-  const rawListings = service.metadata?.listings || service.rawConfig?.metadata?.listings || [];
   const baseTariff = Number(service.price) || 3500;
 
   const roomCategories = useMemo(() => {
@@ -102,20 +106,33 @@ export default function HotelAccommodationTemplate({ service }: HotelAccommodati
 
         const roomImg = l.imageUrl || l.image || meta.imageUrl || meta.images?.[0] || `https://images.unsplash.com/photo-${idx === 0 ? '1618773928121-c32242e63f39' : idx === 1 ? '1590490360182-c33d57733427' : '1582719478250-c89cae4dc85b'}?w=700&auto=format&fit=crop&q=70`;
 
+        const realPerks = Array.isArray(l.perks)
+          ? l.perks
+          : Array.isArray(meta.perks)
+            ? meta.perks
+            : typeof meta.perks === 'string' && meta.perks.trim() !== ''
+              ? meta.perks.split(',').map((s: string) => s.trim())
+              : [];
+
         return {
           id: l.id || `room-${idx}`,
           name: l.name || meta.roomType || 'Executive Room',
           description: l.description || (meta.roomType ? `${meta.roomType} room with comfortable bedding and essential amenities.` : 'Spacious modern room with ergonomic workspace and high-speed Wi-Fi.'),
           basePrice: Number(l.basePrice || l.price) || baseTariff,
-          maxGuests: Number(meta.maxGuests) || Number(l.maxGuests) || 2,
-          bedType: meta.bedType || l.bedType || '1 King Bed or 2 Twins',
-          sizeSqFt: meta.sizeSqFt || l.sizeSqFt || 320,
+          maxGuests: Number(l.maxGuests || meta.maxGuests) || 2,
+          bedType: l.bedType || meta.bedType || '1 King Bed or 2 Twins',
+          sizeSqFt: l.sizeSqFt || meta.sizeSqFt || 320,
           amenities: realAmenities,
+          perks: realPerks,
           image: roomImg,
-          inventoryLeft: Number(meta.totalUnits) || Number(l.inventoryLeft) || 3,
-          checkInTime: meta.checkInTime,
-          checkOutTime: meta.checkOutTime,
-          addons: meta.addons || []
+          inventoryLeft: Number(l.inventoryLeft || meta.totalUnits || l.totalUnits) || 3,
+          checkInTime: l.checkInTime || meta.checkInTime,
+          checkOutTime: l.checkOutTime || meta.checkOutTime,
+          addons: l.addons || meta.addons || [],
+          viewType: l.viewType || meta.viewType,
+          petPolicy: l.petPolicy || meta.petPolicy,
+          cancellationPolicy: l.cancellationPolicy || meta.cancellationPolicy,
+          mealPlanOptions: l.mealPlanOptions || meta.mealPlanOptions
         };
       });
     }
@@ -182,10 +199,30 @@ export default function HotelAccommodationTemplate({ service }: HotelAccommodati
       ? `${checkInDate} to ${checkOutDate} (${nights} Night${nights > 1 ? 's' : ''})`
       : `${checkInDate} | Transit Slot: ${transitSlot}`;
 
+    const matchedRawListing = rawListings.find((l: any) => (l.id === selectedRoom.id || l.name === selectedRoom.name));
+
     const reservationPayload = {
       ...service,
       price: finalPayable,
       name: `${service.name || 'Hotel Stay'} — ${selectedRoom.name}`,
+      selectedListing: matchedRawListing || {
+        id: selectedRoom.id,
+        name: selectedRoom.name,
+        description: selectedRoom.description,
+        price: selectedRoom.basePrice,
+        basePrice: selectedRoom.basePrice,
+        imageUrl: selectedRoom.image,
+        image: selectedRoom.image,
+        addons: selectedRoom.addons,
+        metadata: {
+          addons: selectedRoom.addons,
+          bedType: selectedRoom.bedType,
+          maxGuests: selectedRoom.maxGuests,
+          sizeSqFt: selectedRoom.sizeSqFt,
+          viewType: selectedRoom.viewType,
+          perks: selectedRoom.perks
+        }
+      },
       metadata: {
         ...(service.metadata || {}),
         hotelBooking: {
@@ -609,7 +646,23 @@ export default function HotelAccommodationTemplate({ service }: HotelAccommodati
                             <Clock size={12} className="text-amber-400" /> Out: {room.checkOutTime}
                           </span>
                         )}
+                        {room.viewType && (
+                          <span className="text-[11px] font-semibold bg-[#ff6325]/10 border border-[#ff6325]/20 px-2.5 py-1 rounded-lg text-[#ff6325]">
+                            🌅 {room.viewType}
+                          </span>
+                        )}
                       </div>
+
+                      {/* Highlights / Special Perks */}
+                      {room.perks && room.perks.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {room.perks.map((p: string, pIdx: number) => (
+                            <span key={pIdx} className="text-[10px] font-bold bg-amber-500/15 border border-amber-500/30 text-amber-300 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                              <Sparkles size={10} className="text-amber-400" /> {p}
+                            </span>
+                          ))}
+                        </div>
+                      )}
 
                       <div className="grid grid-cols-2 gap-2 pt-2">
                         {room.amenities.map((am: string, i: number) => (

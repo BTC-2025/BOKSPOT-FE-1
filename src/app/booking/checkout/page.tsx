@@ -73,7 +73,11 @@ export default function CheckoutPage() {
   const listing = selectedService.selectedListing;
   const meta = listing?.metadata || {};
   const isHotel = Boolean(selectedService.metadata?.hotelBooking);
-  const availableAddons = meta.addons || [];
+  const availableAddons = (listing?.addons && listing.addons.length > 0)
+    ? listing.addons
+    : (meta.addons && meta.addons.length > 0)
+      ? meta.addons
+      : (selectedService.selectedListing?.addons || selectedService.metadata?.addons || []);
   const addonsTotal = selectedAddons.reduce((sum: number, idx: number) => sum + (availableAddons[idx]?.price || 0), 0);
   
   const basePrice = isHotel 

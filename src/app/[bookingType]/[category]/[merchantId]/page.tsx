@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Map, Clock, CheckCircle2, ChevronRight, ChevronLeft, Info, ShieldCheck, Search, Users, Utensils, X, Calendar, Bed, Star, Heart, Check, MapPin } from 'lucide-react';
+import { ArrowLeft, Map, Clock, CheckCircle2, ChevronRight, ChevronLeft, Info, ShieldCheck, Search, Users, Utensils, X, Calendar, Bed, Star, Heart, Check, MapPin, ExternalLink, Headphones, Award } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useLocationStore, useBookingFlowStore } from '@/lib/store';
 import { BokspotLoader } from '@/components/ui/BokspotLoader';
@@ -125,6 +126,7 @@ export default function VenueProfilePage() {
   const [copiedShare, setCopiedShare] = useState(false);
   const [isEditSearchOpen, setIsEditSearchOpen] = useState(false);
   const [isAboutExpanded, setIsAboutExpanded] = useState(false);
+  const [activeSubNavTab, setActiveSubNavTab] = useState<'overview' | 'facilities' | 'location' | 'policies'>('overview');
 
   useEffect(() => {
     let active = true;
@@ -141,22 +143,22 @@ export default function VenueProfilePage() {
             console.warn('Could not fetch merchant:', e);
           }
         }
-        
+
         const res = await api.services.list({});
         if (active && res && res.data) {
           const merchantServices = res.data.filter((s: any) => {
             const isMatchMerchant = (s.merchantObj?.id === merchantId) || (s.merchant === merchantId) || (s.merchantObj?.name === merchantId) || (s.merchant === decodeURIComponent(merchantId));
-            
+
             let isMatchType = true;
             if (merchantId === '2cf63fd7-6710-4ac6-a3fa-8cbda29fdc0e') {
               const bType = bookingType.toLowerCase();
               const typeKeywords = (bType.includes('stay') || bType.includes('hotel') || bType.includes('accommodation') || bType.includes('room')) ? ['hotel', 'room', 'resort', 'accommodation', 'stay'] :
-                                   (bType.includes('sports') || bType.includes('turf') || bType.includes('play')) ? ['turf', 'cricket', 'football', 'badminton', 'tennis', 'court', 'sport', 'ground', 'ball'] :
-                                   (bType.includes('health') || bType.includes('doctor') || bType.includes('clinic') || bType.includes('medical')) ? ['doctor', 'clinic', 'dental', 'medical', 'appointment', 'health'] :
-                                   (bType.includes('dine') || bType.includes('food') || bType.includes('restaurant')) ? ['restaurant', 'dining', 'food', 'table', 'dine'] : 
-                                   (bType.includes('salon') || bType.includes('spa') || bType.includes('beauty') || bType.includes('care')) ? ['salon', 'spa', 'beauty', 'hair', 'massage', 'care'] :
-                                   (bType.includes('event') || bType.includes('party') || bType.includes('hall')) ? ['event', 'party', 'hall', 'wedding', 'banquet'] : [];
-                                   
+                (bType.includes('sports') || bType.includes('turf') || bType.includes('play')) ? ['turf', 'cricket', 'football', 'badminton', 'tennis', 'court', 'sport', 'ground', 'ball'] :
+                  (bType.includes('health') || bType.includes('doctor') || bType.includes('clinic') || bType.includes('medical')) ? ['doctor', 'clinic', 'dental', 'medical', 'appointment', 'health'] :
+                    (bType.includes('dine') || bType.includes('food') || bType.includes('restaurant')) ? ['restaurant', 'dining', 'food', 'table', 'dine'] :
+                      (bType.includes('salon') || bType.includes('spa') || bType.includes('beauty') || bType.includes('care')) ? ['salon', 'spa', 'beauty', 'hair', 'massage', 'care'] :
+                        (bType.includes('event') || bType.includes('party') || bType.includes('hall')) ? ['event', 'party', 'hall', 'wedding', 'banquet'] : [];
+
               if (typeKeywords.length > 0) {
                 const catName = (s.category || '').toLowerCase();
                 const svcName = (s.name || '').toLowerCase();
@@ -200,19 +202,23 @@ export default function VenueProfilePage() {
         if (active) setLoading(false);
       }
     };
-    
+
     fetchData();
     return () => { active = false; };
   }, [merchantId, bookingType]);
 
-  const venueName = liveServices.length > 0 ? (liveServices[0].merchantObj?.name || liveServices[0].merchant || 'Venue') : 'Loading...';
-  const address = liveServices.length > 0 ? (liveServices[0].merchantObj?.address || `${city || 'Chennai'}`) : '';
+  const venueName = merchantData?.name ||
+    merchantData?.merchantName ||
+    (liveServices.length > 0 ? (liveServices[0].merchantObj?.name || liveServices[0].merchant || 'Venue') : 'Loading...');
+
+  const address = merchantData?.address ||
+    (liveServices.length > 0 ? (liveServices[0].merchantObj?.address || `${city || 'Chennai'}`) : '');
 
   if (loading) {
     const isHotel = category === 'resorts' || category === 'hotels' || category === 'villas' || category === 'hostels' || category === 'camping';
     return (
-      <BokspotLoader 
-        message={isHotel ? `Loading ${category === 'resorts' ? 'Resort' : category === 'villas' ? 'Villa' : category === 'hotels' ? 'Hotel' : 'Stay'} details...` : 'Loading Venue details...'} 
+      <BokspotLoader
+        message={isHotel ? `Loading ${category === 'resorts' ? 'Resort' : category === 'villas' ? 'Villa' : category === 'hotels' ? 'Hotel' : 'Stay'} details...` : 'Loading Venue details...'}
       />
     );
   }
@@ -232,7 +238,7 @@ export default function VenueProfilePage() {
   ];
 
   const finalMerchantObj = merchantData || liveServices[0]?.merchantObj || {};
-  
+
   // Extract and clean real images from merchant object and room services
   const extractedImages: string[] = [];
   const addIfValid = (url: any) => {
@@ -245,13 +251,21 @@ export default function VenueProfilePage() {
   };
 
   (finalMerchantObj.images || []).forEach(addIfValid);
+  (finalMerchantObj.gallery || []).forEach(addIfValid);
   liveServices.forEach((svc: any) => {
     addIfValid(svc.imageUrl);
     addIfValid(svc.image);
     (svc.images || []).forEach(addIfValid);
     (svc.metadata?.images || []).forEach(addIfValid);
+    (svc.metadata?.gallery || []).forEach(addIfValid);
     (svc.rawConfig?.images || []).forEach(addIfValid);
-    (svc.rawConfig?.metadata?.listings || []).forEach((l: any) => addIfValid(l.imageUrl));
+    const svcListings = svc.metadata?.listings || svc.rawConfig?.metadata?.listings || [];
+    svcListings.forEach((l: any) => {
+      addIfValid(l.imageUrl);
+      addIfValid(l.image);
+      (l.images || []).forEach(addIfValid);
+      (l.metadata?.gallery || []).forEach(addIfValid);
+    });
   });
 
   // Fallback photos based on category (Turf/Sports vs Hotel)
@@ -263,12 +277,24 @@ export default function VenueProfilePage() {
   ];
 
   // Provide curated high-res photos if no custom images exist
-  const galleryImages: string[] = extractedImages.length > 0 
-    ? extractedImages 
+  const galleryImages: string[] = extractedImages.length > 0
+    ? extractedImages
     : (isFacility ? defaultTurfPhotos : defaultHotelPhotos);
 
-  const aboutText = finalMerchantObj.description || liveServices[0]?.rawConfig?.description;
-  const amenities = finalMerchantObj.amenities || [];
+  const firstSvc = liveServices[0];
+  const firstListing = firstSvc?.metadata?.listings?.[0] || firstSvc?.rawConfig?.metadata?.listings?.[0];
+  const aboutText = finalMerchantObj.description ||
+    finalMerchantObj.aboutText ||
+    finalMerchantObj.about ||
+    firstSvc?.description ||
+    firstSvc?.rawConfig?.description ||
+    firstListing?.description;
+
+  const amenities = (finalMerchantObj.amenities && finalMerchantObj.amenities.length > 0)
+    ? finalMerchantObj.amenities
+    : (finalMerchantObj.thingsToKnow && finalMerchantObj.thingsToKnow.length > 0)
+      ? finalMerchantObj.thingsToKnow
+      : (firstSvc?.metadata?.amenities || firstListing?.metadata?.amenities || []);
 
   const handleShare = () => {
     if (typeof window !== 'undefined') {
@@ -279,236 +305,38 @@ export default function VenueProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#090b10] text-slate-800 dark:text-slate-100 pt-24 sm:pt-28 pb-32 transition-colors">
-      {/* Top Sticky Navigation Bar */}
-      <div className="sticky top-[108px] z-40 bg-white/95 dark:bg-[#0f1219]/95 backdrop-blur-md border-b border-slate-200/90 dark:border-white/10 px-4 py-3 shadow-xs">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => router.back()} 
-              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-700 dark:text-slate-300 cursor-pointer"
-              title="Go back"
-            >
-              <ArrowLeft size={18} />
-            </button>
-            <div className="flex flex-col">
-              <span className="text-[10px] uppercase tracking-wider text-[#033266] dark:text-[#ff6325] font-bold">
-                {bookingType.replace('-', ' ')} • {city || 'Chennai'}
-              </span>
-              <h1 className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[220px] sm:max-w-md">
-                {venueName}
-              </h1>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleShare}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer border border-slate-200/80 dark:border-white/10"
-              title="Share hotel"
-            >
-              <span className="text-xs">🔗</span>
-              <span className="hidden sm:inline">{copiedShare ? 'Copied!' : 'Share'}</span>
-            </button>
-            <button
-              onClick={() => setIsSaved(!isSaved)}
-              className={`p-2 rounded-xl transition-all text-xs font-semibold flex items-center gap-1.5 cursor-pointer border ${
-                isSaved 
-                  ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400' 
-                  : 'bg-white dark:bg-slate-800 border-slate-200/80 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200'
-              }`}
-              title="Save to favorites"
-            >
-              <Heart size={14} className={isSaved ? 'fill-rose-500 text-rose-500' : 'text-slate-600 dark:text-slate-400'} />
-              <span className="hidden sm:inline">{isSaved ? 'Saved' : 'Save'}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 py-6">
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#090b10] text-slate-800 dark:text-slate-100 pt-20 sm:pt-24 pb-32 transition-colors">
+      <div className="max-w-6xl mx-auto px-4 py-4">
         {/* ============================================================
-         * SECTION A: HOTEL HEADER
+         * SECTION A: AGODA STANDARD BREADCRUMB & STREAMLINED HOTEL HEADER
          * ============================================================ */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 pb-2">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] text-[11px] font-bold flex items-center gap-1 border border-[#033266]/20 dark:border-[#ff6325]/30">
-                <span>✓</span> BokSpot Verified Stay
-              </span>
-              <div className="flex items-center text-amber-500 text-xs font-black tracking-widest">
-                ★★★★☆
-              </div>
-              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">• 4-Star Luxury Property</span>
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+        <div className="mb-5 space-y-3">
+          {/* Agoda Standard Breadcrumbs (Home > Category > City > Property) */}
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 overflow-x-auto whitespace-nowrap py-1">
+            <Link href="/" className="hover:text-[#033266] dark:hover:text-[#ff6325] hover:underline transition-colors">
+              Home
+            </Link>
+            <ChevronRight size={12} className="text-slate-400 shrink-0" />
+            <Link href={`/${bookingType}/${category}`} className="hover:text-[#033266] dark:hover:text-[#ff6325] hover:underline transition-colors capitalize">
+              {category ? category.replace('-', ' ') : 'Stays'}
+            </Link>
+            <ChevronRight size={12} className="text-slate-400 shrink-0" />
+            <span className="hover:text-[#033266] dark:hover:text-[#ff6325] hover:underline cursor-pointer transition-colors">
+              {city || 'Chennai'}
+            </span>
+            <ChevronRight size={12} className="text-slate-400 shrink-0" />
+            <span className="font-bold text-slate-800 dark:text-slate-200 truncate max-w-[200px] sm:max-w-none">
               {venueName}
-            </h1>
+            </span>
+          </nav>
 
-            <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
-              <span className="text-[#033266] dark:text-[#ff6325]">📍</span>
-              <span className="font-semibold text-slate-800 dark:text-slate-200">{address || `${city || 'Chennai'}, Tamil Nadu`}</span>
-              <span>•</span>
-              <a 
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address || venueName || 'Chennai')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#033266] dark:text-[#ff6325] font-bold hover:underline"
-              >
-                Show on map
-              </a>
-            </div>
-          </div>
-
-          {/* Review Score Badge */}
-          <div className="flex items-center gap-3 bg-white dark:bg-[#0f1219] p-3 rounded-2xl border border-slate-200 dark:border-white/10 shadow-xs self-start md:self-auto shrink-0">
-            <div className="text-right">
-              <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">Very Good</p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">324 verified reviews</p>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-[#033266] dark:bg-[#ff6325] text-white flex items-center justify-center font-black text-sm shadow-sm">
-              4.8
-            </div>
-          </div>
         </div>
 
         {/* ============================================================
-         * SECTION B: PREMIUM PHOTO GALLERY (Desktop Dynamic Bento & Mobile)
-         * ============================================================ */}
-        <div className="mb-8">
-          <div className="relative rounded-3xl overflow-hidden border border-slate-200/90 dark:border-white/10 shadow-sm bg-slate-100 dark:bg-slate-900">
-            {/* Desktop View: Adapts intelligently to image count */}
-            <div className="hidden md:block h-[420px] p-2.5">
-              {galleryImages.length === 1 ? (
-                <div 
-                  onClick={() => { setCurrentImageIdx(0); setIsGalleryOpen(true); }}
-                  className="w-full h-full relative rounded-2xl overflow-hidden cursor-pointer group bg-slate-200"
-                >
-                  <img 
-                    src={galleryImages[0]} 
-                    alt={`${venueName} primary photo`}
-                    className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500 ease-out"
-                    onError={(e) => { e.currentTarget.src = defaultHotelPhotos[0]; }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              ) : galleryImages.length <= 3 ? (
-                <div className="grid grid-cols-2 gap-2.5 h-full">
-                  <div 
-                    onClick={() => { setCurrentImageIdx(0); setIsGalleryOpen(true); }}
-                    className="relative rounded-2xl overflow-hidden cursor-pointer group bg-slate-200 h-full"
-                  >
-                    <img 
-                      src={galleryImages[0]} 
-                      alt={`${venueName} photo 1`}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                      onError={(e) => { e.currentTarget.src = defaultHotelPhotos[0]; }}
-                    />
-                  </div>
-                  <div className="grid grid-rows-2 gap-2.5 h-full">
-                    {[1, 2].slice(0, galleryImages.length - 1).map((idx) => (
-                      <div 
-                        key={idx}
-                        onClick={() => { setCurrentImageIdx(idx); setIsGalleryOpen(true); }}
-                        className="relative rounded-2xl overflow-hidden cursor-pointer group bg-slate-200 h-full"
-                      >
-                        <img 
-                          src={galleryImages[idx]} 
-                          alt={`${venueName} photo ${idx + 1}`}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                          onError={(e) => { e.currentTarget.src = defaultHotelPhotos[idx % defaultHotelPhotos.length]; }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                /* Standard 5-Photo Bento Grid (1 large primary + 4 supporting) */
-                <div className="grid grid-cols-4 grid-rows-2 gap-2.5 h-full">
-                  <div 
-                    onClick={() => { setCurrentImageIdx(0); setIsGalleryOpen(true); }}
-                    className="col-span-2 row-span-2 relative rounded-2xl overflow-hidden cursor-pointer group bg-slate-200"
-                  >
-                    <img 
-                      src={galleryImages[0]} 
-                      alt={`${venueName} primary photo`}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                      onError={(e) => { e.currentTarget.src = defaultHotelPhotos[0]; }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-
-                  {galleryImages.slice(1, 5).map((imgUrl, idx) => (
-                    <div 
-                      key={idx + 1}
-                      onClick={() => { setCurrentImageIdx(idx + 1); setIsGalleryOpen(true); }}
-                      className="relative rounded-2xl overflow-hidden cursor-pointer group bg-slate-200"
-                    >
-                      <img 
-                        src={imgUrl} 
-                        alt={`${venueName} preview ${idx + 2}`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                        onError={(e) => { e.currentTarget.src = defaultHotelPhotos[(idx + 1) % defaultHotelPhotos.length]; }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Mobile Carousel / Scrollable View */}
-            <div className="md:hidden relative h-64 w-full">
-              <img 
-                src={galleryImages[currentImageIdx] || galleryImages[0]} 
-                alt={venueName} 
-                className="w-full h-full object-cover"
-                onError={(e) => { e.currentTarget.src = defaultHotelPhotos[0]; }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-              
-              {galleryImages.length > 1 && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setCurrentImageIdx((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1))}
-                    className="absolute left-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white border border-white/20 text-xs shadow-md"
-                  >
-                    ‹
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCurrentImageIdx((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1))}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white border border-white/20 text-xs shadow-md"
-                  >
-                    ›
-                  </button>
-
-                  <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-full bg-black/70 text-white text-[10px] font-bold">
-                    {currentImageIdx + 1} / {galleryImages.length}
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* "See All Photos" CTA Floating Button */}
-            <button
-              onClick={() => { setCurrentImageIdx(0); setIsGalleryOpen(true); }}
-              className="absolute bottom-5 right-5 bg-white/95 dark:bg-slate-900/95 hover:bg-white dark:hover:bg-slate-900 text-slate-900 dark:text-white text-xs font-black px-4 py-2 rounded-xl shadow-lg border border-slate-200/80 dark:border-white/10 flex items-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
-            >
-              <span>📷</span>
-              <span>See all {galleryImages.length} photos</span>
-            </button>
-          </div>
-        </div>
-
-        {/* ============================================================
-         * SECTION C: STAY DETAILS SUMMARY BAR & EDIT SEARCH
+         * SECTION C: STAY DETAILS SUMMARY BAR & EDIT SEARCH (TOP POSITION)
          * ============================================================ */}
         {isHotel && (
-          <div className="mb-8">
+          <div className="mb-6">
             <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-sm flex flex-wrap items-center justify-between gap-4">
               <div className="flex flex-wrap items-center gap-6 text-xs">
                 {/* Stay Dates */}
@@ -577,56 +405,206 @@ export default function VenueProfilePage() {
 
             {/* Quick Inline Date / Occupancy Editor */}
             {isEditSearchOpen && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-3 p-4 bg-white dark:bg-[#0f1219] rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs"
+                className="mt-3 p-5 bg-white dark:bg-[#0f1219] rounded-3xl border border-slate-200 dark:border-white/10 shadow-lg text-xs space-y-4"
               >
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 block mb-1">Check-in Date</label>
-                  <input
-                    type="date"
-                    value={checkIn}
-                    onChange={(e) => setCheckIn(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 font-bold text-slate-900 dark:text-white outline-none focus:border-[#033266] dark:focus:border-[#ff6325]"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 block mb-1">Check-out Date</label>
-                  <input
-                    type="date"
-                    value={checkOut}
-                    onChange={(e) => setCheckOut(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 font-bold text-slate-900 dark:text-white outline-none focus:border-[#033266] dark:focus:border-[#ff6325]"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 block mb-1">Adults & Rooms</label>
-                  <div className="flex gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+                  {/* Check-in */}
+                  <div>
+                    <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                      Check-in Date
+                    </label>
+                    <input
+                      type="date"
+                      value={checkIn}
+                      onChange={(e) => setCheckIn(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white outline-none focus:border-[#033266] dark:focus:border-[#ff6325]"
+                    />
+                  </div>
+
+                  {/* Check-out */}
+                  <div>
+                    <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                      Check-out Date
+                    </label>
+                    <input
+                      type="date"
+                      value={checkOut}
+                      onChange={(e) => setCheckOut(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white outline-none focus:border-[#033266] dark:focus:border-[#ff6325]"
+                    />
+                  </div>
+
+                  {/* Adults */}
+                  <div>
+                    <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                      Adults (18+ yrs)
+                    </label>
                     <select
                       value={adults}
                       onChange={(e) => setAdults(Number(e.target.value))}
-                      className="w-1/2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-2.5 py-2 font-bold text-slate-900 dark:text-white outline-none"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white outline-none focus:border-[#033266] dark:focus:border-[#ff6325]"
                     >
-                      {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n} className="dark:bg-slate-800 dark:text-white">{n} Adult{n > 1 ? 's' : ''}</option>)}
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+                        <option key={n} value={n} className="dark:bg-slate-800 dark:text-white">
+                          {n} Adult{n > 1 ? 's' : ''}
+                        </option>
+                      ))}
                     </select>
+                  </div>
+
+                  {/* Children */}
+                  <div>
+                    <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                      Children (0–17 yrs)
+                    </label>
+                    <select
+                      value={children}
+                      onChange={(e) => {
+                        const newCount = Number(e.target.value);
+                        setChildren(newCount);
+                        setChildAges(prev => {
+                          const updated = [...prev];
+                          if (newCount > updated.length) {
+                            while (updated.length < newCount) updated.push(5);
+                          } else if (newCount < updated.length) {
+                            return updated.slice(0, newCount);
+                          }
+                          return updated;
+                        });
+                      }}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white outline-none focus:border-[#033266] dark:focus:border-[#ff6325]"
+                    >
+                      {[0, 1, 2, 3, 4, 5].map(n => (
+                        <option key={n} value={n} className="dark:bg-slate-800 dark:text-white">
+                          {n === 0 ? 'No Children' : `${n} Child${n > 1 ? 'ren' : ''}`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Rooms */}
+                  <div>
+                    <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                      Rooms Required
+                    </label>
                     <select
                       value={rooms}
                       onChange={(e) => setRooms(Number(e.target.value))}
-                      className="w-1/2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-2.5 py-2 font-bold text-slate-900 dark:text-white outline-none"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white outline-none focus:border-[#033266] dark:focus:border-[#ff6325]"
                     >
-                      {[1, 2, 3, 4].map(n => <option key={n} value={n} className="dark:bg-slate-800 dark:text-white">{n} Room{n > 1 ? 's' : ''}</option>)}
+                      {[1, 2, 3, 4, 5, 6].map(n => (
+                        <option key={n} value={n} className="dark:bg-slate-800 dark:text-white">
+                          {n} Room{n > 1 ? 's' : ''}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
-                <div className="flex items-end">
-                  <button
-                    type="button"
-                    onClick={() => setIsEditSearchOpen(false)}
-                    className="w-full py-2 bg-[#033266] dark:bg-[#ff6325] text-white rounded-xl font-bold hover:bg-[#022349] dark:hover:bg-[#e04e13] transition-colors cursor-pointer"
-                  >
-                    Apply Dates
-                  </button>
+
+                {/* Child Ages row if children > 0 */}
+                {children > 0 && (
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10">
+                    <span className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 block mb-2">
+                      Ages of Children (at checkout)
+                    </span>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {Array.from({ length: children }).map((_, cIdx) => (
+                        <div key={cIdx} className="flex items-center gap-1.5">
+                          <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">Child {cIdx + 1}:</span>
+                          <select
+                            value={childAges[cIdx] ?? 5}
+                            onChange={(e) => {
+                              const ageVal = Number(e.target.value);
+                              setChildAges(prev => {
+                                const copy = [...prev];
+                                copy[cIdx] = ageVal;
+                                return copy;
+                              });
+                            }}
+                            className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1 font-bold text-xs text-slate-900 dark:text-white outline-none"
+                          >
+                            {Array.from({ length: 18 }).map((_, age) => (
+                              <option key={age} value={age}>
+                                {age === 0 ? '< 1 yr' : `${age} yr${age > 1 ? 's' : ''}`}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Bottom Row: Pets Checkbox + Apply Button */}
+                <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-100 dark:border-white/10">
+                  {/* Pet traveling */}
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={pets}
+                        onChange={(e) => {
+                          const isChecked = e.target.checked;
+                          setPets(isChecked);
+                          if (isChecked && petCount === 0) setPetCount(1);
+                          if (!isChecked) setPetCount(0);
+                        }}
+                        className="w-4 h-4 rounded text-[#033266] dark:text-[#ff6325] focus:ring-0 cursor-pointer accent-[#033266] dark:accent-[#ff6325]"
+                      />
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                        <span>🐾</span> Traveling with Pets?
+                      </span>
+                    </label>
+
+                    {pets && (
+                      <div className="flex items-center gap-1.5 ml-2">
+                        <select
+                          value={petCount || 1}
+                          onChange={(e) => setPetCount(Number(e.target.value))}
+                          className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-900 dark:text-white outline-none"
+                        >
+                          {[1, 2, 3, 4].map(n => (
+                            <option key={n} value={n}>
+                              {n} Pet{n > 1 ? 's' : ''}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 ml-auto">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditSearchOpen(false)}
+                      className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditSearchOpen(false);
+                        const newQuery = new URLSearchParams(window.location.search);
+                        newQuery.set('checkIn', checkIn);
+                        newQuery.set('checkOut', checkOut);
+                        newQuery.set('adults', String(adults));
+                        newQuery.set('children', String(children));
+                        newQuery.set('childAges', encodeURIComponent(JSON.stringify(childAges)));
+                        newQuery.set('rooms', String(rooms));
+                        newQuery.set('pets', String(pets));
+                        newQuery.set('petCount', String(petCount));
+                        window.history.replaceState(null, '', `?${newQuery.toString()}`);
+                      }}
+                      className="px-6 py-2 bg-[#033266] dark:bg-[#ff6325] text-white rounded-xl font-black text-xs hover:bg-[#022349] dark:hover:bg-[#e04e13] active:scale-95 transition-all cursor-pointer shadow-md"
+                    >
+                      Apply Search
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -634,465 +612,1182 @@ export default function VenueProfilePage() {
         )}
 
         {/* ============================================================
-         * SECTION D1: HOTEL HIGHLIGHTS (Amenities, Check-in, Breakfast)
+         * SECTION B: OPTION 1 — 2-SIDES SPLIT HERO (Left: 58% Gallery | Right: 42% Overview & Map)
          * ============================================================ */}
-        {Boolean(
-          (amenities && amenities.length > 0) ||
-          liveServices[0]?.rawConfig?.isTimingEnabled ||
-          liveServices[0]?.rawConfig?.metadata?.listings?.[0]?.metadata?.hasAC ||
-          liveServices[0]?.rawConfig?.metadata?.listings?.[0]?.metadata?.hasWiFi ||
-          liveServices[0]?.rawConfig?.metadata?.listings?.[0]?.metadata?.hasBreakfast
-        ) && (
-          <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
-            <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
-              Property Highlights & Key Inclusions
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-white/5">
-                <div className="w-8 h-8 rounded-lg bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
-                  <CheckCircle2 size={16} />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500 block font-semibold">Connectivity</span>
-                  <span className="font-bold text-slate-900 dark:text-white truncate block">Free High-Speed Wi-Fi</span>
-                </div>
-              </div>
+        <div className="mb-8 grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
 
-              <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-white/5">
-                <div className="w-8 h-8 rounded-lg bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
-                  <Clock size={16} />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500 block font-semibold">Check-in / Out</span>
-                  <span className="font-bold text-slate-900 dark:text-white truncate block">
-                    {liveServices[0]?.rawConfig?.timingDetails || 'Flexible Check-in'}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-white/5">
-                <div className="w-8 h-8 rounded-lg bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
-                  <MapPin size={16} />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500 block font-semibold">Locality</span>
-                  <span className="font-bold text-slate-900 dark:text-white truncate block">
-                    {city || 'Prime Location'}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-white/5">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold shrink-0 border border-emerald-100 dark:border-emerald-900/50">
-                  <span>🛡️</span>
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[10px] text-emerald-700 dark:text-emerald-400 block font-semibold">Trust & Safety</span>
-                  <span className="font-bold text-slate-900 dark:text-white truncate block">Verified Partner</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ============================================================
-         * SECTION D2: ABOUT HOTEL & LOCATION OVERVIEW (Two-Column Layout)
-         * ============================================================ */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-8">
-          {/* About & Amenities Column */}
-          <div className="lg:col-span-7 flex flex-col justify-between bg-white dark:bg-[#0f1219] rounded-3xl p-5 sm:p-6 border border-slate-200/90 dark:border-white/10 shadow-xs space-y-4">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">About {venueName}</h2>
-                <span className="text-[10px] font-bold text-[#033266] dark:text-[#ff6325] bg-[#033266]/10 dark:bg-[#ff6325]/15 px-2.5 py-0.5 rounded-full border border-[#033266]/20 dark:border-[#ff6325]/30">
-                  Verified Stay
-                </span>
-              </div>
-              <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
-                {aboutText 
-                  ? (isAboutExpanded || aboutText.length <= 220 ? aboutText : `${aboutText.slice(0, 220)}...`)
-                  : `${venueName} provides comfortable, well-curated rooms designed for modern business travelers, tourists, and families visiting ${city || 'the area'}.`}
-              </p>
-              {aboutText && aboutText.length > 220 && (
-                <button
-                  type="button"
-                  onClick={() => setIsAboutExpanded(!isAboutExpanded)}
-                  className="mt-2.5 text-xs font-bold text-[#033266] dark:text-[#ff6325] hover:opacity-80 cursor-pointer inline-flex items-center gap-1 transition-opacity"
+          {/* Side 1: Left 58% (lg:col-span-7) — Modern Dynamic Photo Gallery */}
+          <div className="lg:col-span-7 relative rounded-3xl overflow-hidden border border-slate-200/90 dark:border-white/10 shadow-sm bg-slate-100 dark:bg-slate-900 flex flex-col justify-between">
+            {/* Desktop Dynamic Bento Layout (370px height for optimal proportion) */}
+            <div className="hidden md:block h-[370px] p-2.5">
+              <div className="grid grid-cols-3 grid-rows-2 gap-2.5 h-full">
+                {/* Main Featured Photo (2 cols x 2 rows) */}
+                <div
+                  onClick={() => { setCurrentImageIdx(0); setIsGalleryOpen(true); }}
+                  className="col-span-2 row-span-2 relative rounded-2xl overflow-hidden cursor-pointer group bg-slate-200"
                 >
-                  <span>{isAboutExpanded ? 'Show less ↑' : 'Read more →'}</span>
-                </button>
+                  <img
+                    src={galleryImages[0]}
+                    alt={`${venueName} primary photo`}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                    onError={(e) => { e.currentTarget.src = defaultHotelPhotos[0]; }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute top-3 left-3 px-3 py-1 rounded-xl bg-black/60 backdrop-blur-md text-white text-[11px] font-bold shadow-sm">
+                    ✨ Featured Property
+                  </div>
+                </div>
+
+                {/* 2 Supporting Side Thumbnails */}
+                {galleryImages.slice(1, 3).map((imgUrl, idx) => (
+                  <div
+                    key={idx + 1}
+                    onClick={() => { setCurrentImageIdx(idx + 1); setIsGalleryOpen(true); }}
+                    className="relative rounded-2xl overflow-hidden cursor-pointer group bg-slate-200"
+                  >
+                    <img
+                      src={imgUrl}
+                      alt={`${venueName} preview ${idx + 2}`}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                      onError={(e) => { e.currentTarget.src = defaultHotelPhotos[(idx + 1) % defaultHotelPhotos.length]; }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Mobile Carousel View */}
+            <div className="md:hidden relative h-60 w-full">
+              <img
+                src={galleryImages[currentImageIdx] || galleryImages[0]}
+                alt={venueName}
+                className="w-full h-full object-cover"
+                onError={(e) => { e.currentTarget.src = defaultHotelPhotos[0]; }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+
+              {galleryImages.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentImageIdx((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1))}
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white border border-white/20 text-xs shadow-md"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentImageIdx((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1))}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white border border-white/20 text-xs shadow-md"
+                  >
+                    ›
+                  </button>
+                  <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-full bg-black/70 text-white text-[10px] font-bold">
+                    {currentImageIdx + 1} / {galleryImages.length}
+                  </div>
+                </>
               )}
             </div>
 
-            {/* Popular Amenities Pills */}
-            {amenities && amenities.length > 0 && (
-              <div className="pt-3 border-t border-slate-100 dark:border-white/10">
-                <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
-                  Featured Amenities
-                </h3>
-                <div className="flex flex-wrap gap-2 text-xs text-slate-700 dark:text-slate-300">
-                  {amenities.slice(0, 6).map((amenity: string, idx: number) => (
-                    <span 
-                      key={idx} 
-                      className="px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 font-medium flex items-center gap-1.5"
-                    >
-                      <CheckCircle2 size={13} className="text-[#033266] dark:text-[#ff6325]" /> {amenity}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Floating "See All Photos" CTA Badge */}
+            <button
+              onClick={() => { setCurrentImageIdx(0); setIsGalleryOpen(true); }}
+              className="absolute bottom-4 right-4 bg-white/95 dark:bg-slate-900/95 hover:bg-white dark:hover:bg-slate-900 text-slate-900 dark:text-white text-xs font-black px-4 py-2 rounded-xl shadow-lg border border-slate-200/80 dark:border-white/10 flex items-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
+            >
+              <span>📷</span>
+              <span>View All {galleryImages.length} Photos</span>
+            </button>
           </div>
 
-          {/* Location & Map Preview Column */}
-          <div className="lg:col-span-5 bg-white dark:bg-[#0f1219] rounded-3xl p-5 border border-slate-200/90 dark:border-white/10 shadow-xs flex flex-col justify-between space-y-3">
+          {/* Side 2: Right 42% (lg:col-span-5) — Agoda-Style Combined Property Highlights & Mini Map Card */}
+          <div className="lg:col-span-5 rounded-3xl p-5 sm:p-6 bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-sm flex flex-col justify-between space-y-4">
+
+            {/* Property Title & Quick Actions Header */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <h3 className="font-extrabold text-base text-slate-900 dark:text-white">Location & Area</h3>
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">{city || 'Chennai'}</span>
-              </div>
-              {address && (
-                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mb-2.5 flex items-center gap-1">
-                  <MapPin size={13} className="text-[#033266] dark:text-[#ff6325] shrink-0" />
-                  <span>{address}</span>
-                </p>
-              )}
+              <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-white/10 mb-3">
+                <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight truncate">
+                  {venueName}
+                </h1>
 
-              {/* Embedded Google Map Preview */}
-              {(() => {
-                const lat = finalMerchantObj.latitude || liveServices[0]?.merchantObj?.latitude;
-                const lng = finalMerchantObj.longitude || liveServices[0]?.merchantObj?.longitude;
-                const mapQuery = (lat && lng) ? `${lat},${lng}` : encodeURIComponent(address || venueName || 'Chennai');
+                {/* Share & Save Actions */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleShare}
+                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl transition-colors text-xs font-bold border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0f1219] shadow-xs cursor-pointer active:scale-95"
+                    title="Share property"
+                  >
+                    <span>🔗</span>
+                  </button>
 
-                return (
-                  <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 relative bg-slate-100 dark:bg-slate-800">
-                    <div className="h-44 sm:h-48 w-full relative">
-                      <iframe
-                        title="Property Location Map"
-                        width="100%"
-                        height="100%"
-                        frameBorder="0"
-                        style={{ border: 0 }}
-                        src={`https://maps.google.com/maps?q=${mapQuery}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
-                        loading="lazy"
-                        allowFullScreen
-                      />
-                    </div>
-                    <div className="p-2.5 bg-slate-50 dark:bg-slate-800/90 border-t border-slate-200 dark:border-white/10 flex items-center justify-between">
-                      <span className="text-[11px] text-slate-600 dark:text-slate-300 font-medium truncate max-w-[170px]">
-                        {venueName}
-                      </span>
-                      <a 
-                        href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="text-[11px] font-bold text-[#033266] dark:text-[#ff6325] hover:underline shrink-0"
-                      >
-                        View on Map &rarr;
-                      </a>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-
-            {/* Nearby Landmarks if available */}
-            {Array.isArray(finalMerchantObj.metadata?.aroundProperty) && finalMerchantObj.metadata.aroundProperty.length > 0 && (
-              <div className="pt-2 border-t border-slate-100 dark:border-white/10">
-                <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-600 dark:text-slate-400 font-medium">
-                  {finalMerchantObj.metadata.aroundProperty.slice(0, 3).map((item: any, idx: number) => (
-                    <span key={idx} className="flex items-center gap-1">
-                      <span>📍</span> {item.name || item.title} ({item.distance || ''})
-                    </span>
-                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setIsSaved(!isSaved)}
+                    className={`p-2 rounded-xl transition-all text-xs font-bold border shadow-xs cursor-pointer active:scale-95 ${isSaved
+                      ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400'
+                      : 'bg-white dark:bg-[#0f1219] border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                      }`}
+                    title="Save to favorites"
+                  >
+                    <Heart size={14} className={isSaved ? 'fill-rose-500 text-rose-500' : 'text-slate-600 dark:text-slate-400'} />
+                  </button>
                 </div>
               </div>
-            )}
+
+              {/* Catchy Bio / Summary Text */}
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-3">
+                {aboutText || `${venueName} features luxury air-conditioned accommodations, outdoor swimming pools, multi-cuisine dining, and 24/7 dedicated guest assistance along the scenic East Coast corridor.`}
+              </p>
+            </div>
+
+
+            {/* Middle: Amenities Grid & Check-in Pill */}
+            <div className="space-y-3">
+              <span className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block tracking-wider">
+                Property Highlights & Inclusions
+              </span>
+              <div className="grid grid-cols-2 gap-2.5">
+                {(amenities && amenities.length > 0 ? amenities.slice(0, 6) : ['Free High-Speed Wi-Fi', 'Swimming Pool', 'Air Conditioned', '24/7 Front Desk', 'Private Bath', 'Daily Housekeeping']).map((am: string, idx: number) => (
+                  <div key={idx} className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-white/5 shadow-2xs">
+                    <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0 stroke-[2.5]" />
+                    <span className="truncate text-[11px]">{am}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Check-in & Check-out Timings Bar */}
+              <div className="px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                <span className="flex items-center gap-1.5">🕒 Check-in: <strong className="text-slate-800 dark:text-slate-200 font-extrabold">12:00 PM</strong></span>
+                <span>•</span>
+                <span className="flex items-center gap-1.5">Check-out: <strong className="text-slate-800 dark:text-slate-200 font-extrabold">11:00 AM</strong></span>
+              </div>
+            </div>
+
+            {/* Bottom Quick-Action: View on Map */}
+            <div className="pt-2 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById('property-location-section');
+                  el?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="text-xs font-extrabold text-[#033266] dark:text-[#ff6325] hover:underline flex items-center gap-1 cursor-pointer py-1"
+              >
+                <span>📍 View Location on Map</span>
+                <span>&darr;</span>
+              </button>
+
+              <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500">
+                Rooms listed below ↓
+              </span>
+            </div>
+
           </div>
         </div>
 
+
+
         {/* ============================================================
-         * SECTION D3: AVAILABLE ROOM CATEGORIES
+         * SECTION D3: DYNAMIC ACCOMMODATION CATEGORIES (TOP BOOKING PRIORITY)
          * ============================================================ */}
         {isHotel && (
-          <div id="available-rooms-section" className="space-y-6 mt-8">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-slate-200 dark:border-white/10 pb-3">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-                Available Room Categories
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                All rooms include clean linens, ensuite bathroom, and standard hotel hospitality.
-              </p>
-            </div>
-            <span className="text-xs font-bold px-3 py-1 bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] rounded-full border border-[#033266]/20 dark:border-[#ff6325]/30 self-start sm:self-auto">
-              {liveServices.filter((svc: any) => svc.name !== '__BOKSPOT_GROUP__').length} Types Available
-            </span>
-          </div>
+          <div id="available-rooms-section" className="space-y-6 mb-10">
+            {(() => {
+              const catTitleMap: Record<string, { title: string; subtitle: string; unitName: string }> = {
+                villas: {
+                  title: 'Select Your Villa',
+                  subtitle: 'Choose your preferred villa unit and proceed to booking.',
+                  unitName: 'Villa'
+                },
+                resorts: {
+                  title: 'Select Your Room',
+                  subtitle: 'Choose your room type and proceed to booking.',
+                  unitName: 'Option'
+                },
+                hostels: {
+                  title: 'Select Your Dorm',
+                  subtitle: 'Choose your dorm or bed type and proceed to booking.',
+                  unitName: 'Bed'
+                },
+                camping: {
+                  title: 'Select Your Tent',
+                  subtitle: 'Choose your camping setup and proceed to booking.',
+                  unitName: 'Tent'
+                },
+                hotels: {
+                  title: 'Select Your Room',
+                  subtitle: 'Choose your room type and proceed to booking.',
+                  unitName: 'Room'
+                }
+              };
 
-          {/* Rooms List */}
-          <div className="space-y-4">
-            {liveServices.filter((svc: any) => svc.name !== '__BOKSPOT_GROUP__').length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400 italic p-8 rounded-2xl border border-slate-200 dark:border-white/10 text-center bg-white dark:bg-[#0f1219] shadow-xs">
-                No specific rooms have been listed by the property yet.
-              </p>
-            ) : (
-              liveServices.filter((svc: any) => svc.name !== '__BOKSPOT_GROUP__').map((svc, sIdx) => {
-                const listings = svc.rawConfig?.metadata?.listings || svc.metadata?.listings || [];
-                const startingPrice = Number(svc.price || svc.basePrice || svc.rawConfig?.basePrice || listings[0]?.price) || 2200;
-                const stayTotal = startingPrice * nights * rooms;
-                const primaryListing = listings[0] || {};
-                const primaryMeta = primaryListing.metadata || svc.metadata || {};
-                const maxGuests = primaryMeta.maxGuests || 2;
-                const bedType = primaryMeta.bedType;
-                const roomSize = primaryMeta.sizeSqFt || primaryMeta.roomSize;
-                const bathroomType = primaryMeta.bathroomType;
-                const perks = Array.isArray(primaryMeta.perks) ? primaryMeta.perks : (primaryMeta.perks ? [primaryMeta.perks] : []);
-                const roomAmenities = Array.isArray(primaryMeta.amenities) ? primaryMeta.amenities : [];
-                
-                // Pick valid image, exclude generic screenshot data urls
-                const rawThumb = svc.imageUrl || svc.image || svc.metadata?.mainImageUrl || svc.metadata?.images?.[0] || listings[0]?.imageUrl;
-                const thumb = (rawThumb && !rawThumb.includes('screenshot') && !rawThumb.startsWith('blob:')) 
-                  ? rawThumb 
-                  : defaultHotelPhotos[sIdx % defaultHotelPhotos.length];
+              const dynamicHeading = catTitleMap[category] || {
+                title: 'Select Your Room',
+                subtitle: 'Choose your stay option and proceed directly to booking.',
+                unitName: 'Option'
+              };
 
-                const isNonAc = svc.name?.toLowerCase().includes('non ac') || svc.name?.toLowerCase().includes('non-ac');
+              return (
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-slate-200 dark:border-white/10 pb-3">
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                      {dynamicHeading.title}
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {dynamicHeading.subtitle}
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold px-3 py-1 bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] rounded-full border border-[#033266]/20 dark:border-[#ff6325]/30 self-start sm:self-auto">
+                    {(() => {
+                      let total = 0;
+                      liveServices.filter((svc: any) => svc.name !== '__BOKSPOT_GROUP__').forEach((svc: any) => {
+                        const cnt = (svc.metadata?.listings || svc.rawConfig?.metadata?.listings || []).length;
+                        total += cnt > 0 ? cnt : 1;
+                      });
+                      return `${total} ${dynamicHeading.unitName}${total !== 1 ? 's' : ''} Available`;
+                    })()}
+                  </span>
+                </div>
+              );
+            })()}
 
-                return (
-                  <div 
-                    key={svc.id || sIdx}
-                    className="bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 hover:border-[#033266]/30 dark:hover:border-[#ff6325]/40 rounded-3xl p-5 shadow-xs hover:shadow-md transition-all duration-300"
-                  >
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-                      {/* Room Photo */}
-                      <div 
-                        onClick={() => {
-                          setActiveRoomService(svc);
-                          setRoomModalStep('DETAILS');
-                          setSelectedAddonIds([]);
-                          setRoomModalImageIdx(0);
-                        }}
-                        className="lg:col-span-4 h-52 sm:h-56 rounded-2xl overflow-hidden relative group cursor-pointer border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-800 shrink-0"
-                      >
-                        <img 
-                          src={thumb} 
-                          alt={svc.name} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                          onError={(e) => { e.currentTarget.src = defaultHotelPhotos[0]; }}
-                        />
-                        <div className="absolute top-2.5 left-2.5 bg-[#033266]/90 dark:bg-[#ff6325]/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold text-white uppercase tracking-wider shadow-xs">
-                          {listings.length > 0 ? `${listings.length} Unit Options` : 'Instant Reserve'}
-                        </div>
-                        <div className="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-lg bg-black/75 backdrop-blur-md text-white text-[10px] font-bold">
-                          View Specs &rarr;
-                        </div>
-                      </div>
+            {/* Rooms List */}
+            <div className="space-y-4">
+              {(() => {
+                const nonGroupServices = liveServices.filter((svc: any) => svc.name !== '__BOKSPOT_GROUP__');
+                const roomItems: any[] = [];
 
-                      {/* Room Details & Specifications */}
-                      <div className="lg:col-span-5 flex flex-col justify-between space-y-3">
-                        <div>
-                          <h3 
-                            onClick={() => {
-                              setActiveRoomService(svc);
-                              setRoomModalStep('DETAILS');
-                              setSelectedAddonIds([]);
-                              setRoomModalImageIdx(0);
-                            }}
-                            className="font-black text-lg text-slate-900 dark:text-white hover:text-[#033266] dark:hover:text-[#ff6325] cursor-pointer transition-colors"
-                          >
-                            {svc.name}
-                          </h3>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1.5 leading-relaxed">
-                            {svc.description || primaryListing.description || 'Spacious and welcoming accommodation with comfortable bedding, clean linens, and private ensuite bathroom.'}
-                          </p>
-                        </div>
+                nonGroupServices.forEach((svc: any, sIdx: number) => {
+                  const listings = svc.metadata?.listings || svc.rawConfig?.metadata?.listings || [];
+                  if (listings.length > 0) {
+                    listings.forEach((l: any, lIdx: number) => {
+                      const lMeta = l.metadata || {};
+                      const lPrice = Number(l.basePrice || l.price || svc.basePrice || svc.price) || 2200;
+                      const lName = l.name || svc.name;
+                      const lDesc = l.description || svc.description || 'Spacious and welcoming accommodation with comfortable bedding, clean linens, and private ensuite bathroom.';
+                      const rawThumb = l.imageUrl || l.image || lMeta.gallery?.[0] || l.images?.[0] || svc.imageUrl || svc.image;
+                      const thumb = (rawThumb && !rawThumb.includes('screenshot') && !rawThumb.startsWith('blob:'))
+                        ? rawThumb
+                        : defaultHotelPhotos[(sIdx + lIdx) % defaultHotelPhotos.length];
 
-                        {/* Specs Pills: Bed, Capacity, Size, Bathroom (Render if available) */}
-                        <div className="flex flex-wrap gap-2 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                          <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center gap-1.5">
-                            <Users size={13} className="text-[#033266] dark:text-[#ff6325]" /> Fits {maxGuests} Adults
-                          </span>
-                          {bedType && (
-                            <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center gap-1.5">
-                              <Bed size={13} className="text-[#033266] dark:text-[#ff6325]" /> {bedType}
-                            </span>
-                          )}
-                          {roomSize && (
-                            <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center gap-1.5">
-                              <span>📐</span> {roomSize} sq.ft
-                            </span>
-                          )}
-                          {bathroomType && (
-                            <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center gap-1.5">
-                              <span>🚿</span> {bathroomType}
-                            </span>
-                          )}
-                          <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center gap-1.5">
-                            <span>{isNonAc ? '💨' : '❄️'}</span> {isNonAc ? 'Natural Airflow / Fan' : 'Air Conditioned'}
-                          </span>
-                        </div>
+                      roomItems.push({
+                        id: l.id || `${svc.id}-${lIdx}`,
+                        parentService: svc,
+                        listing: l,
+                        name: lName,
+                        description: lDesc,
+                        price: lPrice,
+                        thumb,
+                        maxGuests: Number(l.maxGuests || lMeta.maxGuests) || 2,
+                        bedType: l.bedType || lMeta.bedType,
+                        roomSize: l.sizeSqFt || lMeta.sizeSqFt || lMeta.roomSize,
+                        bathroomType: l.bathroomType || lMeta.bathroomType,
+                        perks: Array.isArray(l.perks) ? l.perks : (Array.isArray(lMeta.perks) ? lMeta.perks : (lMeta.perks ? [lMeta.perks] : [])),
+                        roomAmenities: Array.isArray(l.amenities) ? l.amenities : (Array.isArray(lMeta.amenities) ? lMeta.amenities : []),
+                        addons: l.addons || lMeta.addons || svc.metadata?.addons || svc.addOns || [],
+                        gallery: (l.images && l.images.length > 0) ? l.images : (lMeta.gallery || [thumb])
+                      });
+                    });
+                  } else {
+                    // Fallback for services without nested listings array
+                    const primaryMeta = svc.metadata || {};
+                    const sPrice = Number(svc.price || svc.basePrice) || 2200;
+                    const rawThumb = svc.imageUrl || svc.image;
+                    const thumb = (rawThumb && !rawThumb.includes('screenshot') && !rawThumb.startsWith('blob:'))
+                      ? rawThumb
+                      : defaultHotelPhotos[sIdx % defaultHotelPhotos.length];
 
-                        {/* Inclusions & Business Perks Badges */}
-                        <div className="flex flex-wrap gap-1.5 pt-1 text-[11px]">
-                          {perks.length > 0 ? (
-                            perks.map((perk: string, pIdx: number) => {
-                              const cleanPerk = (perk || '')
-                                .replace(/([a-z])([A-Z])/g, '$1 $2')
-                                .replace(/Freelaunch/i, 'Free Lunch')
-                                .replace(/freedinner/i, 'Free Dinner')
-                                .replace(/Freewifi/i, 'Free Wi-Fi')
-                                .replace(/smarttv/i, 'Smart TV')
-                                .replace(/balconyview/i, 'Balcony View')
-                                .replace(/oceanview/i, 'Ocean View')
-                                .replace(/seaview/i, 'Sea View')
-                                .replace(/swimmingpool/i, 'Swimming Pool')
-                                .replace(/ComplimentorbuffetBreakfast/i, 'Complimentary Buffet Breakfast')
-                                .replace(/buffetbreakfast/i, 'Buffet Breakfast')
-                                .replace(/breakfast/i, 'Breakfast')
-                                .replace(/firecamp/i, 'Fire Camp')
-                                .replace(/waterbottle/i, 'Water Bottle')
-                                .trim();
-                              const formattedPerk = cleanPerk.charAt(0).toUpperCase() + cleanPerk.slice(1);
-                              return (
-                                <span key={pIdx} className="px-2.5 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 font-bold border border-amber-200 dark:border-amber-900/50 flex items-center gap-1">
-                                  🎁 {formattedPerk}
-                                </span>
-                              );
-                            })
-                          ) : (
-                            <>
-                              <span className="px-2.5 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-900/50 flex items-center gap-1">
-                                ✓ Free Wi-Fi
-                              </span>
-                              <span className="px-2.5 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-900/50 flex items-center gap-1">
-                                ✓ Free Cancellation (24h before)
-                              </span>
-                            </>
-                          )}
-                          {roomAmenities.slice(0, 3).map((am: string, aIdx: number) => {
-                            const cleanAm = (am || '')
-                              .replace(/([a-z])([A-Z])/g, '$1 $2')
-                              .replace(/balconyview/i, 'Balcony View')
-                              .replace(/oceanview/i, 'Ocean View')
-                              .replace(/seaview/i, 'Sea View')
-                              .replace(/smarttv/i, 'Smart TV')
-                              .replace(/freewifi/i, 'Free Wi-Fi')
-                              .replace(/swimmingpool/i, 'Swimming Pool')
-                              .trim();
-                            const formattedAmenity = cleanAm.charAt(0).toUpperCase() + cleanAm.slice(1);
-                            return (
-                              <span key={aIdx} className="px-2.5 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium border border-slate-200 dark:border-white/10">
-                                {formattedAmenity}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      </div>
+                    roomItems.push({
+                      id: svc.id,
+                      parentService: svc,
+                      listing: null,
+                      name: svc.name,
+                      description: svc.description || 'Spacious and welcoming accommodation with comfortable bedding, clean linens, and private ensuite bathroom.',
+                      price: sPrice,
+                      thumb,
+                      maxGuests: Number(primaryMeta.maxGuests) || 2,
+                      bedType: primaryMeta.bedType,
+                      roomSize: primaryMeta.sizeSqFt || primaryMeta.roomSize,
+                      bathroomType: primaryMeta.bathroomType,
+                      perks: Array.isArray(primaryMeta.perks) ? primaryMeta.perks : (primaryMeta.perks ? [primaryMeta.perks] : []),
+                      roomAmenities: Array.isArray(primaryMeta.amenities) ? primaryMeta.amenities : [],
+                      addons: svc.metadata?.addons || svc.addOns || [],
+                      gallery: svc.images || [thumb]
+                    });
+                  }
+                });
 
-                      {/* Pricing Column & Booking Actions */}
-                      <div className="lg:col-span-3 flex lg:flex-col items-center lg:items-end justify-between border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-white/10 pt-4 lg:pt-0 lg:pl-6 gap-3">
-                        <div className="text-left lg:text-right">
-                          <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider block">
-                            Price per night
-                          </span>
-                          <div className="flex items-baseline gap-1 mt-0.5">
-                            <span className="text-2xl font-black text-[#033266] dark:text-[#ff6325]">
-                              ₹{startingPrice.toLocaleString()}
-                            </span>
-                          </div>
-                          <span className="text-[11px] text-slate-600 dark:text-slate-300 font-semibold block mt-1">
-                            Total stay: <strong className="text-slate-900 dark:text-white">₹{stayTotal.toLocaleString()}</strong> ({nights}N)
-                          </span>
-                          <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold block mt-0.5">
-                            + taxes & fees included
-                          </span>
-                        </div>
+                if (roomItems.length === 0) {
+                  return (
+                    <p className="text-sm text-slate-500 dark:text-slate-400 italic p-8 rounded-2xl border border-slate-200 dark:border-white/10 text-center bg-white dark:bg-[#0f1219] shadow-xs">
+                      No specific rooms have been listed by the property yet.
+                    </p>
+                  );
+                }
 
-                        <div className="flex flex-col sm:flex-row lg:flex-col gap-2 w-full lg:w-auto">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const roomListings = svc.rawConfig?.metadata?.listings || svc.metadata?.listings || [];
-                              const roomMeta = roomListings[0]?.metadata || svc.metadata || {};
-                              const rawAddons = roomMeta.addons || svc.metadata?.addons || svc.addOns || [];
-                              const partnerListingAddons = Array.isArray(rawAddons) ? rawAddons : [];
+                return roomItems.map((roomItem, rIdx) => {
+                  const startingPrice = roomItem.price;
+                  const stayTotal = startingPrice * nights * rooms;
+                  const maxGuests = roomItem.maxGuests;
+                  const bedType = roomItem.bedType;
+                  const roomSize = roomItem.roomSize;
+                  const bathroomType = roomItem.bathroomType;
+                  const perks = roomItem.perks;
+                  const roomAmenities = roomItem.roomAmenities;
+                  const thumb = roomItem.thumb;
+                  const isNonAc = roomItem.name?.toLowerCase().includes('non ac') || roomItem.name?.toLowerCase().includes('non-ac');
 
-                              // If room has add-ons configured by merchant, show add-ons step; otherwise direct checkout!
-                              if (partnerListingAddons.length > 0) {
-                                setActiveRoomService(svc);
-                                setRoomModalStep('ADDONS');
+                  const servicePayloadForModal = {
+                    ...roomItem.parentService,
+                    id: roomItem.parentService.id,
+                    selectedListingId: roomItem.id,
+                    name: roomItem.name,
+                    description: roomItem.description,
+                    price: roomItem.price,
+                    basePrice: roomItem.price,
+                    imageUrl: thumb,
+                    images: roomItem.gallery,
+                    metadata: {
+                      ...(roomItem.parentService.metadata || {}),
+                      ...(roomItem.listing?.metadata || {}),
+                      gallery: roomItem.gallery,
+                      addons: roomItem.addons,
+                      maxGuests,
+                      bedType,
+                      sizeSqFt: roomSize,
+                      bathroomType,
+                      perks,
+                      amenities: roomAmenities,
+                      listings: roomItem.listing ? [roomItem.listing] : (roomItem.parentService.metadata?.listings || [])
+                    }
+                  };
+
+                  const listingMeta = roomItem.listing?.metadata || {};
+                  const merchantOriginalPrice = Number(listingMeta.originalPrice ?? (roomItem.listing as any)?.originalPrice ?? 0);
+                  const merchantDiscountPct = Number(listingMeta.discountPercentage ?? (roomItem.listing as any)?.discountPercentage ?? 0);
+                  const offerBadgeText = listingMeta.offerBadge || (roomItem.listing as any)?.offerBadge || '';
+                  const merchantBannerTagline = listingMeta.bannerTagline || (roomItem.listing as any)?.bannerTagline || '';
+
+                  // Dynamic original price & discount calculation:
+                  // 1) If merchant gave explicit discount % (e.g. 10%), use that directly!
+                  // 2) If merchant gave original price > selling price, calculate %
+                  // 3) Fallback to 20% standard only if neither is provided
+                  let discountPct = 20;
+                  let originalPrice = Math.round(startingPrice * 1.25);
+
+                  if (merchantDiscountPct > 0) {
+                    discountPct = merchantDiscountPct;
+                    originalPrice = merchantOriginalPrice > startingPrice
+                      ? merchantOriginalPrice
+                      : Math.round(startingPrice / (1 - merchantDiscountPct / 100));
+                  } else if (merchantOriginalPrice > startingPrice) {
+                    originalPrice = merchantOriginalPrice;
+                    discountPct = Math.round(((merchantOriginalPrice - startingPrice) / merchantOriginalPrice) * 100);
+                  }
+
+                  const roomGallery = (roomItem.gallery && roomItem.gallery.length > 0) ? roomItem.gallery : [thumb];
+                  const totalReviews = 120 + ((rIdx * 17) % 45);
+                  const roomRating = (4.7 + ((rIdx * 0.1) % 0.3)).toFixed(1);
+
+                  return (
+                    <div
+                      key={roomItem.id || rIdx}
+                      className="bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 rounded-3xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-all duration-300"
+                    >
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+
+                        {/* ==============================================================
+                         * COLUMN 1: LEFT (lg:col-span-4) - Image Carousel + Thumbnails + Title/Bio
+                         * ============================================================== */}
+                        <div className="lg:col-span-4 flex flex-col justify-between space-y-4">
+                          <div>
+                            {/* Main Room Image with badges & navigation */}
+                            <div
+                              onClick={() => {
+                                setActiveRoomService(servicePayloadForModal);
+                                setRoomModalStep('DETAILS');
                                 setSelectedAddonIds([]);
                                 setRoomModalImageIdx(0);
-                              } else {
-                                // Direct checkout with room
-                                const roomPrice = Number(svc.price || svc.basePrice || roomListings[0]?.price) || 2500;
-                                const roomTotal = roomPrice * nights * rooms;
-                                const slotStr = `${checkIn} to ${checkOut} (${nights} Night${nights > 1 ? 's' : ''}) • ${adults + children} Guests • ${rooms} Room${rooms > 1 ? 's' : ''}`;
+                              }}
+                              className="h-56 sm:h-64 rounded-2xl overflow-hidden relative group cursor-pointer border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-800"
+                            >
+                              <img
+                                src={thumb}
+                                alt={roomItem.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                onError={(e) => { e.currentTarget.src = defaultHotelPhotos[0]; }}
+                              />
+                              {/* Remaining Units Badge */}
+                              <div className="absolute top-3 left-3 bg-[#033266]/90 dark:bg-[#ff6325]/90 backdrop-blur-md px-3 py-1 rounded-xl text-[11px] font-black text-white flex items-center gap-1.5 shadow-md">
+                                <Users size={12} />
+                                <span>{roomItem.listing?.metadata?.totalUnits ? `${roomItem.listing.metadata.totalUnits} UNITS LEFT` : '3 UNITS LEFT'}</span>
+                              </div>
 
-                                setSelectedService({
-                                  ...svc,
-                                  price: roomTotal,
-                                  name: `${venueName} — ${svc.name || 'Room'}`,
-                                  metadata: {
-                                    ...(svc.metadata || {}),
-                                    hotelBooking: {
-                                      venueName,
-                                      address,
-                                      roomType: svc.name,
-                                      checkIn,
-                                      checkOut,
-                                      nights,
-                                      rooms,
-                                      adults,
-                                      children,
-                                      childAges,
-                                      pets,
-                                      petCount,
-                                      selectedAddons: [],
-                                      pricePerNight: roomPrice,
-                                      totalPrice: roomTotal
-                                    }
-                                  }
-                                });
+                              {/* See Photos Pill Button */}
+                              <button
+                                type="button"
+                                className="absolute bottom-3 left-3 px-3 py-1.5 rounded-xl bg-black/75 hover:bg-black/90 backdrop-blur-md text-white text-[11px] font-bold shadow-md flex items-center gap-1.5 cursor-pointer transition-all"
+                              >
+                                <span>📷</span>
+                                <span>See Photos ({roomGallery.length})</span>
+                              </button>
 
-                                setSelectedSlot({
-                                  id: `hotel-stay-${Date.now()}`,
-                                  timeStr: slotStr,
-                                  date: checkIn,
-                                  available: true
-                                });
+                              {/* Dot Indicators */}
+                              {roomGallery.length > 1 && (
+                                <div className="absolute bottom-3.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/40 backdrop-blur-xs px-2.5 py-1 rounded-full">
+                                  {roomGallery.slice(0, 5).map((_: string, dotIdx: number) => (
+                                    <span
+                                      key={dotIdx}
+                                      className={`w-1.5 h-1.5 rounded-full ${dotIdx === 0 ? 'bg-white' : 'bg-white/50'}`}
+                                    />
+                                  ))}
+                                </div>
+                              )}
+                            </div>
 
-                                router.push('/booking/checkout');
-                              }
-                            }}
-                            className="px-5 py-2.5 bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] active:scale-95 text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                          >
-                            <span>Select Room &rarr;</span>
-                          </button>
+                            {/* Thumbnail Row */}
+                            {roomGallery.length > 1 && (
+                              <div className="grid grid-cols-5 gap-2 mt-2.5">
+                                {roomGallery.slice(0, 5).map((imgUrl: string, tIdx: number) => (
+                                  <div
+                                    key={tIdx}
+                                    onClick={() => {
+                                      setActiveRoomService(servicePayloadForModal);
+                                      setRoomModalStep('DETAILS');
+                                      setSelectedAddonIds([]);
+                                      setRoomModalImageIdx(tIdx);
+                                    }}
+                                    className={`h-12 rounded-xl overflow-hidden cursor-pointer border-2 transition-all ${tIdx === 0
+                                      ? 'border-[#033266] dark:border-[#ff6325]'
+                                      : 'border-transparent opacity-75 hover:opacity-100'
+                                      }`}
+                                  >
+                                    <img
+                                      src={imgUrl}
+                                      alt=""
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => { e.currentTarget.src = defaultHotelPhotos[0]; }}
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
 
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveRoomService(svc);
-                              setRoomModalStep('DETAILS');
-                              setSelectedAddonIds([]);
-                              setRoomModalImageIdx(0);
-                            }}
-                            className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-xs border border-slate-200 dark:border-white/10 transition-all flex items-center justify-center gap-1 cursor-pointer"
-                          >
-                            <span>View Details</span>
-                            <Info size={13} />
-                          </button>
+                            {/* Room Title & Reviews */}
+                            <div className="mt-4">
+                              <h3
+                                onClick={() => {
+                                  setActiveRoomService(servicePayloadForModal);
+                                  setRoomModalStep('DETAILS');
+                                  setSelectedAddonIds([]);
+                                  setRoomModalImageIdx(0);
+                                }}
+                                className="font-black text-xl text-slate-900 dark:text-white hover:text-[#033266] dark:hover:text-[#ff6325] cursor-pointer transition-colors tracking-tight"
+                              >
+                                {roomItem.name}
+                              </h3>
+
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-600 text-white font-black text-xs">
+                                  ★ {roomRating}
+                                </span>
+                                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                  ({totalReviews} Reviews)
+                                </span>
+                              </div>
+
+                              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 mt-2 leading-relaxed">
+                                {roomItem.description || `${roomItem.name} featuring premium bedding, spacious ensuite bathroom, and modern guest amenities for a truly luxurious stay.`}
+                              </p>
+                            </div>
+                          </div>
                         </div>
+
+                        {/* ==============================================================
+                         * COLUMN 2: MIDDLE (lg:col-span-5) - Inclusions, Perks & Specs Grid
+                         * ============================================================== */}
+                        <div className="lg:col-span-5 flex flex-col justify-between space-y-4">
+                          <div>
+                            {/* Instant Confirmation Pill */}
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-bold text-xs border border-emerald-200 dark:border-emerald-800/50 mb-3">
+                              <CheckCircle2 size={13} className="shrink-0" />
+                              <span>Instant Confirmation</span>
+                            </div>
+
+                            {/* Inclusions List with Green Checkmarks */}
+                            <div className="space-y-1.5 text-xs">
+                              <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold">
+                                <CheckCircle2 size={13} className="shrink-0" />
+                                <span>Free Cancellation (up to 24h before check-in)</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold">
+                                <CheckCircle2 size={13} className="shrink-0" />
+                                <span>Free High-Speed Wi-Fi in unit</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold">
+                                <CheckCircle2 size={13} className="shrink-0" />
+                                <span>Complimentary Bottled Water & Clean Linens</span>
+                              </div>
+                            </div>
+
+                            {/* 2-Column Specs Grid (Light Blue / Clean Slate Box) */}
+                            <div className="grid grid-cols-2 gap-3.5 p-4 mt-4 rounded-2xl bg-sky-50/60 dark:bg-sky-950/20 border border-sky-100 dark:border-sky-900/30 text-xs">
+                              {/* Left specs: Perks & Highlights */}
+                              <div className="space-y-2.5">
+                                {perks.length > 0 ? (
+                                  perks.slice(0, 4).map((perk: string, pIdx: number) => {
+                                    const cleanPerk = (perk || '')
+                                      .replace(/([a-z])([A-Z])/g, '$1 $2')
+                                      .replace(/Freelaunch/i, 'Free Lunch')
+                                      .replace(/freedinner/i, 'Free Dinner')
+                                      .replace(/Freewifi/i, 'Free Wi-Fi')
+                                      .replace(/smarttv/i, 'Smart TV')
+                                      .replace(/balconyview/i, 'Balcony View')
+                                      .replace(/oceanview/i, 'Ocean View')
+                                      .replace(/seaview/i, 'Sea View')
+                                      .replace(/swimmingpool/i, 'Swimming Pool')
+                                      .replace(/ComplimentorbuffetBreakfast/i, 'Buffet Breakfast')
+                                      .trim();
+                                    const formattedPerk = cleanPerk.charAt(0).toUpperCase() + cleanPerk.slice(1);
+                                    return (
+                                      <div key={pIdx} className="flex items-start gap-2 font-bold text-slate-800 dark:text-slate-200">
+                                        <span className="text-[#033266] dark:text-[#ff6325] text-sm shrink-0 mt-0.5">✨</span>
+                                        <span className="leading-snug">{formattedPerk}</span>
+                                      </div>
+                                    );
+                                  })
+                                ) : (
+                                  <>
+                                    <div className="flex items-start gap-2 font-bold text-slate-800 dark:text-slate-200">
+                                      <span className="text-[#033266] dark:text-[#ff6325] text-sm shrink-0 mt-0.5">🏊</span>
+                                      <span className="leading-snug">Private Plunge Pool</span>
+                                    </div>
+                                    <div className="flex items-start gap-2 font-bold text-slate-800 dark:text-slate-200">
+                                      <span className="text-[#033266] dark:text-[#ff6325] text-sm shrink-0 mt-0.5">🌅</span>
+                                      <span className="leading-snug">Sunset Deck View</span>
+                                    </div>
+                                    <div className="flex items-start gap-2 font-bold text-slate-800 dark:text-slate-200">
+                                      <span className="text-[#033266] dark:text-[#ff6325] text-sm shrink-0 mt-0.5">🍳</span>
+                                      <span className="leading-snug">Floating Breakfast</span>
+                                    </div>
+                                    <div className="flex items-start gap-2 font-bold text-slate-800 dark:text-slate-200">
+                                      <span className="text-[#033266] dark:text-[#ff6325] text-sm shrink-0 mt-0.5">🛎️</span>
+                                      <span className="leading-snug">24/7 Butler Support</span>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+
+                              {/* Right specs: Capacity, Bed, Size, Bath, AC */}
+                              <div className="space-y-2.5">
+                                <div className="flex items-start gap-2 font-bold text-slate-800 dark:text-slate-200">
+                                  <Users size={14} className="text-[#033266] dark:text-[#ff6325] shrink-0 mt-0.5" />
+                                  <span className="leading-snug">Max {maxGuests} Adults</span>
+                                </div>
+                                {bedType && (
+                                  <div className="flex items-start gap-2 font-bold text-slate-800 dark:text-slate-200">
+                                    <Bed size={14} className="text-[#033266] dark:text-[#ff6325] shrink-0 mt-0.5" />
+                                    <span className="leading-snug">{bedType}</span>
+                                  </div>
+                                )}
+                                {roomSize && (
+                                  <div className="flex items-start gap-2 font-bold text-slate-800 dark:text-slate-200">
+                                    <span className="text-xs shrink-0 mt-0.5">📐</span>
+                                    <span className="leading-snug">{roomSize} sq.ft / {(Number(roomSize) * 0.0929).toFixed(0)} m²</span>
+                                  </div>
+                                )}
+                                {bathroomType && (
+                                  <div className="flex items-start gap-2 font-bold text-slate-800 dark:text-slate-200">
+                                    <span className="text-xs shrink-0 mt-0.5">🚿</span>
+                                    <span className="leading-snug">{bathroomType} Ensuite</span>
+                                  </div>
+                                )}
+                                <div className="flex items-start gap-2 font-bold text-slate-800 dark:text-slate-200">
+                                  <span className="shrink-0 mt-0.5">{isNonAc ? '💨' : '❄️'}</span>
+                                  <span className="leading-snug">{isNonAc ? 'Non-AC / Fan' : 'Air Conditioned'}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* See room specs trigger link */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveRoomService(servicePayloadForModal);
+                                setRoomModalStep('DETAILS');
+                                setSelectedAddonIds([]);
+                                setRoomModalImageIdx(0);
+                              }}
+                              className="text-xs font-bold text-[#033266] dark:text-[#ff6325] hover:underline cursor-pointer inline-flex items-center gap-1 mt-3"
+                            >
+                              <span>See room specs & policies &rarr;</span>
+                            </button>
+                          </div>
+
+                          {/* 3 Trust Badges Footer: Secure Booking, 24/7 Guest Support, Best Price */}
+                          <div className="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 text-[10px]">
+                            <div className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-300">
+                              <ShieldCheck size={14} className="text-[#033266] dark:text-[#ff6325] shrink-0" />
+                              <span className="leading-tight">100% Secure Booking</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-300">
+                              <Headphones size={14} className="text-[#033266] dark:text-[#ff6325] shrink-0" />
+                              <span className="leading-tight">24/7 Guest Support</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-300">
+                              <Award size={14} className="text-[#033266] dark:text-[#ff6325] shrink-0" />
+                              <span className="leading-tight">Best Price Guarantee</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* ==============================================================
+                         * COLUMN 3: RIGHT (lg:col-span-3) - Pricing Box, Book Button & Getaway Card
+                         * ============================================================== */}
+                        <div className="lg:col-span-3 flex flex-col justify-between space-y-4 border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-white/10 pt-5 lg:pt-0 lg:pl-6">
+                          <div>
+                            {/* Strikethrough original rate & Discount Badge */}
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-medium text-slate-400 line-through">
+                                ₹{originalPrice.toLocaleString()}
+                              </span>
+                              <span className="px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-[11px] font-black border border-rose-200 dark:border-rose-900/40">
+                                -{discountPct}%
+                              </span>
+                            </div>
+
+                            {/* Main Nightly Price */}
+                            <div className="mt-1">
+                              <span className="text-3xl font-black text-[#033266] dark:text-[#ff6325] tracking-tight">
+                                ₹{startingPrice.toLocaleString()}
+                              </span>
+                              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-semibold block">
+                                per night before taxes
+                              </span>
+                            </div>
+
+                            {/* Total Stay Price Calculation */}
+                            <div className="mt-2 text-xs font-bold text-slate-800 dark:text-slate-200">
+                              Total: ₹{stayTotal.toLocaleString()} ({nights} Night{nights > 1 ? 's' : ''})
+                            </div>
+
+                            {/* Big Primary Book Room Button */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const partnerListingAddons = roomItem.addons || [];
+
+                                if (partnerListingAddons.length > 0) {
+                                  setActiveRoomService(servicePayloadForModal);
+                                  setRoomModalStep('ADDONS');
+                                  setSelectedAddonIds([]);
+                                  setRoomModalImageIdx(0);
+                                } else {
+                                  const roomPrice = startingPrice;
+                                  const roomTotal = roomPrice * nights * rooms;
+                                  const slotStr = `${checkIn} to ${checkOut} (${nights} Night${nights > 1 ? 's' : ''}) • ${adults + children} Guests • ${rooms} Room${rooms > 1 ? 's' : ''}`;
+
+                                  setSelectedService({
+                                    ...servicePayloadForModal,
+                                    price: roomTotal,
+                                    name: `${venueName} — ${roomItem.name}`,
+                                    selectedListing: roomItem.listing || undefined,
+                                    metadata: {
+                                      ...(servicePayloadForModal.metadata || {}),
+                                      hotelBooking: {
+                                        venueName,
+                                        address,
+                                        roomType: roomItem.name,
+                                        checkIn,
+                                        checkOut,
+                                        nights,
+                                        rooms,
+                                        adults,
+                                        children,
+                                        childAges,
+                                        pets,
+                                        petCount,
+                                        selectedAddons: [],
+                                        pricePerNight: roomPrice,
+                                        totalPrice: roomTotal
+                                      }
+                                    }
+                                  });
+
+                                  setSelectedSlot({
+                                    id: `hotel-stay-${Date.now()}`,
+                                    timeStr: slotStr,
+                                    date: checkIn,
+                                    available: true
+                                  });
+
+                                  router.push('/booking/checkout');
+                                }
+                              }}
+                              className="w-full mt-4 py-3.5 bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+                            >
+                              <Calendar size={15} />
+                              <span>BOOK ROOM &rarr;</span>
+                            </button>
+
+                            {/* Micro guarantee badge */}
+                            <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 text-center mt-2.5">
+                              FREE Cancellation • Pay later available
+                            </div>
+
+                            {/* Urgent Scarcity Callout Box with Dynamic Merchant Offer Badge */}
+                            <div className="mt-3 p-3 rounded-2xl bg-sky-50 dark:bg-sky-950/30 border border-sky-100 dark:border-sky-900/30 flex items-start gap-2.5">
+                              <span className="text-[#033266] dark:text-[#ff6325] font-black text-base shrink-0 leading-none">⚡</span>
+                              <div>
+                                <span className="text-xs font-black text-slate-900 dark:text-white block">
+                                  {offerBadgeText ? offerBadgeText : `Only ${roomItem.listing?.metadata?.totalUnits || 3} units left at this price!`}
+                                </span>
+                                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                                  {offerBadgeText ? `Book now before offer expires.` : `Book now before it's gone.`}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Dynamic Promotional Getaway Banner */}
+                          <div className="h-32 rounded-2xl overflow-hidden relative shadow-inner border border-slate-200 dark:border-white/10 group">
+                            <img
+                              src={thumb}
+                              alt="Getaway"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              onError={(e) => { e.currentTarget.src = defaultHotelPhotos[0]; }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex items-end p-3.5">
+                              <span className="font-serif italic text-white text-base font-bold drop-shadow-md">
+                                {merchantBannerTagline ? merchantBannerTagline : 'Your Perfect Getaway Awaits'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
                       </div>
                     </div>
+                  );
+                });
+              })()}
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================
+         * SECTION D1: AGODA-STYLE SUB-NAV & OVERVIEW (AFTER SELECT ROOM)
+         * ============================================================ */}
+        <div className="space-y-6 mb-10">
+          {/* 1. Agoda Sub-Navigation Bar (Removed Rooms button, Dynamic Tab Switching) */}
+          <div className="bg-white dark:bg-[#0f1219] rounded-2xl border border-slate-200/90 dark:border-white/10 p-2 sm:px-4 shadow-2xs flex items-center justify-start overflow-x-auto custom-scrollbar">
+            <div className="flex items-center gap-1 sm:gap-2 text-xs font-bold text-slate-600 dark:text-slate-300">
+              <button
+                type="button"
+                onClick={() => setActiveSubNavTab('overview')}
+                className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all ${
+                  activeSubNavTab === 'overview'
+                    ? 'bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border-b-2 border-[#033266] dark:border-[#ff6325] font-black'
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                Overview
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveSubNavTab('facilities')}
+                className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all ${
+                  activeSubNavTab === 'facilities'
+                    ? 'bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border-b-2 border-[#033266] dark:border-[#ff6325] font-black'
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                Facilities
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveSubNavTab('location')}
+                className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all ${
+                  activeSubNavTab === 'location'
+                    ? 'bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border-b-2 border-[#033266] dark:border-[#ff6325] font-black'
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                Location
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveSubNavTab('policies')}
+                className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all ${
+                  activeSubNavTab === 'policies'
+                    ? 'bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border-b-2 border-[#033266] dark:border-[#ff6325] font-black'
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                Policies
+              </button>
+            </div>
+          </div>
+
+          {/* 2. Main Agoda Content — Header stays in place, content below switches dynamically */}
+          <div id="agoda-overview-section" className="space-y-6">
+
+            {/* TAB CONTENT: OVERVIEW (Name Card + Highlights + Staycation + About + Mini Map sidebar) */}
+            {activeSubNavTab === 'overview' && (
+              <div className="space-y-6">
+                {/* Property Identity & Address (Only in Overview) */}
+                <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-md bg-rose-600 text-white text-[10px] font-black uppercase tracking-wider">
+                      {finalMerchantObj.metadata?.offerBadge || 'Best Seller'}
+                    </span>
+                    <span className="text-xs text-amber-500 font-bold flex items-center gap-1">
+                      <span>★ ★ ★ ★</span>
+                      <span className="text-[10px] text-slate-400 font-semibold ml-1">BokSpot Preferred</span>
+                    </span>
                   </div>
-                );
-              })
+
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                      {venueName}
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium flex items-center flex-wrap gap-1.5">
+                      <span>{address || `${city || 'Chennai'}, Tamil Nadu`}</span>
+                      <span>•</span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSubNavTab('location')}
+                        className="text-[#033266] dark:text-[#ff6325] font-extrabold hover:underline uppercase text-[11px] cursor-pointer"
+                      >
+                        SEE MAP
+                      </button>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+                {/* Left Column (8 cols) */}
+                <div className="lg:col-span-8 space-y-6">
+                  {/* Highlights */}
+                  <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-4">
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                      Highlights
+                    </h3>
+                    <div className="space-y-3.5">
+                      {(() => {
+                        const defaultHighlights = [
+                          {
+                            icon: '🍳',
+                            title: 'Great breakfast & inclusions',
+                            description: finalMerchantObj.metadata?.breakfastDetails || 'Breakfast buffet gets strong praise for its wide spread, varied choices, and fresh multi-cuisine preparations.'
+                          },
+                          {
+                            icon: '🍽️',
+                            title: 'Great food & dining',
+                            description: 'In-house multi-cuisine dining options with seafood specialties and room service options praised by guests.'
+                          },
+                          {
+                            icon: '🛎️',
+                            title: 'Professional guest services',
+                            description: 'Dedicated 24/7 front desk, warm concierge, express check-in, and personalized butler assistance.'
+                          },
+                          {
+                            icon: '✨',
+                            title: 'Sparkling clean & hygienic',
+                            description: 'Rooms are regularly sanitized and described as clean, neat, and well kept with spotless linen.'
+                          },
+                          {
+                            icon: '🏊',
+                            title: 'Top property leisure facilities',
+                            description: 'Private swimming pool, lawn garden, sun deck, and entertainment conveniences designed for staycations.'
+                          }
+                        ];
+
+                        const activeHighlights = (Array.isArray(finalMerchantObj.metadata?.highlights) && finalMerchantObj.metadata.highlights.length > 0)
+                          ? finalMerchantObj.metadata.highlights
+                          : defaultHighlights;
+
+                        return activeHighlights.map((hl: any, idx: number) => {
+                          const iconBgColors = [
+                            'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+                            'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+                            'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+                            'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400',
+                            'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
+                            'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                          ];
+                          const colorClass = iconBgColors[idx % iconBgColors.length];
+
+                          return (
+                            <div key={idx} className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg shrink-0 ${colorClass}`}>
+                                {hl.icon || '⭐'}
+                              </div>
+                              <div className="min-w-0">
+                                <h4 className="text-xs font-black text-slate-900 dark:text-white">
+                                  {hl.title}
+                                </h4>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                                  {hl.description}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  </div>
+
+
+                  {/* About Us */}
+                  <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-3">
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                      About us
+                    </h3>
+                    <div className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
+                      <p>
+                        {aboutText
+                          ? (isAboutExpanded || aboutText.length <= 260 ? aboutText : `${aboutText.slice(0, 260)}...`)
+                          : `Indulge in a luxurious stay at ${venueName} situated on the scenic ${city || 'Chennai'} corridor. Immerse yourself in the vibrant culture while exploring nearby beaches, entertainment hubs, and serene gardens. Experience signature hospitality, private pools, and bespoke concierge care.`}
+                      </p>
+                      {aboutText && aboutText.length > 260 && (
+                        <button
+                          type="button"
+                          onClick={() => setIsAboutExpanded(!isAboutExpanded)}
+                          className="mt-2 text-xs font-extrabold text-[#033266] dark:text-[#ff6325] hover:underline cursor-pointer block"
+                        >
+                          {isAboutExpanded ? 'Show less ↑' : 'Read more →'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column (4 cols) Map Sidebar */}
+                <div className="lg:col-span-4 space-y-6">
+                  <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-4">
+                    {/* Map Preview */}
+                    {(() => {
+                      const lat = finalMerchantObj.latitude || liveServices[0]?.merchantObj?.latitude;
+                      const lng = finalMerchantObj.longitude || liveServices[0]?.merchantObj?.longitude;
+                      const mapQuery = (lat && lng) ? `${lat},${lng}` : encodeURIComponent(address || venueName || 'Chennai');
+
+                      return (
+                        <div className="relative rounded-2xl overflow-hidden border border-slate-200/90 dark:border-white/10 bg-slate-100 dark:bg-slate-800 group shadow-sm">
+                          <div className="h-40 w-full relative">
+                            <iframe
+                              title="Property Location Map"
+                              width="100%"
+                              height="100%"
+                              frameBorder="0"
+                              style={{ border: 0 }}
+                              src={`https://maps.google.com/maps?q=${mapQuery}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                              loading="lazy"
+                              allowFullScreen
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setActiveSubNavTab('location')}
+                            className="absolute inset-0 bg-black/30 hover:bg-black/40 flex items-center justify-center transition-colors group cursor-pointer"
+                          >
+                            <span className="px-3.5 py-1.5 rounded-xl bg-white text-slate-900 font-black text-xs shadow-md group-hover:scale-105 transition-transform">
+                              SEE MAP
+                            </span>
+                          </button>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Location Score Pill */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-black text-slate-900 dark:text-white">
+                          8.2 Excellent
+                        </span>
+                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/40">
+                          Top Rated Area
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                        Excellent location — situated conveniently near beaches and transport routes in {city || 'Chennai'}.
+                      </p>
+                    </div>
+
+                    {/* Parking Tag */}
+                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                      <span className="flex items-center gap-1.5">🅿️ Parking</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 uppercase font-black text-[11px]">FREE</span>
+                    </div>
+
+                    {/* What's Nearby Distances */}
+                    {Array.isArray(finalMerchantObj.metadata?.aroundProperty) && finalMerchantObj.metadata.aroundProperty.length > 0 && (
+                      <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-white/10">
+                        <span className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block tracking-wider">
+                          See nearby places
+                        </span>
+                        <div className="space-y-2">
+                          {finalMerchantObj.metadata.aroundProperty.slice(0, 4).map((item: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between text-xs">
+                              <span className="text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[180px]">
+                                📍 {item.name || item.title}
+                              </span>
+                              <span className="text-slate-500 dark:text-slate-400 font-bold text-[11px] shrink-0">
+                                {item.distance || ''}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
             )}
+
+            {/* TAB CONTENT: FACILITIES (Full Grid) */}
+            {activeSubNavTab === 'facilities' && (
+              <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-6">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-4">
+                  <div>
+                    <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                      Property Facilities & Inclusions
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      Verified amenities provided directly for guests staying at {venueName}
+                    </p>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-[#033266]/5 dark:bg-[#ff6325]/10 text-[#033266] dark:text-[#ff6325] font-black text-xs">
+                    {amenities.length} Verified Facilities
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 text-xs font-bold text-slate-700 dark:text-slate-200">
+                  {(amenities.length > 0 ? amenities : ['Free Wi-Fi', 'Swimming pool', 'Free parking', 'Spa & Jacuzzi', 'Front desk [24-hour]', 'Fitness center', 'Restaurants', 'Bar & Lounge', 'Air Conditioned', 'Daily Housekeeping', 'Butler Service', 'Power Backup']).map((item: string, idx: number) => (
+                    <div key={idx} className="flex items-center gap-2.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 shadow-2xs">
+                      <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <span className="truncate text-xs">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* TAB CONTENT: LOCATION (Full interactive map + Directions + Places) */}
+            {activeSubNavTab === 'location' && (
+              <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-6">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-4">
+                  <div>
+                    <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                      Location & Nearby Landmarks
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {address || `${city || 'Chennai'}, Tamil Nadu`}
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/40">
+                    8.2 Top Rated Location
+                  </span>
+                </div>
+
+                {(() => {
+                  const lat = finalMerchantObj.latitude || liveServices[0]?.merchantObj?.latitude;
+                  const lng = finalMerchantObj.longitude || liveServices[0]?.merchantObj?.longitude;
+                  const mapQuery = (lat && lng) ? `${lat},${lng}` : encodeURIComponent(address || venueName || 'Chennai');
+
+                  return (
+                    <div className="space-y-4">
+                      <div className="h-64 sm:h-80 w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm relative">
+                        <iframe
+                          title="Property Location Detailed Map"
+                          width="100%"
+                          height="100%"
+                          frameBorder="0"
+                          style={{ border: 0 }}
+                          src={`https://maps.google.com/maps?q=${mapQuery}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                          loading="lazy"
+                          allowFullScreen
+                        />
+                      </div>
+                      <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5">
+                        <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                          Need driving navigation directly in Google Maps?
+                        </span>
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 bg-[#033266] dark:bg-[#ff6325] text-white rounded-xl text-xs font-black shadow-sm hover:opacity-95 transition-opacity"
+                        >
+                          Open in Google Maps →
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Nearby Places */}
+                {Array.isArray(finalMerchantObj.metadata?.aroundProperty) && finalMerchantObj.metadata.aroundProperty.length > 0 && (
+                  <div className="pt-2 space-y-3">
+                    <h4 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                      Walking & Driving Distances
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {finalMerchantObj.metadata.aroundProperty.map((item: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5">
+                          <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                            📍 {item.name || item.title}
+                          </span>
+                          <span className="text-xs font-extrabold text-[#033266] dark:text-[#ff6325] px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 shadow-2xs">
+                            {item.distance || ''}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB CONTENT: POLICIES (Full detailed list) */}
+            {activeSubNavTab === 'policies' && (
+              <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-5">
+                <div className="border-b border-slate-100 dark:border-white/10 pb-4">
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>📋</span> Property Policies & Stay Rules
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Important rules and check-in guidelines for guests staying at {venueName}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700 dark:text-slate-300 font-medium">
+                  {(Array.isArray(finalMerchantObj.metadata?.policies) && finalMerchantObj.metadata.policies.length > 0
+                    ? finalMerchantObj.metadata.policies
+                    : [
+                      'Valid Government ID required for all guests at check-in (Aadhaar / Passport / DL)',
+                      `Standard Check-in is ${finalMerchantObj.metadata?.checkInTime || '12:00 PM'} and Check-out is ${finalMerchantObj.metadata?.checkOutTime || '11:00 AM'}`,
+                      'Couples and families are warmly welcome',
+                      'Smoking strictly prohibited in air-conditioned suites and indoor areas',
+                      'Pets permitted in designated private villa lawns with prior intimation',
+                      'Quiet hours observed after 10:30 PM for guest relaxation'
+                    ]
+                  ).map((policy: string, idx: number) => (
+                    <div key={idx} className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5">
+                      <span className="text-[#033266] dark:text-[#ff6325] font-black text-sm mt-0.5">•</span>
+                      <span className="leading-relaxed">{policy}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
-        )}
+
+
 
         {/* ============================================================
          * SECTION D4: SPORTS, TURF & COURT HOURLY SLOTS BOOKING (PLAYO STYLE)
@@ -1134,11 +1829,10 @@ export default function VenueProfilePage() {
                       setSelectedHourSlot(null);
                       setPricingResult(null);
                     }}
-                    className={`px-4 py-2.5 rounded-xl text-xs font-extrabold flex flex-col items-center min-w-[76px] transition-all cursor-pointer border ${
-                      isSelected
-                        ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md scale-105'
-                        : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-[#033266] dark:hover:border-[#ff6325]'
-                    }`}
+                    className={`px-4 py-2.5 rounded-xl text-xs font-extrabold flex flex-col items-center min-w-[76px] transition-all cursor-pointer border ${isSelected
+                      ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md scale-105'
+                      : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-[#033266] dark:hover:border-[#ff6325]'
+                      }`}
                   >
                     <span className="text-[10px] uppercase font-bold opacity-80">
                       {offset === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' })}
@@ -1179,11 +1873,10 @@ export default function VenueProfilePage() {
                           setPricingResult(calc);
                           setIsPricingCalculating(false);
                         }}
-                        className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md'
-                            : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#033266] dark:hover:border-[#ff6325] text-slate-900 dark:text-white'
-                        }`}
+                        className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${isSelected
+                          ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md'
+                          : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#033266] dark:hover:border-[#ff6325] text-slate-900 dark:text-white'
+                          }`}
                       >
                         <span className="text-xs font-black block">{time}</span>
                         <span className="text-[10px] opacity-75 font-semibold mt-0.5 block">1 Hour Slot</span>
@@ -1219,11 +1912,10 @@ export default function VenueProfilePage() {
                           setPricingResult(calc);
                           setIsPricingCalculating(false);
                         }}
-                        className={`p-3 rounded-xl border text-center transition-all cursor-pointer relative overflow-hidden ${
-                          isSelected
-                            ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md'
-                            : 'bg-slate-50 dark:bg-slate-800/80 border-amber-500/30 hover:border-amber-500 text-slate-900 dark:text-white'
-                        }`}
+                        className={`p-3 rounded-xl border text-center transition-all cursor-pointer relative overflow-hidden ${isSelected
+                          ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md'
+                          : 'bg-slate-50 dark:bg-slate-800/80 border-amber-500/30 hover:border-amber-500 text-slate-900 dark:text-white'
+                          }`}
                       >
                         <div className="absolute top-1 right-1 text-[9px] opacity-75">💡</div>
                         <span className="text-xs font-black block">{time}</span>
@@ -1335,11 +2027,10 @@ export default function VenueProfilePage() {
                   <div
                     key={spec.name}
                     onClick={() => setSelectedPractitioner(spec.name)}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
-                      selectedPractitioner === spec.name
-                        ? 'bg-[#033266]/5 dark:bg-[#ff6325]/10 border-[#033266] dark:border-[#ff6325]'
-                        : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
-                    }`}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${selectedPractitioner === spec.name
+                      ? 'bg-[#033266]/5 dark:bg-[#ff6325]/10 border-[#033266] dark:border-[#ff6325]'
+                      : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                      }`}
                   >
                     <div>
                       <h4 className="text-xs font-black text-slate-900 dark:text-white">{spec.name}</h4>
@@ -1364,11 +2055,10 @@ export default function VenueProfilePage() {
                       key={slot}
                       type="button"
                       onClick={() => setSelectedApptSlot(slot)}
-                      className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
-                        isSelected
-                          ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md'
-                          : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#033266] dark:hover:border-[#ff6325] text-slate-900 dark:text-white'
-                      }`}
+                      className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${isSelected
+                        ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md'
+                        : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#033266] dark:hover:border-[#ff6325] text-slate-900 dark:text-white'
+                        }`}
                     >
                       <span className="text-xs font-black block">{slot}</span>
                       <span className="text-[10px] opacity-75 font-medium mt-0.5 block">Token #{tokenQueueNum}</span>
@@ -1614,11 +2304,10 @@ export default function VenueProfilePage() {
                 <div
                   key={tier.name}
                   onClick={() => setSelectedTier(tier.name)}
-                  className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
-                    selectedTier === tier.name
-                      ? 'bg-[#033266]/5 dark:bg-[#ff6325]/10 border-[#033266] dark:border-[#ff6325]'
-                      : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
-                  }`}
+                  className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${selectedTier === tier.name
+                    ? 'bg-[#033266]/5 dark:bg-[#ff6325]/10 border-[#033266] dark:border-[#ff6325]'
+                    : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                    }`}
                 >
                   <div>
                     <h4 className="text-xs font-black text-slate-900 dark:text-white">{tier.name}</h4>
@@ -1657,11 +2346,10 @@ export default function VenueProfilePage() {
             {/* F&B Snack Combo Add-on */}
             <div
               onClick={() => setPopcornComboAddon(!popcornComboAddon)}
-              className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
-                popcornComboAddon
-                  ? 'bg-amber-500/10 border-amber-500'
-                  : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10'
-              }`}
+              className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${popcornComboAddon
+                ? 'bg-amber-500/10 border-amber-500'
+                : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <span className="text-2xl">🍿</span>
@@ -1764,11 +2452,10 @@ export default function VenueProfilePage() {
                   <div
                     key={cat}
                     onClick={() => setHomeIssueCategory(cat)}
-                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
-                      homeIssueCategory === cat
-                        ? 'bg-[#033266]/5 dark:bg-[#ff6325]/10 border-[#033266] dark:border-[#ff6325]'
-                        : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
-                    }`}
+                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${homeIssueCategory === cat
+                      ? 'bg-[#033266]/5 dark:bg-[#ff6325]/10 border-[#033266] dark:border-[#ff6325]'
+                      : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                      }`}
                   >
                     <span className="text-xs font-bold text-slate-900 dark:text-white">{cat}</span>
                     <span className="text-xs font-black text-[#033266] dark:text-[#ff6325]">₹199</span>
@@ -1792,11 +2479,10 @@ export default function VenueProfilePage() {
                     key={win}
                     type="button"
                     onClick={() => setPreferredHomeWindow(win)}
-                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                      preferredHomeWindow === win
-                        ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md'
-                        : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#033266] dark:hover:border-[#ff6325] text-slate-900 dark:text-white'
-                    }`}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${preferredHomeWindow === win
+                      ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md'
+                      : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#033266] dark:hover:border-[#ff6325] text-slate-900 dark:text-white'
+                      }`}
                   >
                     <span className="text-xs font-black block">{win}</span>
                     <span className="text-[10px] opacity-75 font-semibold mt-0.5 block">Verified Professional</span>
@@ -1894,7 +2580,7 @@ export default function VenueProfilePage() {
       <AnimatePresence>
         {isModalOpen && (
           <>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setIsModalOpen(false)}
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99999]"
@@ -1911,23 +2597,23 @@ export default function VenueProfilePage() {
                   <X size={24} />
                 </button>
               </div>
-              
+
               <div className="p-6 overflow-y-auto">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {liveServices.filter((svc: any) => svc.name !== '__BOKSPOT_GROUP__').map(svc => {
-                     const numOptions = svc.rawConfig?.metadata?.listings ? svc.rawConfig.metadata.listings.length : 1;
-                     return (
-                       <button
-                         key={svc.id}
-                         onClick={() => router.push(`/service/${svc.id}`)}
-                         className="flex flex-col text-left p-6 rounded-2xl border border-[color:var(--color-outline-variant)]/30 hover:border-[color:var(--color-primary)] hover:bg-[color:var(--color-primary)]/5 transition-all group"
-                       >
-                         <h3 className="text-lg font-bold mb-2 group-hover:text-[color:var(--color-primary)] transition-colors">
-                           {svc.name}
-                         </h3>
-                         <p className="text-sm text-[color:var(--color-on-surface-variant)] font-medium">{numOptions} option{numOptions !== 1 ? 's' : ''}</p>
-                       </button>
-                     );
+                    const numOptions = svc.rawConfig?.metadata?.listings ? svc.rawConfig.metadata.listings.length : 1;
+                    return (
+                      <button
+                        key={svc.id}
+                        onClick={() => router.push(`/service/${svc.id}`)}
+                        className="flex flex-col text-left p-6 rounded-2xl border border-[color:var(--color-outline-variant)]/30 hover:border-[color:var(--color-primary)] hover:bg-[color:var(--color-primary)]/5 transition-all group"
+                      >
+                        <h3 className="text-lg font-bold mb-2 group-hover:text-[color:var(--color-primary)] transition-colors">
+                          {svc.name}
+                        </h3>
+                        <p className="text-sm text-[color:var(--color-on-surface-variant)] font-medium">{numOptions} option{numOptions !== 1 ? 's' : ''}</p>
+                      </button>
+                    );
                   })}
                   {liveServices.filter((svc: any) => svc.name !== '__BOKSPOT_GROUP__').length === 0 && (
                     <p className="text-sm text-[color:var(--color-on-surface-variant)] italic p-4 col-span-2 text-center">No specific categories have been added by the business yet.</p>
@@ -1942,9 +2628,9 @@ export default function VenueProfilePage() {
       {/* Fullscreen Image Gallery Modal */}
       <AnimatePresence>
         {isGalleryOpen && (
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-xl flex flex-col"
           >
@@ -1966,27 +2652,27 @@ export default function VenueProfilePage() {
 
             {/* Main Image Viewer */}
             <div className="flex-1 flex items-center justify-center relative px-4 md:px-12 mt-16 md:mt-0">
-              <button 
+              <button
                 onClick={(e) => { e.stopPropagation(); setCurrentImageIdx(prev => prev === 0 ? galleryImages.length - 1 : prev - 1); }}
                 className="absolute left-2 md:left-6 p-3 bg-black/50 hover:bg-black/80 text-white rounded-full transition-colors border border-white/10 z-10"
               >
                 <ChevronLeft size={24} />
               </button>
-              
+
               <div className="w-full max-w-5xl max-h-[70vh] flex items-center justify-center">
-                <motion.img 
+                <motion.img
                   key={currentImageIdx}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.2 }}
-                  src={galleryImages[currentImageIdx]} 
-                  alt="Gallery image" 
+                  src={galleryImages[currentImageIdx]}
+                  alt="Gallery image"
                   className="max-w-full max-h-[70vh] object-contain rounded-xl shadow-2xl"
                   onError={(e) => { e.currentTarget.src = defaultHotelPhotos[currentImageIdx % defaultHotelPhotos.length]; }}
                 />
               </div>
 
-              <button 
+              <button
                 onClick={(e) => { e.stopPropagation(); setCurrentImageIdx(prev => prev === galleryImages.length - 1 ? 0 : prev + 1); }}
                 className="absolute right-2 md:right-6 p-3 bg-black/50 hover:bg-black/80 text-white rounded-full transition-colors border border-white/10 z-10"
               >
@@ -2003,10 +2689,10 @@ export default function VenueProfilePage() {
                     onClick={() => setCurrentImageIdx(idx)}
                     className={`relative w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden flex-shrink-0 transition-all ${currentImageIdx === idx ? 'ring-2 ring-white scale-105 opacity-100' : 'opacity-50 hover:opacity-100'}`}
                   >
-                    <img 
-                      src={img} 
-                      alt={`Thumbnail ${idx + 1}`} 
-                      className="w-full h-full object-cover" 
+                    <img
+                      src={img}
+                      alt={`Thumbnail ${idx + 1}`}
+                      className="w-full h-full object-cover"
                       onError={(e) => { e.currentTarget.src = defaultHotelPhotos[idx % defaultHotelPhotos.length]; }}
                     />
                   </button>
@@ -2073,9 +2759,19 @@ export default function VenueProfilePage() {
                   const roomPrice = Number(activeRoomService.price || activeRoomService.basePrice || roomListings[0]?.price) || 2500;
                   const roomTotal = roomPrice * nights * rooms;
 
-                  // Curated room gallery
-                  const roomPhotos = [
-                    activeRoomService.imageUrl || activeRoomService.metadata?.mainImageUrl || 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=900&q=80',
+                  // Room gallery from listing / merchant uploads
+                  const rawPhotos: string[] = [];
+                  if (activeRoomService.images && Array.isArray(activeRoomService.images)) {
+                    activeRoomService.images.forEach((img: string) => { if (img && !rawPhotos.includes(img)) rawPhotos.push(img); });
+                  }
+                  if (activeRoomService.metadata?.gallery && Array.isArray(activeRoomService.metadata.gallery)) {
+                    activeRoomService.metadata.gallery.forEach((img: string) => { if (img && !rawPhotos.includes(img)) rawPhotos.push(img); });
+                  }
+                  if (activeRoomService.imageUrl && !rawPhotos.includes(activeRoomService.imageUrl)) {
+                    rawPhotos.unshift(activeRoomService.imageUrl);
+                  }
+                  const roomPhotos = rawPhotos.length > 0 ? rawPhotos : [
+                    'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=900&q=80',
                     'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=900&q=80',
                     'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=900&q=80'
                   ];
@@ -2083,7 +2779,7 @@ export default function VenueProfilePage() {
                   // Check if hotel partner has custom add-ons saved in this listing
                   const rawAddons = roomMeta.addons || activeRoomService.metadata?.addons || activeRoomService.addOns || [];
                   const partnerListingAddons = Array.isArray(rawAddons) ? rawAddons : [];
-                  
+
                   // ONLY show add-ons created directly by the business merchant (No dummy/template duplicates)
                   const availableAddonsList = partnerListingAddons.map((pa: any, pIdx: number) => ({
                     id: `custom-addon-${pIdx}`,
@@ -2122,9 +2818,8 @@ export default function VenueProfilePage() {
                                   key={pIdx}
                                   type="button"
                                   onClick={() => setRoomModalImageIdx(pIdx)}
-                                  className={`h-2 rounded-full transition-all cursor-pointer ${
-                                    roomModalImageIdx === pIdx ? 'w-6 bg-[#033266] dark:bg-[#ff6325]' : 'w-2 bg-white/70'
-                                  }`}
+                                  className={`h-2 rounded-full transition-all cursor-pointer ${roomModalImageIdx === pIdx ? 'w-6 bg-[#033266] dark:bg-[#ff6325]' : 'w-2 bg-white/70'
+                                    }`}
                                 />
                               ))}
                             </div>
@@ -2193,7 +2888,7 @@ export default function VenueProfilePage() {
                           {(() => {
                             const rawPerks: string[] = Array.isArray(roomMeta.perks) ? roomMeta.perks : [];
                             const rawAmenities: string[] = Array.isArray(roomMeta.amenities) ? roomMeta.amenities : [];
-                            
+
                             // Formatting helper for camelCase/tight strings like "balconyview" -> "Balcony View", "smartTV" -> "Smart TV"
                             const formatPerkName = (str: string) => {
                               if (!str) return '';
@@ -2256,19 +2951,17 @@ export default function VenueProfilePage() {
                                 {displayList.map((item, idx) => (
                                   <div
                                     key={idx}
-                                    className={`flex items-center gap-2 p-2.5 rounded-lg border font-semibold ${
-                                      item.isFreeHighlight
-                                        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/50'
-                                        : 'bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-white/10'
-                                    }`}
+                                    className={`flex items-center gap-2 p-2.5 rounded-lg border font-semibold ${item.isFreeHighlight
+                                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/50'
+                                      : 'bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-white/10'
+                                      }`}
                                   >
                                     <CheckCircle2
                                       size={15}
-                                      className={`shrink-0 ${
-                                        item.isFreeHighlight
-                                          ? 'text-emerald-600 dark:text-emerald-400'
-                                          : 'text-[#033266] dark:text-[#ff6325]'
-                                      }`}
+                                      className={`shrink-0 ${item.isFreeHighlight
+                                        ? 'text-emerald-600 dark:text-emerald-400'
+                                        : 'text-[#033266] dark:text-[#ff6325]'
+                                        }`}
                                     />
                                     <span>{item.label}</span>
                                   </div>
@@ -2337,11 +3030,10 @@ export default function VenueProfilePage() {
                                         : [...prev, addon.id]
                                     );
                                   }}
-                                  className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                                    isSelected
-                                      ? 'bg-[#033266]/5 dark:bg-[#ff6325]/10 border-[#033266] dark:border-[#ff6325] shadow-xs'
-                                      : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
-                                  }`}
+                                  className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${isSelected
+                                    ? 'bg-[#033266]/5 dark:bg-[#ff6325]/10 border-[#033266] dark:border-[#ff6325] shadow-xs'
+                                    : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                                    }`}
                                 >
                                   <div className="flex items-start gap-3 min-w-0">
                                     <span className="text-2xl shrink-0 p-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10">
@@ -2371,11 +3063,10 @@ export default function VenueProfilePage() {
                                       </span>
                                     </div>
                                     <div
-                                      className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
-                                        isSelected
-                                          ? 'bg-[#033266] dark:bg-[#ff6325] border-[#033266] dark:border-[#ff6325] text-white'
-                                          : 'border-slate-300 dark:border-white/20 bg-white dark:bg-slate-700'
-                                      }`}
+                                      className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${isSelected
+                                        ? 'bg-[#033266] dark:bg-[#ff6325] border-[#033266] dark:border-[#ff6325] text-white'
+                                        : 'border-slate-300 dark:border-white/20 bg-white dark:bg-slate-700'
+                                        }`}
                                     >
                                       {isSelected && <Check size={12} />}
                                     </div>
@@ -2549,6 +3240,79 @@ export default function VenueProfilePage() {
                 )}
               </div>
             </motion.div>
+          </div>
+        )}
+
+        {/* Full-Screen Photo Gallery Lightbox Modal */}
+        {isGalleryOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-md animate-fade-in">
+            <div className="relative w-full max-w-5xl h-[85vh] bg-[#0b0f19] rounded-3xl border border-white/10 overflow-hidden flex flex-col shadow-2xl">
+              {/* Modal Top Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-black/40">
+                <div className="flex items-center gap-3">
+                  <span className="text-white font-black text-sm sm:text-base">{venueName} Gallery</span>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-white/10 text-white font-bold">
+                    {currentImageIdx + 1} of {galleryImages.length}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsGalleryOpen(false)}
+                  className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                  title="Close gallery"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Main Image View */}
+              <div className="relative flex-1 flex items-center justify-center p-4 min-h-0 bg-black/50">
+                <img
+                  src={galleryImages[currentImageIdx] || galleryImages[0]}
+                  alt={`${venueName} photo ${currentImageIdx + 1}`}
+                  className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl transition-all duration-300"
+                />
+
+                {/* Left/Right Prev/Next Buttons */}
+                {galleryImages.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentImageIdx((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1))}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/70 hover:bg-black/90 text-white border border-white/20 shadow-xl cursor-pointer transition-transform hover:scale-110 active:scale-95"
+                      title="Previous photo"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentImageIdx((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1))}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/70 hover:bg-black/90 text-white border border-white/20 shadow-xl cursor-pointer transition-transform hover:scale-110 active:scale-95"
+                      title="Next photo"
+                    >
+                      ›
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Bottom Thumbnail Strip */}
+              <div className="p-3 bg-black/70 border-t border-white/10 overflow-x-auto flex items-center gap-2.5 scrollbar-thin scrollbar-thumb-white/20">
+                {galleryImages.map((imgUrl, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setCurrentImageIdx(idx)}
+                    className={`relative w-16 h-12 sm:w-20 sm:h-14 rounded-xl overflow-hidden shrink-0 border-2 transition-all cursor-pointer ${currentImageIdx === idx
+                      ? 'border-[#ff6325] scale-105 shadow-md shadow-[#ff6325]/30'
+                      : 'border-white/10 opacity-60 hover:opacity-100'
+                      }`}
+                  >
+                    <img src={imgUrl} alt={`Thumb ${idx + 1}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </AnimatePresence>

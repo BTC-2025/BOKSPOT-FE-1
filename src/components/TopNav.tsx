@@ -398,8 +398,7 @@ export function TopNav({
                   { 
                     label: 'Bookings', 
                     href: '/bookings', 
-                    id: 'bookings',
-                    hasBadge: Array.isArray(bookings) && bookings.length > 0 
+                    id: 'bookings'
                   },
                 ];
 
@@ -431,9 +430,6 @@ export function TopNav({
                             />
                           )}
                           <span>{item.label}</span>
-                          {item.hasBadge && (
-                            <span className="h-1.5 w-1.5 rounded-full bg-[#ff6325] animate-pulse" />
-                          )}
                         </Link>
                       );
                     })}
