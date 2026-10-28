@@ -269,8 +269,8 @@ function CabBookingView({ categoryName, city }: any) {
                     key={key}
                     onClick={() => setCabType(key)}
                     className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer hover:scale-102 ${isSel
-                        ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]/10 shadow-[0_0_12px_rgba(255,215,0,0.1)]'
-                        : 'border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-dim)]/45'
+                      ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]/10 shadow-[0_0_12px_rgba(255,215,0,0.1)]'
+                      : 'border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-dim)]/45'
                       }`}
                   >
                     <span className="text-xs font-bold text-[color:var(--color-on-surface)]">{cabDetails[key].name}</span>
@@ -1023,10 +1023,10 @@ function BusBookingView({ categoryName, city }: any) {
                     disabled={seat.booked}
                     onClick={() => handleSeatClick(seat.code, seat.booked)}
                     className={`h-9 w-9 rounded-lg border flex items-center justify-center text-[10px] font-black tracking-tighter transition-all cursor-pointer ${seat.booked
-                        ? 'bg-[color:var(--color-surface-container-highest)] border-[color:var(--color-outline-variant)]/40 text-[color:var(--color-outline)] cursor-not-allowed opacity-35'
-                        : isSelected
-                          ? 'bg-[color:var(--color-primary)] border-[color:var(--color-primary)] text-[color:var(--color-on-primary)] scale-95 shadow-[0_0_8px_rgba(255,215,0,0.5)]'
-                          : 'bg-[color:var(--color-surface-dim)] border-[color:var(--color-outline-variant)]/50 text-[color:var(--color-on-surface-variant)] hover:border-[color:var(--color-primary)]/40'
+                      ? 'bg-[color:var(--color-surface-container-highest)] border-[color:var(--color-outline-variant)]/40 text-[color:var(--color-outline)] cursor-not-allowed opacity-35'
+                      : isSelected
+                        ? 'bg-[color:var(--color-primary)] border-[color:var(--color-primary)] text-[color:var(--color-on-primary)] scale-95 shadow-[0_0_8px_rgba(255,215,0,0.5)]'
+                        : 'bg-[color:var(--color-surface-dim)] border-[color:var(--color-outline-variant)]/50 text-[color:var(--color-on-surface-variant)] hover:border-[color:var(--color-primary)]/40'
                       }`}
                   >
                     {seat.code}
@@ -1264,8 +1264,8 @@ function MetroBookingView({ categoryName, city }: any) {
                   key={amt}
                   onClick={() => setRechargeAmt(amt)}
                   className={`py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${rechargeAmt === amt
-                      ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]/10 text-[color:var(--color-primary)]'
-                      : 'border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-dim)]/45 text-[color:var(--color-on-surface-variant)]'
+                    ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]/10 text-[color:var(--color-primary)]'
+                    : 'border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-dim)]/45 text-[color:var(--color-on-surface-variant)]'
                     }`}
                 >
                   ₹{amt}
@@ -1375,8 +1375,8 @@ function TurfsBookingView({ categoryName, city }: any) {
                     key={key}
                     onClick={() => setSelectedSport(key)}
                     className={`p-3.5 rounded-2xl border text-center flex flex-col items-center justify-center transition-all duration-300 cursor-pointer hover:scale-102 ${isSel
-                        ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]/10 shadow-[0_0_12px_rgba(255,215,0,0.1)] font-extrabold'
-                        : 'border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-dim)]/45 font-medium'
+                      ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]/10 shadow-[0_0_12px_rgba(255,215,0,0.1)] font-extrabold'
+                      : 'border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-dim)]/45 font-medium'
                       }`}
                   >
                     <span className="text-2xl mb-1">{config.emoji}</span>
@@ -1430,8 +1430,8 @@ function TurfsBookingView({ categoryName, city }: any) {
           <div
             onClick={() => setEquipmentRental(!equipmentRental)}
             className={`p-3.5 rounded-2xl border cursor-pointer flex items-center justify-between transition-all duration-300 ${equipmentRental
-                ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]/[0.04]'
-                : 'border-[color:var(--color-outline-variant)]/20 bg-transparent hover:bg-[color:var(--color-surface-dim)]/40'
+              ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]/[0.04]'
+              : 'border-[color:var(--color-outline-variant)]/20 bg-transparent hover:bg-[color:var(--color-surface-dim)]/40'
               }`}
           >
             <div className="flex items-center gap-3">
@@ -1668,8 +1668,8 @@ export default function ProviderDiscoveryPage() {
       const sCat = (s.category?.name || s.category?.slug || s.category || '').toLowerCase();
       const sName = (s.name || '').toLowerCase();
       const mName = (s.merchant?.name || s.merchantName || '').toLowerCase();
-      const isTurfOrSports = sCat.includes('turf') || sCat.includes('sport') || sCat.includes('cricket') || sCat.includes('badminton') || 
-                             sName.includes('turf') || sName.includes('court') || mName.includes('turf');
+      const isTurfOrSports = sCat.includes('turf') || sCat.includes('sport') || sCat.includes('cricket') || sCat.includes('badminton') ||
+        sName.includes('turf') || sName.includes('court') || mName.includes('turf');
       if (isTurfOrSports) return false;
     }
 
@@ -1698,11 +1698,11 @@ export default function ProviderDiscoveryPage() {
     // Free cancellation only
     if (freeCancellationOnly) {
       const rawText = `${s.name} ${s.description || ''} ${JSON.stringify(s.metadata || {})} ${JSON.stringify(s.merchant?.metadata || {})}`.toLowerCase();
-      const hasFreeCancellation = rawText.includes('free cancellation') || 
-                                  rawText.includes('cancellation available') || 
-                                  rawText.includes('cancel anytime') || 
-                                  rawText.includes('24h before') ||
-                                  (s.metadata?.policies && JSON.stringify(s.metadata.policies).toLowerCase().includes('cancellation'));
+      const hasFreeCancellation = rawText.includes('free cancellation') ||
+        rawText.includes('cancellation available') ||
+        rawText.includes('cancel anytime') ||
+        rawText.includes('24h before') ||
+        (s.metadata?.policies && JSON.stringify(s.metadata.policies).toLowerCase().includes('cancellation'));
       if (!hasFreeCancellation) return false;
     }
 
@@ -1714,11 +1714,11 @@ export default function ProviderDiscoveryPage() {
       }
       // If user explicitly activated pet friendly filter, verify positive pet allowance
       if (petFriendlyOnly) {
-        const isPetFriendly = rawText.includes('pet friendly') || 
-                             rawText.includes('pets allowed') || 
-                             rawText.includes('pet-friendly') || 
-                             rawText.includes('pets welcome') ||
-                             rawText.includes('dog friendly');
+        const isPetFriendly = rawText.includes('pet friendly') ||
+          rawText.includes('pets allowed') ||
+          rawText.includes('pet-friendly') ||
+          rawText.includes('pets welcome') ||
+          rawText.includes('dog friendly');
         if (!isPetFriendly) return false;
       }
     }
@@ -1742,7 +1742,7 @@ export default function ProviderDiscoveryPage() {
     const matchCity = s.city?.toLowerCase().includes(query) || s.merchant?.city?.toLowerCase().includes(query);
     const matchAddress = s.merchant?.address?.toLowerCase().includes(query);
     const matchDesc = s.description && s.description.toLowerCase().includes(query);
-    
+
     // Check metadata / amenities / features
     const metadataStr = JSON.stringify(s.metadata || {}).toLowerCase();
     const matchMeta = metadataStr.includes(query);
@@ -1816,7 +1816,7 @@ export default function ProviderDiscoveryPage() {
             <div className="space-y-6">
               {/* ── UNIFIED ALL-IN-ONE SEARCH BAR & FILTER DOCK ── */}
               <div className="rounded-2xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-container)]/80 backdrop-blur-xl p-3 shadow-xl space-y-3">
-                
+
                 {/* Unified Search & Discovery Bar */}
                 {isHotelCategory ? (
                   /* ── BOKSPOT LUXURY HOTEL SEARCH BAR (#033266 Brand Palette) ── */
@@ -1842,9 +1842,9 @@ export default function ProviderDiscoveryPage() {
                               />
                             </div>
                             {searchQuery && (
-                              <button 
+                              <button
                                 type="button"
-                                onClick={() => setSearchQuery('')} 
+                                onClick={() => setSearchQuery('')}
                                 className="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xs p-1 cursor-pointer"
                                 title="Clear search"
                               >
@@ -2179,11 +2179,10 @@ export default function ProviderDiscoveryPage() {
                         <button
                           type="button"
                           onClick={() => setFreeCancellationOnly(!freeCancellationOnly)}
-                          className={`px-3 py-1.5 rounded-lg border font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                            freeCancellationOnly
+                          className={`px-3 py-1.5 rounded-lg border font-bold transition-all cursor-pointer flex items-center gap-1 ${freeCancellationOnly
                               ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-[#033266] dark:border-[#ff6325] shadow-xs'
                               : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:border-[#033266] dark:hover:border-[#ff6325]'
-                          }`}
+                            }`}
                         >
                           <span>Free Cancellation</span>
                         </button>
@@ -2192,11 +2191,10 @@ export default function ProviderDiscoveryPage() {
                         <button
                           type="button"
                           onClick={() => setPetFriendlyOnly(!petFriendlyOnly)}
-                          className={`px-3 py-1.5 rounded-lg border font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                            petFriendlyOnly || pets
+                          className={`px-3 py-1.5 rounded-lg border font-bold transition-all cursor-pointer flex items-center gap-1 ${petFriendlyOnly || pets
                               ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-[#033266] dark:border-[#ff6325] shadow-xs'
                               : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:border-[#033266] dark:hover:border-[#ff6325]'
-                          }`}
+                            }`}
                         >
                           <span>🐾 Pet Friendly</span>
                         </button>
@@ -2246,8 +2244,8 @@ export default function ProviderDiscoveryPage() {
                         className="w-full bg-transparent text-xs sm:text-sm font-medium text-[color:var(--color-on-surface)] placeholder-[color:var(--color-outline)] outline-none"
                       />
                       {searchQuery && (
-                        <button 
-                          onClick={() => setSearchQuery('')} 
+                        <button
+                          onClick={() => setSearchQuery('')}
                           className="text-[color:var(--color-outline)] hover:text-[color:var(--color-on-surface)] text-xs p-1 cursor-pointer"
                           title="Clear search"
                         >
@@ -2301,166 +2299,194 @@ export default function ProviderDiscoveryPage() {
               </div>
 
               <div id="hotel-results-anchor" className="scroll-mt-6">
-              {filteredServices.length === 0 ? (
-                <div className="col-span-full py-20 px-6 rounded-3xl border border-dashed border-slate-200 bg-white flex flex-col items-center justify-center text-center shadow-xs">
-                  <div className="h-16 w-16 bg-[#033266]/10 border border-[#033266]/20 rounded-2xl flex items-center justify-center mb-4 text-[#033266] shadow-inner">
-                    <Search size={30} />
+                {filteredServices.length === 0 ? (
+                  <div className="col-span-full py-20 px-6 rounded-3xl border border-dashed border-slate-200 bg-white flex flex-col items-center justify-center text-center shadow-xs">
+                    <div className="h-16 w-16 bg-[#033266]/10 border border-[#033266]/20 rounded-2xl flex items-center justify-center mb-4 text-[#033266] shadow-inner">
+                      <Search size={30} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">No {categoryName} found</h3>
+                    <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+                      There are no services available matching your criteria in {city} right now. Please explore other categories or adjust your filters.
+                    </p>
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-2">No {categoryName} found</h3>
-                  <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-                    There are no services available matching your criteria in {city} right now. Please explore other categories or adjust your filters.
-                  </p>
-                </div>
-              ) : (
-                <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
-                  {Object.values(filteredServices.reduce((acc: any, service: any) => {
-                    const mObj = service.merchantObj || (typeof service.merchant === 'string' ? { id: service.merchant, name: service.merchant } : service.merchant) || { name: 'BokSpot Merchant', id: 'unknown' };
-                    const mId = mObj.id && mObj.id !== 'unknown' ? mObj.id : (mObj.name || service.name || 'unknown');
-                    const groupKey = (mObj.name ? mObj.name.toLowerCase().trim() : mId);
+                ) : (
+                  <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
+                    {Object.values(filteredServices.reduce((acc: any, service: any) => {
+                      const mObj = service.merchantObj || (typeof service.merchant === 'string' ? { id: service.merchant, name: service.merchant } : service.merchant) || { name: 'BokSpot Merchant', id: 'unknown' };
+                      const branchName = service.metadata?.branchName || service.metadata?.facilityName;
+                      const mId = mObj.id && mObj.id !== 'unknown' ? mObj.id : (mObj.name || service.name || 'unknown');
+                      const groupKey = branchName ? `${mId}_${branchName.toLowerCase().trim()}` : (mObj.name ? mObj.name.toLowerCase().trim() : mId);
 
-                    if (!acc[groupKey]) {
-                      acc[groupKey] = {
-                        merchantObj: mObj,
-                        service: service,
-                        categories: new Set(),
-                        groupImageUrl: null,
-                        minPrice: service.basePrice || service.price || null,
-                        rating: service.rating || 4.8,
-                        reviewCount: service.reviewCount || 24,
-                        dist: (latitude !== null && longitude !== null && mObj.latitude && mObj.longitude)
-                          ? `${calculateDistance(latitude, longitude, mObj.latitude, mObj.longitude)} km`
-                          : '4.5 km',
-                      };
-                    }
-                    if (service.name === '__BOKSPOT_GROUP__') {
-                      acc[groupKey].groupImageUrl = service.metadata?.mainImageUrl || service.imageUrl;
-                      acc[groupKey].groupName = service.category;
-                      acc[groupKey].groupCity = service.city;
-                    }
-                    if (service.basePrice && (!acc[groupKey].minPrice || service.basePrice < acc[groupKey].minPrice)) {
-                      acc[groupKey].minPrice = service.basePrice;
-                    }
+                      if (!acc[groupKey]) {
+                        acc[groupKey] = {
+                          merchantObj: {
+                            ...mObj,
+                            name: branchName || mObj.name
+                          },
+                          service: service,
+                          categories: new Set(),
+                          groupImageUrl: null,
+                          minPrice: service.basePrice || service.price || null,
+                          rating: service.rating || 4.8,
+                          reviewCount: service.reviewCount || 24,
+                          dist: (latitude !== null && longitude !== null && mObj.latitude && mObj.longitude)
+                            ? `${calculateDistance(latitude, longitude, mObj.latitude, mObj.longitude)} km`
+                            : '4.5 km',
+                        };
+                      }
+                      if (service.name === '__BOKSPOT_GROUP__') {
+                        acc[groupKey].groupImageUrl = service.metadata?.mainImageUrl || service.imageUrl;
+                        acc[groupKey].groupName = service.category;
+                        acc[groupKey].groupCity = service.city;
+                      }
+                      if (service.basePrice && (!acc[groupKey].minPrice || service.basePrice < acc[groupKey].minPrice)) {
+                        acc[groupKey].minPrice = service.basePrice;
+                      }
 
-                    if (mObj.allCategories && Array.isArray(mObj.allCategories)) {
-                      mObj.allCategories.forEach((cat: string) => acc[groupKey].categories.add(cat));
-                    } else if (service.name && service.name !== '__BOKSPOT_GROUP__') {
-                      acc[groupKey].categories.add(service.name);
-                    }
-                    return acc;
-                  }, {})).map((group: any, i: number) => {
-                    const m = group.merchantObj;
-                    const s = group.service;
-                    const chips = Array.from(group.categories).slice(0, 3);
-                    return (
-                      <motion.div
-                        key={m.id || m.name || i}
-                        initial={{ opacity: 0, y: 15 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: Math.min(i * 0.05, 0.4) }}
-                        className="h-full"
-                      >
-                        <Link 
-                          href={isHotelCategory 
-                            ? `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?checkIn=${checkInDate}&checkOut=${checkOutDate}&adults=${adults}&children=${children}&childAges=${encodeURIComponent(JSON.stringify(childAges))}&rooms=${rooms}&pets=${pets}&petCount=${petCount}` 
-                            : `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}`
-                          } 
-                          className="block h-full"
+                      if (service.metadata?.listings && Array.isArray(service.metadata.listings) && service.metadata.listings.length > 0) {
+                        if (!acc[groupKey].listings) acc[groupKey].listings = [];
+                        service.metadata.listings.forEach((l: any) => {
+                          acc[groupKey].listings.push(l);
+                          if (l.name) acc[groupKey].categories.add(l.name);
+                        });
+                        if (!acc[groupKey].primaryUnitName && service.metadata.listings[0]?.name) {
+                          acc[groupKey].primaryUnitName = service.metadata.listings[0].name;
+                        }
+                      }
+
+                      if (mObj.allCategories && Array.isArray(mObj.allCategories)) {
+                        mObj.allCategories.forEach((cat: string) => acc[groupKey].categories.add(cat));
+                      } else if (service.name && service.name !== '__BOKSPOT_GROUP__') {
+                        acc[groupKey].categories.add(service.name);
+                      }
+                      return acc;
+                    }, {})).map((group: any, i: number) => {
+                      const m = group.merchantObj;
+                      const s = group.service;
+                      const chips = Array.from(group.categories).slice(0, 3);
+                      return (
+                        <motion.div
+                          key={m.id || m.name || i}
+                          initial={{ opacity: 0, y: 15 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: Math.min(i * 0.05, 0.4) }}
+                          className="h-full"
                         >
-                          <div className={`group relative flex flex-col h-full bg-[color:var(--color-surface)] rounded-3xl overflow-hidden border border-[color:var(--color-outline-variant)]/30 hover:border-[#ff6325]/50 hover:shadow-2xl hover:shadow-[#ff6325]/10 transition-all duration-300 cursor-pointer ${viewMode === 'list' ? 'sm:flex-row' : ''}`}>
-                            {/* Image Header with Hover Zoom */}
-                            <div className={`relative overflow-hidden bg-[color:var(--color-surface-dim)] shrink-0 ${viewMode === 'list' ? 'sm:w-80 h-52 sm:h-auto' : 'h-52 w-full'}`}>
-                              <img
-                                src={group.groupImageUrl || s?.metadata?.mainImageUrl || s?.imageUrl || s?.images?.[0] || m.images?.[0] || `https://images.unsplash.com/photo-1540039155732-68bebc6894b9?w=800&q=80`}
-                                alt={m.name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                                onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1540039155732-68bebc6894b9?w=800&q=80'; }}
-                              />
+                          <Link
+                            href={isHotelCategory
+                              ? `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?checkIn=${checkInDate}&checkOut=${checkOutDate}&adults=${adults}&children=${children}&childAges=${encodeURIComponent(JSON.stringify(childAges))}&rooms=${rooms}&pets=${pets}&petCount=${petCount}`
+                              : `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}`
+                            }
+                            className="block h-full"
+                          >
+                            <div className={`group relative flex flex-col h-full bg-[color:var(--color-surface)] rounded-3xl overflow-hidden border border-[color:var(--color-outline-variant)]/30 hover:border-[#ff6325]/50 hover:shadow-2xl hover:shadow-[#ff6325]/10 transition-all duration-300 cursor-pointer ${viewMode === 'list' ? 'sm:flex-row' : ''}`}>
+                              {/* Image Header with Hover Zoom */}
+                              <div className={`relative overflow-hidden bg-[color:var(--color-surface-dim)] shrink-0 ${viewMode === 'list' ? 'sm:w-80 h-52 sm:h-auto' : 'h-52 w-full'}`}>
+                                <img
+                                  src={
+                                    s?.metadata?.mainImageUrl ||
+                                    s?.images?.[0] ||
+                                    s?.imageUrl ||
+                                    group.groupImageUrl ||
+                                    (category.includes('turf') || category.includes('football') || category.includes('cricket') || category.includes('badminton') || category.includes('court')
+                                      ? 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=800&q=80'
+                                      : (m.images?.[0] || `https://images.unsplash.com/photo-1540039155732-68bebc6894b9?w=800&q=80`))
+                                  }
+                                  alt={s?.metadata?.facilityName || s?.metadata?.branchName || m.name}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                                  onError={(e) => {
+                                    e.currentTarget.src = (category.includes('turf') || category.includes('football'))
+                                      ? 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=800&q=80'
+                                      : 'https://images.unsplash.com/photo-1540039155732-68bebc6894b9?w=800&q=80';
+                                  }}
+                                />
 
-                              {/* Subtle Gradient Overlay */}
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+                                {/* Subtle Gradient Overlay */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
-                              {/* Verified Pill / Rating Badge */}
-                              <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white text-[11px] font-bold shadow-md">
-                                <Star size={12} className="text-[#ff6325] fill-[#ff6325]" />
-                                <span>{group.rating || '4.8'}</span>
-                                <span className="text-white/60 text-[9px]">({group.reviewCount || '20+'})</span>
-                              </div>
-
-                              <div className="absolute top-3 right-3 p-2 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-white/80 hover:text-[#ff6325] hover:scale-110 transition-all shadow-md">
-                                <Heart size={14} />
-                              </div>
-
-                              {/* Bottom of Image: Price tag preview if available */}
-                              {group.minPrice && (
-                                <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#ff6325] to-[#e04e13] text-white font-extrabold text-xs shadow-lg">
-                                  From ₹{group.minPrice}
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Info Body */}
-                            <div className="p-5 flex flex-col flex-1 justify-between">
-                              <div>
-                                <div className="flex items-start justify-between gap-2 mb-1">
-                                  <h3 className="font-extrabold text-[17px] text-[color:var(--color-on-surface)] group-hover:text-[#ff6325] transition-colors line-clamp-1 tracking-tight">
-                                    {m.name}
-                                  </h3>
+                                {/* Verified Pill / Rating Badge */}
+                                <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white text-[11px] font-bold shadow-md">
+                                  <Star size={12} className="text-[#ff6325] fill-[#ff6325]" />
+                                  <span>{group.rating || '4.8'}</span>
+                                  <span className="text-white/60 text-[9px]">({group.reviewCount || '20+'})</span>
                                 </div>
 
-                                <div className="flex items-center text-xs font-medium text-[color:var(--color-on-surface-variant)] mb-3.5">
-                                  <MapPin size={13} className="text-[#ff6325]/80 mr-1 shrink-0" />
-                                  <span className="truncate max-w-[150px]">{group.groupCity || city || 'Chennai'}</span>
-                                  {group.dist && (
-                                    <>
-                                      <span className="mx-2 text-[color:var(--color-outline-variant)]">•</span>
-                                      <span className="shrink-0 font-semibold text-[color:var(--color-on-surface)]/80">{group.dist}</span>
-                                    </>
-                                  )}
+                                <div className="absolute top-3 right-3 p-2 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-white/80 hover:text-[#ff6325] hover:scale-110 transition-all shadow-md">
+                                  <Heart size={14} />
                                 </div>
+
+                                {/* Bottom of Image: Price tag preview if available */}
+                                {group.minPrice && (
+                                  <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#ff6325] to-[#e04e13] text-white font-extrabold text-xs shadow-lg">
+                                    From ₹{group.minPrice}
+                                  </div>
+                                )}
                               </div>
 
-                              {/* Tags / Service Offerings */}
-                              {chips.length > 0 && (
-                                <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[color:var(--color-outline-variant)]/20 mt-2">
-                                  {chips.map((chip: any, idx: number) => {
-                                    const isCurrentCat = chip === categoryName;
-                                    return (
-                                      <span
-                                        key={idx}
-                                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide transition-all ${isCurrentCat
+                              {/* Info Body */}
+                              <div className="p-5 flex flex-col flex-1 justify-between">
+                                <div>
+                                  <div className="flex items-start justify-between gap-2 mb-1">
+                                    <h3 className="font-extrabold text-[17px] text-[color:var(--color-on-surface)] group-hover:text-[#ff6325] transition-colors line-clamp-1 tracking-tight">
+                                      {s?.metadata?.facilityName || s?.metadata?.branchName || s?.metadata?.merchantName || m.name}
+                                    </h3>
+                                  </div>
+
+
+                                  <div className="flex items-center text-xs font-medium text-[color:var(--color-on-surface-variant)] mb-3.5">
+                                    <MapPin size={13} className="text-[#ff6325]/80 mr-1 shrink-0" />
+                                    <span className="truncate max-w-[150px]">{group.groupCity || city || 'Chennai'}</span>
+                                    {group.dist && (
+                                      <>
+                                        <span className="mx-2 text-[color:var(--color-outline-variant)]">•</span>
+                                        <span className="shrink-0 font-semibold text-[color:var(--color-on-surface)]/80">{group.dist}</span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Tags / Service Offerings */}
+                                {chips.length > 0 && (
+                                  <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[color:var(--color-outline-variant)]/20 mt-2">
+                                    {chips.map((chip: any, idx: number) => {
+                                      const isCurrentCat = chip === categoryName;
+                                      return (
+                                        <span
+                                          key={idx}
+                                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide transition-all ${isCurrentCat
                                             ? 'bg-gradient-to-r from-[#ff6325] to-[#e04e13] text-white shadow-sm font-extrabold'
                                             : 'bg-[color:var(--color-surface-dim)]/80 border border-[color:var(--color-outline-variant)]/40 text-[color:var(--color-on-surface)]/90 hover:border-[#ff6325]/40'
-                                          }`}
-                                      >
-                                        {chip}
-                                      </span>
-                                    );
-                                  })}
-                                </div>
-                              )}
-
-                              {/* Action Footer for Hotels */}
-                              {isHotelCategory && (
-                                <div className="mt-3 pt-3 border-t border-[color:var(--color-outline-variant)]/20 flex items-center justify-between">
-                                  <div>
-                                    <span className="text-[10px] text-[color:var(--color-outline)] font-bold uppercase tracking-wider block leading-tight">Starting from</span>
-                                    <span className="text-base font-black text-[#ff6325]">₹{group.minPrice || '2,499'}</span>
-                                    <span className="text-[10px] text-[color:var(--color-on-surface-variant)] font-medium"> / night</span>
+                                            }`}
+                                        >
+                                          {chip}
+                                        </span>
+                                      );
+                                    })}
                                   </div>
-                                  <span className="px-3 py-1.5 rounded-xl bg-[#0a3161] dark:bg-[#ff6325] text-white text-xs font-bold group-hover:brightness-110 flex items-center gap-1 shadow-xs transition-all">
-                                    <span>View Rooms</span>
-                                    <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
-                                  </span>
-                                </div>
-                              )}
+                                )}
+
+                                {/* Action Footer for Hotels */}
+                                {isHotelCategory && (
+                                  <div className="mt-3 pt-3 border-t border-[color:var(--color-outline-variant)]/20 flex items-center justify-between">
+                                    <div>
+                                      <span className="text-[10px] text-[color:var(--color-outline)] font-bold uppercase tracking-wider block leading-tight">Starting from</span>
+                                      <span className="text-base font-black text-[#ff6325]">₹{group.minPrice || '2,499'}</span>
+                                      <span className="text-[10px] text-[color:var(--color-on-surface-variant)] font-medium"> / night</span>
+                                    </div>
+                                    <span className="px-3 py-1.5 rounded-xl bg-[#0a3161] dark:bg-[#ff6325] text-white text-xs font-bold group-hover:brightness-110 flex items-center gap-1 shadow-xs transition-all">
+                                      <span>View Rooms</span>
+                                      <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        </Link>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              )}
+                          </Link>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}

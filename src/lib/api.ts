@@ -233,9 +233,10 @@ export const api = {
             reviewCount: srv.reviewCount || 10,
             isFeatured: srv.isFeatured || false,
             metadata: srv.metadata || {},
+            merchantId: srv.merchantId || srv.merchant?.id,
             merchant: srv.metadata?.merchantName || srv.merchant?.name || 'Merchant',
             merchantObj: srv.merchant ? {
-              id: srv.merchant.id,
+              id: srv.merchant.id || srv.merchantId,
               name: srv.metadata?.merchantName || srv.merchant.name,
               city: srv.merchant.city,
               address: `${srv.merchant.city} Main Road`,
@@ -246,13 +247,13 @@ export const api = {
               amenities: [],
               allCategories: srv.merchant.allCategories || []
             } : undefined,
-            categoryObj: srv.category ? {
+            categoryObj: (typeof srv.category === 'object' && srv.category) ? {
               id: srv.category.id,
               name: srv.category.name,
               slug: srv.category.slug
             } : undefined,
             city: srv.merchant?.city || 'Chennai',
-            category: srv.category?.name || 'Category',
+            category: (typeof srv.category === 'string' && srv.category) ? srv.category : (srv.category?.name || srv.metadata?.originalCategory || 'Category'),
             // Pass the dynamic configurations straight to UI
             rawConfig: srv
           }));

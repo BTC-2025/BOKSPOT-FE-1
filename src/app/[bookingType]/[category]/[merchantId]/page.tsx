@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Map, Clock, CheckCircle2, ChevronRight, ChevronLeft, Info, ShieldCheck, Search, Users, Utensils, X, Calendar, Bed, Star, Heart, Check, MapPin, ExternalLink, Headphones, Award } from 'lucide-react';
+import { ArrowLeft, Map, Clock, CheckCircle2, ChevronRight, ChevronLeft, Info, ShieldCheck, Search, Users, Utensils, X, Calendar, Bed, Star, Heart, Check, MapPin, ExternalLink, Headphones, Award, Minus, Plus } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useLocationStore, useBookingFlowStore } from '@/lib/store';
 import { BokspotLoader } from '@/components/ui/BokspotLoader';
@@ -66,6 +66,10 @@ export default function VenueProfilePage() {
   const [pets, setPets] = useState(searchParams?.get('pets') === 'true');
   const [petCount, setPetCount] = useState<number>(Number(searchParams?.get('petCount')) || 0);
 
+  // Custom Calendar Popover states for Check-in / Check-out
+  const [activeDatePicker, setActiveDatePicker] = useState<'checkIn' | 'checkOut' | null>(null);
+  const [pickerMonthDate, setPickerMonthDate] = useState(() => new Date());
+
   // Compute stay duration in nights
   const nights = React.useMemo(() => {
     try {
@@ -95,6 +99,8 @@ export default function VenueProfilePage() {
   const [selectedDate, setSelectedDate] = useState(todayStr);
   const [selectedHourSlot, setSelectedHourSlot] = useState<string | null>(null);
   const [selectedTurfService, setSelectedTurfService] = useState<any | null>(null);
+  const [selectedTurfAddons, setSelectedTurfAddons] = useState<string[]>([]);
+  const [isTurfAddonModalOpen, setIsTurfAddonModalOpen] = useState(false);
   const [slotHoldTimeRemaining, setSlotHoldTimeRemaining] = useState<number | null>(null);
   const [pricingResult, setPricingResult] = useState<any | null>(null);
   const [isPricingCalculating, setIsPricingCalculating] = useState(false);
@@ -147,7 +153,7 @@ export default function VenueProfilePage() {
         const res = await api.services.list({});
         if (active && res && res.data) {
           const merchantServices = res.data.filter((s: any) => {
-            const isMatchMerchant = (s.merchantObj?.id === merchantId) || (s.merchant === merchantId) || (s.merchantObj?.name === merchantId) || (s.merchant === decodeURIComponent(merchantId));
+            const isMatchMerchant = (s.merchantId === merchantId) || (s.merchantObj?.id === merchantId) || (s.merchant === merchantId) || (s.merchantObj?.name === merchantId) || (s.merchant === decodeURIComponent(merchantId));
 
             let isMatchType = true;
             if (merchantId === '2cf63fd7-6710-4ac6-a3fa-8cbda29fdc0e') {
@@ -167,9 +173,17 @@ export default function VenueProfilePage() {
               }
             } else {
               const expectedCategoryName = CATEGORY_NAMES[category];
-              if (expectedCategoryName) {
-                isMatchType = s.category === expectedCategoryName || s.categoryObj?.slug === category;
-              }
+              const sCat = (s.category || '').toLowerCase();
+              const catSlug = (s.categoryObj?.slug || '').toLowerCase();
+              const sName = (s.name || '').toLowerCase();
+              const expCat = (expectedCategoryName || '').toLowerCase();
+              const urlCat = (category || '').toLowerCase().replace(/-/g, ' ');
+
+              isMatchType = sCat === expCat || 
+                catSlug === category.toLowerCase() || 
+                sCat.includes(urlCat) || 
+                sName.includes(urlCat) ||
+                (urlCat.includes('turf') && (sCat.includes('turf') || sName.includes('turf')));
             }
             return isMatchMerchant && isMatchType;
           });
@@ -207,12 +221,14 @@ export default function VenueProfilePage() {
     return () => { active = false; };
   }, [merchantId, bookingType]);
 
-  const venueName = merchantData?.name ||
+  const venueName = (liveServices.length > 0 && (liveServices[0].metadata?.facilityName || liveServices[0].metadata?.branchName || liveServices[0].metadata?.merchantName || liveServices[0].merchantObj?.name)) ||
+    merchantData?.name ||
     merchantData?.merchantName ||
-    (liveServices.length > 0 ? (liveServices[0].merchantObj?.name || liveServices[0].merchant || 'Venue') : 'Loading...');
+    (liveServices.length > 0 ? (liveServices[0].merchant || 'Venue') : 'Loading...');
 
-  const address = merchantData?.address ||
-    (liveServices.length > 0 ? (liveServices[0].merchantObj?.address || `${city || 'Chennai'}`) : '');
+  const address = (liveServices.length > 0 && (liveServices[0].metadata?.address || liveServices[0].merchantObj?.address)) ||
+    merchantData?.address ||
+    `${city || 'Chennai'}`;
 
   if (loading) {
     const isHotel = category === 'resorts' || category === 'hotels' || category === 'villas' || category === 'hostels' || category === 'camping';
@@ -250,8 +266,12 @@ export default function VenueProfilePage() {
     }
   };
 
-  (finalMerchantObj.images || []).forEach(addIfValid);
-  (finalMerchantObj.gallery || []).forEach(addIfValid);
+  // If this is a sports facility, only add photos from the turf service/listings (not from parent hotel/resort gallery)
+  if (!isFacility) {
+    (finalMerchantObj.images || []).forEach(addIfValid);
+    (finalMerchantObj.gallery || []).forEach(addIfValid);
+  }
+
   liveServices.forEach((svc: any) => {
     addIfValid(svc.imageUrl);
     addIfValid(svc.image);
@@ -283,18 +303,34 @@ export default function VenueProfilePage() {
 
   const firstSvc = liveServices[0];
   const firstListing = firstSvc?.metadata?.listings?.[0] || firstSvc?.rawConfig?.metadata?.listings?.[0];
-  const aboutText = finalMerchantObj.description ||
-    finalMerchantObj.aboutText ||
-    finalMerchantObj.about ||
-    firstSvc?.description ||
-    firstSvc?.rawConfig?.description ||
-    firstListing?.description;
+  
+  // Venue profile about text (distinct from court/pitch listing description)
+  const aboutText = isFacility 
+    ? (firstSvc?.description ||
+      firstListing?.description ||
+      firstSvc?.metadata?.about ||
+      `Premier sports arena and multi-sport turf facility located in ${city || 'Chennai'}. Equipped with FIFA certified astro turf, high-mast floodlights, and professional player amenities.`)
+    : (finalMerchantObj.description ||
+      finalMerchantObj.aboutText ||
+      finalMerchantObj.about ||
+      firstSvc?.description ||
+      firstListing?.description);
 
-  const amenities = (finalMerchantObj.amenities && finalMerchantObj.amenities.length > 0)
-    ? finalMerchantObj.amenities
-    : (finalMerchantObj.thingsToKnow && finalMerchantObj.thingsToKnow.length > 0)
-      ? finalMerchantObj.thingsToKnow
-      : (firstSvc?.metadata?.amenities || firstListing?.metadata?.amenities || []);
+  const defaultFacilityAmenities = [
+    'FIFA Standard Astro Turf', 'High-Mast LED Floodlights', 'Clean Changing Rooms', 'Dugout Seating for Teams', 'Drinking Water & First Aid', 'Parking Area'
+  ];
+
+  const amenities = isFacility
+    ? ((firstListing?.metadata?.amenities && firstListing.metadata.amenities.length > 0)
+        ? firstListing.metadata.amenities
+        : ((firstSvc?.metadata?.amenities && firstSvc.metadata.amenities.length > 0)
+            ? firstSvc.metadata.amenities
+            : defaultFacilityAmenities))
+    : ((finalMerchantObj.amenities && finalMerchantObj.amenities.length > 0)
+        ? finalMerchantObj.amenities
+        : (finalMerchantObj.thingsToKnow && finalMerchantObj.thingsToKnow.length > 0)
+          ? finalMerchantObj.thingsToKnow
+          : (firstSvc?.metadata?.amenities || firstListing?.metadata?.amenities || []));
 
   const handleShare = () => {
     if (typeof window !== 'undefined') {
@@ -412,95 +448,340 @@ export default function VenueProfilePage() {
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
                   {/* Check-in */}
-                  <div>
+                  <div className="relative">
                     <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
                       Check-in Date
                     </label>
-                    <input
-                      type="date"
-                      value={checkIn}
-                      onChange={(e) => setCheckIn(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white outline-none focus:border-[#033266] dark:focus:border-[#ff6325]"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const targetD = checkIn ? new Date(checkIn) : new Date();
+                        setPickerMonthDate(isNaN(targetD.getTime()) ? new Date() : targetD);
+                        setActiveDatePicker(activeDatePicker === 'checkIn' ? null : 'checkIn');
+                      }}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white flex items-center justify-between hover:border-[#033266] dark:hover:border-[#ff6325] transition-all cursor-pointer text-left"
+                    >
+                      <span className="text-xs">
+                        {(() => {
+                          try {
+                            const [y, m, d] = checkIn.split('-');
+                            return `${d}-${m}-${y}`;
+                          } catch {
+                            return checkIn;
+                          }
+                        })()}
+                      </span>
+                      <Calendar size={15} className="text-[#ff6325] shrink-0" />
+                    </button>
+
+                    {/* Popover Calendar for Check-In */}
+                    <AnimatePresence>
+                      {activeDatePicker === 'checkIn' && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                          className="absolute left-0 top-full mt-2 w-72 bg-white dark:bg-[#0c1424] border border-slate-200 dark:border-white/15 rounded-3xl p-4 shadow-2xl z-50 space-y-3"
+                        >
+                          {/* Calendar Month Header */}
+                          <div className="bg-slate-50 dark:bg-[#121722] rounded-2xl border border-slate-200/80 dark:border-white/10 p-2 flex items-center justify-between">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPickerMonthDate(new Date(pickerMonthDate.getFullYear(), pickerMonthDate.getMonth() - 1, 1));
+                              }}
+                              className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+                            >
+                              <ChevronLeft size={15} />
+                            </button>
+                            <span className="text-xs font-black text-slate-900 dark:text-white">
+                              {pickerMonthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPickerMonthDate(new Date(pickerMonthDate.getFullYear(), pickerMonthDate.getMonth() + 1, 1));
+                              }}
+                              className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+                            >
+                              <ChevronRight size={15} />
+                            </button>
+                          </div>
+
+                          {/* Days of Week */}
+                          <div className="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400">
+                            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                              <div key={d} className="py-1">{d}</div>
+                            ))}
+                          </div>
+
+                          {/* Days Grid */}
+                          <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                            {(() => {
+                              const year = pickerMonthDate.getFullYear();
+                              const month = pickerMonthDate.getMonth();
+                              const firstDay = new Date(year, month, 1).getDay();
+                              const totalDays = new Date(year, month + 1, 0).getDate();
+                              const cells = [];
+
+                              for (let i = 0; i < firstDay; i++) {
+                                cells.push(<div key={`empty-${i}`} className="h-8" />);
+                              }
+
+                              for (let d = 1; d <= totalDays; d++) {
+                                const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                                const isSelected = checkIn === dStr;
+                                const isToday = todayStr === dStr;
+
+                                cells.push(
+                                  <div key={d} className="flex items-center justify-center">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setCheckIn(dStr);
+                                        // Ensure checkOut is at least next day
+                                        if (new Date(dStr) >= new Date(checkOut)) {
+                                          const nextD = new Date(year, month, d + 1);
+                                          const nextStr = `${nextD.getFullYear()}-${String(nextD.getMonth() + 1).padStart(2, '0')}-${String(nextD.getDate()).padStart(2, '0')}`;
+                                          setCheckOut(nextStr);
+                                        }
+                                        setActiveDatePicker(null);
+                                      }}
+                                      className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs transition-all cursor-pointer ${
+                                        isSelected
+                                          ? 'bg-[#1a56db] text-white shadow-md shadow-blue-500/40 ring-2 ring-blue-400/30 font-extrabold'
+                                          : isToday
+                                          ? 'border border-[#1a56db] text-[#1a56db] dark:text-blue-400 font-extrabold'
+                                          : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                      }`}
+                                    >
+                                      {d}
+                                    </button>
+                                  </div>
+                                );
+                              }
+                              return cells;
+                            })()}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   {/* Check-out */}
-                  <div>
+                  <div className="relative">
                     <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
                       Check-out Date
                     </label>
-                    <input
-                      type="date"
-                      value={checkOut}
-                      onChange={(e) => setCheckOut(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white outline-none focus:border-[#033266] dark:focus:border-[#ff6325]"
-                    />
-                  </div>
-
-                  {/* Adults */}
-                  <div>
-                    <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
-                      Adults (18+ yrs)
-                    </label>
-                    <select
-                      value={adults}
-                      onChange={(e) => setAdults(Number(e.target.value))}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white outline-none focus:border-[#033266] dark:focus:border-[#ff6325]"
-                    >
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-                        <option key={n} value={n} className="dark:bg-slate-800 dark:text-white">
-                          {n} Adult{n > 1 ? 's' : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Children */}
-                  <div>
-                    <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
-                      Children (0–17 yrs)
-                    </label>
-                    <select
-                      value={children}
-                      onChange={(e) => {
-                        const newCount = Number(e.target.value);
-                        setChildren(newCount);
-                        setChildAges(prev => {
-                          const updated = [...prev];
-                          if (newCount > updated.length) {
-                            while (updated.length < newCount) updated.push(5);
-                          } else if (newCount < updated.length) {
-                            return updated.slice(0, newCount);
-                          }
-                          return updated;
-                        });
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const targetD = checkOut ? new Date(checkOut) : new Date();
+                        setPickerMonthDate(isNaN(targetD.getTime()) ? new Date() : targetD);
+                        setActiveDatePicker(activeDatePicker === 'checkOut' ? null : 'checkOut');
                       }}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white outline-none focus:border-[#033266] dark:focus:border-[#ff6325]"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white flex items-center justify-between hover:border-[#033266] dark:hover:border-[#ff6325] transition-all cursor-pointer text-left"
                     >
-                      {[0, 1, 2, 3, 4, 5].map(n => (
-                        <option key={n} value={n} className="dark:bg-slate-800 dark:text-white">
-                          {n === 0 ? 'No Children' : `${n} Child${n > 1 ? 'ren' : ''}`}
-                        </option>
-                      ))}
-                    </select>
+                      <span className="text-xs">
+                        {(() => {
+                          try {
+                            const [y, m, d] = checkOut.split('-');
+                            return `${d}-${m}-${y}`;
+                          } catch {
+                            return checkOut;
+                          }
+                        })()}
+                      </span>
+                      <Calendar size={15} className="text-[#ff6325] shrink-0" />
+                    </button>
+
+                    {/* Popover Calendar for Check-Out */}
+                    <AnimatePresence>
+                      {activeDatePicker === 'checkOut' && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                          className="absolute left-0 top-full mt-2 w-72 bg-white dark:bg-[#0c1424] border border-slate-200 dark:border-white/15 rounded-3xl p-4 shadow-2xl z-50 space-y-3"
+                        >
+                          {/* Calendar Month Header */}
+                          <div className="bg-slate-50 dark:bg-[#121722] rounded-2xl border border-slate-200/80 dark:border-white/10 p-2 flex items-center justify-between">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPickerMonthDate(new Date(pickerMonthDate.getFullYear(), pickerMonthDate.getMonth() - 1, 1));
+                              }}
+                              className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+                            >
+                              <ChevronLeft size={15} />
+                            </button>
+                            <span className="text-xs font-black text-slate-900 dark:text-white">
+                              {pickerMonthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPickerMonthDate(new Date(pickerMonthDate.getFullYear(), pickerMonthDate.getMonth() + 1, 1));
+                              }}
+                              className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+                            >
+                              <ChevronRight size={15} />
+                            </button>
+                          </div>
+
+                          {/* Days of Week */}
+                          <div className="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400">
+                            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                              <div key={d} className="py-1">{d}</div>
+                            ))}
+                          </div>
+
+                          {/* Days Grid */}
+                          <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                            {(() => {
+                              const year = pickerMonthDate.getFullYear();
+                              const month = pickerMonthDate.getMonth();
+                              const firstDay = new Date(year, month, 1).getDay();
+                              const totalDays = new Date(year, month + 1, 0).getDate();
+                              const cells = [];
+
+                              for (let i = 0; i < firstDay; i++) {
+                                cells.push(<div key={`empty-out-${i}`} className="h-8" />);
+                              }
+
+                              for (let d = 1; d <= totalDays; d++) {
+                                const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                                const isSelected = checkOut === dStr;
+                                const isToday = todayStr === dStr;
+
+                                cells.push(
+                                  <div key={d} className="flex items-center justify-center">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setCheckOut(dStr);
+                                        // If user selects checkOut before or equal to checkIn, adjust checkIn
+                                        if (new Date(dStr) <= new Date(checkIn)) {
+                                          const prevD = new Date(year, month, d - 1);
+                                          const prevStr = `${prevD.getFullYear()}-${String(prevD.getMonth() + 1).padStart(2, '0')}-${String(prevD.getDate()).padStart(2, '0')}`;
+                                          setCheckIn(prevStr);
+                                        }
+                                        setActiveDatePicker(null);
+                                      }}
+                                      className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs transition-all cursor-pointer ${
+                                        isSelected
+                                          ? 'bg-[#1a56db] text-white shadow-md shadow-blue-500/40 ring-2 ring-blue-400/30 font-extrabold'
+                                          : isToday
+                                          ? 'border border-[#1a56db] text-[#1a56db] dark:text-blue-400 font-extrabold'
+                                          : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                      }`}
+                                    >
+                                      {d}
+                                    </button>
+                                  </div>
+                                );
+                              }
+                              return cells;
+                            })()}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
-                  {/* Rooms */}
-                  <div>
-                    <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
-                      Rooms Required
-                    </label>
-                    <select
-                      value={rooms}
-                      onChange={(e) => setRooms(Number(e.target.value))}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white outline-none focus:border-[#033266] dark:focus:border-[#ff6325]"
-                    >
-                      {[1, 2, 3, 4, 5, 6].map(n => (
-                        <option key={n} value={n} className="dark:bg-slate-800 dark:text-white">
-                          {n} Room{n > 1 ? 's' : ''}
-                        </option>
-                      ))}
-                    </select>
+                  {/* Adults Stepper */}
+                  <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-2xl p-2.5 flex items-center justify-between">
+                    <div>
+                      <h5 className="text-xs font-black text-slate-900 dark:text-white leading-tight">Adults</h5>
+                      <p className="text-[10px] text-slate-400 font-medium">Ages 18 or above</p>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <button
+                        type="button"
+                        disabled={adults <= 1}
+                        onClick={() => setAdults(Math.max(1, adults - 1))}
+                        className="w-7 h-7 rounded-lg border border-slate-250 dark:border-white/15 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 dark:text-white flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                      >
+                        <Minus size={13} />
+                      </button>
+                      <span className="w-4 text-center font-black text-sm text-slate-900 dark:text-white">
+                        {adults}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={adults >= 10}
+                        onClick={() => setAdults(Math.min(10, adults + 1))}
+                        className="w-7 h-7 rounded-lg border border-slate-250 dark:border-white/15 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 dark:text-white flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                      >
+                        <Plus size={13} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Children Stepper */}
+                  <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-2xl p-2.5 flex items-center justify-between">
+                    <div>
+                      <h5 className="text-xs font-black text-slate-900 dark:text-white leading-tight">Children</h5>
+                      <p className="text-[10px] text-slate-400 font-medium">Ages 0 to 17</p>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <button
+                        type="button"
+                        disabled={children <= 0}
+                        onClick={() => {
+                          const newC = Math.max(0, children - 1);
+                          setChildren(newC);
+                          setChildAges(prev => prev.slice(0, newC));
+                        }}
+                        className="w-7 h-7 rounded-lg border border-slate-250 dark:border-white/15 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 dark:text-white flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                      >
+                        <Minus size={13} />
+                      </button>
+                      <span className="w-4 text-center font-black text-sm text-slate-900 dark:text-white">
+                        {children}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={children >= 6}
+                        onClick={() => {
+                          const newC = Math.min(6, children + 1);
+                          setChildren(newC);
+                          setChildAges(prev => [...prev, 5]);
+                        }}
+                        className="w-7 h-7 rounded-lg border border-slate-250 dark:border-white/15 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 dark:text-white flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                      >
+                        <Plus size={13} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Rooms Stepper */}
+                  <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-2xl p-2.5 flex items-center justify-between">
+                    <div>
+                      <h5 className="text-xs font-black text-slate-900 dark:text-white leading-tight">Rooms</h5>
+                      <p className="text-[10px] text-slate-400 font-medium">Units required</p>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <button
+                        type="button"
+                        disabled={rooms <= 1}
+                        onClick={() => setRooms(Math.max(1, rooms - 1))}
+                        className="w-7 h-7 rounded-lg border border-slate-250 dark:border-white/15 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 dark:text-white flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                      >
+                        <Minus size={13} />
+                      </button>
+                      <span className="w-4 text-center font-black text-sm text-slate-900 dark:text-white">
+                        {rooms}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={rooms >= 8}
+                        onClick={() => setRooms(Math.min(8, rooms + 1))}
+                        className="w-7 h-7 rounded-lg border border-slate-250 dark:border-white/15 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 dark:text-white flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                      >
+                        <Plus size={13} />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -630,7 +911,7 @@ export default function VenueProfilePage() {
                     src={galleryImages[0]}
                     alt={`${venueName} primary photo`}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                    onError={(e) => { e.currentTarget.src = defaultHotelPhotos[0]; }}
+                    onError={(e) => { e.currentTarget.src = isFacility ? defaultTurfPhotos[0] : defaultHotelPhotos[0]; }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="absolute top-3 left-3 px-3 py-1 rounded-xl bg-black/60 backdrop-blur-md text-white text-[11px] font-bold shadow-sm">
@@ -649,7 +930,11 @@ export default function VenueProfilePage() {
                       src={imgUrl}
                       alt={`${venueName} preview ${idx + 2}`}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                      onError={(e) => { e.currentTarget.src = defaultHotelPhotos[(idx + 1) % defaultHotelPhotos.length]; }}
+                      onError={(e) => { 
+                        e.currentTarget.src = isFacility 
+                          ? defaultTurfPhotos[(idx + 1) % defaultTurfPhotos.length] 
+                          : defaultHotelPhotos[(idx + 1) % defaultHotelPhotos.length]; 
+                      }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
@@ -663,7 +948,7 @@ export default function VenueProfilePage() {
                 src={galleryImages[currentImageIdx] || galleryImages[0]}
                 alt={venueName}
                 className="w-full h-full object-cover"
-                onError={(e) => { e.currentTarget.src = defaultHotelPhotos[0]; }}
+                onError={(e) => { e.currentTarget.src = isFacility ? defaultTurfPhotos[0] : defaultHotelPhotos[0]; }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
 
@@ -745,7 +1030,7 @@ export default function VenueProfilePage() {
             {/* Middle: Amenities Grid & Check-in Pill */}
             <div className="space-y-3">
               <span className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block tracking-wider">
-                Property Highlights & Inclusions
+                {isFacility ? 'Venue Highlights & Amenities' : 'Property Highlights & Inclusions'}
               </span>
               <div className="grid grid-cols-2 gap-2.5">
                 {(amenities && amenities.length > 0 ? amenities.slice(0, 6) : ['Free High-Speed Wi-Fi', 'Swimming Pool', 'Air Conditioned', '24/7 Front Desk', 'Private Bath', 'Daily Housekeeping']).map((am: string, idx: number) => (
@@ -756,12 +1041,24 @@ export default function VenueProfilePage() {
                 ))}
               </div>
 
-              {/* Check-in & Check-out Timings Bar */}
-              <div className="px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
-                <span className="flex items-center gap-1.5">🕒 Check-in: <strong className="text-slate-800 dark:text-slate-200 font-extrabold">12:00 PM</strong></span>
-                <span>•</span>
-                <span className="flex items-center gap-1.5">Check-out: <strong className="text-slate-800 dark:text-slate-200 font-extrabold">11:00 AM</strong></span>
-              </div>
+              {/* Timings Bar: Operating Hours for Facility/Turf, Check-in/out for Stays */}
+              {isFacility ? (
+                <div className="px-3.5 py-2.5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40 flex items-center justify-between text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                  <span className="flex items-center gap-1.5">
+                    <span>🕒 Operating Hours:</span>
+                    <strong className="font-extrabold">{firstSvc?.metadata?.operatingHours || firstListing?.metadata?.operatingHours || (finalMerchantObj.operatingHours && !finalMerchantObj.operatingHours.includes('Front Desk') ? finalMerchantObj.operatingHours : '06:00 AM – 11:00 PM')}</strong>
+                  </span>
+                  <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-md bg-emerald-200/60 dark:bg-emerald-800/60 text-emerald-900 dark:text-emerald-100">
+                    Open Daily
+                  </span>
+                </div>
+              ) : (
+                <div className="px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <span className="flex items-center gap-1.5">🕒 Check-in: <strong className="text-slate-800 dark:text-slate-200 font-extrabold">{finalMerchantObj.metadata?.checkInTime || '12:00 PM'}</strong></span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1.5">Check-out: <strong className="text-slate-800 dark:text-slate-200 font-extrabold">{finalMerchantObj.metadata?.checkOutTime || '11:00 AM'}</strong></span>
+                </div>
+              )}
             </div>
 
             {/* Bottom Quick-Action: View on Map */}
@@ -779,12 +1076,508 @@ export default function VenueProfilePage() {
               </button>
 
               <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500">
-                Rooms listed below ↓
+                {isFacility ? 'Slots & Courts listed below ↓' : 'Rooms listed below ↓'}
               </span>
             </div>
 
           </div>
         </div>
+
+        {/* ============================================================
+         * SECTION D4: SPORTS, TURF & COURT HOURLY SLOTS BOOKING (PLAYO STYLE)
+         * ============================================================ */}
+        {isFacility && (
+          <div className="space-y-6 mb-10 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>⚽</span> Select Time Slot & Court
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Book 1-hour slots. Instant 5-minute temporary reservation hold upon selection.
+                </p>
+              </div>
+
+              {/* Slot Hold Timer */}
+              {selectedHourSlot && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 text-xs font-bold animate-pulse">
+                  <Clock size={14} />
+                  <span>Slot Held: 04:59 mins remaining</span>
+                </div>
+              )}
+            </div>
+
+            {/* Available Courts / Pitches Selector */}
+            {(() => {
+              const allAvailablePitches: any[] = [];
+              liveServices.forEach((svc: any) => {
+                const svcListings = svc.metadata?.listings || svc.rawConfig?.metadata?.listings || [];
+                if (svcListings.length > 0) {
+                  svcListings.forEach((lst: any) => {
+                    allAvailablePitches.push({
+                      id: lst.id || svc.id,
+                      name: lst.name || svc.name,
+                      price: lst.price || svc.price || svc.basePrice || 1350,
+                      description: lst.description || svc.description,
+                      parentService: svc,
+                      rawListing: lst
+                    });
+                  });
+                } else if (svc.name && svc.name !== '__BOKSPOT_GROUP__') {
+                  allAvailablePitches.push({
+                    id: svc.id,
+                    name: svc.name,
+                    price: svc.price || svc.basePrice || 1350,
+                    description: svc.description,
+                    parentService: svc
+                  });
+                }
+              });
+
+              if (allAvailablePitches.length === 0) return null;
+
+              const activePitchId = selectedTurfService?.id || allAvailablePitches[0].id;
+              const activePitch = allAvailablePitches.find(p => p.id === activePitchId) || allAvailablePitches[0];
+              const activeListing = activePitch.rawListing || activePitch.parentService || {};
+              const activeMeta = activeListing.metadata || activePitch.parentService?.metadata || {};
+
+              return (
+                <div className="space-y-4">
+                  <div>
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">
+                      Choose Court / Pitch Unit
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      {allAvailablePitches.map((pitch) => {
+                        const isPitchSelected = activePitchId === pitch.id;
+                        return (
+                          <div
+                            key={pitch.id}
+                            onClick={() => {
+                              setSelectedTurfService({
+                                ...(pitch.parentService || liveServices[0]),
+                                id: pitch.id,
+                                name: pitch.name,
+                                price: pitch.price,
+                                rawListing: pitch.rawListing
+                              });
+                              setSelectedHourSlot(null);
+                              setPricingResult(null);
+                            }}
+                            className={`p-3.5 rounded-2xl border text-left cursor-pointer transition-all flex flex-col justify-between ${
+                              isPitchSelected
+                                ? 'bg-gradient-to-br from-[#033266]/10 to-[#ff6325]/10 border-[#ff6325] ring-2 ring-[#ff6325]/20 shadow-sm'
+                                : 'bg-slate-50/80 dark:bg-slate-800/60 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="text-xs font-black text-slate-900 dark:text-white line-clamp-1">
+                                {pitch.name}
+                              </span>
+                              <span className="text-xs font-extrabold text-[#ff6325] shrink-0">
+                                ₹{pitch.price}/hr
+                              </span>
+                            </div>
+                            {pitch.description && (
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                                {pitch.description}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Playo-Style Court Profile Card */}
+                  <div className="p-4 sm:p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-5">
+                    
+                    {/* Top Row: Pitch Cover, Title, Crown Badge, Description & Big Price Box */}
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
+                      <div className="flex items-start gap-3.5">
+                        <img
+                          src={(Array.isArray(activeListing.images) && activeListing.images[0]) || activeListing.imageUrl || 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600&q=80'}
+                          alt={activePitch.name}
+                          className="h-20 w-24 sm:h-24 sm:w-32 object-cover rounded-2xl border border-slate-200 dark:border-white/10 shrink-0 shadow-xs"
+                        />
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/20 flex items-center gap-1">
+                              <span>👑</span> Best Value
+                            </span>
+                            {activeListing.discountPercentage && (
+                              <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                                {activeListing.discountPercentage}% OFF
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-snug">
+                            {activePitch.name}
+                          </h3>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 max-w-xl">
+                            {activePitch.description || 'FIFA Certified 50mm monofilament turf with rubber granules infill. Equipped with high-mast LED floodlights for night play.'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Right Big Price Box */}
+                      <div className="w-full md:w-auto flex md:flex-col items-center md:items-end justify-between md:justify-center p-3 sm:p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 shrink-0">
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-2xl sm:text-3xl font-black text-[#033266] dark:text-[#ff6325]">
+                            ₹{activePitch.price}
+                          </span>
+                          <span className="text-xs font-bold text-slate-500 dark:text-slate-400">/hr</span>
+                        </div>
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-100/80 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-200/50 dark:border-amber-700/40 mt-1 flex items-center gap-1">
+                          <span>☀️</span> {activeListing.offerBadge || 'Prime Evening Slot'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* 4-Pill Specs Grid */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-lg shrink-0">
+                          🥅
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Dimensions & Size</span>
+                          <span className="text-xs font-black text-slate-900 dark:text-white truncate block">
+                            {activeMeta.turfSize || '100ft x 65ft (7-a-side)'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-lg shrink-0">
+                          ⚽
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Pitch Surface</span>
+                          <span className="text-xs font-black text-slate-900 dark:text-white truncate block" title={activeMeta.surfaceType || 'FIFA 50mm AstroTurf'}>
+                            {activeMeta.surfaceType || 'FIFA 50mm Monofilament'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-lg shrink-0">
+                          💡
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Floodlights</span>
+                          <span className="text-xs font-black text-slate-900 dark:text-white truncate block">
+                            {activeMeta.floodlightsSurcharge ? `₹${activeMeta.floodlightsSurcharge}/hr (Night)` : 'Included in Night Play'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-lg shrink-0">
+                          🛡️
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">On-site Official</span>
+                          <span className="text-xs font-black text-slate-900 dark:text-white truncate block" title={activeMeta.refereeOrManager || 'Ground Supervisor (KFA Certified)'}>
+                            {activeMeta.refereeOrManager || 'Ground Supervisor'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Green Included Playing Gear Banner */}
+                    <div className="p-3.5 sm:p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40 flex items-center justify-between gap-3 text-emerald-900 dark:text-emerald-200">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-base shrink-0 shadow-xs">
+                          ⚽
+                        </div>
+                        <div>
+                          <span className="text-xs font-black block">Included Playing Gear</span>
+                          <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium leading-relaxed">
+                            {activeMeta.equipmentAddons || '2 Match Balls (Size 5), 14 Team Bibs (Neon Green & Orange), Goalkeeper Gloves'}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 shrink-0">›</span>
+                    </div>
+
+                    {/* Court Photos Gallery Section */}
+                    {(() => {
+                      const courtImages = (Array.isArray(activeListing.images) && activeListing.images.length > 0)
+                        ? activeListing.images
+                        : [
+                            'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=1200&q=80',
+                            'https://images.unsplash.com/photo-1574629810360-7efbb49fec90?w=1200&q=80',
+                            'https://images.unsplash.com/photo-1551958219-acbc608c6377?w=1200&q=80'
+                          ];
+
+                      return (
+                        <div className="space-y-3 pt-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                              <span className="text-sm">📷</span> Court Photos ({courtImages.length})
+                            </span>
+                            <span className="text-xs font-bold text-[#033266] dark:text-[#ff6325] hover:underline cursor-pointer">
+                              View all ›
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="h-44 sm:h-52 rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 relative group">
+                              <img
+                                src={courtImages[0]}
+                                alt={`${activePitch.name} wide`}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            </div>
+
+                            <div className="h-44 sm:h-52 rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 relative group">
+                              <img
+                                src={courtImages[1] || courtImages[0]}
+                                alt={`${activePitch.name} pitch`}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                              {courtImages.length > 2 && (
+                                <div className="absolute bottom-3 right-3 px-3 py-1.5 rounded-xl bg-black/80 backdrop-blur-md text-white text-xs font-black shadow-lg">
+                                  +{courtImages.length - 2} More
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Date Quick Selector */}
+            {(() => {
+              const currentListing = selectedTurfService?.rawListing || 
+                liveServices[0]?.metadata?.listings?.[0] || 
+                liveServices[0]?.rawConfig?.metadata?.listings?.[0];
+
+              const publishedSchedule: Array<{ dayOfWeek?: string; specificDate?: string; startTime: string; endTime: string; price: number }> =
+                currentListing?.schedule || currentListing?.metadata?.schedule || selectedTurfService?.schedule || [];
+
+              return (
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                  {[0, 1, 2, 3, 4, 5, 6].map(offset => {
+                    const d = new Date();
+                    d.setDate(d.getDate() + offset);
+                    const ds = d.toISOString().split('T')[0];
+                    const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+                    const isSelected = selectedDate === ds;
+                    const daySlotCount = publishedSchedule.filter((s: any) => {
+                      if (s.specificDate) {
+                        return s.specificDate === ds;
+                      }
+                      return s.dayOfWeek?.toLowerCase() === dayName.toLowerCase();
+                    }).length;
+
+                    return (
+                      <button
+                        key={ds}
+                        type="button"
+                        onClick={() => {
+                          setSelectedDate(ds);
+                          setSelectedHourSlot(null);
+                          setPricingResult(null);
+                        }}
+                        className={`px-4 py-2.5 rounded-xl text-xs font-extrabold flex flex-col items-center min-w-[76px] transition-all cursor-pointer border relative ${isSelected
+                          ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md scale-105'
+                          : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-[#033266] dark:hover:border-[#ff6325]'
+                          }`}
+                      >
+                        <span className="text-[10px] uppercase font-bold opacity-80">
+                          {offset === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' })}
+                        </span>
+                        <span className="text-sm font-black mt-0.5">
+                          {d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                        </span>
+                        {daySlotCount > 0 && (
+                          <span className={`text-[9px] font-black mt-1 px-1.5 py-0.2 rounded-full ${isSelected ? 'bg-white/20 text-white' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>
+                            {daySlotCount} slots
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+
+            {/* Slot Grid - Purely driven by Business Published Schedule */}
+            {(() => {
+              // Extract selected date day of week (e.g. 'Monday', 'Tuesday'...)
+              const targetDayOfWeek = new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' });
+
+              // Find active listing or service
+              const currentListing = selectedTurfService?.rawListing || 
+                liveServices[0]?.metadata?.listings?.[0] || 
+                liveServices[0]?.rawConfig?.metadata?.listings?.[0];
+
+              const publishedSchedule: Array<{ dayOfWeek?: string; specificDate?: string; startTime: string; endTime: string; price: number }> =
+                currentListing?.schedule || currentListing?.metadata?.schedule || selectedTurfService?.schedule || [];
+
+              // Priority 1: Specific Date match (e.g. 2026-10-28)
+              // Priority 2: Fallback or combine with recurring day of week match
+              const dateSpecificSlots = publishedSchedule.filter(s => s.specificDate === selectedDate);
+              const daySlots = (dateSpecificSlots.length > 0 
+                ? dateSpecificSlots 
+                : publishedSchedule.filter(s => !s.specificDate && s.dayOfWeek?.toLowerCase() === targetDayOfWeek.toLowerCase())
+              ).sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+              if (daySlots.length === 0) {
+                // Check if any other day has slots
+                const daysWithSlots = Array.from(new Set(publishedSchedule.map(s => s.specificDate || s.dayOfWeek).filter(Boolean)));
+
+                return (
+                  <div className="py-8 px-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-dashed border-slate-200 dark:border-white/10 text-center space-y-3">
+                    <span className="text-3xl block">⏳</span>
+                    <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                      No slots published for {targetDayOfWeek} ({selectedDate})
+                    </h4>
+                    {daysWithSlots.length > 0 ? (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+                        This venue currently has slots scheduled for <strong className="text-slate-700 dark:text-slate-300">{daysWithSlots.join(', ')}</strong>. Click on one of those dates/days above to book!
+                      </p>
+                    ) : (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+                        Venue has not published booking slots yet. Please check back shortly.
+                      </p>
+                    )}
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-4 pt-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                      ⚡ Available Slots for {targetDayOfWeek} ({daySlots.length} Slots)
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
+                    {daySlots.map((slot, sIdx) => {
+                      const timeLabel = `${slot.startTime} - ${slot.endTime}`;
+                      const isSelected = selectedHourSlot === timeLabel;
+                      const slotPrice = Number(slot.price) || Number(selectedTurfService?.price) || 1350;
+
+                      return (
+                        <button
+                          key={sIdx}
+                          type="button"
+                          onClick={async () => {
+                            setSelectedHourSlot(timeLabel);
+                            const currentSvc = selectedTurfService || liveServices[0] || {};
+                            if (!selectedTurfService) setSelectedTurfService(currentSvc);
+                            setIsPricingCalculating(true);
+                            const calc = await api.services.calculatePricing({
+                              archetype: 'FacilityHourly',
+                              basePrice: slotPrice,
+                              durationHours: 1,
+                              isNightPeak: false,
+                              quantity: 1
+                            });
+                            setPricingResult({
+                              ...calc,
+                              finalPayable: slotPrice,
+                              breakdownSummary: `₹${slotPrice} / slot`
+                            });
+                            setIsPricingCalculating(false);
+                          }}
+                          className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md scale-102'
+                              : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#033266] dark:hover:border-[#ff6325] text-slate-900 dark:text-white'
+                          }`}
+                        >
+                          <span className="text-xs font-black block">{slot.startTime}</span>
+                          <span className="text-[10px] opacity-75 font-semibold mt-0.5 block">to {slot.endTime}</span>
+                          <span className="text-[10px] font-black text-[#ff6325] dark:text-amber-400 mt-1 block">
+                            ₹{slotPrice}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Live Pricing Engine Result Card */}
+            {selectedHourSlot && pricingResult && (() => {
+              const baseSlotCost = Number(pricingResult.finalPayable) || 1350;
+              // Sum any selected addons
+              const activeListingObj = selectedTurfService?.rawListing || liveServices[0]?.metadata?.listings?.[0] || {};
+              const activeMetaObj = activeListingObj.metadata || {};
+              const defaultAddonsList = [
+                { name: 'Certified Match Referee', price: 300 },
+                { name: 'High-Res Match Video Recording', price: 500 },
+                { name: 'Chilled Energy Drinks (Pack of 6)', price: 250 },
+                { name: 'Extra Pro Match Ball (Size 5)', price: 150 },
+                { name: 'Warm-up Bibs Set (10 Pack)', price: 100 },
+                { name: 'Ice Pack & Recovery First-Aid Kit', price: 120 }
+              ];
+              const availableAddons = (Array.isArray(activeMetaObj.addons) && activeMetaObj.addons.length > 0)
+                ? activeMetaObj.addons
+                : defaultAddonsList;
+
+              const addonsTotal = selectedTurfAddons.reduce((sum, addName) => {
+                const found = availableAddons.find((a: any) => a.name === addName);
+                return sum + (found ? Number(found.price) : 0);
+              }, 0);
+
+              const grandTotal = baseSlotCost + addonsTotal;
+
+              return (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#033266] to-[#0c4a85] text-white shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4"
+                >
+                  <div className="space-y-1 text-center sm:text-left">
+                    <div className="flex items-center justify-center sm:justify-start gap-2">
+                      <span className="text-sm font-black text-white">
+                        ⚽ {selectedTurfService?.name || '7v7 Premier FIFA Astro Turf A'}
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
+                        Slot Reserved (5m hold)
+                      </span>
+                    </div>
+                    <span className="text-xs text-blue-100 block font-medium">
+                      📅 {selectedDate} • ⏰ {selectedHourSlot}
+                      {selectedTurfAddons.length > 0 && ` • ${selectedTurfAddons.length} Add-on(s) (+₹${addonsTotal})`}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                    <div className="text-right">
+                      <span className="text-[10px] uppercase font-bold text-blue-200 block">Total Payable</span>
+                      <span className="text-2xl font-black text-amber-400">
+                        ₹{grandTotal.toLocaleString()}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsTurfAddonModalOpen(true);
+                      }}
+                      className="px-7 py-3.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-sm uppercase tracking-wider shadow-lg active:scale-95 transition-all cursor-pointer shrink-0 flex items-center gap-2"
+                    >
+                      <span>⚡</span> Continue &rarr;
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })()}
+          </div>
+        )}
 
 
 
@@ -1476,7 +2269,7 @@ export default function VenueProfilePage() {
                     </h3>
                     <div className="space-y-3.5">
                       {(() => {
-                        const defaultHighlights = [
+                        const defaultStayHighlights = [
                           {
                             icon: '🍳',
                             title: 'Great breakfast & inclusions',
@@ -1504,9 +2297,41 @@ export default function VenueProfilePage() {
                           }
                         ];
 
-                        const activeHighlights = (Array.isArray(finalMerchantObj.metadata?.highlights) && finalMerchantObj.metadata.highlights.length > 0)
-                          ? finalMerchantObj.metadata.highlights
-                          : defaultHighlights;
+                        const defaultFacilityHighlights = [
+                          {
+                            icon: '⚽',
+                            title: 'FIFA Standard Astro Turf',
+                            description: 'High-density 50mm monofilament synthetic grass with shock-absorbing rubber infill engineered for all-weather play.'
+                          },
+                          {
+                            icon: '💡',
+                            title: 'High-Mast LED Floodlights',
+                            description: 'Stadium-grade anti-glare illumination across all pitch zones ensuring seamless evening and late-night matches.'
+                          },
+                          {
+                            icon: '🚿',
+                            title: 'Player Changing Rooms & Showers',
+                            description: 'Hygienic private dressing rooms, lockers, and clean showers ready for teams before and after games.'
+                          },
+                          {
+                            icon: '🪑',
+                            title: 'Covered Team Dugouts & Spectator Seating',
+                            description: 'Weather-protected substitutes benches, scoring tables, and viewing spaces for fans and guests.'
+                          },
+                          {
+                            icon: '🚗',
+                            title: 'Dedicated Parking & Amenities',
+                            description: 'Spacious on-site two-wheeler and car parking, RO drinking water dispenser, and first-aid support.'
+                          }
+                        ];
+
+                        const activeHighlights = isFacility
+                          ? ((Array.isArray(firstSvc?.metadata?.highlights) && firstSvc.metadata.highlights.length > 0)
+                              ? firstSvc.metadata.highlights
+                              : defaultFacilityHighlights)
+                          : ((Array.isArray(finalMerchantObj.metadata?.highlights) && finalMerchantObj.metadata.highlights.length > 0)
+                              ? finalMerchantObj.metadata.highlights
+                              : defaultStayHighlights);
 
                         return activeHighlights.map((hl: any, idx: number) => {
                           const iconBgColors = [
@@ -1789,210 +2614,7 @@ export default function VenueProfilePage() {
 
 
 
-        {/* ============================================================
-         * SECTION D4: SPORTS, TURF & COURT HOURLY SLOTS BOOKING (PLAYO STYLE)
-         * ============================================================ */}
-        {isFacility && (
-          <div className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>⚽</span> Select Time Slot & Court
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Book 1-hour slots. Instant 5-minute temporary reservation hold upon selection.
-                </p>
-              </div>
 
-              {/* Slot Hold Timer */}
-              {selectedHourSlot && (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 text-xs font-bold animate-pulse">
-                  <Clock size={14} />
-                  <span>Slot Held: 04:59 mins remaining</span>
-                </div>
-              )}
-            </div>
-
-            {/* Date Quick Selector */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
-              {[0, 1, 2, 3, 4, 5, 6].map(offset => {
-                const d = new Date();
-                d.setDate(d.getDate() + offset);
-                const ds = d.toISOString().split('T')[0];
-                const isSelected = selectedDate === ds;
-                return (
-                  <button
-                    key={ds}
-                    type="button"
-                    onClick={() => {
-                      setSelectedDate(ds);
-                      setSelectedHourSlot(null);
-                      setPricingResult(null);
-                    }}
-                    className={`px-4 py-2.5 rounded-xl text-xs font-extrabold flex flex-col items-center min-w-[76px] transition-all cursor-pointer border ${isSelected
-                      ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md scale-105'
-                      : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-[#033266] dark:hover:border-[#ff6325]'
-                      }`}
-                  >
-                    <span className="text-[10px] uppercase font-bold opacity-80">
-                      {offset === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' })}
-                    </span>
-                    <span className="text-sm font-black mt-0.5">
-                      {d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Morning vs Evening Slot Grid */}
-            <div className="space-y-4 pt-2">
-              <div>
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">
-                  🌅 Morning & Afternoon (Regular Pricing)
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
-                  {['06:00 AM', '07:00 AM', '08:00 AM', '09:00 AM', '10:00 AM', '04:00 PM'].map(time => {
-                    const isSelected = selectedHourSlot === time;
-                    return (
-                      <button
-                        key={time}
-                        type="button"
-                        onClick={async () => {
-                          setSelectedHourSlot(time);
-                          const currentSvc = liveServices[0] || {};
-                          setSelectedTurfService(currentSvc);
-                          setIsPricingCalculating(true);
-                          const calc = await api.services.calculatePricing({
-                            archetype: 'FacilityHourly',
-                            basePrice: Number(currentSvc.price || currentSvc.basePrice) || 1200,
-                            durationHours: 1,
-                            isNightPeak: false,
-                            quantity: 1
-                          });
-                          setPricingResult(calc);
-                          setIsPricingCalculating(false);
-                        }}
-                        className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${isSelected
-                          ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md'
-                          : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#033266] dark:hover:border-[#ff6325] text-slate-900 dark:text-white'
-                          }`}
-                      >
-                        <span className="text-xs font-black block">{time}</span>
-                        <span className="text-[10px] opacity-75 font-semibold mt-0.5 block">1 Hour Slot</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block mb-2 flex items-center gap-1.5">
-                  <span>🌙 Evening & Night Peak (+ Floodlights ₹200)</span>
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
-                  {['06:00 PM', '07:00 PM', '08:00 PM', '09:00 PM', '10:00 PM', '11:00 PM'].map(time => {
-                    const isSelected = selectedHourSlot === time;
-                    return (
-                      <button
-                        key={time}
-                        type="button"
-                        onClick={async () => {
-                          setSelectedHourSlot(time);
-                          const currentSvc = liveServices[0] || {};
-                          setSelectedTurfService(currentSvc);
-                          setIsPricingCalculating(true);
-                          const calc = await api.services.calculatePricing({
-                            archetype: 'FacilityHourly',
-                            basePrice: Number(currentSvc.price || currentSvc.basePrice) || 1200,
-                            durationHours: 1,
-                            isNightPeak: true,
-                            quantity: 1
-                          });
-                          setPricingResult(calc);
-                          setIsPricingCalculating(false);
-                        }}
-                        className={`p-3 rounded-xl border text-center transition-all cursor-pointer relative overflow-hidden ${isSelected
-                          ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md'
-                          : 'bg-slate-50 dark:bg-slate-800/80 border-amber-500/30 hover:border-amber-500 text-slate-900 dark:text-white'
-                          }`}
-                      >
-                        <div className="absolute top-1 right-1 text-[9px] opacity-75">💡</div>
-                        <span className="text-xs font-black block">{time}</span>
-                        <span className="text-[10px] opacity-75 font-semibold mt-0.5 block">Floodlights</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* Live Pricing Engine Result Card */}
-            {selectedHourSlot && pricingResult && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-6 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4"
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-slate-900 dark:text-white">
-                      {selectedTurfService?.name || 'Standard 7s Turf'}
-                    </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                      Slot Reserved
-                    </span>
-                  </div>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5 font-medium">
-                    {selectedDate} • {selectedHourSlot} • {pricingResult.breakdownSummary}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                  <div className="text-right">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Payable Total</span>
-                    <span className="text-xl font-black text-[#033266] dark:text-[#ff6325]">
-                      ₹{pricingResult.finalPayable?.toLocaleString()}
-                    </span>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedService({
-                        ...selectedTurfService,
-                        price: pricingResult.finalPayable,
-                        name: `${venueName} — ${selectedTurfService?.name || 'Turf Slot'}`,
-                        metadata: {
-                          ...(selectedTurfService?.metadata || {}),
-                          turfBooking: {
-                            venueName,
-                            address,
-                            slotDate: selectedDate,
-                            slotTime: selectedHourSlot,
-                            priceBreakdown: pricingResult
-                          }
-                        }
-                      });
-
-                      setSelectedSlot({
-                        id: `turf-slot-${Date.now()}`,
-                        timeStr: `${selectedDate} at ${selectedHourSlot} (1 Hour)`,
-                        date: selectedDate,
-                        available: true
-                      });
-
-                      router.push('/booking/checkout');
-                    }}
-                    className="px-6 py-3 rounded-xl bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
-                  >
-                    Book Slot &rarr;
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </div>
-        )}
 
         {/* ============================================================
          * SECTION D5: APPOINTMENTS & CLINIC/SALON QUEUE (ARCHETYPE 3: TimeSlot)
@@ -2701,6 +3323,207 @@ export default function VenueProfilePage() {
             </div>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      {/* ── INTERACTIVE TURF MATCH ADD-ONS WORKFLOW MODAL (Resort-Style) ── */}
+      <AnimatePresence>
+        {isTurfAddonModalOpen && selectedHourSlot && pricingResult && (() => {
+          const baseSlotCost = Number(pricingResult.finalPayable) || 1350;
+          const activeListingObj = selectedTurfService?.rawListing || liveServices[0]?.metadata?.listings?.[0] || {};
+          const activeMetaObj = activeListingObj.metadata || {};
+          const defaultAddonsList = [
+            { id: 'referee', name: 'Certified Match Referee', price: 300, icon: '👨‍⚖️', desc: 'Official qualified referee for 60 mins match management & fair play.' },
+            { id: 'video', name: 'High-Res Match Video Recording', price: 500, icon: '📹', desc: 'Full match recording delivered via HD cloud link within 24 hours.' },
+            { id: 'drinks', name: 'Chilled Energy Drinks (Pack of 6)', price: 250, icon: '🧴', desc: 'Ice-chilled electrolyte sports beverages ready at bench.' },
+            { id: 'ball', name: 'Extra Pro Match Ball (Size 5)', price: 150, icon: '⚽', desc: 'FIFA standard match ball pumped to regulation pressure.' },
+            { id: 'bibs', name: 'Warm-up Bibs Set (10 Pack)', price: 100, icon: '🎽', desc: 'Clean, sanitized breathable neon training bibs.' },
+            { id: 'firstaid', name: 'Ice Pack & Recovery First-Aid Kit', price: 120, icon: '🧊', desc: 'Instant cold compress packs, compression straps, and spray.' }
+          ];
+
+          const availableAddons = (Array.isArray(activeMetaObj.addons) && activeMetaObj.addons.length > 0)
+            ? activeMetaObj.addons.map((a: any, i: number) => ({
+                id: a.id || a.name || `addon-${i}`,
+                name: a.name || 'Custom Add-on',
+                price: Number(a.price) || 0,
+                icon: a.icon || '⭐',
+                desc: a.description || 'Enhance your match experience.'
+              }))
+            : defaultAddonsList;
+
+          const addonsTotal = selectedTurfAddons.reduce((sum, addName) => {
+            const found = availableAddons.find((a: any) => a.name === addName);
+            return sum + (found ? Number(found.price) : 0);
+          }, 0);
+
+          const grandTotal = baseSlotCost + addonsTotal;
+
+          const executeTurfBooking = (finalAddons: string[], finalCost: number) => {
+            const totalToPay = baseSlotCost + finalCost;
+            setSelectedService({
+              ...selectedTurfService,
+              price: totalToPay,
+              name: `${venueName} — ${selectedTurfService?.name || 'Turf Slot'}`,
+              metadata: {
+                ...(selectedTurfService?.metadata || {}),
+                selectedAddons: finalAddons,
+                addonsCost: finalCost,
+                turfBooking: {
+                  venueName,
+                  address,
+                  slotDate: selectedDate,
+                  slotTime: selectedHourSlot,
+                  selectedAddons: finalAddons,
+                  addonsCost: finalCost,
+                  priceBreakdown: {
+                    ...pricingResult,
+                    finalPayable: totalToPay
+                  }
+                }
+              }
+            });
+
+            setSelectedSlot({
+              id: `turf-slot-${Date.now()}`,
+              timeStr: `${selectedDate} at ${selectedHourSlot} (1 Hour)`,
+              date: selectedDate,
+              available: true
+            });
+
+            setIsTurfAddonModalOpen(false);
+            router.push('/booking/checkout');
+          };
+
+          return (
+            <div className="fixed inset-0 z-[100000] flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-slate-900/80 backdrop-blur-md">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96, y: 30 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 30 }}
+                className="w-full sm:max-w-2xl md:max-w-3xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-white/10 rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[90vh] sm:h-auto sm:max-h-[85vh]"
+              >
+                {/* Modal Top Header */}
+                <div className="px-6 py-5 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/60 shrink-0">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                      Step 2 of 2: Optional Match Add-ons
+                    </span>
+                    <h3 className="font-extrabold text-lg sm:text-xl text-slate-900 dark:text-white mt-1 tracking-tight flex items-center gap-2">
+                      <span>⚽ Upgrade Your Match Session</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      📅 {selectedDate} • ⏰ {selectedHourSlot} • {selectedTurfService?.name || 'Astro Turf'}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsTurfAddonModalOpen(false)}
+                    className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                    title="Close"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Modal Add-ons Grid */}
+                <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+                  <div className="flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 p-3.5 rounded-2xl">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-xl">✨</span>
+                      <div>
+                        <span className="text-xs font-black text-emerald-900 dark:text-emerald-300 block">Want official match gear or refreshments?</span>
+                        <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">Select any add-ons below or skip to proceed with pure turf slot rental.</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    {availableAddons.map((addon: any, aIdx: number) => {
+                      const isChecked = selectedTurfAddons.includes(addon.name);
+
+                      return (
+                        <div
+                          key={aIdx}
+                          onClick={() => {
+                            if (isChecked) {
+                              setSelectedTurfAddons(prev => prev.filter(n => n !== addon.name));
+                            } else {
+                              setSelectedTurfAddons(prev => [...prev, addon.name]);
+                            }
+                          }}
+                          className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${
+                            isChecked
+                              ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-500 ring-2 ring-blue-500/20 shadow-md'
+                              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                          }`}
+                        >
+                          <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-white/10 flex items-center justify-center text-lg shrink-0">
+                            {addon.icon}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <h4 className="text-xs font-black text-slate-900 dark:text-white">
+                                {addon.name}
+                              </h4>
+                              <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 shrink-0">
+                                +₹{addon.price}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed font-medium">
+                              {addon.desc}
+                            </p>
+                          </div>
+                          <div className={`h-5 w-5 rounded-md border flex items-center justify-center text-xs font-black shrink-0 mt-0.5 ${
+                            isChecked 
+                              ? 'bg-blue-600 text-white border-blue-600' 
+                              : 'border-slate-300 dark:border-white/20'
+                          }`}>
+                            {isChecked && '✓'}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Modal Footer (Skip vs Proceed with Add-ons) */}
+                <div className="px-6 py-4 border-t border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/60 flex items-center justify-between gap-3 shrink-0">
+                  {/* Skip Option */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      executeTurfBooking([], 0);
+                    }}
+                    className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-white/20 text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer bg-white dark:bg-slate-800"
+                  >
+                    Skip Add-ons
+                  </button>
+
+                  {/* Proceed to Checkout */}
+                  <div className="flex items-center gap-3">
+                    <div className="text-right hidden sm:block">
+                      <span className="text-[10px] text-slate-400 uppercase font-black block">Total Payable</span>
+                      <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
+                        ₹{grandTotal.toLocaleString()}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        executeTurfBooking(selectedTurfAddons, addonsTotal);
+                      }}
+                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 text-xs font-black shadow-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                      <span>Proceed to Payment</span>
+                      <span>&rarr;</span>
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          );
+        })()}
       </AnimatePresence>
 
       {/* ── INTERACTIVE HOTEL ROOM DETAILS & ADD-ONS WORKFLOW MODAL ── */}

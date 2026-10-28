@@ -152,7 +152,7 @@ export default function CheckoutPage() {
         date: selectedSlot.date,
         time: bookingTime,
         amount: total,
-        status: (isSplitEnabled && (!splitInitiatorPaysNow || splitCount > 1) ? 'SPLIT_PENDING' : 'PENDING') as any,
+        status: (isSplitEnabled && (!splitInitiatorPaysNow || splitCount > 1) ? 'SPLIT_PENDING' : 'CONFIRMED') as any,
         city: selectedService.city,
         durationMinutes: selectedService.duration,
         customerName: name,
@@ -194,9 +194,9 @@ export default function CheckoutPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 pt-24 sm:pt-28 pb-24">
+    <main className="min-h-screen bg-gray-50 pt-20 sm:pt-24 pb-24">
       {/* Header */}
-      <div className="sticky top-[108px] z-40 bg-white border-b border-gray-200 shadow-sm">
+      <div className="bg-white border-b border-gray-200 shadow-xs mb-2">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
           <button onClick={() => router.back()} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
             <ArrowLeft size={20} />
@@ -213,7 +213,7 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-6">
+      <div className="max-w-5xl mx-auto px-4 py-4">
         <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-5 items-start">
           {/* LEFT COLUMN */}
           <div className="lg:col-span-3 space-y-4">
@@ -743,11 +743,7 @@ export default function CheckoutPage() {
                   )}
                 </button>
 
-                {timeLeft > 0 ? (
-                  <p className="text-center text-xs text-gray-400 mt-3 flex items-center justify-center gap-1">
-                    <Clock size={11} />Slot held for <span className="font-bold text-amber-600 font-mono">{formatTime(timeLeft)}</span>
-                  </p>
-                ) : (
+                {timeLeft === 0 && (
                   <p className="text-center text-xs text-red-500 mt-3 flex items-center justify-center gap-1">
                     <AlertCircle size={11} />Slot expired. Go back and re-select.
                   </p>

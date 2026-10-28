@@ -183,149 +183,151 @@ function TracksContent() {
   };
 
   return (
-    <main className="page-content px-4 md:px-8 lg:pr-8 min-h-screen">
-      <div className="mx-auto max-w-5xl pt-3 pb-12 sm:pt-4 sm:pb-12 space-y-8">
+    <main className="page-content px-3 sm:px-6 md:px-10 min-h-screen">
+      <div className="mx-auto max-w-7xl pt-2 pb-14 space-y-6">
 
-        {/* ── Executive Inspired Header ────────────────────────────────────────────── */}
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full backdrop-blur-xl bg-black/5 dark:bg-white/10 border border-black/5 dark:border-white/10 text-[10px] font-black uppercase tracking-widest text-[color:var(--color-primary)] shadow-2xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-            Live Activity Dashboard
-          </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold text-[color:var(--color-on-surface)] tracking-tight">
-            Track your bookings &amp; live activity
-          </h1>
-          <p className="text-[color:var(--color-on-surface-variant)] text-sm md:text-base max-w-xl font-normal leading-relaxed">
-            Keep an eye on reservations, service progress, and real-time transit updates from one unified Apple-grade control center.
-          </p>
-        </div>
-
-        {/* ── 1. Real-Time Travel Tracker (Apple Frosted Glass Canvas) ───────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-[28px] p-6 sm:p-7 border border-black/5 dark:border-white/10 bg-white/75 dark:bg-[#121722]/80 backdrop-blur-2xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.4)] relative overflow-hidden"
-        >
-          {/* Subtle ambient light glow */}
-          <div
-            className="absolute -right-20 -top-20 w-72 h-72 rounded-full opacity-10 pointer-events-none blur-3xl"
-            style={{ background: 'radial-gradient(circle, var(--color-primary), #3b82f6)' }}
+        {/* ── 1. Apple-Grade Unified Hero & Quick Tracker Section ────────────────────────────── */}
+        <div className="relative rounded-[32px] overflow-hidden border border-slate-200/80 dark:border-white/10 shadow-xl bg-white dark:bg-slate-900/90 transition-all">
+          {/* Ambient Background Graphic Layer */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center opacity-40 dark:opacity-25"
+            style={{ backgroundImage: 'url("/common-banner.jpg")' }}
           />
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-transparent dark:from-slate-950 dark:via-slate-950/85 dark:to-transparent" />
 
-          <div className="flex items-center justify-between mb-4 relative z-10">
-            <div className="flex items-center gap-2.5">
-              <span className="w-8 h-8 rounded-xl bg-[color:var(--color-primary)]/10 text-[color:var(--color-primary)] flex items-center justify-center border border-[color:var(--color-primary)]/20 shadow-xs">
-                <Compass size={17} className="animate-spin-slow" />
-              </span>
-              <div>
-                <h2 className="font-extrabold text-[color:var(--color-on-surface)] text-base tracking-tight">
-                  Real-Time Travel Tracker
-                </h2>
-                <p className="text-xs text-[color:var(--color-outline)] font-medium">
-                  Select a mode, enter your PNR or booking identifier, and hook into live radar feeds.
-                </p>
+          <div className="relative z-10 p-6 sm:p-8 lg:p-9 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-8">
+            {/* Left: Branding & Overview */}
+            <div className="max-w-xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-600/10 dark:bg-blue-400/10 border border-blue-600/20 dark:border-blue-400/20 text-[10px] font-black uppercase tracking-widest text-blue-700 dark:text-blue-300 shadow-2xs mb-3">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                Live Control Center
+              </div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+                Track Your Bookings &amp; <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Live Activity</span>
+              </h1>
+              <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm mt-2 font-medium leading-relaxed">
+                Monitor confirmed reservations, active slot schedules, and real-time status updates all in one place.
+              </p>
+
+              <div className="mt-4 flex items-center gap-3">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-white/10">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                  {mergedBookings.filter(b => b.status === 'PENDING' || b.status === 'CONFIRMED' || b.status === 'SPLIT_PENDING').length} Active Reservations
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Live Sync
+                </div>
               </div>
             </div>
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              GPS Live
-            </span>
-          </div>
 
-          {/* Transport Mode Selector (Apple Segmented Style) */}
-          <div className="my-5 relative z-10">
-            <p className="text-[10px] font-black uppercase tracking-widest text-[color:var(--color-outline)] mb-2.5">
-              Transportation Mode
-            </p>
-            <div className="inline-flex p-1 rounded-2xl bg-slate-100/80 dark:bg-slate-900/60 border border-black/5 dark:border-white/10 gap-1.5 shadow-inner">
-              {TRANSPORT_MODES.map(({ id, icon: Icon, label }) => {
-                const isActive = selectedMode === id;
+            {/* Right: Glassmorphic Quick PNR Tracker Pod */}
+            <div className="w-full lg:max-w-md bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/90 dark:border-white/15 p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-lg space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-600/30">
+                    <Navigation size={15} />
+                  </span>
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white">Quick Ticket Tracker</h3>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Transit &amp; Slot Real-Time Radar</p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-lg border border-blue-200 dark:border-blue-800">
+                  Radar Feed
+                </span>
+              </div>
+
+              {/* Transport Mode Chips */}
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10">
+                {TRANSPORT_MODES.map(({ id, icon: Icon, label }) => {
+                  const isActive = selectedMode === id;
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => setSelectedMode(id)}
+                      className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 text-[11px] font-bold transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50'
+                      }`}
+                    >
+                      <Icon size={12} />
+                      <span>{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Input & Button in one sleek bar */}
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    value={pnr}
+                    onChange={e => setPnr(e.target.value)}
+                    placeholder="Enter PNR or Ref ID (e.g. CAB-8291)"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/15 bg-white/90 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/30 transition-all"
+                  />
+                </div>
+                <button
+                  onClick={() => pnr && router.push(`/booking/track?ref=${pnr}`)}
+                  className="px-5 py-2.5 rounded-xl bg-[#033266] hover:bg-[#022349] dark:bg-[#ff6325] dark:hover:bg-[#e04e13] text-white font-bold text-xs transition-all shadow-md active:scale-95 cursor-pointer whitespace-nowrap flex items-center gap-1.5"
+                >
+                  <Navigation size={12} />
+                  <span>Track</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── 2. My Bookings ────────────────────────────────────── */}
+        <div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2.5">
+              <h2 className="font-black text-xl text-slate-900 dark:text-white">My Bookings</h2>
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+                {filteredBookings.length}
+              </span>
+            </div>
+
+            {/* Filter Tabs (Apple Segmented Bar) */}
+            <div className="flex bg-slate-200/70 dark:bg-slate-800/80 backdrop-blur-xl p-1 rounded-2xl border border-slate-300/40 dark:border-white/10 sm:w-auto overflow-x-auto no-scrollbar shadow-inner">
+              {FILTERS.map(f => {
+                const count = f.id === 'ALL' 
+                  ? mergedBookings.length 
+                  : mergedBookings.filter(b => f.id === 'ACTIVE' 
+                      ? (b.status === 'PENDING' || b.status === 'CONFIRMED' || b.status === 'SPLIT_PENDING')
+                      : b.status === f.id
+                    ).length;
+
                 return (
                   <button
-                    key={id}
-                    onClick={() => setSelectedMode(id)}
-                    title={label}
-                    className={`px-4 py-2 rounded-xl flex items-center gap-2 text-xs font-bold transition-all duration-300 cursor-pointer ${isActive
-                        ? 'bg-[color:var(--color-primary)] text-white shadow-md scale-102'
-                        : 'text-[color:var(--color-outline)] hover:text-[color:var(--color-on-surface)] hover:bg-white/60 dark:hover:bg-white/10'
+                    key={f.id}
+                    onClick={() => setActiveFilter(f.id as any)}
+                    className={`relative px-4 py-1.5 text-xs font-bold rounded-xl whitespace-nowrap transition-all duration-300 flex items-center gap-1.5 cursor-pointer ${activeFilter === f.id
+                        ? 'text-white'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                       }`}
                   >
-                    <Icon size={15} />
-                    <span>{label}</span>
+                    {activeFilter === f.id && (
+                      <motion.div
+                        layoutId="filter-pill"
+                        className="absolute inset-0 bg-[#033266] dark:bg-blue-600 rounded-xl shadow-md"
+                        transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative z-10">{f.label}</span>
+                    <span className={`relative z-10 text-[10px] px-1.5 py-0.2 rounded-md ${
+                      activeFilter === f.id ? 'bg-white/20 text-white' : 'bg-black/5 dark:bg-white/10 text-slate-500'
+                    }`}>
+                      {count}
+                    </span>
                   </button>
                 );
               })}
             </div>
-          </div>
-
-          {/* PNR Input + Find Button */}
-          <div className="relative z-10">
-            <p className="text-[10px] font-black uppercase tracking-widest text-[color:var(--color-outline)] mb-2">
-              PNR / Ticket / Reference
-            </p>
-            <div className="flex flex-col sm:flex-row gap-2.5">
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  value={pnr}
-                  onChange={e => setPnr(e.target.value)}
-                  placeholder="e.g., Booking CAB-8291, PNR 847291"
-                  className="w-full px-4 py-3 rounded-2xl border border-black/10 dark:border-white/15 bg-white dark:bg-slate-900/90 text-[color:var(--color-on-surface)] text-sm font-medium placeholder:text-[color:var(--color-outline)]/60 focus:outline-none focus:ring-2 focus:ring-[color:var(--color-primary)]/40 shadow-xs transition-all"
-                />
-              </div>
-              <button
-                onClick={() => pnr && router.push(`/booking/track?ref=${pnr}`)}
-                className="flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-[color:var(--color-primary)] hover:brightness-110 active:scale-95 text-white font-extrabold text-sm transition-all shadow-md cursor-pointer"
-              >
-                <Navigation size={15} />
-                <span>Find &amp; Track</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Apple Stat Pods Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6 pt-5 border-t border-black/5 dark:border-white/10 relative z-10">
-            {[
-              { label: 'Active Reservations', value: `${mergedBookings.filter(b => b.status === 'PENDING' || b.status === 'CONFIRMED').length} active items`, sub: 'Real-time verified status' },
-              { label: 'Live Telemetry', value: 'Satellite Sync Active', sub: 'Monitoring slot changes' },
-              { label: 'Completed Trails', value: `${mergedBookings.filter(b => b.status === 'COMPLETED').length} journeys`, sub: 'Archived booking logs' },
-            ].map(s => (
-              <div key={s.label} className="bg-white/60 dark:bg-white/[0.04] rounded-2xl p-3.5 border border-black/5 dark:border-white/10 shadow-2xs">
-                <p className="text-[9px] font-black uppercase tracking-widest text-[color:var(--color-outline)] mb-0.5">{s.label}</p>
-                <p className="font-extrabold text-[color:var(--color-on-surface)] text-sm">{s.value}</p>
-                <p className="text-[10px] text-[color:var(--color-outline)] mt-0.5 font-medium">{s.sub}</p>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* ── 2. My Bookings ────────────────────────────────────── */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-black text-xl text-[color:var(--color-on-surface)]">My Bookings</h2>
-          </div>
-
-          {/* Filter Tabs (Apple Segmented Bar) */}
-          <div className="flex bg-slate-100/80 dark:bg-slate-900/60 backdrop-blur-xl p-1 rounded-2xl border border-black/5 dark:border-white/10 w-full overflow-x-auto no-scrollbar shadow-inner mb-6">
-            {FILTERS.map(f => (
-              <button
-                key={f.id}
-                onClick={() => setActiveFilter(f.id as any)}
-                className={`relative px-5 py-2 text-xs font-bold rounded-xl whitespace-nowrap transition-all duration-300 flex-1 cursor-pointer ${activeFilter === f.id
-                    ? 'text-white'
-                    : 'text-[color:var(--color-outline)] hover:text-[color:var(--color-on-surface)]'
-                  }`}
-              >
-                {activeFilter === f.id && (
-                  <motion.div
-                    layoutId="filter-pill"
-                    className="absolute inset-0 bg-[color:var(--color-primary)] rounded-xl shadow-md"
-                    transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-                  />
-                )}
-                <span className="relative z-10">{f.label}</span>
-              </button>
-            ))}
           </div>
 
           {filteredBookings.length === 0 ? (

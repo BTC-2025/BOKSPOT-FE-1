@@ -184,91 +184,43 @@ Show this at the reception counter.
   }
 
   return (
-    <div className="min-h-screen transition-colors duration-700 pt-28 sm:pt-32" style={{ background: 'white' }}>
-      {/* ── Gradient Header Banner ──────────────────────────────────────────── */}
-      <div className={`relative bg-gradient-to-br ${config.gradient} overflow-hidden`}>
-        {/* Decorative blobs */}
-        <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
-        <div className="absolute -bottom-6 -left-6 w-32 h-32 rounded-full bg-white/10 blur-xl" />
-
-        <div className="relative max-w-lg mx-auto px-4 pt-14 pb-10 text-center">
+    <div className="min-h-screen bg-slate-50/60 dark:bg-[#0b0f17] text-slate-900 dark:text-slate-100 pt-24 sm:pt-28 pb-20">
+      {/* ── Top App-Style Success Hero Card ─────────────────────────────────────── */}
+      <div className="max-w-xl mx-auto px-4">
+        <div className="bg-white dark:bg-[#111726] rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-sm p-6 sm:p-8 text-center relative overflow-hidden">
+          {/* Subtle Confetti/Accent background */}
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500" />
+          
           {/* Status Icon */}
-          <div className="relative inline-flex mb-4">
-            {config.showPulse && (
-              <>
-                <span className={`absolute inline-flex h-full w-full rounded-full ${config.pulseColor} opacity-40 animate-ping`} />
-                <span className={`absolute inline-flex h-full w-full rounded-full ${config.pulseColor} opacity-20 animate-ping`}
-                  style={{ animationDelay: '0.5s' }} />
-              </>
-            )}
-            <div className={`relative w-24 h-24 rounded-full ${config.iconBg} border-4 border-white shadow-2xl flex items-center justify-center`}>
-              <Icon size={44} className={config.iconColor} />
-            </div>
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 mb-4 ring-8 ring-emerald-500/5">
+            <CheckCircle2 size={36} className="stroke-[2.3]" />
           </div>
 
-          <h1 className="text-2xl font-black text-white drop-shadow mb-1">{config.title}</h1>
-          <p className="text-white/80 text-sm font-medium max-w-xs mx-auto">{config.subtitle}</p>
+          <span className="inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40 mb-2">
+            ✓ Booking Confirmed & Guaranteed
+          </span>
 
-          {/* Status badge */}
-          <div className={`inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-full text-xs font-black border bg-white/90 ${config.textColor} shadow`}>
-            {config.badge}
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+            Booking Confirmed!
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-1.5 max-w-sm mx-auto">
+            Your reservation at <strong className="text-slate-800 dark:text-slate-200">{booking.merchantName}</strong> is locked in. Instant QR check-in pass is active below.
+          </p>
 
-          {/* Polling indicator for PENDING */}
-          {status === 'PENDING' && (
-            <div className="flex items-center justify-center gap-2 mt-4">
-              <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-              <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-              <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-              <span className="text-white/70 text-[10px] font-bold ml-1">Checking for updates...</span>
+          {/* Stepper Pill */}
+          <div className="mt-6 pt-5 border-t border-slate-100 dark:border-white/10 grid grid-cols-3 gap-2">
+            <div className="text-center">
+              <div className="w-6 h-6 mx-auto rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black">✓</div>
+              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 mt-1 block">Payment</span>
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── Progress Steps ──────────────────────────────────────────────────── */}
-      <div className={`bg-gradient-to-b ${config.bgGradient} border-b ${config.borderColor} px-4 py-5`}>
-        <div className="max-w-lg mx-auto">
-          <div className="flex items-center justify-between relative">
-            {/* connecting line */}
-            <div className="absolute left-0 right-0 top-4 h-0.5 bg-gray-200 z-0" />
-            <div
-              className={`absolute left-0 top-4 h-0.5 bg-gradient-to-r ${config.gradient} z-0 transition-all duration-700`}
-              style={{
-                width: status === 'SPLIT_PENDING' ? '33%' : status === 'PENDING' ? '66%' : status === 'CONFIRMED' ? '100%' : '66%',
-              }}
-            />
-
-            {[
-              {
-                label: status === 'SPLIT_PENDING' ? 'Your Share Paid' : 'Payment Done',
-                done: true
-              },
-              {
-                label: status === 'SPLIT_PENDING' ? 'Group Share Completion' : 'Venue Accepted',
-                done: status === 'CONFIRMED' || (status === 'PENDING' && !booking?.isSplitEnabled),
-                active: status === 'SPLIT_PENDING' || status === 'PENDING',
-                failed: status === 'CANCELLED',
-              },
-              { label: 'Booking Locked', done: status === 'CONFIRMED', failed: status === 'CANCELLED' },
-            ].map((step, i) => (
-              <div key={i} className="flex flex-col items-center gap-1.5 z-10">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black border-2 transition-all duration-500 ${step.failed
-                    ? 'bg-red-100 border-red-400 text-red-600'
-                    : step.done
-                      ? `bg-gradient-to-br ${config.gradient} border-white text-white shadow-md`
-                      : step.active
-                        ? 'bg-white border-amber-400 text-amber-600 animate-pulse shadow'
-                        : 'bg-white border-gray-200 text-gray-400'
-                  }`}>
-                  {step.failed ? '✕' : step.done ? '✓' : i + 1}
-                </div>
-                <span className={`text-[9px] font-bold text-center leading-tight ${step.failed ? 'text-red-500' : step.done ? config.textColor : 'text-gray-400'
-                  }`}>
-                  {step.label}
-                </span>
-              </div>
-            ))}
+            <div className="text-center">
+              <div className="w-6 h-6 mx-auto rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black">✓</div>
+              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 mt-1 block">Slot Locked</span>
+            </div>
+            <div className="text-center">
+              <div className="w-6 h-6 mx-auto rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black">✓</div>
+              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 mt-1 block">Gate Pass Ready</span>
+            </div>
           </div>
         </div>
       </div>

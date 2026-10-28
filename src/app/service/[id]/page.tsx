@@ -147,9 +147,9 @@ export default function BokspotServiceDetailPage() {
   const selectedSlot = slotsToDisplay.find(s => s.id === selectedSlotId);
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-24 sm:pt-28 pb-24">
-      {/* Sticky Header */}
-      <div className="sticky top-[108px] z-40 bg-white border-b border-gray-200 shadow-sm">
+    <div className="min-h-screen bg-gray-50 pt-20 sm:pt-24 pb-24">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 shadow-xs mb-2">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-4">
           <button onClick={() => router.back()} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
             <ArrowLeft size={20} />
@@ -161,7 +161,7 @@ export default function BokspotServiceDetailPage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
+      <div className="max-w-5xl mx-auto px-4 py-4 space-y-4">
         {listings.length > 0 && (
           <>
             {/* ─── DATE PICKER ─── */}

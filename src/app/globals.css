@@ -1372,3 +1372,20 @@ body {
 .leaflet-control {
   z-index: 10 !important;
 }
+
+/* ─── Clear, High-Contrast Date & Time Picker Indicators ─── */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.85;
+  filter: invert(42%) sepia(98%) saturate(1450%) hue-rotate(346deg) brightness(98%) contrast(102%);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  width: 18px;
+  height: 18px;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  transform: scale(1.15);
+  opacity: 1;
+}
