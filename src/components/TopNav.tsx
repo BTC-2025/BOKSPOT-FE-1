@@ -369,14 +369,20 @@ export function TopNav({
             <div className="relative hidden lg:inline-block">
               <button
                 onClick={() => setIsLocationModalOpen(true)}
-                className="custom-nav-btn pl-2.5 pr-3 h-8 shadow-md duration-200 flex items-center gap-2 hover:border-[#ff6325]/40"
+                className="custom-nav-btn px-2.5 h-7.5 shadow-sm duration-200 flex items-center gap-1 hover:border-[#ff6325]/40"
+                title={mounted ? (city || 'Select Location') : 'Chennai'}
               >
-                <div className="relative flex items-center justify-center">
-                  <MapPin size={13} className={`text-[#ff6325] ${status === 'detecting' ? 'animate-bounce' : ''}`} />
-                  <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-[#ff6325] rounded-full animate-ping" />
+                <div className="relative flex items-center justify-center shrink-0">
+                  <MapPin size={12} className={`text-[#ff6325] ${status === 'detecting' ? 'animate-bounce' : ''}`} />
+                  <span className="absolute -top-0.5 -right-0.5 w-1 h-1 bg-[#ff6325] rounded-full animate-ping" />
                 </div>
-                <span className="!text-white text-[12px] font-black">{mounted ? (city || 'Select Location') : 'Chennai'}</span>
-                <span className="material-symbols-outlined text-[15px] !text-white/80 transition-transform duration-200" style={{ transform: isLocationModalOpen ? 'rotate(180deg)' : 'none' }}>keyboard_arrow_down</span>
+                <span className="!text-white text-[12px] font-black block text-left">
+                  {(() => {
+                    const raw = mounted ? (city || 'Select Location') : 'Chennai';
+                    return raw.length > 3 ? `${raw.slice(0, 3)}...` : raw;
+                  })()}
+                </span>
+                <span className="material-symbols-outlined text-[13px] !text-white/80 transition-transform duration-200 shrink-0" style={{ transform: isLocationModalOpen ? 'rotate(180deg)' : 'none' }}>keyboard_arrow_down</span>
               </button>
             </div>
 
@@ -819,7 +825,7 @@ export function TopNav({
                 className="subnav-pill flex items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-semibold shrink-0"
                 title="Customer Support & Help Desk"
               >
-                <Headset className="w-3.5 h-3.5 text-white/90 shrink-0" />
+                <Headset className="w-3.5 h-3.5 shrink-0" />
                 <span>Support</span>
               </Link>
 
@@ -828,7 +834,7 @@ export function TopNav({
                 className="subnav-pill flex items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-semibold shrink-0"
                 title="App Settings & Preferences"
               >
-                <Settings className="w-3.5 h-3.5 text-white/90 shrink-0" />
+                <Settings className="w-3.5 h-3.5 shrink-0" />
                 <span>Settings</span>
               </Link>
             </div>

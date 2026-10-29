@@ -14,6 +14,7 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   };
   const res = await fetch(`${API_BASE}${path}`, {
     ...defaultOptions,
+    
     ...options,
     headers: { ...defaultOptions.headers, ...options?.headers },
   });
@@ -258,10 +259,20 @@ export const api = {
             rawConfig: srv
           }));
           // Return actual data, even if empty, so the UI can show an empty state instead of dummy cards
+        // Filter out dummy/mock fallback cards for hotel listings so only real publisher units appear
+        if (params?.categorySlug && (params.categorySlug.includes('hotel') || params.categorySlug.includes('room'))) {
           return {
-            data: mappedServices,
-            meta: { total: body.data?.meta?.total || mappedServices.length, page: 1, limit: 100, totalPages: 1 }
+            data: mappedServices.filter((s: any) => {
+              const name = (s.merchant || s.name || '').toLowerCase();
+              return !name.includes('bokspot verified');
+            }),
+            meta: { total: mappedServices.length, page: 1, limit: 100, totalPages: 1 }
           };
+        }
+        return {
+          data: mappedServices,
+          meta: { total: body.data?.meta?.total || mappedServices.length, page: 1, limit: 100, totalPages: 1 }
+        };
         }
       } catch (err) {
         console.warn('Backend services list error:', err);

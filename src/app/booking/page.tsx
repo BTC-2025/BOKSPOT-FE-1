@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   CheckCircle2, Clock, MapPin, XCircle,
   Train, Bus, Plane, Car, Navigation, Compass,
-  Calendar, ChevronRight,
+  Calendar, ChevronRight, Bookmark, Radio, ShieldCheck,
   Shield, Hotel, Coffee, Zap, User, Mail, Phone, Building2, Key, QrCode, DoorClosed, Lock, Unlock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -65,6 +65,30 @@ const ADD_ONS = [
     cta: 'PROTECT TRIP →',
   },
 ];
+
+const getServiceBanner = (serviceName: string, category: string) => {
+  const name = (serviceName || '').toLowerCase();
+  const cat = (category || '').toLowerCase();
+  if (cat.includes('resort') || name.includes('resort') || name.includes('villa')) {
+    return 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&auto=format&fit=crop&q=80';
+  }
+  if (cat.includes('turf') || name.includes('turf') || name.includes('football')) {
+    return 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=700&auto=format&fit=crop&q=80';
+  }
+  if (name.includes('cricket') || name.includes('ground')) {
+    return 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=700&auto=format&fit=crop&q=80';
+  }
+  if (cat.includes('camp') || name.includes('camp') || name.includes('tent')) {
+    return 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=700&auto=format&fit=crop&q=80';
+  }
+  if (cat.includes('hotel') || name.includes('room') || name.includes('suite')) {
+    return 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=700&auto=format&fit=crop&q=80';
+  }
+  if (cat.includes('train') || cat.includes('bus') || name.includes('express')) {
+    return 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=700&auto=format&fit=crop&q=80';
+  }
+  return 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=700&auto=format&fit=crop&q=80';
+};
 
 const getBookingType = (serviceName: string, fallback?: string) => {
   const name = (serviceName || '').toLowerCase();
@@ -183,8 +207,8 @@ function TracksContent() {
   };
 
   return (
-    <main className="page-content px-3 sm:px-6 md:px-10 min-h-screen">
-      <div className="mx-auto max-w-7xl pt-2 pb-14 space-y-6">
+    <main className="page-content w-full px-4 sm:px-6 lg:px-8 min-h-screen">
+      <div className="mx-auto max-w-[1600px] pt-2 pb-14 space-y-6">
 
         {/* ── 1. Apple-Grade Unified Hero & Quick Tracker Section ────────────────────────────── */}
         <div className="relative rounded-[32px] overflow-hidden border border-slate-200/80 dark:border-white/10 shadow-xl bg-white dark:bg-slate-900/90 transition-all">
@@ -282,6 +306,120 @@ function TracksContent() {
           </div>
         </div>
 
+        {/* ── 1.1 Four Edge-to-Edge Summary & Metric Cards ───────────────────────── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          {/* Card 1: Recent Bookings */}
+          <div className="bg-white/80 dark:bg-[#121824]/90 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-white/10 p-5 shadow-sm space-y-2.5 hover:shadow-md transition-all">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#003580] dark:text-blue-400 flex items-center justify-center font-bold">
+                  <Clock size={16} />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Recent Bookings</h3>
+                  <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                    {mergedBookings.filter(b => b.status === 'PENDING' || b.status === 'CONFIRMED' || b.status === 'SPLIT_PENDING').length} active items
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold">
+                {mergedBookings.length} Total
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+              Track ongoing and upcoming reservations across sports turf, hotels, lounges, and transit shuttles.
+            </p>
+            <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs">
+              <span className="text-slate-400 text-[11px]">Active status:</span>
+              <span className="font-bold text-emerald-600 dark:text-emerald-400 text-[11px]">Confirmed &amp; Live</span>
+            </div>
+          </div>
+
+          {/* Card 2: Live Updates */}
+          <div className="bg-white/80 dark:bg-[#121824]/90 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-white/10 p-5 shadow-sm space-y-2.5 hover:shadow-md transition-all">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-[#ff6325] flex items-center justify-center font-bold">
+                  <Radio size={16} />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Live Updates</h3>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                    <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">Realtime status</span>
+                  </div>
+                </div>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-orange-50 dark:bg-orange-950/40 text-[#ff6325] font-bold">
+                Sync 3s
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+              Monitor booking and service changes instantly. Gate check-ins, locker assignments, and updates sync live.
+            </p>
+            <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs">
+              <span className="text-slate-400 text-[11px]">Radar broker:</span>
+              <span className="font-bold text-blue-600 dark:text-blue-400 text-[11px]">Connected</span>
+            </div>
+          </div>
+
+          {/* Card 3: Saved Trails */}
+          <div className="bg-white/80 dark:bg-[#121824]/90 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-white/10 p-5 shadow-sm space-y-2.5 hover:shadow-md transition-all">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center font-bold">
+                  <Bookmark size={16} />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Saved Trails</h3>
+                  <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                    0 journeys saved
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200">
+                Quick Hub
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+              Keep track of frequent destinations, favorite turf grounds, and preferred stays for single-click re-booking.
+            </p>
+            <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs">
+              <span className="text-slate-400 text-[11px]">Explore Hub:</span>
+              <Link href="/categories" className="font-bold text-[#ff6325] hover:underline text-[11px]">Browse Venues →</Link>
+            </div>
+          </div>
+
+          {/* Card 4: Digital Passes & Keycards */}
+          <div className="bg-white/80 dark:bg-[#121824]/90 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-white/10 p-5 shadow-sm space-y-2.5 hover:shadow-md transition-all">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold">
+                  <Key size={16} />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Digital FastPass</h3>
+                  <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                    Contactless Smart Key
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 animate-pulse">
+                Ready
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+              Fast contactless RFID room keys &amp; turnstile entry QR passes auto-generated for verified reservations.
+            </p>
+            <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs">
+              <span className="text-slate-400 text-[11px]">Instant Pass:</span>
+              <span className="font-bold text-purple-600 dark:text-purple-400 text-[11px]">Active on Bookings ↓</span>
+            </div>
+          </div>
+
+        </div>
+
         {/* ── 2. My Bookings ────────────────────────────────────── */}
         <div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
@@ -344,7 +482,7 @@ function TracksContent() {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               <AnimatePresence mode="popLayout">
                 {filteredBookings.map((b: any, i) => {
                   const st = STATUS_STYLE[b.status] || STATUS_STYLE.PENDING;
@@ -370,160 +508,186 @@ function TracksContent() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ delay: i * 0.05 }}
-                      className="bg-white/75 dark:bg-[#121722]/80 backdrop-blur-2xl border border-black/5 dark:border-white/10 rounded-[24px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.3)] hover:shadow-xl hover:-translate-y-1 transition-all group"
+                      className="bg-white dark:bg-[#121824] border border-slate-200/90 dark:border-white/10 rounded-[28px] overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col justify-between"
                     >
-                      {/* Status + Ref */}
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-[color:var(--color-on-surface-variant)]">
-                          REF #{b.ref}
-                        </span>
-                        <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${st.badge}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
-                          {st.label}
-                        </span>
-                      </div>
+                      <div>
+                        {/* Top Banner Image with Overlay */}
+                        <div className="relative h-44 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                          <img
+                            src={getServiceBanner(b.serviceName, b.category)}
+                            alt={b.serviceName}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/10" />
 
-                      {/* Business & Service Info */}
-                      <div className="mb-3 border-b border-[color:var(--color-outline-variant)]/20 pb-3">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h2 className="font-black text-[color:var(--color-on-surface)] text-xl leading-tight mb-0.5">{b.merchantName}</h2>
-                            <p className="text-[11px] text-[color:var(--color-on-surface-variant)] opacity-80 flex items-center gap-1 mb-2">
-                              <MapPin size={10} /> {b.merchantAddress || b.city || 'No Address Provided'}
+                          {/* Top Badges */}
+                          <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
+                            <span className="text-[10px] font-mono font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/20">
+                              REF #{b.ref}
+                            </span>
+                            <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black backdrop-blur-md shadow-sm ${st.badge}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
+                              {st.label}
+                            </span>
+                          </div>
+
+                          {/* Bottom Floating Title on Image */}
+                          <div className="absolute bottom-3 left-3 right-3">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-orange-300 drop-shadow-sm">
+                              {b.merchantCategory || getBookingType(b.serviceName)}
+                            </span>
+                            <h2 className="font-black text-white text-lg leading-tight drop-shadow-sm truncate">
+                              {b.merchantName}
+                            </h2>
+                            <p className="text-[11px] text-white/90 font-medium flex items-center gap-1 mt-0.5 truncate">
+                              <MapPin size={10} className="shrink-0 text-orange-400" /> {b.merchantAddress || b.city || 'Verified Venue'}
                             </p>
                           </div>
                         </div>
-                        <div className="flex flex-col gap-1 mt-2">
-                          <span className="text-[11px] font-black uppercase tracking-widest text-[color:var(--color-primary)]">
-                            {b.merchantCategory || getBookingType(b.serviceName)}
-                          </span>
-                          <span className="text-sm font-bold text-[color:var(--color-on-surface)]">
-                            {getCategoryName(b.serviceName, b.category)} &bull; {b.serviceName}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-sm font-bold text-[color:var(--color-primary)]">
-                        <span className="flex items-center gap-1"><Calendar size={13} />{formatDate(b.date)}</span>
-                        <span className="flex items-center gap-1"><Clock size={13} />{b.time}</span>
-                      </div>
 
-                      {/* Details Grid */}
-                      <div className="grid grid-cols-1 gap-2 mt-4 pt-2">
-
-                        {/* User Info */}
-                        <div className="flex items-start gap-2">
-                          <User size={12} className="text-[color:var(--color-on-surface-variant)] mt-0.5 shrink-0" />
-                          <div className="text-xs text-[color:var(--color-on-surface-variant)] font-medium flex flex-col gap-0.5">
-                            <span className="font-bold text-[color:var(--color-on-surface)]">{b.customerName || user?.fullName || 'N/A'}</span>
-                            <div className="flex flex-wrap items-center gap-x-2">
-                              {b.customerEmail && <span className="flex items-center gap-1"><Mail size={10} /> {b.customerEmail}</span>}
-                              {b.customerPhone && <span className="flex items-center gap-1"><Phone size={10} /> {b.customerPhone}</span>}
+                        {/* Card Body */}
+                        <div className="p-5 space-y-3">
+                          
+                          {/* Service offering & Date strip */}
+                          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/5 space-y-1.5">
+                            <span className="text-xs font-black text-slate-800 dark:text-slate-100 block truncate">
+                              {getCategoryName(b.serviceName, b.category)} &bull; {b.serviceName}
+                            </span>
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-bold text-[#003580] dark:text-blue-400">
+                              <span className="flex items-center gap-1"><Calendar size={12} />{formatDate(b.date)}</span>
+                              <span className="flex items-center gap-1"><Clock size={12} />{b.time}</span>
                             </div>
-                            <span className="opacity-80 flex items-center gap-1 mt-0.5"><MapPin size={10} /> {b.customerAddress || user?.address || 'No Address Provided'}</span>
                           </div>
-                        </div>
 
-                        {/* Booked At Info */}
-                        {b.bookedAt && (
-                          <div className="flex items-start gap-2 mt-1">
-                            <Clock size={12} className="text-[color:var(--color-on-surface-variant)] mt-0.5 shrink-0" />
-                            <p className="text-[10px] text-[color:var(--color-on-surface-variant)] font-medium uppercase tracking-wider">
-                              Placed on {formatDateTime(b.bookedAt)}
-                            </p>
-                          </div>
-                        )}
+                          {/* Details Grid */}
+                          <div className="grid grid-cols-1 gap-2 mt-4 pt-2">
 
-                        {/* ── Hotel Digital Keycard & Entry Pass Module ── */}
-                        {((b.category || '').toLowerCase().includes('hotel') || (b.serviceName || '').toLowerCase().includes('room') || b.keycardIssued) && (
-                          <div className="mt-3 p-3.5 rounded-2xl border border-[color:var(--color-primary)]/20 bg-gradient-to-br from-[color:var(--color-primary)]/5 via-transparent to-amber-500/5">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center gap-1.5">
-                                <Key size={14} className="text-[color:var(--color-primary)]" />
-                                <span className="text-[11px] font-black uppercase tracking-wider text-[color:var(--color-on-surface)]">
-                                  {b.keycardIssued ? 'Digital Keycard Active' : 'Digital Room Access'}
-                                </span>
-                              </div>
-                              <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${b.keycardIssued
-                                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 animate-pulse'
-                                  : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30'
-                                }`}>
-                                {b.keycardIssued ? `Room ${b.roomNumber || 'Assigned'} Access` : 'Awaiting Reception Desk'}
-                              </span>
-                            </div>
-
-                            {b.keycardIssued ? (
-                              <div className="space-y-2">
-                                <p className="text-[11px] text-[color:var(--color-on-surface-variant)]">
-                                  Your NFC &amp; Smart RFID Key is active for <strong>Room {b.roomNumber || '102'}</strong>. Hold your phone near the door lock or tap below to unlock.
-                                </p>
-                                <div className="flex items-center gap-2 pt-1">
-                                  <button
-                                    onClick={() => {
-                                      setUnlockedRooms(prev => ({ ...prev, [b.ref]: true }));
-                                      setTimeout(() => {
-                                        setUnlockedRooms(prev => ({ ...prev, [b.ref]: false }));
-                                      }, 4000);
-                                    }}
-                                    className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm ${unlockedRooms[b.ref]
-                                        ? 'bg-emerald-500 text-white shadow-emerald-500/30 scale-102'
-                                        : 'bg-[color:var(--color-primary)] text-white hover:opacity-90 active:scale-95'
-                                      }`}
-                                  >
-                                    {unlockedRooms[b.ref] ? (
-                                      <>
-                                        <Unlock size={14} />
-                                        <span>Door Unlocked! (Open Now)</span>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Lock size={14} />
-                                        <span>Tap to Unlock Room {b.roomNumber || ''}</span>
-                                      </>
-                                    )}
-                                  </button>
-                                  <Link
-                                    href={`/booking/track?ref=${b.ref}`}
-                                    className="p-2 bg-[color:var(--color-surface)] border border-[color:var(--color-outline-variant)]/40 rounded-xl text-[color:var(--color-on-surface)] hover:text-[color:var(--color-primary)] transition-colors"
-                                    title="View QR Entry Pass"
-                                  >
-                                    <QrCode size={16} />
-                                  </Link>
+                            {/* User Info */}
+                            <div className="flex items-start gap-2">
+                              <User size={12} className="text-[color:var(--color-on-surface-variant)] mt-0.5 shrink-0" />
+                              <div className="text-xs text-[color:var(--color-on-surface-variant)] font-medium flex flex-col gap-0.5">
+                                <span className="font-bold text-[color:var(--color-on-surface)]">{b.customerName || user?.fullName || 'N/A'}</span>
+                                <div className="flex flex-wrap items-center gap-x-2">
+                                  {b.customerEmail && <span className="flex items-center gap-1"><Mail size={10} /> {b.customerEmail}</span>}
+                                  {b.customerPhone && <span className="flex items-center gap-1"><Phone size={10} /> {b.customerPhone}</span>}
                                 </div>
+                                <span className="opacity-80 flex items-center gap-1 mt-0.5"><MapPin size={10} /> {b.customerAddress || user?.address || 'No Address Provided'}</span>
                               </div>
-                            ) : (
-                              <div className="flex items-center justify-between text-[11px] text-[color:var(--color-on-surface-variant)] pt-1">
-                                <span>Show Entry QR Pass at front desk to receive keycard.</span>
-                                <Link
-                                  href={`/booking/track?ref=${b.ref}`}
-                                  className="text-[color:var(--color-primary)] font-bold flex items-center gap-1 hover:underline"
-                                >
-                                  <QrCode size={12} /> View Entry Pass
-                                </Link>
+                            </div>
+
+                            {/* Booked At Info */}
+                            {b.bookedAt && (
+                              <div className="flex items-start gap-2 mt-1">
+                                <Clock size={12} className="text-[color:var(--color-on-surface-variant)] mt-0.5 shrink-0" />
+                                <p className="text-[10px] text-[color:var(--color-on-surface-variant)] font-medium uppercase tracking-wider">
+                                  Placed on {formatDateTime(b.bookedAt)}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* ── Hotel Digital Keycard & Entry Pass Module ── */}
+                            {((b.category || '').toLowerCase().includes('hotel') || (b.serviceName || '').toLowerCase().includes('room') || b.keycardIssued) && (
+                              <div className="mt-3 p-3.5 rounded-2xl border border-[color:var(--color-primary)]/20 bg-gradient-to-br from-[color:var(--color-primary)]/5 via-transparent to-amber-500/5">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-1.5">
+                                    <Key size={14} className="text-[color:var(--color-primary)]" />
+                                    <span className="text-[11px] font-black uppercase tracking-wider text-[color:var(--color-on-surface)]">
+                                      {b.keycardIssued ? 'Digital Keycard Active' : 'Digital Room Access'}
+                                    </span>
+                                  </div>
+                                  <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${b.keycardIssued
+                                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 animate-pulse'
+                                      : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                                    }`}>
+                                    {b.keycardIssued ? `Room ${b.roomNumber || 'Assigned'} Access` : 'Awaiting Reception Desk'}
+                                  </span>
+                                </div>
+
+                                {b.keycardIssued ? (
+                                  <div className="space-y-2">
+                                    <p className="text-[11px] text-[color:var(--color-on-surface-variant)]">
+                                      Your NFC &amp; Smart RFID Key is active for <strong>Room {b.roomNumber || '102'}</strong>. Hold your phone near the door lock or tap below to unlock.
+                                    </p>
+                                    <div className="flex items-center gap-2 pt-1">
+                                      <button
+                                        onClick={() => {
+                                          setUnlockedRooms(prev => ({ ...prev, [b.ref]: true }));
+                                          setTimeout(() => {
+                                            setUnlockedRooms(prev => ({ ...prev, [b.ref]: false }));
+                                          }, 4000);
+                                        }}
+                                        className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm ${unlockedRooms[b.ref]
+                                            ? 'bg-emerald-500 text-white shadow-emerald-500/30 scale-102'
+                                            : 'bg-[color:var(--color-primary)] text-white hover:opacity-90 active:scale-95'
+                                          }`}
+                                      >
+                                        {unlockedRooms[b.ref] ? (
+                                          <>
+                                            <Unlock size={14} />
+                                            <span>Door Unlocked! (Open Now)</span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Lock size={14} />
+                                            <span>Tap to Unlock Room {b.roomNumber || ''}</span>
+                                          </>
+                                        )}
+                                      </button>
+                                      <Link
+                                        href={`/booking/track?ref=${b.ref}`}
+                                        className="p-2 bg-[color:var(--color-surface)] border border-[color:var(--color-outline-variant)]/40 rounded-xl text-[color:var(--color-on-surface)] hover:text-[color:var(--color-primary)] transition-colors"
+                                        title="View QR Entry Pass"
+                                      >
+                                        <QrCode size={16} />
+                                      </Link>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center justify-between text-[11px] text-[color:var(--color-on-surface-variant)] pt-1">
+                                    <span>Show Entry QR Pass at front desk to receive keycard.</span>
+                                    <Link
+                                      href={`/booking/track?ref=${b.ref}`}
+                                      className="text-[color:var(--color-primary)] font-bold flex items-center gap-1 hover:underline"
+                                    >
+                                      <QrCode size={12} /> View Entry Pass
+                                    </Link>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
-                        )}
+                        </div>
                       </div>
 
-                      {/* Amount and Action */}
-                      <div className="flex flex-col mt-5 pt-4 border-t border-[color:var(--color-outline-variant)]/20 gap-3">
+                      {/* Card Footer: Amount and Fast Action */}
+                      <div className="p-5 pt-3 bg-slate-50/70 dark:bg-slate-800/40 border-t border-slate-200/80 dark:border-white/5 space-y-2.5">
                         <div className="flex items-center justify-between w-full">
                           <div>
-                            <p className="text-[9px] font-black uppercase tracking-widest text-[color:var(--color-on-surface-variant)]">Total Amount</p>
-                            <p className="font-black text-[color:var(--color-on-surface)] text-lg">₹{b.amount}</p>
+                            <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Value</p>
+                            <p className="font-black text-slate-900 dark:text-white text-lg">₹{b.amount?.toLocaleString()}</p>
                           </div>
-                          <Link
-                            href={`/booking/track?ref=${b.ref}`}
-                            className="flex items-center gap-1.5 px-4 py-2 bg-[color:var(--color-primary)] text-white rounded-2xl text-xs font-bold hover:opacity-90 group-hover:gap-2.5 transition-all"
-                          >
-                            Track <ChevronRight size={13} />
-                          </Link>
+                          <div className="flex items-center gap-2">
+                            <Link
+                              href={`/booking/track?ref=${b.ref}`}
+                              className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs"
+                              title="Entry QR Pass"
+                            >
+                              <QrCode size={14} /> Pass
+                            </Link>
+                            <Link
+                              href={`/booking/track?ref=${b.ref}`}
+                              className="px-4 py-2 bg-[#003580] hover:bg-[#002760] dark:bg-[#ff6325] dark:hover:bg-[#e04e13] text-white rounded-xl text-xs font-black transition-all flex items-center gap-1 shadow-md"
+                            >
+                              Track Live <ChevronRight size={13} />
+                            </Link>
+                          </div>
                         </div>
+
                         {b.status === 'PENDING' && (
-                          <div className="w-full flex justify-end">
+                          <div className="w-full flex justify-end pt-1">
                             <button
                               onClick={() => handleCancel(b)}
-                              className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-all"
+                              className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 px-2.5 py-1 rounded-lg transition-all"
                             >
                               Cancel Booking
                             </button>

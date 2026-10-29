@@ -17,8 +17,7 @@ export interface MockService {
 }
 
 export const MOCK_SERVICES: MockService[] = [
-  // H101 Hotel Demo
-  { id: 'svc-h101', name: 'Deluxe Suite', merchant: 'Grand Hotel', price: 2500, rating: 4.8, reviews: 342, duration: 1440, city: 'Chennai', image: 'https://picsum.photos/seed/h101/400/250', category: 'Hotel Booking', lat: 13.085, lng: 80.275, metadata: { bedSize: 'King', maxGuests: 2, hasAC: true, hasWiFi: true, hasBreakfast: true } },
+  // H101 Hotel Demo removed to prevent dummy duplicates with real merchant units
   
   // Chennai (2 services)
   { id: 'svc-1', name: 'Premium Haircut', merchant: 'Style Studio', price: 599, rating: 4.8, reviews: 234, duration: 45, city: 'Chennai', image: 'https://picsum.photos/seed/10/400/250', category: 'Salon / Spa Appointment', lat: 13.085, lng: 80.275 },

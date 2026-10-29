@@ -255,30 +255,26 @@ export default function VenueProfilePage() {
 
   const finalMerchantObj = merchantData || liveServices[0]?.merchantObj || {};
 
-  // Extract and clean real images from merchant object and room services
+  // Extract and clean real images from room listings first (highest priority), then property gallery
   const extractedImages: string[] = [];
   const addIfValid = (url: any) => {
     if (typeof url === 'string' && url.trim().length > 0 && !extractedImages.includes(url)) {
-      // Do not include temporary object blobs or UI screenshots
-      if (!url.startsWith('blob:') && !url.includes('screenshot')) {
+      const lower = url.toLowerCase();
+      // Filter out temporary blobs, UI screenshots, and previous dummy temple or card preview captures
+      if (
+        !url.startsWith('blob:') && 
+        !lower.includes('screenshot') && 
+        !lower.includes('temple') &&
+        !lower.includes('darshan') &&
+        !lower.includes('dummy')
+      ) {
         extractedImages.push(url.trim());
       }
     }
   };
 
-  // If this is a sports facility, only add photos from the turf service/listings (not from parent hotel/resort gallery)
-  if (!isFacility) {
-    (finalMerchantObj.images || []).forEach(addIfValid);
-    (finalMerchantObj.gallery || []).forEach(addIfValid);
-  }
-
+  // 1. First priority: Freshly uploaded active listings / room photos
   liveServices.forEach((svc: any) => {
-    addIfValid(svc.imageUrl);
-    addIfValid(svc.image);
-    (svc.images || []).forEach(addIfValid);
-    (svc.metadata?.images || []).forEach(addIfValid);
-    (svc.metadata?.gallery || []).forEach(addIfValid);
-    (svc.rawConfig?.images || []).forEach(addIfValid);
     const svcListings = svc.metadata?.listings || svc.rawConfig?.metadata?.listings || [];
     svcListings.forEach((l: any) => {
       addIfValid(l.imageUrl);
@@ -286,7 +282,21 @@ export default function VenueProfilePage() {
       (l.images || []).forEach(addIfValid);
       (l.metadata?.gallery || []).forEach(addIfValid);
     });
+    // Only include service level images if there are no listing photos yet
+    if (extractedImages.length === 0) {
+      addIfValid(svc.imageUrl);
+      addIfValid(svc.image);
+      (svc.images || []).forEach(addIfValid);
+      (svc.metadata?.images || []).forEach(addIfValid);
+      (svc.metadata?.gallery || []).forEach(addIfValid);
+    }
   });
+
+  // 2. Second priority: Merchant Property Showcase gallery only if NO room listing photos exist
+  if (!isFacility && extractedImages.length === 0) {
+    (finalMerchantObj.images || []).forEach(addIfValid);
+    (finalMerchantObj.gallery || []).forEach(addIfValid);
+  }
 
   // Fallback photos based on category (Turf/Sports vs Hotel)
   const defaultTurfPhotos = [
@@ -1672,7 +1682,7 @@ export default function VenueProfilePage() {
                         description: lDesc,
                         price: lPrice,
                         thumb,
-                        maxGuests: Number(l.maxGuests || lMeta.maxGuests) || 2,
+                        maxGuests: l.maxGuests || lMeta.maxGuests || 2,
                         bedType: l.bedType || lMeta.bedType,
                         roomSize: l.sizeSqFt || lMeta.sizeSqFt || lMeta.roomSize,
                         bathroomType: l.bathroomType || lMeta.bathroomType,
@@ -1699,7 +1709,7 @@ export default function VenueProfilePage() {
                       description: svc.description || 'Spacious and welcoming accommodation with comfortable bedding, clean linens, and private ensuite bathroom.',
                       price: sPrice,
                       thumb,
-                      maxGuests: Number(primaryMeta.maxGuests) || 2,
+                      maxGuests: primaryMeta.maxGuests || 2,
                       bedType: primaryMeta.bedType,
                       roomSize: primaryMeta.sizeSqFt || primaryMeta.roomSize,
                       bathroomType: primaryMeta.bathroomType,
@@ -1976,7 +1986,7 @@ export default function VenueProfilePage() {
                               <div className="space-y-2.5">
                                 <div className="flex items-start gap-2 font-bold text-slate-800 dark:text-slate-200">
                                   <Users size={14} className="text-[#033266] dark:text-[#ff6325] shrink-0 mt-0.5" />
-                                  <span className="leading-snug">Max {maxGuests} Adults</span>
+                                  <span className="leading-snug">{typeof maxGuests === 'string' && maxGuests.toLowerCase().includes('guest') ? maxGuests : `Max ${maxGuests} Guests`}</span>
                                 </div>
                                 {bedType && (
                                   <div className="flex items-start gap-2 font-bold text-slate-800 dark:text-slate-200">

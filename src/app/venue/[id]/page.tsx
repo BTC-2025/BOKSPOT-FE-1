@@ -277,19 +277,24 @@ export default function VenuePage() {
                                 </div>
 
                                 <div className="flex flex-wrap gap-1.5 pt-1">
-                                  {listing.bedType && (
-                                    <span className="text-[10px] font-bold bg-white text-slate-700 border border-slate-200 px-2 py-0.5 rounded-md flex items-center gap-1">
-                                      <Bed size={10} className="text-[#ff6325]" /> {listing.bedType}
+                                  {(listing.bedType || listing.metadata?.bedType) && (
+                                    <span className="text-[10px] font-bold bg-white text-slate-700 border border-slate-200 px-2 py-0.5 rounded-md flex items-center gap-1 shadow-2xs">
+                                      <Bed size={11} className="text-[#ff6325]" /> {listing.bedType || listing.metadata?.bedType}
                                     </span>
                                   )}
-                                  {listing.maxGuests && (
-                                    <span className="text-[10px] font-bold bg-white text-slate-700 border border-slate-200 px-2 py-0.5 rounded-md">
-                                      👥 {listing.maxGuests} Guests
+                                  {(listing.maxGuests || listing.metadata?.maxGuests) && (
+                                    <span className="text-[10px] font-bold bg-white text-slate-700 border border-slate-200 px-2 py-0.5 rounded-md flex items-center gap-1 shadow-2xs">
+                                      <span>👥</span> {listing.maxGuests || listing.metadata?.maxGuests} Guests
                                     </span>
                                   )}
-                                  {listing.sizeSqFt && (
-                                    <span className="text-[10px] font-bold bg-white text-slate-700 border border-slate-200 px-2 py-0.5 rounded-md">
-                                      📐 {listing.sizeSqFt} sq.ft
+                                  {(listing.sizeSqFt || listing.metadata?.sizeSqFt) && (
+                                    <span className="text-[10px] font-bold bg-white text-slate-700 border border-slate-200 px-2 py-0.5 rounded-md flex items-center gap-1 shadow-2xs">
+                                      <span>📐</span> {listing.sizeSqFt || listing.metadata?.sizeSqFt} sq.ft
+                                    </span>
+                                  )}
+                                  {(listing.metadata?.viewType) && (
+                                    <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60 px-2 py-0.5 rounded-md flex items-center gap-1 shadow-2xs">
+                                      <span>🌊</span> {listing.metadata.viewType}
                                     </span>
                                   )}
                                 </div>

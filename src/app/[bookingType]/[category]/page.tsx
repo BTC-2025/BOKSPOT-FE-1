@@ -1605,9 +1605,16 @@ export default function ProviderDiscoveryPage() {
 
         // Format real merchant services if returned from backend
         if (category === 'hotels' || category === 'hotel-booking' || category.includes('hotel') || category.includes('room')) {
-          list = list.map((item: any) => ({
+          list = list.filter((item: any) => {
+            const mName = (item.merchant?.name || item.merchantName || '').toLowerCase();
+            const sName = (item.name || '').toLowerCase();
+            if (mName.includes('bokspot verified') || sName.includes('bokspot verified')) return false;
+            if (item.id === '11111111-1111-4111-a111-111111111111') return false;
+            if (mName.includes('grand hotel') && sName.includes('standard king')) return false;
+            return true;
+          }).map((item: any) => ({
             ...item,
-            merchant: item.merchant || { name: item.merchantName || 'Bokspot Verified Hotel', id: item.merchantId || item.id },
+            merchant: item.merchant || { name: item.merchantName || 'Grand Hotel', id: item.merchantId || item.id },
             basePrice: item.basePrice || item.price || '2500'
           }));
         }
@@ -2315,7 +2322,12 @@ export default function ProviderDiscoveryPage() {
                       const mObj = service.merchantObj || (typeof service.merchant === 'string' ? { id: service.merchant, name: service.merchant } : service.merchant) || { name: 'BokSpot Merchant', id: 'unknown' };
                       const branchName = service.metadata?.branchName || service.metadata?.facilityName;
                       const mId = mObj.id && mObj.id !== 'unknown' ? mObj.id : (mObj.name || service.name || 'unknown');
-                      const groupKey = branchName ? `${mId}_${branchName.toLowerCase().trim()}` : (mObj.name ? mObj.name.toLowerCase().trim() : mId);
+                      let groupKey = branchName ? `${mId}_${branchName.toLowerCase().trim()}` : (mObj.name ? mObj.name.toLowerCase().trim() : mId);
+                      if ((mObj.name || '').toLowerCase().includes('bokspot verified')) return acc;
+                      if ((mObj.name || '').toLowerCase().includes('grand hotel')) {
+                        if ((service.name || '').toLowerCase().includes('standard king')) return acc;
+                        groupKey = 'grand_hotel_main_venue';
+                      }
 
                       if (!acc[groupKey]) {
                         acc[groupKey] = {
@@ -2384,6 +2396,11 @@ export default function ProviderDiscoveryPage() {
                               <div className={`relative overflow-hidden bg-[color:var(--color-surface-dim)] shrink-0 ${viewMode === 'list' ? 'sm:w-80 h-52 sm:h-auto' : 'h-52 w-full'}`}>
                                 <img
                                   src={
+                                    group.listings?.[0]?.imageUrl ||
+                                    group.listings?.[0]?.metadata?.gallery?.[0] ||
+                                    group.listings?.[0]?.images?.[0] ||
+                                    s?.metadata?.listings?.[0]?.imageUrl ||
+                                    s?.metadata?.listings?.[0]?.metadata?.gallery?.[0] ||
                                     s?.metadata?.mainImageUrl ||
                                     s?.images?.[0] ||
                                     s?.imageUrl ||

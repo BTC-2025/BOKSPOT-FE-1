@@ -803,11 +803,11 @@
   box-shadow: 0 6px 32px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.06) inset !important;
 }
 
-/* Light Mode Styling */
+/* Light Mode Styling - Exact Business Navy */
 .light .custom-navbar {
-  background: linear-gradient(180deg, rgba(10, 37, 72, 0.95) 0%, rgba(8, 28, 56, 0.98) 100%) !important;
-  border-bottom: 1px solid rgba(255, 99, 37, 0.38) !important;
-  box-shadow: 0 4px 25px rgba(10, 49, 97, 0.3), 0 1px 0 rgba(255, 255, 255, 0.1) inset !important;
+  background: linear-gradient(180deg, #003580 0%, #00224f 100%) !important;
+  border-bottom: 2px solid #ff6325 !important;
+  box-shadow: 0 4px 25px rgba(0, 34, 79, 0.35), 0 1px 0 rgba(255, 255, 255, 0.15) inset !important;
 }
 
 /* Brand Logo Color Classes (To prevent overrides) */
@@ -1187,8 +1187,43 @@
 }
 
 .light .secondary-subnav-bar {
-  background: #0f172a !important;
-  border-top: 1px solid rgba(255, 99, 37, 0.35) !important;
+  background: #ffffff !important;
+  border-top: 1px solid rgba(0, 34, 79, 0.08) !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05) !important;
+}
+
+.light .secondary-subnav-bar .subnav-pill {
+  color: #00224f !important;
+  background-color: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  font-weight: 600 !important;
+}
+
+.light .secondary-subnav-bar .subnav-pill:hover {
+  color: #ff6325 !important;
+  background-color: #fff7ed !important;
+  border-color: #ff6325 !important;
+}
+
+.light .secondary-subnav-bar .subnav-pill-action {
+  color: #ff6325 !important;
+  background-color: #fff7ed !important;
+  border: 1px solid rgba(255, 99, 37, 0.3) !important;
+  font-weight: 600 !important;
+}
+
+.light .secondary-subnav-bar .subnav-pill span,
+.light .secondary-subnav-bar .subnav-pill-action span,
+.light .secondary-subnav-bar a,
+.light .secondary-subnav-bar span {
+  color: #00224f !important;
+}
+
+.light .secondary-subnav-bar a:hover,
+.light .secondary-subnav-bar a:hover span,
+.light .secondary-subnav-bar .subnav-pill:hover span {
+  color: #ff6325 !important;
 }
 
 .secondary-subnav-bar .subnav-pill {
