@@ -5,12 +5,12 @@ import { useParams, useRouter } from 'next/navigation';
 import { BokspotLoader } from '../../../components/ui/BokspotLoader';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, ChevronRight, MapPin, Star, Clock, Shield, Search, SlidersHorizontal,
+  ArrowLeft, ChevronRight, ChevronLeft, MapPin, Star, Clock, Shield, Search, SlidersHorizontal,
   List, Map, AlertCircle, Plane, Train, Bus, Car, Compass, Sparkles, QrCode, Ticket, Grid,
   Luggage, X, RotateCw, CheckCircle2, ShieldCheck, Heart, User, Phone, Check, RefreshCw,
-  Navigation, HelpCircle, Activity, AlertTriangle, Bed, Calendar, Users, Plus, Minus, ChevronDown
+  Navigation, HelpCircle, Activity, AlertTriangle, Bed, Calendar, Users, Plus, Minus, ChevronDown, Headphones
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useLocationStore, useBookingFlowStore, useUserStore } from '../../../lib/store';
 import { api, Service } from '../../../lib/api';
@@ -1546,6 +1546,8 @@ export default function ProviderDiscoveryPage() {
     d.setDate(d.getDate() + 2);
     return d.toISOString().split('T')[0];
   });
+  const [activeDatePicker, setActiveDatePicker] = useState<'checkin' | 'checkout' | null>(null);
+  const [calendarViewDate, setCalendarViewDate] = useState<Date>(() => new Date());
   const [guestDropdownOpen, setGuestDropdownOpen] = useState(false);
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
@@ -1556,6 +1558,22 @@ export default function ProviderDiscoveryPage() {
 
   // Autocomplete suggestions state
   const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const searchDockRef = useRef<HTMLDivElement>(null);
+
+  // Auto-close any open popup when clicking outside anywhere on the page
+  useEffect(() => {
+    const handleGlobalClickOutside = (e: MouseEvent) => {
+      if (searchDockRef.current && !searchDockRef.current.contains(e.target as Node)) {
+        setShowAutocomplete(false);
+        setActiveDatePicker(null);
+        setGuestDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleGlobalClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleGlobalClickOutside);
+    };
+  }, []);
 
   // Faceted Filters State (Sidebar / Bar)
   const [priceRange, setPriceRange] = useState<number>(50000); // Max price ceiling
@@ -1767,48 +1785,746 @@ export default function ProviderDiscoveryPage() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-[#ff6325]/10 via-[#0a3161]/5 to-transparent blur-3xl pointer-events-none -z-10" />
       <div className="absolute top-40 right-10 w-72 h-72 bg-[#ff6325]/5 rounded-full blur-3xl pointer-events-none -z-10" />
 
-      {/* Inline Breadcrumb */}
-      <div className="container-main flex items-center justify-between pt-2 pb-1.5">
-        <div className="flex items-center gap-3 min-w-0">
-          <Link
-            href={`/${bookingType}`}
-            className="p-2.5 shrink-0 rounded-xl bg-[var(--color-surface)]/70 backdrop-blur-md border border-[var(--color-outline-variant)]/40 hover:border-[#ff6325]/60 hover:bg-[#ff6325]/10 text-[var(--text-primary)] transition-all shadow-sm group"
-          >
-            <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
-          </Link>
-          <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)] min-w-0">
-            <Link href="/" className="hover:text-[#ff6325] transition-colors shrink-0">Home</Link>
-            <ChevronRight size={13} className="shrink-0 opacity-40" />
-            <Link href={`/${bookingType}`} className="hover:text-[#ff6325] transition-colors truncate shrink-0 capitalize">{bookingType}</Link>
-            <ChevronRight size={13} className="shrink-0 opacity-40" />
-            <span className="text-[var(--text-primary)] font-bold truncate bg-[#ff6325]/10 text-[#ff6325] px-2.5 py-0.5 rounded-md border border-[#ff6325]/20">{categoryName}</span>
+      {/* Inline Breadcrumb (Only for non-stay categories) */}
+      {!isHotelCategory && (
+        <div className="container-main flex items-center justify-between pt-2 pb-1.5">
+          <div className="flex items-center gap-3 min-w-0">
+            <Link
+              href={`/${bookingType}`}
+              className="p-2.5 shrink-0 rounded-xl bg-[var(--color-surface)]/70 backdrop-blur-md border border-[var(--color-outline-variant)]/40 hover:border-[#ff6325]/60 hover:bg-[#ff6325]/10 text-[var(--text-primary)] transition-all shadow-sm group"
+            >
+              <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
+            </Link>
+            <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)] min-w-0">
+              <Link href="/" className="hover:text-[#ff6325] transition-colors shrink-0">Home</Link>
+              <ChevronRight size={13} className="shrink-0 opacity-40" />
+              <Link href={`/${bookingType}`} className="hover:text-[#ff6325] transition-colors truncate shrink-0 capitalize">{bookingType}</Link>
+              <ChevronRight size={13} className="shrink-0 opacity-40" />
+              <span className="text-[var(--text-primary)] font-bold truncate bg-[#ff6325]/10 text-[#ff6325] px-2.5 py-0.5 rounded-md border border-[#ff6325]/20">{categoryName}</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      <div className="container-main py-6 max-w-7xl mx-auto">
-        {/* Luxury Hero Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8 relative"
-        >
-          <div className="inline-flex items-center gap-2 text-[11px] font-bold text-[#ff6325] uppercase tracking-wider mb-2.5 px-3 py-1 rounded-full bg-[#ff6325]/10 border border-[#ff6325]/20 backdrop-blur-md shadow-sm">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff6325] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ff6325]"></span>
-            </span>
-            <MapPin size={12} className="text-[#ff6325]" />
-            <span>Search Hub: {city} Terminal</span>
+      {/* ── FULL-WIDTH LUXURY STAY HERO BANNER ── */}
+      {isHotelCategory ? (
+        <div className="relative w-full shadow-2xl border-b border-slate-200/60 dark:border-white/10 pb-8 sm:pb-10">
+          {/* Panoramic Luxury Sunset Villa Background */}
+          <div className="absolute inset-0 z-0 overflow-hidden">
+            <img
+              src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1920&q=80&auto=format&fit=crop"
+              alt="Luxury Resort Banner"
+              className="w-full h-full object-cover object-right sm:object-center"
+            />
+            {/* Dark Navy to Sunset horizontal gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#031833] via-[#03264d]/95 sm:via-[#03264d]/85 to-black/30" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#021329] via-transparent to-black/40" />
           </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[color:var(--color-on-surface)] flex items-center gap-3">
-            {categoryName}
-            <Sparkles size={24} className="text-[#ff6325]/80 hidden sm:inline-block animate-pulse" />
-          </h1>
-          <p className="text-sm text-[color:var(--color-on-surface-variant)] mt-2 max-w-xl font-normal leading-relaxed">
-            Curated top-rated choices and verified dispatcher portal in {city}.
-          </p>
-        </motion.div>
+
+          <div className="relative z-10 container-main max-w-6xl mx-auto pt-6 pb-8 text-white space-y-4">
+            {/* Top Navigation Row: Back Button + Breadcrumbs + Pill Tag */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <Link
+                  href={`/${bookingType}`}
+                  className="p-2 rounded-xl bg-white/10 hover:bg-[#ff6325] backdrop-blur-md border border-white/20 text-white transition-all shadow-md group shrink-0"
+                  title="Go Back"
+                >
+                  <ArrowLeft size={15} className="group-hover:-translate-x-0.5 transition-transform" />
+                </Link>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-white/80">
+                  <Link href="/" className="hover:text-[#ff6325] transition-colors">Home</Link>
+                  <ChevronRight size={12} className="opacity-50" />
+                  <Link href={`/${bookingType}`} className="hover:text-[#ff6325] transition-colors capitalize">{bookingType}</Link>
+                  <ChevronRight size={12} className="opacity-50" />
+                  <span className="text-white font-bold">{categoryName}</span>
+                </div>
+              </div>
+
+              <div className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#ff6325] text-white shadow-md">
+                <MapPin size={11} className="text-white" />
+                <span>{categoryName.toUpperCase()} • {city || 'AHMEDNAGAR'}</span>
+              </div>
+            </div>
+
+            {/* Clean Hero Title Row - Compact, Balanced & Centered */}
+            <div className="text-center pt-1 pb-2 space-y-1.5">
+              <p className="text-[11px] sm:text-xs font-black uppercase tracking-[0.2em] text-slate-300 drop-shadow">
+                PREMIUM STAYS &nbsp;•&nbsp; BETTER EXPERIENCES
+              </p>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-tight text-white drop-shadow-md">
+                Find Your Perfect Stay in <span className="text-[#ff6325]">{city || 'Bangalore'}</span>
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-200/90 font-medium max-w-3xl mx-auto drop-shadow truncate">
+                {(() => {
+                  const catLabel = categoryName ? categoryName.toLowerCase() : 'stays';
+                  return `Discover handpicked ${catLabel} & verified stays in ${city || 'your destination'} for your next getaway`;
+                })()}
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* ── MODERN UNIFIED PILL SEARCH DOCK (Matching Reference Design) ── */}
+      {isHotelCategory && (
+        <div ref={searchDockRef} className="w-full flex justify-center -translate-y-1/2 relative z-30 -mb-6 sm:-mb-8 px-4">
+          <div className="w-full max-w-5xl bg-white dark:bg-slate-900 rounded-full p-2 sm:p-2.5 shadow-2xl shadow-slate-900/25 border border-slate-200/90 dark:border-white/10 hover:shadow-orange-500/10 transition-all">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+
+              {/* 1. Destination / Where */}
+              <div className="flex-[1.2] relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors cursor-pointer group">
+                <div className="flex items-center gap-3">
+                  <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                    <MapPin size={18} />
+                  </div>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">WHERE</span>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onFocus={() => setShowAutocomplete(true)}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setShowAutocomplete(true);
+                      }}
+                      placeholder={`Search city, villa, hotel or resort...`}
+                      className="w-full bg-transparent text-xs sm:text-sm font-bold text-slate-800 dark:text-white placeholder:text-slate-400 placeholder:font-medium outline-none truncate"
+                    />
+                  </div>
+                  {searchQuery ? (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1"
+                      title="Clear"
+                    >
+                      <X size={14} />
+                    </button>
+                  ) : (
+                    <ChevronDown size={14} className="text-slate-400 shrink-0" />
+                  )}
+                </div>
+
+                {/* Autocomplete Dropdown - Real-time Filtering by City, Name & Locality */}
+                {showAutocomplete && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowAutocomplete(false)} />
+                    <div className="absolute top-full left-0 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl p-2 z-50 max-h-72 overflow-y-auto">
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1.5 flex items-center justify-between">
+                        <span>{searchQuery ? `Matching "${searchQuery}"` : `Popular Stays & Places`}</span>
+                        <span className="text-[9px] text-[#ff6325]">{city || 'All India'}</span>
+                      </div>
+                      {(() => {
+                        const allSuggestions: Array<{ label: string; type: string; icon: string; city?: string }> = [
+                          { label: city || 'Bangalore', type: 'City', icon: '📍', city: city || 'Bangalore' },
+                          { label: `${city || 'Bangalore'} Central`, type: 'City Hub', icon: '🏙️', city: city || 'Bangalore' },
+                          { label: `${city || 'Bangalore'} North / Airport Road`, type: 'Transit Hub', icon: '🛫', city: city || 'Bangalore' },
+                          { label: 'Scenic Outskirts & Luxury Villas', type: 'Villas', icon: '🏡', city: city || 'Bangalore' },
+                          { label: 'Hilltop Resort & Spa', type: 'Resorts', icon: '🌄', city: city || 'Bangalore' },
+                          ...servicesList.map((s: any) => ({
+                            label: s.name,
+                            type: s.category?.name || 'Verified Stay',
+                            icon: '🏨',
+                            city: s.city || s.merchant?.city || city
+                          }))
+                        ];
+
+                        const q = searchQuery.toLowerCase().trim();
+                        const filteredSuggestions = q
+                          ? allSuggestions.filter(item =>
+                              item.label.toLowerCase().includes(q) ||
+                              item.type.toLowerCase().includes(q) ||
+                              (item.city && item.city.toLowerCase().includes(q))
+                            ).slice(0, 8)
+                          : allSuggestions.slice(0, 6);
+
+                        if (filteredSuggestions.length === 0) {
+                          return (
+                            <div className="px-3 py-4 text-center text-xs text-slate-400">
+                              No matching stays or cities found for "{searchQuery}". Press Search to explore all options.
+                            </div>
+                          );
+                        }
+
+                        return filteredSuggestions.map((item, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setSearchQuery(item.label);
+                              setShowAutocomplete(false);
+                            }}
+                            className="w-full text-left flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 cursor-pointer transition-colors"
+                          >
+                            <span className="flex items-center gap-2 font-semibold truncate">
+                              <span>{item.icon}</span>
+                              <span className="truncate">{item.label}</span>
+                            </span>
+                            <span className="text-[10px] text-slate-400 shrink-0 font-medium ml-2">{item.type}</span>
+                          </button>
+                        ));
+                      })()}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* 2. Check-in Date */}
+              <div className="flex-1 relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCalendarViewDate(new Date(checkInDate));
+                    setActiveDatePicker(activeDatePicker === 'checkin' ? null : 'checkin');
+                  }}
+                  className="flex items-center gap-3 w-full text-left cursor-pointer"
+                >
+                  <div className={`transition-colors shrink-0 ${activeDatePicker === 'checkin' ? 'text-[#ff6325]' : 'text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325]'}`}>
+                    <Calendar size={18} />
+                  </div>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">CHECK-IN</span>
+                    <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white truncate">
+                      {(() => {
+                        try {
+                          const [y, m, d] = checkInDate.split('-');
+                          return `${d}-${m}-${y}`;
+                        } catch {
+                          return checkInDate;
+                        }
+                      })()}
+                    </span>
+                  </div>
+                  <Calendar size={15} className="text-[#ff6325] shrink-0" />
+                  <ChevronDown size={14} className={`text-slate-400 shrink-0 transition-transform ${activeDatePicker === 'checkin' ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Custom Interactive Calendar Popover for Check-in */}
+                {activeDatePicker === 'checkin' && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setActiveDatePicker(null)} />
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-150 dark:border-white/15 shadow-2xl p-4 z-50 text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
+                      {/* Calendar Month Header */}
+                      <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-2 mb-4 border border-slate-150/60 dark:border-white/5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newD = new Date(calendarViewDate);
+                            newD.setMonth(newD.getMonth() - 1);
+                            setCalendarViewDate(newD);
+                          }}
+                          className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all cursor-pointer"
+                        >
+                          <ChevronLeft size={16} />
+                        </button>
+                        <span className="font-extrabold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white">
+                          {calendarViewDate.toLocaleString('default', { month: 'long' })} {calendarViewDate.getFullYear()}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newD = new Date(calendarViewDate);
+                            newD.setMonth(newD.getMonth() + 1);
+                            setCalendarViewDate(newD);
+                          }}
+                          className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all cursor-pointer"
+                        >
+                          <ChevronRight size={16} />
+                        </button>
+                      </div>
+
+                      {/* Day of Week Labels */}
+                      <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">
+                        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
+                          <div key={day} className="py-1">
+                            {day}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Days Grid */}
+                      <div className="grid grid-cols-7 gap-1 text-center">
+                        {(() => {
+                          const year = calendarViewDate.getFullYear();
+                          const month = calendarViewDate.getMonth();
+                          const firstDayIndex = new Date(year, month, 1).getDay();
+                          const totalDays = new Date(year, month + 1, 0).getDate();
+
+                          const cells = [];
+                          for (let i = 0; i < firstDayIndex; i++) {
+                            cells.push(<div key={`empty-${i}`} className="h-9 w-9" />);
+                          }
+
+                          for (let day = 1; day <= totalDays; day++) {
+                            const monthStr = String(month + 1).padStart(2, '0');
+                            const dayStr = String(day).padStart(2, '0');
+                            const dateStr = `${year}-${monthStr}-${dayStr}`;
+                            const isSelected = dateStr === checkInDate;
+
+                            cells.push(
+                              <button
+                                key={`day-${day}`}
+                                type="button"
+                                onClick={() => {
+                                  setCheckInDate(dateStr);
+                                  // Auto shift checkout if checkout <= checkin
+                                  if (new Date(dateStr) >= new Date(checkOutDate)) {
+                                    const nextD = new Date(dateStr);
+                                    nextD.setDate(nextD.getDate() + 1);
+                                    const nextMonthStr = String(nextD.getMonth() + 1).padStart(2, '0');
+                                    const nextDayStr = String(nextD.getDate()).padStart(2, '0');
+                                    setCheckOutDate(`${nextD.getFullYear()}-${nextMonthStr}-${nextDayStr}`);
+                                  }
+                                  setActiveDatePicker('checkout');
+                                }}
+                                className={`h-9 w-9 mx-auto rounded-full text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-[#1d4ed8] text-white shadow-md shadow-blue-500/30 font-black scale-105'
+                                    : 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                }`}
+                              >
+                                {day}
+                              </button>
+                            );
+                          }
+                          return cells;
+                        })()}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* 3. Check-out Date */}
+              <div className="flex-1 relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCalendarViewDate(new Date(checkOutDate));
+                    setActiveDatePicker(activeDatePicker === 'checkout' ? null : 'checkout');
+                  }}
+                  className="flex items-center gap-3 w-full text-left cursor-pointer"
+                >
+                  <div className={`transition-colors shrink-0 ${activeDatePicker === 'checkout' ? 'text-[#ff6325]' : 'text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325]'}`}>
+                    <Calendar size={18} />
+                  </div>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">CHECK-OUT</span>
+                    <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white truncate">
+                      {(() => {
+                        try {
+                          const [y, m, d] = checkOutDate.split('-');
+                          return `${d}-${m}-${y}`;
+                        } catch {
+                          return checkOutDate;
+                        }
+                      })()}
+                    </span>
+                  </div>
+                  <Calendar size={15} className="text-[#ff6325] shrink-0" />
+                  <ChevronDown size={14} className={`text-slate-400 shrink-0 transition-transform ${activeDatePicker === 'checkout' ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Custom Interactive Calendar Popover for Check-out */}
+                {activeDatePicker === 'checkout' && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setActiveDatePicker(null)} />
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-150 dark:border-white/15 shadow-2xl p-4 z-50 text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
+                      {/* Calendar Month Header */}
+                      <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-2 mb-4 border border-slate-150/60 dark:border-white/5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newD = new Date(calendarViewDate);
+                            newD.setMonth(newD.getMonth() - 1);
+                            setCalendarViewDate(newD);
+                          }}
+                          className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all cursor-pointer"
+                        >
+                          <ChevronLeft size={16} />
+                        </button>
+                        <span className="font-extrabold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white">
+                          {calendarViewDate.toLocaleString('default', { month: 'long' })} {calendarViewDate.getFullYear()}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newD = new Date(calendarViewDate);
+                            newD.setMonth(newD.getMonth() + 1);
+                            setCalendarViewDate(newD);
+                          }}
+                          className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all cursor-pointer"
+                        >
+                          <ChevronRight size={16} />
+                        </button>
+                      </div>
+
+                      {/* Day of Week Labels */}
+                      <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">
+                        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
+                          <div key={day} className="py-1">
+                            {day}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Days Grid */}
+                      <div className="grid grid-cols-7 gap-1 text-center">
+                        {(() => {
+                          const year = calendarViewDate.getFullYear();
+                          const month = calendarViewDate.getMonth();
+                          const firstDayIndex = new Date(year, month, 1).getDay();
+                          const totalDays = new Date(year, month + 1, 0).getDate();
+
+                          const cells = [];
+                          for (let i = 0; i < firstDayIndex; i++) {
+                            cells.push(<div key={`empty-${i}`} className="h-9 w-9" />);
+                          }
+
+                          for (let day = 1; day <= totalDays; day++) {
+                            const monthStr = String(month + 1).padStart(2, '0');
+                            const dayStr = String(day).padStart(2, '0');
+                            const dateStr = `${year}-${monthStr}-${dayStr}`;
+                            const isSelected = dateStr === checkOutDate;
+                            const isPastCheckIn = new Date(dateStr) < new Date(checkInDate);
+
+                            cells.push(
+                              <button
+                                key={`day-${day}`}
+                                type="button"
+                                disabled={isPastCheckIn}
+                                onClick={() => {
+                                  setCheckOutDate(dateStr);
+                                  setActiveDatePicker(null);
+                                }}
+                                className={`h-9 w-9 mx-auto rounded-full text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-[#1d4ed8] text-white shadow-md shadow-blue-500/30 font-black scale-105'
+                                    : isPastCheckIn
+                                    ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                                    : 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                }`}
+                              >
+                                {day}
+                              </button>
+                            );
+                          }
+                          return cells;
+                        })()}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* 4. Who (Guests & Rooms) */}
+              <div className="flex-[1.1] relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
+                <button
+                  type="button"
+                  onClick={() => setGuestDropdownOpen(!guestDropdownOpen)}
+                  className="flex items-center gap-3 w-full text-left cursor-pointer"
+                >
+                  <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                    <Users size={18} />
+                  </div>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">WHO</span>
+                    <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white truncate">
+                      {adults + children} Guest{adults + children > 1 ? 's' : ''} • {rooms} Room{rooms > 1 ? 's' : ''}{petCount > 0 ? ` • ${petCount} Pet${petCount > 1 ? 's' : ''}` : ''}
+                    </span>
+                  </div>
+                  <ChevronDown size={14} className={`text-slate-400 transition-transform shrink-0 ${guestDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Guests Popover */}
+                {guestDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setGuestDropdownOpen(false)} />
+                    <div className="absolute top-full right-0 mt-3 w-72 rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/15 shadow-2xl p-4 z-50 space-y-3.5 text-slate-900 dark:text-white">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-bold">Adults</p>
+                          <p className="text-[10px] text-slate-400">Ages 18+</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            disabled={adults <= 1}
+                            onClick={() => setAdults(Math.max(1, adults - 1))}
+                            className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs font-bold disabled:opacity-30 hover:border-[#ff6325] cursor-pointer"
+                          >
+                            <Minus size={12} />
+                          </button>
+                          <span className="w-5 text-center text-xs font-bold">{adults}</span>
+                          <button
+                            type="button"
+                            onClick={() => setAdults(adults + 1)}
+                            className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs font-bold hover:border-[#ff6325] cursor-pointer"
+                          >
+                            <Plus size={12} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-bold">Children</p>
+                          <p className="text-[10px] text-slate-400">Ages 0 to 17</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            disabled={children <= 0}
+                            onClick={() => {
+                              const newCount = Math.max(0, children - 1);
+                              setChildren(newCount);
+                              setChildAges(prev => prev.slice(0, newCount));
+                            }}
+                            className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs font-bold disabled:opacity-30 hover:border-[#ff6325] cursor-pointer"
+                          >
+                            <Minus size={12} />
+                          </button>
+                          <span className="w-5 text-center text-xs font-bold">{children}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newCount = children + 1;
+                              setChildren(newCount);
+                              setChildAges(prev => [...prev, 5]);
+                            }}
+                            className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs font-bold hover:border-[#ff6325] cursor-pointer"
+                          >
+                            <Plus size={12} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/10">
+                        <div>
+                          <p className="text-xs font-bold">Rooms</p>
+                          <p className="text-[10px] text-slate-400">Total units</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            disabled={rooms <= 1}
+                            onClick={() => setRooms(Math.max(1, rooms - 1))}
+                            className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs font-bold disabled:opacity-30 hover:border-[#ff6325] cursor-pointer"
+                          >
+                            <Minus size={12} />
+                          </button>
+                          <span className="w-5 text-center text-xs font-bold">{rooms}</span>
+                          <button
+                            type="button"
+                            onClick={() => setRooms(rooms + 1)}
+                            className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs font-bold hover:border-[#ff6325] cursor-pointer"
+                          >
+                            <Plus size={12} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Pets Selector Row */}
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/10">
+                        <div>
+                          <p className="text-xs font-bold flex items-center gap-1">
+                            <span>Pets</span>
+                            <span className="text-[11px]">🐾</span>
+                          </p>
+                          <p className="text-[10px] text-slate-400">Bringing a pet?</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            disabled={petCount <= 0}
+                            onClick={() => {
+                              const newCount = Math.max(0, petCount - 1);
+                              setPetCount(newCount);
+                              setPets(newCount > 0);
+                            }}
+                            className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs font-bold disabled:opacity-30 hover:border-[#ff6325] cursor-pointer"
+                          >
+                            <Minus size={12} />
+                          </button>
+                          <span className="w-5 text-center text-xs font-bold">{petCount}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newCount = petCount + 1;
+                              setPetCount(newCount);
+                              setPets(true);
+                              setPetFriendlyOnly(true);
+                            }}
+                            className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs font-bold hover:border-[#ff6325] cursor-pointer"
+                          >
+                            <Plus size={12} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setGuestDropdownOpen(false)}
+                        className="w-full py-2 bg-[#ff6325] hover:bg-[#e0531b] text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-md"
+                      >
+                        Done
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* 5. Search Action Button (Prominent Orange Capsule Pill) */}
+              <div className="p-1 shrink-0 flex items-center justify-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById('hotel-results-anchor');
+                    el?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="w-full md:w-auto px-7 py-3.5 rounded-full bg-[#ff6325] hover:bg-[#e0531b] active:scale-95 text-white flex items-center justify-center gap-2.5 font-bold text-sm shadow-lg shadow-[#ff6325]/35 hover:shadow-[#ff6325]/50 transition-all cursor-pointer group"
+                >
+                  <Search size={17} className="group-hover:scale-110 transition-transform" />
+                  <span>Search</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className={`container-main max-w-7xl mx-auto ${isHotelCategory ? 'pt-0 pb-6' : 'py-4'}`}>
+        {/* Sleek Airbnb-Style Luxury Filter & Sort Capsule Toolbar */}
+        {isHotelCategory && (
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6 px-1">
+            {/* Left: Interactive Filter Pills */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+              {/* Price Range Pill */}
+              <div className="relative">
+                <select
+                  value={priceRange}
+                  onChange={(e) => setPriceRange(Number(e.target.value))}
+                  className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${
+                    priceRange < 50000
+                      ? 'bg-[#ff6325]/10 border-[#ff6325] text-[#ff6325]'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20 shadow-xs'
+                  }`}
+                >
+                  <option value={50000}>₹ Any Price</option>
+                  <option value={3500}>Under ₹3,500</option>
+                  <option value={7500}>Under ₹7,500</option>
+                  <option value={15000}>Under ₹15,000</option>
+                  <option value={30000}>Under ₹30,000</option>
+                </select>
+                <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
+
+              {/* Rating Pill */}
+              <div className="relative">
+                <select
+                  value={minRating}
+                  onChange={(e) => setMinRating(Number(e.target.value))}
+                  className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${
+                    minRating > 0
+                      ? 'bg-[#ff6325]/10 border-[#ff6325] text-[#ff6325]'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20 shadow-xs'
+                  }`}
+                >
+                  <option value={0}>★ Any Rating</option>
+                  <option value={4.0}>★ 4.0+ Above</option>
+                  <option value={4.5}>★ 4.5+ Top Rated</option>
+                  <option value={4.8}>★ 4.8+ Luxury</option>
+                </select>
+                <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
+
+              {/* Free Cancellation Pill */}
+              <button
+                type="button"
+                onClick={() => setFreeCancellationOnly(!freeCancellationOnly)}
+                className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
+                  freeCancellationOnly
+                    ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                <span>Free Cancellation</span>
+              </button>
+
+              {/* Pet Friendly Pill */}
+              <button
+                type="button"
+                onClick={() => setPetFriendlyOnly(!petFriendlyOnly)}
+                className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
+                  petFriendlyOnly || pets
+                    ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                <span>🐾 Pet Friendly</span>
+              </button>
+
+              {/* Reset Filters (Only appears when any filter is active) */}
+              {(priceRange < 50000 || minRating > 0 || freeCancellationOnly || petFriendlyOnly) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPriceRange(50000);
+                    setMinRating(0);
+                    setFreeCancellationOnly(false);
+                    setPetFriendlyOnly(false);
+                  }}
+                  className="px-2.5 py-1 rounded-full text-[11px] font-bold text-slate-400 hover:text-[#ff6325] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Reset all
+                </button>
+              )}
+            </div>
+
+            {/* Right: Clean Sort Pill */}
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider hidden sm:inline">Sort:</span>
+              <div className="relative">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="appearance-none pl-3.5 pr-7 py-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none cursor-pointer hover:border-slate-300 dark:hover:border-white/20 transition-all shadow-xs"
+                >
+                  <option value="distance">Recommended / Distance</option>
+                  <option value="price">Price: Low to High</option>
+                  <option value="rating">Guest Rating: High to Low</option>
+                  <option value="reviews">Most Reviewed</option>
+                </select>
+                <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+        )}
+        {!isHotelCategory && (
+          /* Luxury Hero Header for Other Categories */
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 relative"
+          >
+            <div className="inline-flex items-center gap-2 text-[11px] font-bold text-[#ff6325] uppercase tracking-wider mb-2.5 px-3 py-1 rounded-full bg-[#ff6325]/10 border border-[#ff6325]/20 backdrop-blur-md shadow-sm">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff6325] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ff6325]"></span>
+              </span>
+              <MapPin size={12} className="text-[#ff6325]" />
+              <span>Search Hub: {city} Terminal</span>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[color:var(--color-on-surface)] flex items-center gap-3">
+              {categoryName}
+              <Sparkles size={24} className="text-[#ff6325]/80 hidden sm:inline-block animate-pulse" />
+            </h1>
+            <p className="text-sm text-[color:var(--color-on-surface-variant)] mt-2 max-w-xl font-normal leading-relaxed">
+              Curated top-rated choices and verified dispatcher portal in {city}.
+            </p>
+          </motion.div>
+        )}
 
         <div className="mt-4">
           {category === 'cabs' && <CabBookingView categoryName={categoryName} city={city} />}
@@ -1821,425 +2537,10 @@ export default function ProviderDiscoveryPage() {
           {/* Standard fallback listing for all other categories */}
           {!isCustomBooking && (
             <div className="space-y-6">
-              {/* ── UNIFIED ALL-IN-ONE SEARCH BAR & FILTER DOCK ── */}
-              <div className="rounded-2xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-container)]/80 backdrop-blur-xl p-3 shadow-xl space-y-3">
-
-                {/* Unified Search & Discovery Bar */}
-                {isHotelCategory ? (
-                  /* ── BOKSPOT LUXURY HOTEL SEARCH BAR (#033266 Brand Palette) ── */
-                  <div className="space-y-3">
-                    <div className="bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-md p-2.5 sm:p-3 transition-all hover:shadow-lg">
-                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 items-center">
-                        {/* 1. Destination / Locality / Hotel Name with Autocomplete */}
-                        <div className="lg:col-span-4 relative">
-                          <div className="flex items-center rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 px-3.5 py-2.5 focus-within:border-[#033266] dark:focus-within:border-[#ff6325] focus-within:bg-white dark:focus-within:bg-slate-800 focus-within:ring-2 focus-within:ring-[#033266]/15 transition-all">
-                            <Bed size={18} className="text-[#033266] dark:text-[#ff6325] mr-2.5 shrink-0" />
-                            <div className="flex flex-col flex-1 min-w-0">
-                              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400 leading-none mb-0.5">Where are you going?</span>
-                              <input
-                                type="text"
-                                value={searchQuery}
-                                onFocus={() => setShowAutocomplete(true)}
-                                onChange={(e) => {
-                                  setSearchQuery(e.target.value);
-                                  setShowAutocomplete(true);
-                                }}
-                                placeholder={`City, locality, landmark or ${category === 'resorts' ? 'Resort' : category === 'villas' ? 'Villa' : category === 'hotels' ? 'Hotel' : 'Property'} name...`}
-                                className="w-full bg-transparent text-xs sm:text-sm font-semibold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none"
-                              />
-                            </div>
-                            {searchQuery && (
-                              <button
-                                type="button"
-                                onClick={() => setSearchQuery('')}
-                                className="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xs p-1 cursor-pointer"
-                                title="Clear search"
-                              >
-                                <X size={14} />
-                              </button>
-                            )}
-                          </div>
-
-                          {/* Autocomplete Dropdown */}
-                          {showAutocomplete && (
-                            <>
-                              <div className="fixed inset-0 z-40" onClick={() => setShowAutocomplete(false)} />
-                              <div className="absolute top-full left-0 mt-1.5 w-full bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl p-2 z-50 max-h-64 overflow-y-auto">
-                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1.5">
-                                  Popular Localities & {category === 'resorts' ? 'Resorts' : category === 'villas' ? 'Villas' : category === 'hotels' ? 'Hotels' : 'Properties'}
-                                </div>
-                                {[
-                                  { label: `${city || 'Chennai'} Central`, type: 'City Hub', icon: '📍' },
-                                  { label: `${city || 'Chennai'} Airport Area`, type: 'Transit', icon: '✈️' },
-                                  { label: 'OMR - IT Corridor', type: 'Locality', icon: '🏢' },
-                                  { label: 'T. Nagar Shopping District', type: 'Commercial', icon: '🛍️' },
-                                  { label: 'ECR Beach Resorts', type: 'Leisure', icon: '🏖️' },
-                                  ...servicesList.slice(0, 4).map(s => ({
-                                    label: s.name,
-                                    type: 'Verified Property',
-                                    icon: '🏨'
-                                  }))
-                                ].map((item, idx) => (
-                                  <button
-                                    key={idx}
-                                    type="button"
-                                    onClick={() => {
-                                      setSearchQuery(item.label);
-                                      setShowAutocomplete(false);
-                                    }}
-                                    className="w-full text-left flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-xs text-slate-700 dark:text-slate-200 cursor-pointer"
-                                  >
-                                    <span className="flex items-center gap-2 font-medium truncate">
-                                      <span>{item.icon}</span>
-                                      <span className="truncate">{item.label}</span>
-                                    </span>
-                                    <span className="text-[10px] text-slate-400 shrink-0 font-semibold">{item.type}</span>
-                                  </button>
-                                ))}
-                              </div>
-                            </>
-                          )}
-                        </div>
-
-                        {/* 2. Check-in & Check-out Date Picker with Night Calculation */}
-                        <div className="lg:col-span-4 flex items-center gap-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 px-3 py-2 focus-within:border-[#033266] dark:focus-within:border-[#ff6325] focus-within:bg-white dark:focus-within:bg-slate-800 focus-within:ring-2 focus-within:ring-[#033266]/15 transition-all">
-                          <Calendar size={18} className="text-[#033266] dark:text-[#ff6325] shrink-0" />
-                          <div className="flex items-center gap-2 flex-1 text-xs">
-                            <div className="flex flex-col flex-1">
-                              <span className="text-[9px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400 leading-tight">Check-in</span>
-                              <input
-                                type="date"
-                                value={checkInDate}
-                                onChange={(e) => setCheckInDate(e.target.value)}
-                                className="bg-transparent text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer p-0"
-                              />
-                            </div>
-                            <div className="px-2 py-0.5 rounded-full bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] font-black text-[10px] shrink-0 border border-transparent dark:border-[#ff6325]/20">
-                              {(() => {
-                                try {
-                                  const diff = Math.ceil((new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) / (1000 * 60 * 60 * 24));
-                                  return diff > 0 ? `${diff}N` : '1N';
-                                } catch { return '1N'; }
-                              })()}
-                            </div>
-                            <div className="flex flex-col flex-1">
-                              <span className="text-[9px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400 leading-tight">Check-out</span>
-                              <input
-                                type="date"
-                                value={checkOutDate}
-                                onChange={(e) => setCheckOutDate(e.target.value)}
-                                className="bg-transparent text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer p-0"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* 3. Guests & Rooms Selector with Child Ages and Pets */}
-                        <div className="lg:col-span-3 relative">
-                          <button
-                            type="button"
-                            onClick={() => setGuestDropdownOpen(!guestDropdownOpen)}
-                            className="w-full flex items-center justify-between rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 px-3.5 py-2 hover:border-[#033266] dark:hover:border-[#ff6325] hover:bg-white dark:hover:bg-slate-800 transition-all text-left"
-                          >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <Users size={18} className="text-[#033266] dark:text-[#ff6325] shrink-0" />
-                              <div className="flex flex-col min-w-0">
-                                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400 leading-none mb-0.5">Guests & Rooms</span>
-                                <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
-                                  {adults + children} Guests • {rooms} Room{rooms > 1 ? 's' : ''}{pets || petCount > 0 ? ' • 🐾' : ''}
-                                </span>
-                              </div>
-                            </div>
-                            <ChevronDown size={14} className={`text-slate-400 transition-transform ${guestDropdownOpen ? 'rotate-180' : ''}`} />
-                          </button>
-
-                          {/* Guests Popover */}
-                          {guestDropdownOpen && (
-                            <>
-                              <div className="fixed inset-0 z-40" onClick={() => setGuestDropdownOpen(false)} />
-                              <div className="absolute top-full right-0 mt-2 w-80 rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/15 shadow-2xl p-4 z-50 space-y-3.5">
-                                {/* Adults */}
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <p className="text-xs font-bold text-slate-900 dark:text-white">Adults</p>
-                                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Ages 18 or above</p>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      type="button"
-                                      disabled={adults <= 1}
-                                      onClick={() => setAdults(Math.max(1, adults - 1))}
-                                      className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs font-bold disabled:opacity-30 hover:border-[#033266] dark:hover:border-[#ff6325] cursor-pointer"
-                                    >
-                                      <Minus size={12} />
-                                    </button>
-                                    <span className="w-5 text-center text-xs font-bold text-slate-900 dark:text-white">{adults}</span>
-                                    <button
-                                      type="button"
-                                      onClick={() => setAdults(adults + 1)}
-                                      className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs font-bold hover:border-[#033266] dark:hover:border-[#ff6325] cursor-pointer"
-                                    >
-                                      <Plus size={12} />
-                                    </button>
-                                  </div>
-                                </div>
-
-                                {/* Children */}
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <p className="text-xs font-bold text-slate-900 dark:text-white">Children</p>
-                                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Ages 0 to 17</p>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      type="button"
-                                      disabled={children <= 0}
-                                      onClick={() => {
-                                        const newCount = Math.max(0, children - 1);
-                                        setChildren(newCount);
-                                        setChildAges(prev => prev.slice(0, newCount));
-                                      }}
-                                      className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs font-bold disabled:opacity-30 hover:border-[#033266] dark:hover:border-[#ff6325] cursor-pointer"
-                                    >
-                                      <Minus size={12} />
-                                    </button>
-                                    <span className="w-5 text-center text-xs font-bold text-slate-900 dark:text-white">{children}</span>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const newCount = children + 1;
-                                        setChildren(newCount);
-                                        setChildAges(prev => [...prev, 5]); // default age 5
-                                      }}
-                                      className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs font-bold hover:border-[#033266] dark:hover:border-[#ff6325] cursor-pointer"
-                                    >
-                                      <Plus size={12} />
-                                    </button>
-                                  </div>
-                                </div>
-
-                                {/* Child Age Selectors */}
-                                {children > 0 && (
-                                  <div className="pt-2 border-t border-slate-100 dark:border-white/10 space-y-2">
-                                    <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                      Age of child at check-out
-                                    </p>
-                                    <div className="grid grid-cols-2 gap-2">
-                                      {Array.from({ length: children }).map((_, cIdx) => (
-                                        <div key={cIdx} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-xs">
-                                          <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">Child {cIdx + 1}</span>
-                                          <select
-                                            value={childAges[cIdx] || 5}
-                                            onChange={(e) => {
-                                              const newAges = [...childAges];
-                                              newAges[cIdx] = Number(e.target.value);
-                                              setChildAges(newAges);
-                                            }}
-                                            className="bg-transparent font-bold text-[#033266] dark:text-[#ff6325] outline-none cursor-pointer"
-                                          >
-                                            {Array.from({ length: 18 }, (_, a) => (
-                                              <option key={a} value={a} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">{a} yrs</option>
-                                            ))}
-                                          </select>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Rooms */}
-                                <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/10">
-                                  <div>
-                                    <p className="text-xs font-bold text-slate-900 dark:text-white">Rooms</p>
-                                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Total room units</p>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      type="button"
-                                      disabled={rooms <= 1}
-                                      onClick={() => setRooms(Math.max(1, rooms - 1))}
-                                      className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs font-bold disabled:opacity-30 hover:border-[#033266] dark:hover:border-[#ff6325] cursor-pointer"
-                                    >
-                                      <Minus size={12} />
-                                    </button>
-                                    <span className="w-5 text-center text-xs font-bold text-slate-900 dark:text-white">{rooms}</span>
-                                    <button
-                                      type="button"
-                                      onClick={() => setRooms(rooms + 1)}
-                                      className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs font-bold hover:border-[#033266] dark:hover:border-[#ff6325] cursor-pointer"
-                                    >
-                                      <Plus size={12} />
-                                    </button>
-                                  </div>
-                                </div>
-
-                                {/* Pet Friendly Toggle & Count */}
-                                <div className="pt-2 border-t border-slate-100 dark:border-white/10 space-y-2">
-                                  <div className="flex items-center justify-between">
-                                    <div>
-                                      <p className="text-xs font-bold text-slate-900 dark:text-white">Traveling with Pets?</p>
-                                      <p className="text-[10px] text-slate-500 dark:text-slate-400">Service animals & friendly stays</p>
-                                    </div>
-                                    <input
-                                      type="checkbox"
-                                      checked={pets || petCount > 0}
-                                      onChange={(e) => {
-                                        setPets(e.target.checked);
-                                        setPetCount(e.target.checked ? 1 : 0);
-                                      }}
-                                      className="w-4 h-4 rounded text-[#033266] dark:text-[#ff6325] accent-[#033266] dark:accent-[#ff6325] cursor-pointer"
-                                    />
-                                  </div>
-
-                                  {(pets || petCount > 0) && (
-                                    <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-xs">
-                                      <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">Number of pets</span>
-                                      <div className="flex items-center gap-2">
-                                        <button
-                                          type="button"
-                                          disabled={petCount <= 1}
-                                          onClick={() => setPetCount(Math.max(1, petCount - 1))}
-                                          className="w-5 h-5 rounded border border-slate-300 dark:border-white/10 text-slate-800 dark:text-white flex items-center justify-center text-xs"
-                                        >
-                                          -
-                                        </button>
-                                        <span className="font-bold text-xs text-slate-900 dark:text-white">{petCount}</span>
-                                        <button
-                                          type="button"
-                                          onClick={() => setPetCount(petCount + 1)}
-                                          className="w-5 h-5 rounded border border-slate-300 dark:border-white/10 text-slate-800 dark:text-white flex items-center justify-center text-xs"
-                                        >
-                                          +
-                                        </button>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-
-                                <button
-                                  type="button"
-                                  onClick={() => setGuestDropdownOpen(false)}
-                                  className="w-full py-2 bg-[#033266] dark:bg-[#ff6325] text-white rounded-xl text-xs font-bold hover:brightness-110 transition-colors cursor-pointer shadow-sm"
-                                >
-                                  Done
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-
-                        {/* 4. Prominent Search Hotels CTA Button */}
-                        <div className="lg:col-span-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              // Triggers filtering & smooth scroll to results
-                              const el = document.getElementById('hotel-results-anchor');
-                              el?.scrollIntoView({ behavior: 'smooth' });
-                            }}
-                            className="w-full py-3.5 bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] active:scale-95 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-1 cursor-pointer"
-                            title="Search Available Hotels"
-                          >
-                            <Search size={15} />
-                            <span className="hidden lg:inline">Search</span>
-                            <span className="lg:hidden">Search Hotels</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* ── FACETED FILTER BAR (Brand Color #033266 / Dark Mode Adaptive) ── */}
-                    <div className="bg-white dark:bg-[#0f172a] rounded-xl border border-slate-200/80 dark:border-white/10 p-3 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mr-1 flex items-center gap-1">
-                          <SlidersHorizontal size={12} className="text-[#033266] dark:text-[#ff6325]" /> Filters:
-                        </span>
-
-                        {/* Price Filter Pill */}
-                        <div className="relative group">
-                          <select
-                            value={priceRange}
-                            onChange={(e) => setPriceRange(Number(e.target.value))}
-                            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 hover:border-[#033266] dark:hover:border-[#ff6325] outline-none cursor-pointer"
-                          >
-                            <option value={50000} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">All Prices</option>
-                            <option value={3500} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Under ₹3,500</option>
-                            <option value={7500} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Under ₹7,500</option>
-                            <option value={15000} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Under ₹15,000</option>
-                            <option value={30000} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Under ₹30,000</option>
-                          </select>
-                        </div>
-
-                        {/* Star Rating Filter */}
-                        <select
-                          value={minRating}
-                          onChange={(e) => setMinRating(Number(e.target.value))}
-                          className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 hover:border-[#033266] dark:hover:border-[#ff6325] outline-none cursor-pointer"
-                        >
-                          <option value={0} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">All Ratings</option>
-                          <option value={4.0} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">★ 4.0 &amp; Above</option>
-                          <option value={4.5} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">★ 4.5+ (Top Rated)</option>
-                          <option value={4.8} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">★ 4.8+ (Luxury)</option>
-                        </select>
-
-                        {/* Free Cancellation Toggle */}
-                        <button
-                          type="button"
-                          onClick={() => setFreeCancellationOnly(!freeCancellationOnly)}
-                          className={`px-3 py-1.5 rounded-lg border font-bold transition-all cursor-pointer flex items-center gap-1 ${freeCancellationOnly
-                              ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-[#033266] dark:border-[#ff6325] shadow-xs'
-                              : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:border-[#033266] dark:hover:border-[#ff6325]'
-                            }`}
-                        >
-                          <span>Free Cancellation</span>
-                        </button>
-
-                        {/* Pet Friendly Quick Filter */}
-                        <button
-                          type="button"
-                          onClick={() => setPetFriendlyOnly(!petFriendlyOnly)}
-                          className={`px-3 py-1.5 rounded-lg border font-bold transition-all cursor-pointer flex items-center gap-1 ${petFriendlyOnly || pets
-                              ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-[#033266] dark:border-[#ff6325] shadow-xs'
-                              : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:border-[#033266] dark:hover:border-[#ff6325]'
-                            }`}
-                        >
-                          <span>🐾 Pet Friendly</span>
-                        </button>
-
-                        {(priceRange < 10000 || minRating > 0 || freeCancellationOnly || petFriendlyOnly) && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPriceRange(10000);
-                              setMinRating(0);
-                              setFreeCancellationOnly(false);
-                              setPetFriendlyOnly(false);
-                            }}
-                            className="text-xs text-red-500 font-bold hover:underline px-2 py-1"
-                          >
-                            Reset
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Right Sort Controls */}
-                      <div className="flex items-center gap-2 ml-auto">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sort:</span>
-                        <select
-                          value={sortBy}
-                          onChange={(e) => setSortBy(e.target.value)}
-                          className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 font-bold text-slate-800 dark:text-white outline-none cursor-pointer hover:border-[#033266] dark:hover:border-[#ff6325]"
-                        >
-                          <option value="distance" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Recommended / Distance</option>
-                          <option value="price" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Price: Low to High</option>
-                          <option value="rating" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Guest Rating: High to Low</option>
-                          <option value="reviews" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Most Reviewed</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  /* ── STANDARD SINGLE SEARCH INPUT ROW (Other Categories) ── */
+              {/* ── UNIFIED ALL-IN-ONE SEARCH BAR & FILTER DOCK (For Non-Stay Categories) ── */}
+              {!isHotelCategory && (
+                <div className="rounded-2xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-container)]/80 backdrop-blur-xl p-3 shadow-xl space-y-3">
+                  {/* ── STANDARD SINGLE SEARCH INPUT ROW (Other Categories) ── */}
                   <div className="flex flex-col sm:flex-row gap-2.5 items-center justify-between">
                     <div className="relative flex-1 w-full flex items-center rounded-xl border border-[color:var(--color-outline-variant)]/40 bg-[color:var(--color-surface)] px-3.5 py-2.5 focus-within:border-[#0a3161] dark:focus-within:border-[#ff6325] focus-within:ring-2 focus-within:ring-[#0a3161]/15 dark:focus-within:ring-[#ff6325]/15 transition-all shadow-xs">
                       <Search size={16} className="text-[#0a3161] dark:text-[#ff6325] mr-2.5 shrink-0" />
@@ -2301,9 +2602,8 @@ export default function ProviderDiscoveryPage() {
                       </button>
                     </div>
                   </div>
-                )}
-
-              </div>
+                </div>
+              )}
 
               <div id="hotel-results-anchor" className="scroll-mt-6">
                 {filteredServices.length === 0 ? (
@@ -2317,7 +2617,7 @@ export default function ProviderDiscoveryPage() {
                     </p>
                   </div>
                 ) : (
-                  <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
+                  <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5' : 'grid-cols-1 gap-4'}`}>
                     {Object.values(filteredServices.reduce((acc: any, service: any) => {
                       const mObj = service.merchantObj || (typeof service.merchant === 'string' ? { id: service.merchant, name: service.merchant } : service.merchant) || { name: 'BokSpot Merchant', id: 'unknown' };
                       const branchName = service.branchName || service.metadata?.branchName || service.metadata?.facilityName;
@@ -2392,9 +2692,9 @@ export default function ProviderDiscoveryPage() {
                             }
                             className="block h-full"
                           >
-                            <div className={`group relative flex flex-col h-full bg-[color:var(--color-surface)] rounded-3xl overflow-hidden border border-[color:var(--color-outline-variant)]/30 hover:border-[#ff6325]/50 hover:shadow-2xl hover:shadow-[#ff6325]/10 transition-all duration-300 cursor-pointer ${viewMode === 'list' ? 'sm:flex-row' : ''}`}>
-                              {/* Image Header with Hover Zoom */}
-                              <div className={`relative overflow-hidden bg-[color:var(--color-surface-dim)] shrink-0 ${viewMode === 'list' ? 'sm:w-80 h-52 sm:h-auto' : 'h-52 w-full'}`}>
+                            <div className={`group relative flex flex-col h-full bg-[color:var(--color-surface)] rounded-2xl overflow-hidden border border-[color:var(--color-outline-variant)]/30 hover:border-[#ff6325]/50 hover:shadow-xl hover:shadow-[#ff6325]/10 transition-all duration-300 cursor-pointer ${viewMode === 'list' ? 'sm:flex-row' : ''}`}>
+                              {/* Compact Image Header with Hover Zoom */}
+                              <div className={`relative overflow-hidden bg-[color:var(--color-surface-dim)] shrink-0 ${viewMode === 'list' ? 'sm:w-64 h-44 sm:h-auto' : 'h-40 sm:h-44 w-full'}`}>
                                 <img
                                   src={
                                     group.listings?.[0]?.imageUrl ||
@@ -2423,40 +2723,40 @@ export default function ProviderDiscoveryPage() {
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
                                 {/* Verified Pill / Rating Badge */}
-                                <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white text-[11px] font-bold shadow-md">
-                                  <Star size={12} className="text-[#ff6325] fill-[#ff6325]" />
+                                <div className="absolute top-2.5 left-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white text-[10px] font-bold shadow-sm">
+                                  <Star size={11} className="text-[#ff6325] fill-[#ff6325]" />
                                   <span>{group.rating || '4.8'}</span>
                                   <span className="text-white/60 text-[9px]">({group.reviewCount || '20+'})</span>
                                 </div>
 
-                                <div className="absolute top-3 right-3 p-2 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-white/80 hover:text-[#ff6325] hover:scale-110 transition-all shadow-md">
-                                  <Heart size={14} />
+                                <div className="absolute top-2.5 right-2.5 p-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-white/80 hover:text-[#ff6325] hover:scale-110 transition-all shadow-sm">
+                                  <Heart size={13} />
                                 </div>
 
                                 {/* Bottom of Image: Price tag preview if available */}
                                 {group.minPrice && (
-                                  <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#ff6325] to-[#e04e13] text-white font-extrabold text-xs shadow-lg">
+                                  <div className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md bg-gradient-to-r from-[#ff6325] to-[#e04e13] text-white font-extrabold text-[11px] shadow-md">
                                     From ₹{group.minPrice}
                                   </div>
                                 )}
                               </div>
 
-                              {/* Info Body */}
-                              <div className="p-5 flex flex-col flex-1 justify-between">
+                              {/* Info Body - Compact & Clean */}
+                              <div className="p-3.5 sm:p-4 flex flex-col flex-1 justify-between">
                                 <div>
-                                  <div className="flex items-start justify-between gap-2 mb-1">
-                                    <h3 className="font-extrabold text-[17px] text-[color:var(--color-on-surface)] group-hover:text-[#ff6325] transition-colors line-clamp-1 tracking-tight">
+                                  <div className="flex items-start justify-between gap-1.5 mb-1">
+                                    <h3 className="font-bold text-sm sm:text-base text-[color:var(--color-on-surface)] group-hover:text-[#ff6325] transition-colors line-clamp-1 tracking-tight">
                                       {group.branchName || s?.branchName || s?.metadata?.branchName || m.name || 'Merchant'}
                                     </h3>
                                   </div>
 
 
-                                  <div className="flex items-center text-xs font-medium text-[color:var(--color-on-surface-variant)] mb-3.5">
-                                    <MapPin size={13} className="text-[#ff6325]/80 mr-1 shrink-0" />
-                                    <span className="truncate max-w-[260px]">{group.address || group.groupCity || m.address || city || 'Chennai'}</span>
+                                  <div className="flex items-center text-[11px] font-medium text-[color:var(--color-on-surface-variant)] mb-2">
+                                    <MapPin size={12} className="text-[#ff6325]/80 mr-1 shrink-0" />
+                                    <span className="truncate max-w-[200px]">{group.address || group.groupCity || m.address || city || 'Chennai'}</span>
                                     {group.dist && (
                                       <>
-                                        <span className="mx-2 text-[color:var(--color-outline-variant)]">•</span>
+                                        <span className="mx-1.5 text-[color:var(--color-outline-variant)]">•</span>
                                         <span className="shrink-0 font-semibold text-[color:var(--color-on-surface)]/80">{group.dist}</span>
                                       </>
                                     )}
@@ -2465,15 +2765,15 @@ export default function ProviderDiscoveryPage() {
 
                                 {/* Tags / Service Offerings */}
                                 {chips.length > 0 && (
-                                  <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[color:var(--color-outline-variant)]/20 mt-2">
+                                  <div className="flex flex-wrap gap-1 pt-1.5 border-t border-[color:var(--color-outline-variant)]/15 mt-1">
                                     {chips.map((chip: any, idx: number) => {
                                       const isCurrentCat = chip === categoryName;
                                       return (
                                         <span
                                           key={idx}
-                                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide transition-all ${isCurrentCat
-                                            ? 'bg-gradient-to-r from-[#ff6325] to-[#e04e13] text-white shadow-sm font-extrabold'
-                                            : 'bg-[color:var(--color-surface-dim)]/80 border border-[color:var(--color-outline-variant)]/40 text-[color:var(--color-on-surface)]/90 hover:border-[#ff6325]/40'
+                                          className={`px-2 py-0.5 rounded-md text-[9px] font-bold tracking-wide transition-all ${isCurrentCat
+                                            ? 'bg-gradient-to-r from-[#ff6325] to-[#e04e13] text-white shadow-xs font-extrabold'
+                                            : 'bg-[color:var(--color-surface-dim)]/80 border border-[color:var(--color-outline-variant)]/30 text-[color:var(--color-on-surface)]/90 hover:border-[#ff6325]/40'
                                             }`}
                                         >
                                           {chip}
@@ -2483,17 +2783,17 @@ export default function ProviderDiscoveryPage() {
                                   </div>
                                 )}
 
-                                {/* Action Footer for Hotels */}
+                                {/* Action Footer for Hotels - Compact */}
                                 {isHotelCategory && (
-                                  <div className="mt-3 pt-3 border-t border-[color:var(--color-outline-variant)]/20 flex items-center justify-between">
+                                  <div className="mt-2.5 pt-2.5 border-t border-[color:var(--color-outline-variant)]/15 flex items-center justify-between">
                                     <div>
-                                      <span className="text-[10px] text-[color:var(--color-outline)] font-bold uppercase tracking-wider block leading-tight">Starting from</span>
-                                      <span className="text-base font-black text-[#ff6325]">₹{group.minPrice || '2,499'}</span>
-                                      <span className="text-[10px] text-[color:var(--color-on-surface-variant)] font-medium"> / night</span>
+                                      <span className="text-[9px] text-[color:var(--color-outline)] font-bold uppercase tracking-wider block leading-tight">Starting from</span>
+                                      <span className="text-sm sm:text-base font-black text-[#ff6325]">₹{group.minPrice || '2,499'}</span>
+                                      <span className="text-[9px] text-[color:var(--color-on-surface-variant)] font-medium"> / night</span>
                                     </div>
-                                    <span className="px-3 py-1.5 rounded-xl bg-[#0a3161] dark:bg-[#ff6325] text-white text-xs font-bold group-hover:brightness-110 flex items-center gap-1 shadow-xs transition-all">
+                                    <span className="px-2.5 py-1.5 rounded-lg bg-[#0a3161] dark:bg-[#ff6325] text-white text-[11px] font-bold group-hover:brightness-110 flex items-center gap-1 shadow-xs transition-all">
                                       <span>View Rooms</span>
-                                      <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                                      <ChevronRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
                                     </span>
                                   </div>
                                 )}
