@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { SUBNAV_CATEGORIES, AVAILABLE_SHORTCUTS } from '../../store/useShortcutStore';
 
@@ -55,6 +55,30 @@ export function SmartSlotFinder() {
   // Location / City (Typeable with custom themed dropdown)
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [isCitySuggestionsOpen, setIsCitySuggestionsOpen] = useState<boolean>(false);
+  const cityContainerRef = useRef<HTMLDivElement>(null);
+  const serviceContainerRef = useRef<HTMLDivElement>(null);
+  const calendarContainerRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns on outside click or blur
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (cityContainerRef.current && !cityContainerRef.current.contains(target)) {
+        setIsCitySuggestionsOpen(false);
+      }
+      if (serviceContainerRef.current && !serviceContainerRef.current.contains(target)) {
+        setIsServiceDropdownOpen(false);
+      }
+      if (calendarContainerRef.current && !calendarContainerRef.current.contains(target)) {
+        setIsCalendarOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, []);
 
   // Spot / Venue Name (Optional Search filter)
   const [selectedVenue, setSelectedVenue] = useState<string>('');
@@ -150,7 +174,7 @@ export function SmartSlotFinder() {
               </button>
 
               {/* Sub-Service Custom Themed Dropdown */}
-              <div className="relative">
+              <div className="relative" ref={serviceContainerRef}>
                 <button
                   type="button"
                   onClick={() => setIsServiceDropdownOpen(!isServiceDropdownOpen)}
@@ -215,7 +239,7 @@ export function SmartSlotFinder() {
 
             <div className="grid grid-cols-2 gap-2">
               {/* City / Location (Custom Themed Autocomplete Dropdown) */}
-              <div className="relative">
+              <div className="relative" ref={cityContainerRef}>
                 <input
                   type="text"
                   placeholder="City or Area..."
@@ -304,7 +328,7 @@ export function SmartSlotFinder() {
 
             <div className="grid grid-cols-2 gap-2">
               {/* Custom Themed Calendar Dropdown */}
-              <div className="relative">
+              <div className="relative" ref={calendarContainerRef}>
                 <button
                   type="button"
                   onClick={() => setIsCalendarOpen(!isCalendarOpen)}

@@ -126,7 +126,7 @@ export default function SearchPage() {
     <>
       <main className="page-content px-4 md:px-8 lg:pr-8">
         <div className="border-b border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-container)]/80 backdrop-blur-md sticky top-[var(--topnav-height)] z-40 -mx-4 px-4 md:-mx-8 md:px-8 lg:-mr-8 lg:pr-8">
-          <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
+          <div className="w-full px-4 py-4 sm:px-8 lg:px-12">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[color:var(--color-outline)]" />
@@ -187,7 +187,7 @@ export default function SearchPage() {
           </div>
         </div>
 
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+        <div className="w-full px-4 py-8 sm:px-8 lg:px-12">
           <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <p className="text-sm font-bold text-[color:var(--color-on-surface)]">
               {merchantResults.length} {merchantResults.length === 1 ? 'venue' : 'venues'} found in {city}

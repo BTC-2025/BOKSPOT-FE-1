@@ -416,7 +416,7 @@ export default function CategoriesPage() {
       {/* Ambient Backdrop */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-64 bg-gradient-to-b from-[#0a3161]/10 dark:from-[#ff6325]/10 via-[#0a3161]/5 to-transparent blur-3xl pointer-events-none -z-10" />
 
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
+      <div className="w-full px-4 md:px-8 lg:px-12">
 
         {/* ── BENTO TOP SECTION ─────────────────────────────────── */}
         <div className="pt-3 pb-6 space-y-4">

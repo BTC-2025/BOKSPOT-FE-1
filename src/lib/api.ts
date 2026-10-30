@@ -14,7 +14,7 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   };
   const res = await fetch(`${API_BASE}${path}`, {
     ...defaultOptions,
-    
+
     ...options,
     headers: { ...defaultOptions.headers, ...options?.headers },
   });
@@ -216,8 +216,8 @@ export const api = {
           const servicesArray = Array.isArray(body)
             ? body
             : Array.isArray(body.data)
-            ? body.data
-            : body.data?.data || [];
+              ? body.data
+              : body.data?.data || [];
           const mappedServices = servicesArray.map((srv: any) => ({
             id: srv.id,
             name: srv.name,
@@ -234,6 +234,8 @@ export const api = {
             reviewCount: srv.reviewCount || 10,
             isFeatured: srv.isFeatured || false,
             metadata: srv.metadata || {},
+            branchName: srv.branchName || srv.metadata?.branchName || srv.metadata?.facilityName,
+            address: srv.address || srv.metadata?.address || srv.metadata?.facilityAddress,
             merchantId: srv.merchantId || srv.merchant?.id,
             merchant: srv.metadata?.merchantName || srv.merchant?.name || 'Merchant',
             merchantObj: srv.merchant ? {
@@ -259,20 +261,20 @@ export const api = {
             rawConfig: srv
           }));
           // Return actual data, even if empty, so the UI can show an empty state instead of dummy cards
-        // Filter out dummy/mock fallback cards for hotel listings so only real publisher units appear
-        if (params?.categorySlug && (params.categorySlug.includes('hotel') || params.categorySlug.includes('room'))) {
+          // Filter out dummy/mock fallback cards for hotel listings so only real publisher units appear
+          if (params?.categorySlug && (params.categorySlug.includes('hotel') || params.categorySlug.includes('room'))) {
+            return {
+              data: mappedServices.filter((s: any) => {
+                const name = (s.merchant || s.name || '').toLowerCase();
+                return !name.includes('bokspot verified');
+              }),
+              meta: { total: mappedServices.length, page: 1, limit: 100, totalPages: 1 }
+            };
+          }
           return {
-            data: mappedServices.filter((s: any) => {
-              const name = (s.merchant || s.name || '').toLowerCase();
-              return !name.includes('bokspot verified');
-            }),
-            meta: { total: mappedServices.length, page: 1, limit: 100, totalPages: 1 }
+            data: mappedServices,
+            meta: { total: body.data?.meta?.total || mappedServices.length, page: 1, limit: 100, totalPages: 1 }
           };
-        }
-        return {
-          data: mappedServices,
-          meta: { total: body.data?.meta?.total || mappedServices.length, page: 1, limit: 100, totalPages: 1 }
-        };
         }
       } catch (err) {
         console.warn('Backend services list error:', err);
@@ -541,6 +543,7 @@ export const api = {
           metadata: mockFound.metadata || {}
         };
       }
+
 
       // Dynamic fallback for any svc-* to never break customer experience
       if (id.startsWith('svc-')) {

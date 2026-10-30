@@ -2320,17 +2320,18 @@ export default function ProviderDiscoveryPage() {
                   <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
                     {Object.values(filteredServices.reduce((acc: any, service: any) => {
                       const mObj = service.merchantObj || (typeof service.merchant === 'string' ? { id: service.merchant, name: service.merchant } : service.merchant) || { name: 'BokSpot Merchant', id: 'unknown' };
-                      const branchName = service.metadata?.branchName || service.metadata?.facilityName;
+                      const branchName = service.branchName || service.metadata?.branchName || service.metadata?.facilityName;
+                      const branchAddress = service.address || service.metadata?.address || mObj.address;
                       const mId = mObj.id && mObj.id !== 'unknown' ? mObj.id : (mObj.name || service.name || 'unknown');
-                      let groupKey = branchName ? `${mId}_${branchName.toLowerCase().trim()}` : (mObj.name ? mObj.name.toLowerCase().trim() : mId);
+                      let groupKey = branchName ? `${mId}_${branchName.toLowerCase().replace(/\s+/g, '_')}` : (mObj.name ? mObj.name.toLowerCase().trim() : mId);
                       if ((mObj.name || '').toLowerCase().includes('bokspot verified')) return acc;
-                      if ((mObj.name || '').toLowerCase().includes('grand hotel')) {
-                        if ((service.name || '').toLowerCase().includes('standard king')) return acc;
-                        groupKey = 'grand_hotel_main_venue';
-                      }
+
 
                       if (!acc[groupKey]) {
                         acc[groupKey] = {
+                          groupKey: groupKey,
+                          branchName: branchName || mObj.name,
+                          address: branchAddress || mObj.address || service.address || null,
                           merchantObj: {
                             ...mObj,
                             name: branchName || mObj.name
@@ -2378,7 +2379,7 @@ export default function ProviderDiscoveryPage() {
                       const chips = Array.from(group.categories).slice(0, 3);
                       return (
                         <motion.div
-                          key={m.id || m.name || i}
+                          key={group.groupKey || `${m.id || 'm'}-${group.branchName || i}-${i}`}
                           initial={{ opacity: 0, y: 15 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: Math.min(i * 0.05, 0.4) }}
@@ -2445,14 +2446,14 @@ export default function ProviderDiscoveryPage() {
                                 <div>
                                   <div className="flex items-start justify-between gap-2 mb-1">
                                     <h3 className="font-extrabold text-[17px] text-[color:var(--color-on-surface)] group-hover:text-[#ff6325] transition-colors line-clamp-1 tracking-tight">
-                                      {s?.metadata?.facilityName || s?.metadata?.branchName || s?.metadata?.merchantName || m.name}
+                                      {group.branchName || s?.branchName || s?.metadata?.branchName || m.name || 'Merchant'}
                                     </h3>
                                   </div>
 
 
                                   <div className="flex items-center text-xs font-medium text-[color:var(--color-on-surface-variant)] mb-3.5">
                                     <MapPin size={13} className="text-[#ff6325]/80 mr-1 shrink-0" />
-                                    <span className="truncate max-w-[150px]">{group.groupCity || city || 'Chennai'}</span>
+                                    <span className="truncate max-w-[260px]">{group.address || group.groupCity || m.address || city || 'Chennai'}</span>
                                     {group.dist && (
                                       <>
                                         <span className="mx-2 text-[color:var(--color-outline-variant)]">•</span>

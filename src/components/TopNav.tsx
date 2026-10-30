@@ -379,7 +379,7 @@ export function TopNav({
                 <span className="!text-white text-[12px] font-black block text-left">
                   {(() => {
                     const raw = mounted ? (city || 'Select Location') : 'Chennai';
-                    return raw.length > 3 ? `${raw.slice(0, 3)}...` : raw;
+                    return raw.length > 8 ? `${raw.slice(0, 8)}...` : raw;
                   })()}
                 </span>
                 <span className="material-symbols-outlined text-[13px] !text-white/80 transition-transform duration-200 shrink-0" style={{ transform: isLocationModalOpen ? 'rotate(180deg)' : 'none' }}>keyboard_arrow_down</span>
@@ -818,24 +818,24 @@ export function TopNav({
               </Link>
             </div>
 
-            {/* Right Side: Support and Settings (As requested by user) */}
+                        {/* Right Side: Support and Settings (As requested by user) */}
             <div className="flex items-center gap-2 sm:gap-3 pl-3 shrink-0">
               <Link
                 href="/support"
-                className="subnav-pill flex items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-semibold shrink-0"
+                className="subnav-pill flex items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-semibold shrink-0 !text-[#00224f] hover:!text-[#ff6325] transition-colors"
                 title="Customer Support & Help Desk"
               >
-                <Headset className="w-3.5 h-3.5 shrink-0" />
-                <span>Support</span>
+                <Headset className="w-3.5 h-3.5 shrink-0 text-[#ff6325] stroke-[#ff6325]" style={{ color: '#ff6325', stroke: '#ff6325' }} />
+                <span className="!text-[#00224f] hover:!text-[#ff6325]">Support</span>
               </Link>
 
               <Link
                 href="/settings"
-                className="subnav-pill flex items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-semibold shrink-0"
+                className="subnav-pill flex items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-semibold shrink-0 !text-[#00224f] hover:!text-[#ff6325] transition-colors"
                 title="App Settings & Preferences"
               >
-                <Settings className="w-3.5 h-3.5 shrink-0" />
-                <span>Settings</span>
+                <Settings className="w-3.5 h-3.5 shrink-0 text-[#00224f] stroke-[#00224f]" style={{ color: '#00224f', stroke: '#00224f' }} />
+                <span className="!text-[#00224f] hover:!text-[#ff6325]">Settings</span>
               </Link>
             </div>
           </div>

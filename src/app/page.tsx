@@ -139,7 +139,7 @@ export default function HomePage() {
       <SubnavManagerModal />
       <ActionModalManager />
 
-      <main className="page-content px-4 md:px-8 lg:pr-8">
+      <main className="page-content w-full px-4 md:px-8 lg:px-12">
         <div className="mx-auto w-full space-y-4">
           {/* Row 1: Ad Banner with Smart Slot Finder */}
           <motion.div

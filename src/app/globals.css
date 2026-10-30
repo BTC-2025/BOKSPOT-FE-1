@@ -482,19 +482,19 @@
   background-color: color-mix(in srgb, var(--color-surface-dim) 85%, transparent);
 }
 
-/* Centered content container utility */
+/* Full-width content container utility */
 .container-main {
-  max-width: 80rem;
-  /* 1280px */
-  margin: 0 auto;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .container-main {
-    padding-left: 2rem;
-    padding-right: 2rem;
+    padding-left: 3rem !important;
+    padding-right: 3rem !important;
   }
 }
 
@@ -834,7 +834,7 @@
 }
 
 /* Lucide and other icon color fallback */
-.custom-navbar svg:not(.lucide-sparkles) {
+.custom-navbar > div:first-child svg:not(.lucide-sparkles) {
   color: #ffffff !important;
   stroke: #ffffff !important;
 }
@@ -858,7 +858,7 @@
   color: #ffffff !important;
 }
 
-.light .custom-navbar svg:not(.lucide-sparkles) {
+.light .custom-navbar > div:first-child svg:not(.lucide-sparkles) {
   color: #ffffff !important;
   stroke: #ffffff !important;
 }
@@ -1213,11 +1213,20 @@
   font-weight: 600 !important;
 }
 
+.light .secondary-subnav-bar .subnav-pill,
+.light .secondary-subnav-bar .subnav-pill svg,
 .light .secondary-subnav-bar .subnav-pill span,
+.light .secondary-subnav-bar .subnav-pill-action,
+.light .secondary-subnav-bar .subnav-pill-action svg,
 .light .secondary-subnav-bar .subnav-pill-action span,
 .light .secondary-subnav-bar a,
 .light .secondary-subnav-bar span {
   color: #00224f !important;
+}
+
+.light .secondary-subnav-bar .subnav-pill:hover svg,
+.light .secondary-subnav-bar .subnav-pill:hover span {
+  color: #ff6325 !important;
 }
 
 .light .secondary-subnav-bar a:hover,
@@ -1423,4 +1432,22 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover,
 input[type="time"]::-webkit-calendar-picker-indicator:hover {
   transform: scale(1.15);
   opacity: 1;
+}
+
+/* Subnav Bar Icon Visibility Fix */
+.secondary-subnav-bar .subnav-pill svg,
+.secondary-subnav-bar svg {
+  stroke-width: 2.2px !important;
+}
+.light .secondary-subnav-bar .subnav-pill,
+.secondary-subnav-bar .subnav-pill {
+  color: #00224f !important;
+}
+.secondary-subnav-bar .subnav-pill svg.lucide-headset {
+  color: #ff6325 !important;
+  stroke: #ff6325 !important;
+}
+.secondary-subnav-bar .subnav-pill svg.lucide-settings {
+  color: #334155 !important;
+  stroke: #334155 !important;
 }
