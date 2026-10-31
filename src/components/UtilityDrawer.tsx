@@ -5,7 +5,9 @@ import {
   X, Calculator, Sparkles, Plus, Trash2, ArrowLeftRight, 
   ChevronLeft, ChevronRight, ExternalLink, Check, User, 
   Search, MoreVertical, Lightbulb, CheckSquare, Trash,
-  CalendarDays, Settings, RotateCcw, Share2
+  CalendarDays, Settings, RotateCcw, Share2, Edit3, Sliders,
+  CloudSun, Keyboard, FileText, MapPin, ShieldCheck, Mail, Send, CheckCircle2, Bookmark,
+  History, Tag, Globe, ArrowUpDown, Delete
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBookingFlowStore } from '../lib/store';
@@ -14,8 +16,8 @@ interface UtilityDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   isVendor?: boolean;
-  activeTab?: 'calendar' | 'calc' | 'tasks' | 'contacts' | null;
-  setActiveTab?: (tab: 'calendar' | 'calc' | 'tasks' | 'contacts' | null) => void;
+  activeTab?: 'beta' | 'calendar' | 'calc' | 'tasks' | 'contacts' | 'weather' | 'keyboard' | null;
+  setActiveTab?: (tab: 'beta' | 'calendar' | 'calc' | 'tasks' | 'contacts' | 'weather' | 'keyboard' | null) => void;
   isSecondaryHeaderVisible?: boolean;
 }
 
@@ -35,7 +37,8 @@ export function UtilityDrawer({
   isSecondaryHeaderVisible = false,
 }: UtilityDrawerProps) {
   const { bookings } = useBookingFlowStore();
-  const [localActiveTab, setLocalActiveTab] = useState<'calendar' | 'calc' | 'tasks' | 'contacts' | null>(null);
+  const currentMerchant: { merchantName?: string; city?: string } | null = null;
+  const [localActiveTab, setLocalActiveTab] = useState<'beta' | 'calendar' | 'calc' | 'tasks' | 'contacts' | 'weather' | 'keyboard' | null>(null);
   
   const activeTab = propActiveTab !== undefined ? propActiveTab : localActiveTab;
   const setActiveTab = propSetActiveTab !== undefined ? propSetActiveTab : setLocalActiveTab;
@@ -43,23 +46,19 @@ export function UtilityDrawer({
   // Time state for the live red line
   const [now, setNow] = useState(new Date());
   
-  // Tasks state
-  const [tasks, setTasks] = useState<{ id: string; text: string; completed: boolean }[]>([
-    { id: '1', text: 'Check my upcoming appointments', completed: true },
-    { id: '2', text: 'Reschedule my dental consult slot', completed: false },
-    { id: '3', text: 'Set reminders for yoga training', completed: false },
-    { id: '4', text: 'Explore new dining offers in Chennai', completed: false },
-  ]);
-  const [newTaskText, setNewTaskText] = useState('');
+  // Notes state (matching bit-tool.com NOTES screenshot)
+  const [notesList, setNotesList] = useState<Array<{ id: string; title: string; content: string; date: string }>>([]);
+  const [showAddNoteModal, setShowAddNoteModal] = useState(false);
+  const [newNoteTitle, setNewNoteTitle] = useState('');
+  const [newNoteContent, setNewNoteContent] = useState('');
 
-  // Contacts state (Merchant / Support Contacts for Customer)
+  // Contacts state (Global Contacts from bit-tool.com)
   const [searchQuery, setSearchQuery] = useState('');
-  const defaultContacts = [
-    { name: 'Apollo Dental Support', email: 'help@apollodental.com', phone: '+91 98765 43210', role: 'Medical / Doctor' },
-    { name: 'ZenFit Reception Desk', email: 'support@zenfit.com', phone: '+91 98765 54321', role: 'Gym / Fitness' },
-    { name: 'Style Studio Frontdesk', email: 'info@stylestudio.com', phone: '+91 98765 12345', role: 'Salon / Spa' },
-    { name: 'BokSpot Platform Help', email: 'help@bokspot.com', phone: '+91 1800 123 456', role: 'Tech Support' },
-  ];
+  const [contactsList, setContactsList] = useState<Array<{ id: string; name: string; email?: string; phone?: string; role?: string }>>([]);
+  const [showAddContactModal, setShowAddContactModal] = useState(false);
+  const [newContactName, setNewContactName] = useState('');
+  const [newContactPhone, setNewContactPhone] = useState('');
+  const [newContactEmail, setNewContactEmail] = useState('');
 
   // Calculator states
   const [calcInput, setCalcInput] = useState('');
@@ -80,6 +79,43 @@ export function UtilityDrawer({
   const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
+  // Beta Ecosystem states
+  const [betaSubTab, setBetaSubTab] = useState<'favorites' | 'recent'>('favorites');
+  const [baseFilter, setBaseFilter] = useState<'all' | 'public' | 'business'>('all');
+  const [isEditingBeta, setIsEditingBeta] = useState(false);
+  const [favoriteAppIds, setFavoriteAppIds] = useState<string[]>(['cliks', 'bnxmail', 'bit-tool', 'b2auth']);
+  const [recentApps, setRecentApps] = useState<Array<{ id: string; name: string; url: string; icon: string; bg: string; color: string }>>([
+    { id: 'bit-tool', name: 'Bit-Tool', url: 'https://bit-tool.com', icon: 'sliders', bg: 'bg-blue-500/10', color: 'text-[#2563eb]' }
+  ]);
+
+  const toggleFavorite = (appId: string) => {
+    setFavoriteAppIds((prev) => 
+      prev.includes(appId) ? prev.filter(id => id !== appId) : [...prev, appId]
+    );
+  };
+
+  const handleAppLaunch = (app: { id: string; name: string; url: string; icon: string; bg: string; color: string }) => {
+    setRecentApps((prev) => {
+      const filtered = prev.filter(a => a.id !== app.id);
+      return [app, ...filtered];
+    });
+  };
+
+  // Rail Pin Customization State (matching screenshot "EDIT PINS")
+  const [isEditingPins, setIsEditingPins] = useState(false);
+  const [pinnedToolIds, setPinnedToolIds] = useState<string[]>(['calendar', 'calc', 'contacts']);
+
+  const togglePin = (toolId: string) => {
+    setPinnedToolIds((prev) => {
+      if (prev.includes(toolId)) {
+        if (prev.length <= 1) return prev; // Keep at least one
+        return prev.filter(id => id !== toolId);
+      } else {
+        return [...prev, toolId];
+      }
+    });
+  };
+
   // Update live red line every 30 seconds
   useEffect(() => {
     const timer = setInterval(() => {
@@ -98,7 +134,9 @@ export function UtilityDrawer({
 
   // Get customer bookings for selected date
   const selectedDateStr = formatDateString(selectedDate);
-  const dailyBookings = bookings.filter((b) => b.date === selectedDateStr);
+  const dailyBookings = bookings.filter((b: any) => {
+    return b.date === selectedDateStr;
+  });
 
   // Calculate local timezone string, e.g. "GMT+05:30"
   const getTimezoneOffsetString = () => {
@@ -133,20 +171,21 @@ export function UtilityDrawer({
     return hr + min / 60;
   };
 
-  // Tasks actions
-  const handleAddTask = (e: React.FormEvent) => {
+
+
+  const handleAddNoteSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTaskText.trim()) return;
-    setTasks([...tasks, { id: Math.random().toString(), text: newTaskText.trim(), completed: false }]);
-    setNewTaskText('');
-  };
-
-  const toggleTask = (id: string) => {
-    setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
-  };
-
-  const deleteTask = (id: string) => {
-    setTasks(tasks.filter(t => t.id !== id));
+    if (!newNoteTitle.trim()) return;
+    const newNote = {
+      id: Math.random().toString(),
+      title: newNoteTitle.trim(),
+      content: newNoteContent.trim(),
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    };
+    setNotesList((prev) => [newNote, ...prev]);
+    setNewNoteTitle('');
+    setNewNoteContent('');
+    setShowAddNoteModal(false);
   };
 
   // Calculator logic
@@ -281,11 +320,29 @@ export function UtilityDrawer({
   };
 
   // Contacts filtered list
-  const filteredContacts = defaultContacts.filter(c => 
+  const filteredContacts = contactsList.filter(c => 
     c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    c.role.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    c.email.toLowerCase().includes(searchQuery.toLowerCase())
+    (c.role && c.role.toLowerCase().includes(searchQuery.toLowerCase())) || 
+    (c.email && c.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (c.phone && c.phone.includes(searchQuery))
   );
+
+  const handleAddContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newContactName.trim()) return;
+    const newContact = {
+      id: Math.random().toString(),
+      name: newContactName.trim(),
+      phone: newContactPhone.trim(),
+      email: newContactEmail.trim(),
+      role: 'Client',
+    };
+    setContactsList(prev => [newContact, ...prev]);
+    setNewContactName('');
+    setNewContactPhone('');
+    setNewContactEmail('');
+    setShowAddContactModal(false);
+  };
 
   return (
     <AnimatePresence>
@@ -295,9 +352,7 @@ export function UtilityDrawer({
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
           transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-          className={`fixed right-0 bottom-0 z-[40] flex flex-row overflow-hidden border-l border-slate-200/80 dark:border-slate-800 shadow-2xl pointer-events-auto bg-white/95 dark:bg-[#0b0e14]/95 backdrop-blur-xl text-left transition-all duration-300 ${
-            isSecondaryHeaderVisible ? 'top-[96px] lg:top-[102px]' : 'top-[58px] lg:top-[64px]'
-          }`}
+          className="fixed right-0 top-16 bottom-0 z-[40] flex flex-row overflow-hidden border-l border-slate-200 dark:border-slate-850 shadow-2xl pointer-events-auto bg-slate-50 dark:bg-[#0b0e14]/90 backdrop-blur-md"
         >
           {/* Slide-out Left Content Panel (320px) */}
           <AnimatePresence mode="wait">
@@ -305,7 +360,7 @@ export function UtilityDrawer({
               <motion.div
                 key={activeTab}
                 initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: 320 }}
+                animate={{ opacity: 1, width: activeTab === 'beta' ? 340 : 320 }}
                 exit={{ opacity: 0, width: 0 }}
                 transition={{ type: 'spring', damping: 28, stiffness: 240 }}
                 className="h-full bg-white dark:bg-[#0b0e14] border-l border-slate-200 dark:border-slate-850 flex flex-col overflow-hidden select-none shrink-0"
@@ -383,9 +438,9 @@ export function UtilityDrawer({
                                   }}
                                   className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all cursor-pointer ${
                                     isSelected
-                                      ? 'bg-[#1557bf] text-white shadow-md shadow-blue-500/30'
+                                      ? 'bg-[#ff6325] text-white shadow-md shadow-orange-500/30'
                                       : isToday
-                                      ? 'border border-[#1557bf] text-[#1557bf] dark:text-blue-400 font-extrabold'
+                                      ? 'border border-[#ff6325] text-[#ff6325] font-extrabold'
                                       : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                                   }`}
                                 >
@@ -406,35 +461,43 @@ export function UtilityDrawer({
                           <button
                             type="button"
                             onClick={() => {
-                              const title = prompt('Enter quick task or reminder for this day:');
+                              const title = prompt('Enter quick booking note or schedule reminder:');
                               if (title && title.trim()) {
-                                setTasks((prev) => [...prev, { id: Math.random().toString(), text: title.trim(), completed: false }]);
+                                setNotesList((prev) => [
+                                  {
+                                    id: Math.random().toString(),
+                                    title: title.trim(),
+                                    content: `Scheduled for ${selectedDate.toLocaleDateString()}`,
+                                    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                                  },
+                                  ...prev
+                                ]);
                               }
                             }}
-                            className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                            className="px-2.5 py-1 rounded-lg bg-orange-50 dark:bg-orange-950/40 text-[#ff6325] hover:bg-orange-100 dark:hover:bg-orange-900/50 text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
                           >
                             <Plus size={12} />
                             <span>Add</span>
                           </button>
                         </div>
 
-                        {/* Events list / Empty State */}
+                        {/* Events list / Bookings list */}
                         {dailyBookings.length > 0 ? (
                           <div className="space-y-2">
                             {dailyBookings.map((b) => (
                               <div
                                 key={b.id}
-                                className="p-3 rounded-2xl bg-white dark:bg-[#121722] border border-blue-200 dark:border-blue-900/40 shadow-2xs flex items-center justify-between gap-3"
+                                className="p-3 rounded-2xl bg-white dark:bg-[#121722] border border-orange-200/70 dark:border-orange-900/30 shadow-2xs flex items-center justify-between gap-3"
                               >
-                                <div>
+                                <div className="min-w-0">
                                   <h5 className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                                    {b.merchantName}
+                                    {b.customerName || b.merchantName}
                                   </h5>
-                                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                                     {b.serviceName}
                                   </p>
                                 </div>
-                                <span className="px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 text-[10px] font-bold font-mono shrink-0">
+                                <span className="px-2 py-0.5 rounded-md bg-orange-100 dark:bg-orange-950 text-[#ff6325] text-[10px] font-bold font-mono shrink-0">
                                   {b.time}
                                 </span>
                               </div>
@@ -443,7 +506,7 @@ export function UtilityDrawer({
                         ) : (
                           <div className="p-6 rounded-2xl border-2 border-dashed border-slate-200/80 dark:border-slate-800 text-center flex items-center justify-center">
                             <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
-                              No events, notes, or reminders for this day.
+                              No customer appointments on this day.
                             </p>
                           </div>
                         )}
@@ -452,435 +515,1241 @@ export function UtilityDrawer({
                   </div>
                 )}
 
-                {/* 2. CALCULATOR / KEEP TAB POPUP */}
+                {/* 2. CALCULATOR / KEEP TAB POPUP (BETA CALC from bit-tool.com) */}
                 {activeTab === 'calc' && (
-                  <div className="h-full flex flex-col overflow-hidden text-slate-800 dark:text-slate-200 font-sans">
-                    <div className="p-3 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-850 flex items-center justify-between shrink-0">
-                      <div className="flex items-center gap-1.5 select-none">
-                        <span className="text-emerald-500 font-bold text-sm">#</span>
-                        <span className="text-[10px] font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-widest block font-sans">
+                  <div className="h-full flex flex-col overflow-hidden bg-white dark:bg-[#0c121e] text-slate-800 dark:text-slate-100 font-sans select-none">
+                    {/* Header: # BETA CALC with circular action pills */}
+                    <div className="px-4 py-3 bg-white dark:bg-[#0c121e] flex items-center justify-between shrink-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[#00875a] dark:text-[#00a86b] font-black text-lg leading-none">#</span>
+                        <span className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider font-sans">
                           BETA CALC
                         </span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         <button 
+                          type="button"
                           onClick={() => setCalcHistory([])} 
-                          className="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-650"
-                          title="Reset History"
+                          className="w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                          title="History"
                         >
-                          <RotateCcw size={12} />
+                          <History size={14} className="stroke-[2.2]" />
                         </button>
                         <button 
-                          className="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-650"
-                          title="Share Tape"
+                          type="button"
+                          className="w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                          title="Share"
                         >
-                          <Share2 size={12} />
+                          <Share2 size={14} className="stroke-[2.2]" />
                         </button>
                         <button 
+                          type="button"
                           onClick={() => {
                             setCalcInput('');
                             setCalcResult(null);
                             setCalcOperator('');
                           }} 
-                          className="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-650"
+                          className="w-8 h-8 rounded-full bg-red-50 hover:bg-red-100 dark:bg-red-950/30 flex items-center justify-center text-red-500 transition-colors cursor-pointer"
                           title="Clear Output"
                         >
-                          <Trash2 size={12} />
+                          <Trash2 size={14} className="stroke-[2.2]" />
                         </button>
                         <button
+                          type="button"
                           onClick={() => setActiveTab(null)}
-                          className="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-700"
+                          className="w-8 h-8 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors cursor-pointer"
                           title="Close"
                         >
-                          <X size={12} />
+                          <X size={16} className="stroke-[2.2]" />
                         </button>
                       </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-3.5 space-y-3.5 custom-scrollbar text-left">
-                      {compareMode ? (
-                        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/10 p-3 text-[11px] space-y-3">
-                          <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-1.5">
-                            <span className="font-extrabold uppercase text-[9px] tracking-wider text-slate-500">Price Compare Ledger</span>
-                            <button
-                              type="button"
-                              onClick={handleClearCompare}
-                              className="text-red-500 hover:text-red-400 font-bold cursor-pointer"
-                            >
-                              Clear
-                            </button>
-                          </div>
-
-                          <div className="max-h-28 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
-                            {compareItems.length === 0 ? (
-                              <p className="text-slate-400 italic text-[10px] text-center py-2">
-                                No comparison items yet.
-                              </p>
-                            ) : (
-                              compareItems.map((item) => (
-                                <div key={item.id} className="flex justify-between border-b border-slate-100 dark:border-slate-800/40 py-1 text-slate-600 dark:text-slate-300 font-mono">
-                                  <span className="truncate max-w-[140px] font-sans">{item.description}</span>
-                                  <span>
-                                    {currencySymbol}{item.valA} vs {currencySymbol}{item.valB}
-                                  </span>
-                                </div>
-                              ))
-                            )}
-                          </div>
-
-                          {compareItems.length > 0 && (
-                            <div className="border-t border-slate-200 dark:border-slate-800 pt-2 space-y-1 font-mono">
-                              <div className="flex justify-between text-slate-500 font-bold">
-                                <span>Total Side A:</span>
-                                <span>{currencySymbol}{totalA.toFixed(2)}</span>
-                              </div>
-                              <div className="flex justify-between text-slate-500 font-bold">
-                                <span>Total Side B:</span>
-                                <span>{currencySymbol}{totalB.toFixed(2)}</span>
-                              </div>
-                              <div className="pt-1 text-[10.5px] font-sans text-emerald-600 dark:text-emerald-400 flex items-center justify-between border-t border-dashed border-slate-200 dark:border-slate-800">
-                                <span>Cheaper Option:</span>
-                                <span className="font-black uppercase">
-                                  {cheaperSide === 'Equal' ? 'Equal' : `${cheaperSide} (-${currencySymbol}${diffCheaper.toFixed(2)})`}
-                                </span>
-                              </div>
+                    {/* Middle Scrollable Section: Tape / Recording area */}
+                    <div className="flex-1 flex flex-col justify-center items-center px-4 py-3 bg-[#f8fafc]/50 dark:bg-slate-950/20 border-t border-b border-slate-100 dark:border-white/5 overflow-y-auto">
+                      {calcHistory.length > 0 ? (
+                        <div className="w-full h-full max-h-32 overflow-y-auto space-y-1.5 custom-scrollbar text-right font-mono text-xs pr-1">
+                          {calcHistory.map((h, i) => (
+                            <div key={i} className="text-slate-400 dark:text-slate-500 hover:text-slate-700 transition-colors">
+                              {h}
                             </div>
-                          )}
-
-                          <form onSubmit={handleAddCompareItem} className="grid grid-cols-3 gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-900">
-                            <input
-                              type="text"
-                              required
-                              value={compDesc}
-                              onChange={(e) => setCompDesc(e.target.value)}
-                              placeholder="Item Description"
-                              className="col-span-3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1 text-[10.5px] outline-none text-slate-800 dark:text-white"
-                            />
-                            <input
-                              type="number"
-                              required
-                              step="any"
-                              value={compValA}
-                              onChange={(e) => setCompValA(e.target.value)}
-                              placeholder="Side A"
-                              className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 text-[10.5px] outline-none font-mono text-slate-800 dark:text-white"
-                            />
-                            <input
-                              type="number"
-                              required
-                              step="any"
-                              value={compValB}
-                              onChange={(e) => setCompValB(e.target.value)}
-                              placeholder="Side B"
-                              className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 text-[10.5px] outline-none font-mono text-slate-800 dark:text-white"
-                            />
-                            <button
-                              type="submit"
-                              className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center cursor-pointer font-bold"
-                            >
-                              <Plus size={13} />
-                            </button>
-                          </form>
+                          ))}
                         </div>
                       ) : (
-                        <div className="flex flex-col gap-3">
-                          {/* Set Base Display Header */}
-                          <div className="flex justify-between items-center bg-slate-100/50 dark:bg-slate-950/20 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-850 select-none">
-                            <span className="text-[10px] uppercase font-black tracking-wider text-slate-400">SET BASE</span>
-                            <span className="text-[16px] font-black text-slate-800 dark:text-white font-mono leading-none">
-                              {calcInput || '0'}
-                            </span>
-                          </div>
-
-                          {/* 4 outline segment pill buttons */}
-                          <div className="grid grid-cols-4 gap-1.5 py-0.5">
-                            <button
-                              type="button"
-                              onClick={handleAddGst}
-                              className="py-1 rounded-lg border border-emerald-500/30 bg-transparent text-emerald-500 hover:bg-emerald-500/10 text-[9px] font-black uppercase transition-all flex items-center justify-center gap-0.5"
-                            >
-                              % GST
-                            </button>
-                            <button
-                              type="button"
-                              onClick={handleAddDiscount}
-                              className="py-1 rounded-lg border border-amber-500/30 bg-transparent text-amber-500 hover:bg-amber-500/10 text-[9px] font-black uppercase transition-all flex items-center justify-center gap-0.5"
-                            >
-                              % Discount
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setCurrencySymbol((prev) => (prev === '₹' ? '$' : '₹'))}
-                              className="py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 text-[9px] font-black uppercase transition-all flex items-center justify-center gap-0.5"
-                            >
-                              % INR
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setCompareMode(!compareMode)}
-                              className={`py-1 rounded-lg border text-[9px] font-black uppercase transition-all flex items-center justify-center gap-0.5 ${
-                                compareMode
-                                  ? 'bg-blue-600 border-none text-white shadow'
-                                  : 'border-slate-300 dark:border-slate-700 bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
-                              }`}
-                            >
-                              ↑↓ Compare
-                            </button>
-                          </div>
+                        <div className="flex flex-col items-center justify-center text-center py-6 select-none">
+                          <RotateCcw size={22} className="text-slate-300 dark:text-slate-600 mb-2 stroke-[2]" />
+                          <p className="text-xs font-semibold text-slate-400 dark:text-slate-500">
+                            Start typing to record Tape
+                          </p>
                         </div>
                       )}
+                    </div>
 
-                      {/* Calculator numeric grid */}
-                      {!compareMode && (
-                        <div className="grid grid-cols-4 gap-2 pt-1">
-                          {/* Row 1: C, ⌫, ÷, × */}
-                          <button
-                            type="button"
-                            onClick={() => handleCalcBtn('C')}
-                            className="h-9 rounded-xl font-mono text-xs font-black border border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-all active:scale-95 flex items-center justify-center"
-                          >
-                            C
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleCalcBtn('⌫')}
-                            className="h-9 rounded-xl font-mono text-xs font-bold border border-slate-250 dark:border-slate-750 bg-slate-100 dark:bg-slate-800 text-slate-650 dark:text-slate-350 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-95 flex items-center justify-center"
-                          >
-                            ⌫
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleCalcBtn('/')}
-                            className="h-9 rounded-xl font-mono text-xs font-black border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all active:scale-95 flex items-center justify-center"
-                          >
-                            ÷
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleCalcBtn('*')}
-                            className="h-9 rounded-xl font-mono text-xs font-black border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all active:scale-95 flex items-center justify-center"
-                          >
-                            ×
-                          </button>
+                    {/* SET BASE & Main Screen Display */}
+                    <div className="px-5 py-3 bg-[#f1f5f9]/50 dark:bg-slate-900/30 flex items-center justify-between border-b border-slate-100 dark:border-white/5">
+                      <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        SET BASE
+                      </span>
+                      <span className="text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tight">
+                        {calcInput || (calcResult !== null ? calcResult : '0')}
+                      </span>
+                    </div>
 
-                          {/* Row 2: 7, 8, 9, - */}
-                          {['7', '8', '9'].map((k) => (
-                            <button
-                              key={k}
-                              type="button"
-                              onClick={() => handleCalcBtn(k)}
-                              className="h-9 rounded-xl font-mono text-xs font-bold border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95"
-                            >
-                              {k}
-                            </button>
+                    {/* Quick Formula Pills: % GST, Discount, INR, Compare */}
+                    <div className="px-4 py-2.5 grid grid-cols-4 gap-2 bg-white dark:bg-[#0c121e]">
+                      <button
+                        type="button"
+                        onClick={handleAddGst}
+                        className="py-1.5 px-2 rounded-xl border border-[#00875a]/30 hover:border-[#00875a] bg-white dark:bg-slate-900 text-[#00875a] dark:text-[#00a86b] text-[10.5px] font-bold transition-all flex items-center justify-center gap-1 shadow-2xs hover:scale-[1.02] cursor-pointer"
+                      >
+                        <span className="text-[10px] font-black">%</span> GST
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleAddDiscount}
+                        className="py-1.5 px-2 rounded-xl border border-amber-400/40 hover:border-amber-500 bg-white dark:bg-slate-900 text-amber-500 dark:text-amber-400 text-[10.5px] font-bold transition-all flex items-center justify-center gap-1 shadow-2xs hover:scale-[1.02] cursor-pointer"
+                      >
+                        <Tag size={11} className="stroke-[2.5]" /> Discount
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCurrencySymbol((prev) => (prev === '₹' ? '$' : '₹'))}
+                        className="py-1.5 px-2 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-[10.5px] font-bold transition-all flex items-center justify-center gap-1 shadow-2xs hover:scale-[1.02] cursor-pointer"
+                      >
+                        <Globe size={11} className="stroke-[2.5]" /> INR
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCompareMode(!compareMode)}
+                        className={`py-1.5 px-2 rounded-xl border text-[10.5px] font-bold transition-all flex items-center justify-center gap-1 shadow-2xs hover:scale-[1.02] cursor-pointer ${
+                          compareMode
+                            ? 'bg-[#00875a] text-white border-[#00875a]'
+                            : 'border-slate-200 dark:border-white/10 hover:border-slate-300 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200'
+                        }`}
+                      >
+                        <ArrowUpDown size={11} className="stroke-[2.5]" /> Compare
+                      </button>
+                    </div>
+
+                    {/* Compare Ledger if active */}
+                    {compareMode && (
+                      <div className="px-4 py-2 border-t border-slate-100 dark:border-white/5 max-h-40 overflow-y-auto">
+                        <div className="flex justify-between items-center pb-1">
+                          <span className="font-extrabold uppercase text-[9px] tracking-wider text-slate-500">Price Compare Ledger</span>
+                          <button
+                            type="button"
+                            onClick={handleClearCompare}
+                            className="text-red-500 hover:text-red-400 font-bold text-[10px] cursor-pointer"
+                          >
+                            Clear
+                          </button>
+                        </div>
+                        <div className="space-y-1 font-mono text-[11px]">
+                          {compareItems.map((item) => (
+                            <div key={item.id} className="flex justify-between border-b border-slate-100 dark:border-slate-800/40 py-0.5">
+                              <span>{item.description}</span>
+                              <span>{currencySymbol}{item.valA} vs {currencySymbol}{item.valB}</span>
+                            </div>
                           ))}
-                          <button
-                            type="button"
-                            onClick={() => handleCalcBtn('-')}
-                            className="h-9 rounded-xl font-mono text-xs font-black border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all active:scale-95 flex items-center justify-center"
-                          >
-                            -
-                          </button>
-
-                          {/* Row 3: 4, 5, 6, + */}
-                          {['4', '5', '6'].map((k) => (
-                            <button
-                              key={k}
-                              type="button"
-                              onClick={() => handleCalcBtn(k)}
-                              className="h-9 rounded-xl font-mono text-xs font-bold border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95"
-                            >
-                              {k}
-                            </button>
-                          ))}
-                          <button
-                            type="button"
-                            onClick={() => handleCalcBtn('+')}
-                            className="h-9 rounded-xl font-mono text-xs font-black border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all active:scale-95 flex items-center justify-center"
-                          >
-                            +
-                          </button>
-
-                          {/* Row 4 & 5: 1,2,3 / SCI,0,. and '=' spanning 2 rows */}
-                          <div className="col-span-3 grid grid-cols-3 gap-2">
-                            {['1', '2', '3'].map((k) => (
-                              <button
-                                key={k}
-                                type="button"
-                                onClick={() => handleCalcBtn(k)}
-                                className="h-9 rounded-xl font-mono text-xs font-bold border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95"
-                              >
-                                {k}
-                              </button>
-                            ))}
-
-                            <button
-                              type="button"
-                              className="h-9 rounded-xl font-sans text-[8.5px] font-black border border-slate-250 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all active:scale-95 uppercase"
-                            >
-                              SCI
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleCalcBtn('0')}
-                              className="h-9 rounded-xl font-mono text-xs font-bold border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95"
-                            >
-                              0
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleCalcBtn('.')}
-                              className="h-9 rounded-xl font-mono text-xs font-bold border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95"
-                            >
-                              .
-                            </button>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => handleCalcBtn('=')}
-                            className="col-span-1 h-20 rounded-xl bg-emerald-500 hover:bg-emerald-600 border border-emerald-500 text-white font-mono text-sm font-black transition-all active:scale-95 flex items-center justify-center"
-                          >
-                            =
-                          </button>
                         </div>
-                      )}
+                        <form onSubmit={handleAddCompareItem} className="grid grid-cols-3 gap-1 pt-1.5">
+                          <input
+                            type="text"
+                            required
+                            value={compDesc}
+                            onChange={(e) => setCompDesc(e.target.value)}
+                            placeholder="Item"
+                            className="col-span-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-2 py-0.5 text-[10px]"
+                          />
+                          <input
+                            type="number"
+                            required
+                            step="any"
+                            value={compValA}
+                            onChange={(e) => setCompValA(e.target.value)}
+                            placeholder="Side A"
+                            className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-1.5 py-0.5 text-[10px] font-mono"
+                          />
+                          <input
+                            type="number"
+                            required
+                            step="any"
+                            value={compValB}
+                            onChange={(e) => setCompValB(e.target.value)}
+                            placeholder="Side B"
+                            className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-1.5 py-0.5 text-[10px] font-mono"
+                          />
+                          <button
+                            type="submit"
+                            className="bg-[#00875a] text-white rounded flex items-center justify-center font-bold"
+                          >
+                            <Plus size={12} />
+                          </button>
+                        </form>
+                      </div>
+                    )}
 
-                      {/* TAPE RUNNING TOTAL footer */}
-                      {!compareMode && (
-                        <div className="flex justify-between items-center px-3.5 py-2.5 bg-slate-100/50 dark:bg-slate-950/20 rounded-xl border border-slate-200 dark:border-slate-850 font-sans text-xs select-none mt-2">
-                          <span className="text-[9px] uppercase font-black tracking-wider text-slate-400">TAPE RUNNING TOTAL</span>
-                          <span className="font-extrabold text-[13px] text-emerald-600 dark:text-emerald-400 font-mono">
-                            {currencySymbol}{(calcResult !== null ? calcResult : parseFloat(calcInput || '0')).toFixed(2)}
-                          </span>
-                        </div>
-                      )}
+                    {/* Numeric Keypad Matrix (clean medium font weight matching screenshot) */}
+                    <div className="p-4 pt-1 grid grid-cols-4 gap-2.5 bg-white dark:bg-[#0c121e]">
+                      {/* Row 1: ↺, ⌫, /, x */}
+                      <button
+                        type="button"
+                        onClick={() => handleCalcBtn('C')}
+                        className="h-12 rounded-[16px] bg-[#fff1f2] dark:bg-rose-950/20 text-[#f43f5e] hover:bg-[#ffe4e6] flex items-center justify-center transition-all active:scale-95 shadow-2xs cursor-pointer"
+                        title="Clear / Reset"
+                      >
+                        <RotateCcw size={16} className="stroke-[2]" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleCalcBtn('⌫')}
+                        className="h-12 rounded-[16px] bg-[#f0f4f8] dark:bg-slate-800/60 text-[#334155] dark:text-slate-300 hover:bg-[#e2e8f0] flex items-center justify-center transition-all active:scale-95 shadow-2xs cursor-pointer"
+                        title="Backspace"
+                      >
+                        <Delete size={17} className="stroke-[1.8]" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleCalcBtn('/')}
+                        className="h-12 rounded-[16px] bg-[#e6fbf2] dark:bg-emerald-950/30 text-[#00875a] dark:text-[#00a86b] hover:bg-[#cbf7e3] text-lg font-bold transition-all active:scale-95 shadow-2xs cursor-pointer"
+                      >
+                        /
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleCalcBtn('*')}
+                        className="h-12 rounded-[16px] bg-[#e6fbf2] dark:bg-emerald-950/30 text-[#00875a] dark:text-[#00a86b] hover:bg-[#cbf7e3] text-base font-bold transition-all active:scale-95 shadow-2xs cursor-pointer"
+                      >
+                        x
+                      </button>
+
+                      {/* Row 2: 7, 8, 9, - */}
+                      {['7', '8', '9'].map((k) => (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() => handleCalcBtn(k)}
+                          className="h-12 rounded-[16px] bg-[#f8fafc] dark:bg-slate-900 hover:bg-[#f1f5f9] text-[#1e293b] dark:text-slate-100 text-lg font-bold font-sans transition-all active:scale-95 shadow-2xs cursor-pointer"
+                        >
+                          {k}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => handleCalcBtn('-')}
+                        className="h-12 rounded-[16px] bg-[#e6fbf2] dark:bg-emerald-950/30 text-[#00875a] dark:text-[#00a86b] hover:bg-[#cbf7e3] text-xl font-bold transition-all active:scale-95 shadow-2xs cursor-pointer"
+                      >
+                        -
+                      </button>
+
+                      {/* Row 3: 4, 5, 6, + */}
+                      {['4', '5', '6'].map((k) => (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() => handleCalcBtn(k)}
+                          className="h-12 rounded-[16px] bg-[#f8fafc] dark:bg-slate-900 hover:bg-[#f1f5f9] text-[#1e293b] dark:text-slate-100 text-lg font-bold font-sans transition-all active:scale-95 shadow-2xs cursor-pointer"
+                        >
+                          {k}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => handleCalcBtn('+')}
+                        className="h-12 rounded-[16px] bg-[#e6fbf2] dark:bg-emerald-950/30 text-[#00875a] dark:text-[#00a86b] hover:bg-[#cbf7e3] text-xl font-bold transition-all active:scale-95 shadow-2xs cursor-pointer"
+                      >
+                        +
+                      </button>
+
+                      {/* Row 4 & 5: 1, 2, 3 and '=' spanning 2 rows */}
+                      <div className="col-span-3 grid grid-cols-3 gap-2.5">
+                        {['1', '2', '3'].map((k) => (
+                          <button
+                            key={k}
+                            type="button"
+                            onClick={() => handleCalcBtn(k)}
+                            className="h-12 rounded-[16px] bg-[#f8fafc] dark:bg-slate-900 hover:bg-[#f1f5f9] text-[#1e293b] dark:text-slate-100 text-lg font-bold font-sans transition-all active:scale-95 shadow-2xs cursor-pointer"
+                          >
+                            {k}
+                          </button>
+                        ))}
+
+                        <button
+                          type="button"
+                          className="h-12 rounded-[16px] bg-[#f0f4f8] dark:bg-slate-800/60 text-[#334155] dark:text-slate-300 hover:bg-[#e2e8f0] text-xs font-bold uppercase tracking-wider transition-all active:scale-95 shadow-2xs cursor-pointer flex items-center justify-center"
+                        >
+                          SCI
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleCalcBtn('0')}
+                          className="h-12 rounded-[16px] bg-[#f8fafc] dark:bg-slate-900 hover:bg-[#f1f5f9] text-[#1e293b] dark:text-slate-100 text-lg font-bold font-sans transition-all active:scale-95 shadow-2xs cursor-pointer"
+                        >
+                          0
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleCalcBtn('.')}
+                          className="h-12 rounded-[16px] bg-[#f8fafc] dark:bg-slate-900 hover:bg-[#f1f5f9] text-[#1e293b] dark:text-slate-100 text-lg font-bold font-sans transition-all active:scale-95 shadow-2xs cursor-pointer"
+                        >
+                          .
+                        </button>
+                      </div>
+
+                      {/* Equal Button: Tall Solid Green Button matching screenshot */}
+                      <button
+                        type="button"
+                        onClick={() => handleCalcBtn('=')}
+                        className="col-span-1 h-[106px] rounded-[18px] bg-[#00875a] hover:bg-[#00704a] text-white text-2xl font-bold transition-all active:scale-95 flex items-center justify-center shadow-[0_4px_14px_rgba(0,135,90,0.35)] cursor-pointer"
+                      >
+                        =
+                      </button>
+                    </div>
+
+                    {/* Dark Solid Navy Tape Running Total Footer matching screenshot */}
+                    <div className="mt-auto bg-[#0a1120] text-white px-5 py-3.5 flex flex-col justify-center border-t border-slate-800">
+                      <span className="text-[9px] font-black tracking-widest uppercase text-slate-400">
+                        TAPE RUNNING TOTAL
+                      </span>
+                      <span className="text-xl font-black font-mono text-[#00c781] tracking-tight leading-tight mt-0.5">
+                        {currencySymbol}{(calcResult !== null ? calcResult : parseFloat(calcInput || '0')).toFixed(2)}
+                      </span>
                     </div>
                   </div>
                 )}
 
-                {/* 3. TASKS TAB POPUP */}
+                {/* 3. NOTES TAB POPUP (NOTES from bit-tool.com) */}
                 {activeTab === 'tasks' && (
-                  <div className="h-full flex flex-col overflow-hidden text-slate-800 dark:text-slate-200 font-sans">
-                    <div className="p-3 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-850 flex items-center justify-between shrink-0">
-                      <div className="flex items-center gap-1.5">
-                        <CheckSquare size={13} className="text-blue-500" />
-                        <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest block">
-                          MY TASKS
-                        </span>
-                      </div>
+                  <div className="h-full flex flex-col overflow-hidden bg-white dark:bg-[#0c121e] text-slate-800 dark:text-slate-100 font-sans select-none relative">
+                    {/* Top App Header: NOTES & Close X */}
+                    <div className="px-5 py-3.5 bg-white dark:bg-[#0c121e] border-b border-emerald-500/20 flex items-center justify-between shrink-0">
+                      <span className="text-xs font-black tracking-wider text-[#0a1120] dark:text-white uppercase font-sans">
+                        NOTES
+                      </span>
                       <button
+                        type="button"
                         onClick={() => setActiveTab(null)}
-                        className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500"
+                        className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+                        title="Close"
                       >
-                        <X size={13} />
+                        <X size={15} className="stroke-[2.5]" />
                       </button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-3.5 space-y-3.5 custom-scrollbar text-left">
-                      <form onSubmit={handleAddTask} className="flex gap-1.5">
-                        <input
-                          type="text"
-                          value={newTaskText}
-                          onChange={(e) => setNewTaskText(e.target.value)}
-                          placeholder="Add new task..."
-                          className="flex-1 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1 text-[11px] outline-none text-slate-800 dark:text-white"
-                        />
-                        <button
-                          type="submit"
-                          className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-2.5 py-1 text-[11px] font-bold"
-                        >
-                          Add
-                        </button>
-                      </form>
+                    {/* Subheader: My Notes title + blue '+ New Note' button */}
+                    <div className="px-5 pt-5 pb-3 flex items-center justify-between shrink-0">
+                      <h3 className="text-lg font-black text-[#0a3161] dark:text-white font-sans tracking-tight">
+                        My Notes
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setShowAddNoteModal(true)}
+                        className="px-3.5 py-1.5 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold transition-all shadow-[0_2px_8px_rgba(37,99,235,0.3)] flex items-center gap-1.5 cursor-pointer hover:scale-[1.02] active:scale-95"
+                      >
+                        <Plus size={15} className="stroke-[2.8]" /> New Note
+                      </button>
+                    </div>
 
-                      <div className="space-y-1.5">
-                        {tasks.length === 0 ? (
-                          <div className="text-center py-6 text-slate-400 italic text-[10px]">No tasks. Keep it up!</div>
-                        ) : (
-                          tasks.map((t) => (
+                    {/* Content Section: Dashed empty state box or notes list */}
+                    <div className="flex-1 overflow-y-auto px-5 pb-5 custom-scrollbar">
+                      {notesList.length === 0 ? (
+                        <div className="mt-3 p-8 rounded-[22px] border-2 border-dashed border-[#cbd5e1] dark:border-slate-800 flex items-center justify-center text-center">
+                          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 max-w-[200px] leading-relaxed">
+                            No notes yet. Click the button above to create one.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3 pt-2">
+                          {notesList.map((n) => (
                             <div 
-                              key={t.id} 
-                              className="flex items-start justify-between gap-2.5 p-2 rounded-lg border border-slate-100 dark:border-slate-850 hover:bg-slate-50/50 dark:hover:bg-slate-900/35 transition-all group"
+                              key={n.id}
+                              className="p-3.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-white/5 space-y-1 shadow-2xs group hover:border-[#ff6325] transition-all"
                             >
+                              <div className="flex justify-between items-start">
+                                <h4 className="font-bold text-xs text-[#0a3161] dark:text-white">
+                                  {n.title}
+                                </h4>
+                                <span className="text-[10px] text-slate-400 font-mono">
+                                  {n.date}
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+                                {n.content}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* New Note Modal Popup */}
+                    {showAddNoteModal && (
+                      <div className="absolute inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+                        <div className="w-full bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/10 p-4 shadow-2xl space-y-3">
+                          <div className="flex items-center justify-between pb-1 border-b border-slate-100 dark:border-white/5">
+                            <h4 className="font-bold text-xs text-[#0a3161] dark:text-white uppercase tracking-wider">
+                              Create New Note
+                            </h4>
+                            <button
+                              type="button"
+                              onClick={() => setShowAddNoteModal(false)}
+                              className="text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                            >
+                              <X size={15} />
+                            </button>
+                          </div>
+                          <form onSubmit={handleAddNoteSubmit} className="space-y-2.5">
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                                Note Title *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                value={newNoteTitle}
+                                onChange={(e) => setNewNoteTitle(e.target.value)}
+                                placeholder="e.g. Booking guidelines"
+                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs outline-none text-slate-900 dark:text-white"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                                Note Content
+                              </label>
+                              <textarea
+                                rows={3}
+                                value={newNoteContent}
+                                onChange={(e) => setNewNoteContent(e.target.value)}
+                                placeholder="Write details here..."
+                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs outline-none text-slate-900 dark:text-white"
+                              />
+                            </div>
+                            <div className="flex gap-2 pt-1">
                               <button
-                                onClick={() => toggleTask(t.id)}
-                                className={`mt-0.5 shrink-0 w-3.5 h-3.5 border rounded flex items-center justify-center ${
-                                  t.completed
-                                    ? 'bg-blue-600 border-blue-600 text-white'
-                                    : 'border-slate-300 dark:border-slate-600'
-                                }`}
+                                type="button"
+                                onClick={() => setShowAddNoteModal(false)}
+                                className="flex-1 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
                               >
-                                {t.completed && <Check size={10} strokeWidth={3} />}
+                                Cancel
                               </button>
-                              <span className={`flex-1 text-[11px] leading-tight ${t.completed ? 'line-through text-slate-400 dark:text-slate-650' : 'text-slate-700 dark:text-slate-300'}`}>
-                                {t.text}
-                              </span>
-                              <button 
-                                onClick={() => deleteTask(t.id)}
-                                className="text-slate-450 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                              <button
+                                type="submit"
+                                className="flex-1 py-1.5 rounded-xl bg-[#ff6325] hover:bg-[#e0531c] text-white text-xs font-bold shadow-xs"
                               >
-                                <Trash size={11} />
+                                Save Note
                               </button>
                             </div>
-                          ))
-                        )}
+                          </form>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
 
-                {/* 4. CONTACTS TAB POPUP */}
+                {/* 4. CONTACTS TAB POPUP (GLOBAL CONTACTS from bit-tool.com) */}
                 {activeTab === 'contacts' && (
-                  <div className="h-full flex flex-col overflow-hidden text-slate-800 dark:text-slate-200 font-sans">
-                    <div className="p-3 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-850 flex items-center justify-between shrink-0">
-                      <div className="flex items-center gap-1.5">
-                        <User size={13} className="text-blue-500" />
-                        <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest block">
-                          CONTACTS LIST
-                        </span>
-                      </div>
+                  <div className="h-full flex flex-col overflow-hidden bg-white dark:bg-[#0c121e] text-slate-800 dark:text-slate-100 font-sans select-none relative">
+                    {/* Top App Header: GLOBAL CONTACTS & Close X */}
+                    <div className="px-5 py-3.5 bg-white dark:bg-[#0c121e] border-b border-emerald-500/20 flex items-center justify-between shrink-0">
+                      <span className="text-xs font-black tracking-wider text-[#0a1120] dark:text-white uppercase font-sans">
+                        GLOBAL CONTACTS
+                      </span>
                       <button
+                        type="button"
                         onClick={() => setActiveTab(null)}
-                        className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500"
+                        className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+                        title="Close"
                       >
-                        <X size={13} />
+                        <X size={15} className="stroke-[2.5]" />
                       </button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-3.5 space-y-3.5 custom-scrollbar text-left">
+                    {/* Subheader: Global Contacts title + blue '+ Add Contact' button */}
+                    <div className="px-5 pt-5 pb-3 flex items-center justify-between shrink-0">
+                      <h3 className="text-lg font-black text-slate-900 dark:text-white font-sans tracking-tight">
+                        Global Contacts
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setShowAddContactModal(true)}
+                        className="px-3.5 py-1.5 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold transition-all shadow-[0_2px_8px_rgba(37,99,235,0.3)] flex items-center gap-1.5 cursor-pointer hover:scale-[1.02] active:scale-95"
+                      >
+                        <Plus size={15} className="stroke-[2.8]" /> Add Contact
+                      </button>
+                    </div>
+
+                    {/* Search Bar matching screenshot */}
+                    <div className="px-5 pb-4 shrink-0">
                       <div className="relative">
-                        <Search size={12} className="absolute left-2.5 top-2 text-slate-400" />
+                        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 stroke-[2]" />
                         <input
                           type="text"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          placeholder="Search contacts..."
-                          className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg pl-7 pr-2.5 py-1 text-[11px] outline-none text-slate-800 dark:text-white"
+                          placeholder="Search global contacts..."
+                          className="w-full bg-white dark:bg-slate-900/50 border border-slate-200/90 dark:border-white/10 rounded-2xl pl-10 pr-3.5 py-2.5 text-xs outline-none text-slate-800 dark:text-white placeholder:text-slate-400 focus:border-[#2563eb] transition-all shadow-2xs"
                         />
                       </div>
+                    </div>
 
-                      <div className="space-y-1.5">
-                        {filteredContacts.length === 0 ? (
-                          <div className="text-center py-6 text-slate-400 italic text-[10px]">No contacts found</div>
-                        ) : (
-                          filteredContacts.map((c, idx) => (
+                    {/* Contacts List or Empty State matching screenshot */}
+                    <div className="flex-1 overflow-y-auto px-5 pb-5 custom-scrollbar">
+                      {filteredContacts.length === 0 ? (
+                        <div className="h-full min-h-[220px] flex items-center justify-center text-center">
+                          <p className="text-sm font-medium text-slate-400 dark:text-slate-500">
+                            No contacts found.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {filteredContacts.map((c) => (
                             <div 
-                              key={idx} 
-                              className="p-2.5 rounded-lg border border-slate-100 dark:border-slate-850 hover:bg-slate-50/50 dark:hover:bg-slate-900/35 transition-all"
+                              key={c.id} 
+                              className="p-3 rounded-2xl border border-slate-200/80 dark:border-white/10 hover:border-blue-400 dark:hover:border-blue-500 bg-slate-50/50 dark:bg-white/5 transition-all shadow-2xs group"
                             >
-                              <div className="flex justify-between items-start gap-1">
-                                <span className="font-bold text-[11px] text-slate-705 dark:text-slate-202 truncate">{c.name}</span>
-                                <span className="text-[7.5px] uppercase font-black tracking-wider px-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded shrink-0">
-                                  {c.role}
+                              <div className="flex justify-between items-start">
+                                <h4 className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                                  {c.name}
+                                </h4>
+                                <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-[#2563eb] dark:text-blue-400">
+                                  {c.role || 'Contact'}
                                 </span>
                               </div>
-                              <p className="text-[9.5px] text-slate-400 mt-1 font-mono leading-none">{c.phone}</p>
-                              <p className="text-[9.5px] text-slate-400 mt-0.5 font-mono leading-none truncate">{c.email}</p>
+                              {c.phone && (
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-mono">
+                                  {c.phone}
+                                </p>
+                              )}
+                              {c.email && (
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate">
+                                  {c.email}
+                                </p>
+                              )}
                             </div>
-                          ))
-                        )}
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Add Contact Modal Popup */}
+                    {showAddContactModal && (
+                      <div className="absolute inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+                        <div className="w-full bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/10 p-4 shadow-2xl space-y-3">
+                          <div className="flex items-center justify-between pb-1 border-b border-slate-100 dark:border-white/5">
+                            <h4 className="font-bold text-xs text-slate-900 dark:text-white uppercase tracking-wider">
+                              New Global Contact
+                            </h4>
+                            <button
+                              type="button"
+                              onClick={() => setShowAddContactModal(false)}
+                              className="text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                            >
+                              <X size={15} />
+                            </button>
+                          </div>
+                          <form onSubmit={handleAddContactSubmit} className="space-y-2.5">
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                                Full Name *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                value={newContactName}
+                                onChange={(e) => setNewContactName(e.target.value)}
+                                placeholder="e.g. Ramesh Kumar"
+                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs outline-none text-slate-900 dark:text-white"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                                Phone Number
+                              </label>
+                              <input
+                                type="tel"
+                                value={newContactPhone}
+                                onChange={(e) => setNewContactPhone(e.target.value)}
+                                placeholder="+91 98765 43210"
+                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs outline-none font-mono text-slate-900 dark:text-white"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                                Email Address
+                              </label>
+                              <input
+                                type="email"
+                                value={newContactEmail}
+                                onChange={(e) => setNewContactEmail(e.target.value)}
+                                placeholder="name@domain.com"
+                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs outline-none font-mono text-slate-900 dark:text-white"
+                              />
+                            </div>
+                            <div className="flex gap-2 pt-1">
+                              <button
+                                type="button"
+                                onClick={() => setShowAddContactModal(false)}
+                                className="flex-1 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="submit"
+                                className="flex-1 py-1.5 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-[#1d4ed8] shadow-xs"
+                              >
+                                Save Contact
+                              </button>
+                            </div>
+                          </form>
+                        </div>
                       </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 5. Weather Panel (from bit-tool.com) */}
+                {activeTab === 'weather' && (
+                  <div className="flex-1 flex flex-col h-full bg-white dark:bg-[#0c121e]">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800">
+                      <div className="flex items-center gap-2">
+                        <div className="h-6 w-6 rounded-lg bg-teal-50 dark:bg-teal-950/40 text-teal-600 flex items-center justify-center">
+                          <CloudSun size={14} />
+                        </div>
+                        <span className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-white">
+                          LOCAL WEATHER FORECAST
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setActiveTab(null)}
+                        className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500"
+                      >
+                        <X size={13} />
+                      </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar text-left">
+                      {/* Main Weather Card */}
+                      <div className="p-4 rounded-2xl bg-gradient-to-br from-teal-500/10 via-sky-500/5 to-transparent border border-teal-550/20 text-center relative overflow-hidden">
+                        <div className="flex items-center justify-center gap-2 text-xs font-bold text-teal-600 dark:text-teal-400 mb-1">
+                          <MapPin size={12} />
+                          <span>Chennai, India</span>
+                        </div>
+                        <div className="text-4xl font-black text-slate-800 dark:text-white tracking-tight my-2">
+                          31°C
+                        </div>
+                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          Partly Cloudy • Optimal for Outdoor Turf & Pool
+                        </p>
+                        <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-200/60 dark:border-slate-800/60 text-center">
+                          <div>
+                            <span className="text-[10px] text-slate-400 block font-bold uppercase">Humidity</span>
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">68%</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-400 block font-bold uppercase">Wind</span>
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">14 km/h</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-400 block font-bold uppercase">UV Index</span>
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">Moderate</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 3-Day Forecast */}
+                      <div className="space-y-2">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Upcoming Forecast</span>
+                        {[
+                          { day: 'Tomorrow', temp: '32°C / 26°C', cond: 'Sunny & Clear' },
+                          { day: 'Sunday', temp: '30°C / 25°C', cond: 'Passing Showers' },
+                          { day: 'Monday', temp: '31°C / 25°C', cond: 'Clear Skies' }
+                        ].map((f, i) => (
+                          <div key={i} className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-white/[0.02]">
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{f.day}</span>
+                            <span className="text-[11px] text-slate-500">{f.cond}</span>
+                            <span className="text-xs font-mono font-bold text-teal-600 dark:text-teal-400">{f.temp}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 6. Keyboard Shortcuts & Input Tools Panel (KEYBOARD from bit-tool.com) */}
+                {activeTab === 'keyboard' && (
+                  <div className="flex-1 flex flex-col h-full bg-white dark:bg-[#0c121e] text-slate-800 dark:text-slate-100 font-sans select-none">
+                    {/* Header: KEYBOARD with top subtle border and close X */}
+                    <div className="px-5 py-3.5 bg-white dark:bg-[#0c121e] border-b border-emerald-500/20 flex items-center justify-between shrink-0">
+                      <span className="text-xs font-black tracking-wider text-[#0a1120] dark:text-white uppercase font-sans">
+                        KEYBOARD
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab(null)}
+                        className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+                        title="Close"
+                      >
+                        <X size={15} className="stroke-[2.5]" />
+                      </button>
+                    </div>
+
+                    {/* Dedicated Business View Center Body matching screenshot */}
+                    <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+                      {/* BokSpot themed rounded squircle badge with building icon */}
+                      <div className="w-20 h-20 rounded-[28px] bg-[#0a3161]/10 dark:bg-white/5 border border-[#0a3161]/15 flex items-center justify-center mb-6 shadow-xs">
+                        <span className="text-3xl select-none" role="img" aria-label="Building">
+                          🏢
+                        </span>
+                      </div>
+
+                      {/* Title: Keyboard with BokSpot theme navy */}
+                      <h2 className="text-2xl font-black text-[#0a3161] dark:text-white font-sans tracking-tight mb-3">
+                        Keyboard
+                      </h2>
+
+                      {/* Description */}
+                      <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xs leading-relaxed mb-6 font-normal">
+                        This is the dedicated business view for <span className="font-bold text-[#ff6325] dark:text-[#ff6325]">Keyboard</span>. Full feature integration is coming soon.
+                      </p>
+
+                      {/* Pill Badge: Path: /dashboard */}
+                      <div className="px-5 py-2.5 rounded-2xl bg-[#0a3161]/5 dark:bg-white/5 border border-[#0a3161]/15 dark:border-white/5 text-xs font-bold text-[#0a3161] dark:text-slate-300 font-sans shadow-2xs">
+                        Path: /dashboard
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 7. BETA APP LAUNCHER PANEL (Exact match to Beta Ecosystem screenshot) */}
+                {activeTab === 'beta' && (
+                  <div className="flex-1 flex flex-col h-full bg-white dark:bg-[#0c121e] text-left font-sans select-none overflow-hidden">
+                    {/* Header: BETA Logo + Edit Button + Close */}
+                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xl font-black text-[#0052cc] dark:text-[#38bdf8] tracking-wider font-sans">
+                          BETA
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingBeta(!isEditingBeta)}
+                          className={`flex items-center gap-1 px-3 py-1 rounded-lg border text-[11px] font-bold shadow-2xs transition-all cursor-pointer ${
+                            isEditingBeta
+                              ? 'border-emerald-500 bg-emerald-50/80 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-600'
+                              : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          {isEditingBeta ? (
+                            <>
+                              <Check size={12} className="stroke-[3] text-emerald-600 dark:text-emerald-400" />
+                              <span className="font-black text-[#00875a] dark:text-[#00c781]">Done</span>
+                            </>
+                          ) : (
+                            <>
+                              <Edit3 size={11} />
+                              <span>Edit</span>
+                            </>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsEditingBeta(false);
+                            setActiveTab(null);
+                          }}
+                          className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors cursor-pointer"
+                        >
+                          <X size={15} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto px-3.5 py-2.5 space-y-3 custom-scrollbar flex flex-col justify-between">
+                      <div className="space-y-3">
+                        {/* Favorites / Recent Card Container */}
+                        <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 p-3 bg-white dark:bg-slate-900/40 shadow-xs space-y-2.5">
+                          {/* Tabs: FAVORITES | RECENT with underline indicator */}
+                          <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800/60 pb-1.5">
+                            <div className="flex items-center gap-3 text-[11px] font-extrabold uppercase tracking-wider">
+                              <button
+                                type="button"
+                                onClick={() => setBetaSubTab('favorites')}
+                                className={`transition-all cursor-pointer pb-1 ${
+                                  betaSubTab === 'favorites'
+                                    ? 'text-[#00875a] border-b-2 border-[#00875a] font-black'
+                                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 border-b-2 border-transparent'
+                                }`}
+                              >
+                                FAVORITES
+                              </button>
+                              <span className="text-slate-300 dark:text-slate-700 font-normal pb-1">|</span>
+                              <button
+                                type="button"
+                                onClick={() => setBetaSubTab('recent')}
+                                className={`transition-all cursor-pointer pb-1 ${
+                                  betaSubTab === 'recent'
+                                    ? 'text-[#00875a] border-b-2 border-[#00875a] font-black'
+                                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 border-b-2 border-transparent'
+                                }`}
+                              >
+                                RECENT
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Top Content: FAVORITES vs RECENT */}
+                          {betaSubTab === 'favorites' ? (
+                            <div className="grid grid-cols-3 gap-y-3 gap-x-2 pt-0.5 text-center">
+                              {/* Cliks */}
+                              {favoriteAppIds.includes('cliks') && (
+                                <div className={`relative flex flex-col items-center gap-1 group ${isEditingBeta ? 'animate-jiggle' : ''}`}>
+                                  {isEditingBeta && (
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleFavorite('cliks')}
+                                      className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#ef4444] text-white flex items-center justify-center shadow-md z-20 hover:scale-110 cursor-pointer animate-in zoom-in-75 duration-150"
+                                      title="Remove from favorites"
+                                    >
+                                      <X size={12} className="stroke-[3]" />
+                                    </button>
+                                  )}
+                                  <a
+                                    href={isEditingBeta ? undefined : "https://cliks.co.in"}
+                                    target={isEditingBeta ? undefined : "_blank"}
+                                    rel="noopener noreferrer"
+                                    onClick={() => !isEditingBeta && handleAppLaunch({ id: 'cliks', name: 'Cliks', url: 'https://cliks.co.in', icon: 'cliks', bg: 'bg-[#00875a]/10', color: 'text-[#00875a]' })}
+                                    className="flex flex-col items-center gap-1 cursor-pointer w-full"
+                                  >
+                                    <div className="w-11 h-11 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700 flex items-center justify-center transition-all group-hover:scale-105 shadow-2xs">
+                                      <svg className="w-6 h-6 text-[#00875a]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                        <polyline points="22 4 12 14.01 9 11.01" />
+                                      </svg>
+                                    </div>
+                                    <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200">Cliks</span>
+                                  </a>
+                                </div>
+                              )}
+
+                              {/* BNXmail */}
+                              {favoriteAppIds.includes('bnxmail') && (
+                                <div className={`relative flex flex-col items-center gap-1 group ${isEditingBeta ? 'animate-jiggle-reverse' : ''}`}>
+                                  {isEditingBeta && (
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleFavorite('bnxmail')}
+                                      className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#ef4444] text-white flex items-center justify-center shadow-md z-20 hover:scale-110 cursor-pointer animate-in zoom-in-75 duration-150"
+                                      title="Remove from favorites"
+                                    >
+                                      <X size={12} className="stroke-[3]" />
+                                    </button>
+                                  )}
+                                  <a
+                                    href={isEditingBeta ? undefined : "https://bnxmail.com"}
+                                    target={isEditingBeta ? undefined : "_blank"}
+                                    rel="noopener noreferrer"
+                                    onClick={() => !isEditingBeta && handleAppLaunch({ id: 'bnxmail', name: 'BNXmail', url: 'https://bnxmail.com', icon: 'bnxmail', bg: 'bg-sky-500/10', color: 'text-[#0052cc]' })}
+                                    className="flex flex-col items-center gap-1 cursor-pointer w-full"
+                                  >
+                                    <div className="w-11 h-11 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700 flex items-center justify-center transition-all group-hover:scale-105 shadow-2xs">
+                                      <svg className="w-7 h-7 text-[#0052cc]" viewBox="0 0 32 32" fill="none">
+                                        <path 
+                                          d="M7 16.5L16 22.5L25 16.5M6 14.5V23C6 24.1 6.9 25 8 25H24C25.1 25 26 24.1 26 23V14.5" 
+                                          stroke="#0052cc" 
+                                          strokeWidth="1.8" 
+                                          strokeLinecap="round" 
+                                          strokeLinejoin="round" 
+                                        />
+                                        <path 
+                                          d="M7.5 12C9 12 11.5 10 13 8C14.5 6 17 5 19 6C18 7.5 17 9.5 17 11C18.5 10.5 21 10 23.5 11C21 12 18.5 13.5 17 14.5C15.5 15.5 13 16 11 15C9.5 14.2 8.5 13 7.5 12Z" 
+                                          fill="#0052cc" 
+                                        />
+                                      </svg>
+                                    </div>
+                                    <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200">BNXmail</span>
+                                  </a>
+                                </div>
+                              )}
+
+                              {/* Bit-Tool */}
+                              {favoriteAppIds.includes('bit-tool') && (
+                                <div className={`relative flex flex-col items-center gap-1 group ${isEditingBeta ? 'animate-jiggle' : ''}`}>
+                                  {isEditingBeta && (
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleFavorite('bit-tool')}
+                                      className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#ef4444] text-white flex items-center justify-center shadow-md z-20 hover:scale-110 cursor-pointer animate-in zoom-in-75 duration-150"
+                                      title="Remove from favorites"
+                                    >
+                                      <X size={12} className="stroke-[3]" />
+                                    </button>
+                                  )}
+                                  <a
+                                    href={isEditingBeta ? undefined : "https://bit-tool.com"}
+                                    target={isEditingBeta ? undefined : "_blank"}
+                                    rel="noopener noreferrer"
+                                    onClick={() => !isEditingBeta && handleAppLaunch({ id: 'bit-tool', name: 'Bit-Tool', url: 'https://bit-tool.com', icon: 'sliders', bg: 'bg-blue-500/10', color: 'text-[#0052cc]' })}
+                                    className="flex flex-col items-center gap-1 cursor-pointer w-full"
+                                  >
+                                    <div className="w-11 h-11 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700 flex items-center justify-center transition-all group-hover:scale-105 shadow-2xs">
+                                      <svg className="w-6 h-6 text-[#0052cc]" viewBox="0 0 24 24" fill="currentColor">
+                                        <circle cx="5" cy="5.5" r="1.8" />
+                                        <rect x="3.4" y="9.5" width="3.2" height="11.5" rx="1.6" />
+                                        <rect x="10.4" y="4.5" width="3.2" height="15.5" rx="1.6" />
+                                        <rect x="17.4" y="9.5" width="3.2" height="11.5" rx="1.6" />
+                                        <circle cx="19" cy="23.5" r="1.8" />
+                                      </svg>
+                                    </div>
+                                    <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200">Bit-Tool</span>
+                                  </a>
+                                </div>
+                              )}
+
+                              {/* B2Auth */}
+                              {favoriteAppIds.includes('b2auth') && (
+                                <div className={`relative flex flex-col items-center gap-1 group ${isEditingBeta ? 'animate-jiggle-reverse' : ''}`}>
+                                  {isEditingBeta && (
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleFavorite('b2auth')}
+                                      className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#ef4444] text-white flex items-center justify-center shadow-md z-20 hover:scale-110 cursor-pointer animate-in zoom-in-75 duration-150"
+                                      title="Remove from favorites"
+                                    >
+                                      <X size={12} className="stroke-[3]" />
+                                    </button>
+                                  )}
+                                  <a
+                                    href={isEditingBeta ? undefined : "https://b2auth.com"}
+                                    target={isEditingBeta ? undefined : "_blank"}
+                                    rel="noopener noreferrer"
+                                    onClick={() => !isEditingBeta && handleAppLaunch({ id: 'b2auth', name: 'B2Auth', url: 'https://b2auth.com', icon: 'b2auth', bg: 'bg-slate-100', color: 'text-slate-700' })}
+                                    className="flex flex-col items-center gap-1 cursor-pointer w-full"
+                                  >
+                                    <div className="w-11 h-11 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700 flex items-center justify-center transition-all group-hover:scale-105 shadow-2xs">
+                                      <ShieldCheck size={22} className="text-slate-700 dark:text-slate-300" />
+                                    </div>
+                                    <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200">B2Auth</span>
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            /* RECENT Apps view - Exactly matching the screenshot */
+                            <div className="pt-0.5">
+                              {recentApps.length === 0 ? (
+                                <div className="py-4 text-center text-[11px] text-slate-400">
+                                  No recent applications
+                                </div>
+                              ) : (
+                                <div className="grid grid-cols-3 gap-y-3 gap-x-2 text-center">
+                                  {recentApps.map((app) => (
+                                    <a
+                                      key={app.id}
+                                      href={app.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex flex-col items-center gap-1 group cursor-pointer"
+                                    >
+                                      <div className="w-11 h-11 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700 flex items-center justify-center transition-all group-hover:scale-105 shadow-2xs">
+                                        {app.id === 'bit-tool' ? (
+                                          <svg className="w-6 h-6 text-[#0052cc]" viewBox="0 0 24 24" fill="currentColor">
+                                            <circle cx="5" cy="5.5" r="1.8" />
+                                            <rect x="3.4" y="9.5" width="3.2" height="11.5" rx="1.6" />
+                                            <rect x="10.4" y="4.5" width="3.2" height="15.5" rx="1.6" />
+                                            <rect x="17.4" y="9.5" width="3.2" height="11.5" rx="1.6" />
+                                            <circle cx="19" cy="23.5" r="1.8" />
+                                          </svg>
+                                        ) : app.id === 'cliks' ? (
+                                          <CheckCircle2 size={22} className="text-[#00875a]" />
+                                        ) : app.id === 'bnxmail' ? (
+                                          <svg className="w-7 h-7 text-[#0052cc]" viewBox="0 0 32 32" fill="none">
+                                            <path 
+                                              d="M7 16.5L16 22.5L25 16.5M6 14.5V23C6 24.1 6.9 25 8 25H24C25.1 25 26 24.1 26 23V14.5" 
+                                              stroke="#0052cc" 
+                                              strokeWidth="1.8" 
+                                              strokeLinecap="round" 
+                                              strokeLinejoin="round" 
+                                            />
+                                            <path 
+                                              d="M7.5 12C9 12 11.5 10 13 8C14.5 6 17 5 19 6C18 7.5 17 9.5 17 11C18.5 10.5 21 10 23.5 11C21 12 18.5 13.5 17 14.5C15.5 15.5 13 16 11 15C9.5 14.2 8.5 13 7.5 12Z" 
+                                              fill="#0052cc" 
+                                            />
+                                          </svg>
+                                        ) : (
+                                          <ShieldCheck size={20} className="text-slate-700 dark:text-slate-300" />
+                                        )}
+                                      </div>
+                                      <span className="text-[11px] font-black text-slate-800 dark:text-slate-200">
+                                        {app.name}
+                                      </span>
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* BASE Section (Exact match to PUBLIC screenshot) */}
+                        {/* BASE Section (Exact match to all 3 screenshots: BASE, PUBLIC, and BUSINESS) */}
+                        <div className="space-y-3 pt-1">
+                          <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider">
+                            <span 
+                              onClick={() => setBaseFilter('all')}
+                              className="text-[#0a1120] dark:text-slate-100 font-black tracking-wide text-xs cursor-pointer select-none"
+                              title="Show all BASE apps"
+                            >
+                              BASE
+                            </span>
+                            <div className="flex items-center gap-2.5">
+                              <button
+                                type="button"
+                                onClick={() => setBaseFilter(prev => prev === 'public' ? 'all' : 'public')}
+                                className={`cursor-pointer transition-all pb-1 text-[11px] ${
+                                  baseFilter === 'public'
+                                    ? 'text-[#00875a] dark:text-[#00c781] border-b-2 border-[#00875a] font-black'
+                                    : 'text-[#94a3b8] hover:text-slate-600 font-extrabold border-b-2 border-transparent'
+                                }`}
+                              >
+                                PUBLIC
+                              </button>
+                              <span className="text-[#cbd5e1] dark:text-slate-700 font-normal pb-1">|</span>
+                              <button
+                                type="button"
+                                onClick={() => setBaseFilter(prev => prev === 'business' ? 'all' : 'business')}
+                                className={`cursor-pointer transition-all pb-1 text-[11px] ${
+                                  baseFilter === 'business'
+                                    ? 'text-[#00875a] dark:text-[#00c781] border-b-2 border-[#00875a] font-black'
+                                    : 'text-[#94a3b8] hover:text-slate-600 font-extrabold border-b-2 border-transparent'
+                                }`}
+                              >
+                                BUSINESS
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Base Apps Grid: When baseFilter is 'all', show Row 1 (4 apps) + Row 2 (CliksBus...) exactly matching screenshot */}
+                          {baseFilter === 'business' ? (
+                            <div className="grid grid-cols-4 gap-2.5 text-center">
+                              {/* Cliks Business */}
+                              <a
+                                href="https://business.cliks.co.in"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => handleAppLaunch({ id: 'cliks-bus', name: 'CliksBusiness', url: 'https://business.cliks.co.in', icon: 'cliks', bg: 'bg-[#00875a]/10', color: 'text-[#00875a]' })}
+                                className="p-2.5 rounded-[18px] border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900/40 flex flex-col items-center justify-center gap-1.5 hover:shadow-xs transition-all group hover:scale-[1.03] cursor-pointer"
+                              >
+                                <div className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                  <CheckCircle2 size={22} className="text-[#00875a]" />
+                                </div>
+                                <span className="text-[11px] font-black text-slate-900 dark:text-slate-100 truncate w-full tracking-tight">CliksBus...</span>
+                              </a>
+                            </div>
+                          ) : (
+                            <div className="space-y-2.5">
+                              {/* Row 1: Cliks, BNXmail, Bit-Tool, B2Auth */}
+                              <div className="grid grid-cols-4 gap-2.5 text-center">
+                                {/* Cliks */}
+                                <div className={`relative group ${isEditingBeta ? 'animate-jiggle' : ''}`}>
+                                  {isEditingBeta && (
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleFavorite('cliks')}
+                                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center z-20 hover:scale-110 cursor-pointer transition-transform"
+                                      title={favoriteAppIds.includes('cliks') ? "Remove from Favorites" : "Add to Favorites"}
+                                    >
+                                      <span className="text-[#f59e0b] text-xs leading-none select-none">★</span>
+                                    </button>
+                                  )}
+                                  <a
+                                    href={isEditingBeta ? undefined : "https://cliks.co.in"}
+                                    target={isEditingBeta ? undefined : "_blank"}
+                                    rel="noopener noreferrer"
+                                    onClick={() => !isEditingBeta && handleAppLaunch({ id: 'cliks', name: 'Cliks', url: 'https://cliks.co.in', icon: 'cliks', bg: 'bg-[#00875a]/10', color: 'text-[#00875a]' })}
+                                    className="p-2.5 rounded-[18px] border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900/40 flex flex-col items-center justify-center gap-1.5 hover:shadow-xs transition-all group hover:scale-[1.03] cursor-pointer w-full"
+                                  >
+                                    <div className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                      <CheckCircle2 size={22} className="text-[#00875a]" />
+                                    </div>
+                                    <span className="text-[11px] font-black text-slate-900 dark:text-slate-100 truncate w-full">Cliks</span>
+                                  </a>
+                                </div>
+
+                                {/* BNXmail */}
+                                <div className={`relative group ${isEditingBeta ? 'animate-jiggle-reverse' : ''}`}>
+                                  {isEditingBeta && (
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleFavorite('bnxmail')}
+                                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center z-20 hover:scale-110 cursor-pointer transition-transform"
+                                      title={favoriteAppIds.includes('bnxmail') ? "Remove from Favorites" : "Add to Favorites"}
+                                    >
+                                      <span className="text-[#f59e0b] text-xs leading-none select-none">★</span>
+                                    </button>
+                                  )}
+                                  <a
+                                    href={isEditingBeta ? undefined : "https://bnxmail.com"}
+                                    target={isEditingBeta ? undefined : "_blank"}
+                                    rel="noopener noreferrer"
+                                    onClick={() => !isEditingBeta && handleAppLaunch({ id: 'bnxmail', name: 'BNXmail', url: 'https://bnxmail.com', icon: 'bnxmail', bg: 'bg-sky-500/10', color: 'text-[#0052cc]' })}
+                                    className="p-2.5 rounded-[18px] border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900/40 flex flex-col items-center justify-center gap-1.5 hover:shadow-xs transition-all group hover:scale-[1.03] cursor-pointer w-full"
+                                  >
+                                    <div className="w-9 h-9 rounded-full bg-sky-50 dark:bg-sky-950/40 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                      <svg className="w-6 h-6 text-[#0052cc]" viewBox="0 0 32 32" fill="none">
+                                        <path 
+                                          d="M7 16.5L16 22.5L25 16.5M6 14.5V23C6 24.1 6.9 25 8 25H24C25.1 25 26 24.1 26 23V14.5" 
+                                          stroke="#0052cc" 
+                                          strokeWidth="1.8" 
+                                          strokeLinecap="round" 
+                                          strokeLinejoin="round" 
+                                        />
+                                        <path 
+                                          d="M7.5 12C9 12 11.5 10 13 8C14.5 6 17 5 19 6C18 7.5 17 9.5 17 11C18.5 10.5 21 10 23.5 11C21 12 18.5 13.5 17 14.5C15.5 15.5 13 16 11 15C9.5 14.2 8.5 13 7.5 12Z" 
+                                          fill="#0052cc" 
+                                        />
+                                      </svg>
+                                    </div>
+                                    <span className="text-[11px] font-black text-slate-900 dark:text-slate-100 truncate w-full">BNXmail</span>
+                                  </a>
+                                </div>
+
+                                {/* Bit-Tool */}
+                                <div className={`relative group ${isEditingBeta ? 'animate-jiggle' : ''}`}>
+                                  {isEditingBeta && (
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleFavorite('bit-tool')}
+                                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center z-20 hover:scale-110 cursor-pointer transition-transform"
+                                      title={favoriteAppIds.includes('bit-tool') ? "Remove from Favorites" : "Add to Favorites"}
+                                    >
+                                      <span className="text-[#f59e0b] text-xs leading-none select-none">★</span>
+                                    </button>
+                                  )}
+                                  <a
+                                    href={isEditingBeta ? undefined : "https://bit-tool.com"}
+                                    target={isEditingBeta ? undefined : "_blank"}
+                                    rel="noopener noreferrer"
+                                    onClick={() => !isEditingBeta && handleAppLaunch({ id: 'bit-tool', name: 'Bit-Tool', url: 'https://bit-tool.com', icon: 'sliders', bg: 'bg-blue-500/10', color: 'text-[#0052cc]' })}
+                                    className="p-2.5 rounded-[18px] border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900/40 flex flex-col items-center justify-center gap-1.5 hover:shadow-xs transition-all group hover:scale-[1.03] cursor-pointer w-full"
+                                  >
+                                    <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                      <svg className="w-5 h-5 text-[#0052cc]" viewBox="0 0 24 24" fill="currentColor">
+                                        <circle cx="5" cy="5.5" r="1.8" />
+                                        <rect x="3.4" y="9.5" width="3.2" height="11.5" rx="1.6" />
+                                        <rect x="10.4" y="4.5" width="3.2" height="15.5" rx="1.6" />
+                                        <rect x="17.4" y="9.5" width="3.2" height="11.5" rx="1.6" />
+                                        <circle cx="19" cy="23.5" r="1.8" />
+                                      </svg>
+                                    </div>
+                                    <span className="text-[11px] font-black text-slate-900 dark:text-slate-100 truncate w-full">Bit-Tool</span>
+                                  </a>
+                                </div>
+
+                                {/* B2Auth */}
+                                <div className={`relative group ${isEditingBeta ? 'animate-jiggle-reverse' : ''}`}>
+                                  {isEditingBeta && (
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleFavorite('b2auth')}
+                                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center z-20 hover:scale-110 cursor-pointer transition-transform"
+                                      title={favoriteAppIds.includes('b2auth') ? "Remove from Favorites" : "Add to Favorites"}
+                                    >
+                                      <span className="text-[#f59e0b] text-xs leading-none select-none">★</span>
+                                    </button>
+                                  )}
+                                  <a
+                                    href={isEditingBeta ? undefined : "https://b2auth.com"}
+                                    target={isEditingBeta ? undefined : "_blank"}
+                                    rel="noopener noreferrer"
+                                    onClick={() => !isEditingBeta && handleAppLaunch({ id: 'b2auth', name: 'B2Auth', url: 'https://b2auth.com', icon: 'b2auth', bg: 'bg-slate-100', color: 'text-slate-700' })}
+                                    className="p-2.5 rounded-[18px] border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900/40 flex flex-col items-center justify-center gap-1.5 hover:shadow-xs transition-all group hover:scale-[1.03] cursor-pointer w-full"
+                                  >
+                                    <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                      <ShieldCheck size={20} className="text-slate-800 dark:text-slate-200" />
+                                    </div>
+                                    <span className="text-[11px] font-black text-slate-900 dark:text-slate-100 truncate w-full">B2Auth</span>
+                                  </a>
+                                </div>
+                              </div>
+
+                              {/* Row 2: CliksBusiness (Visible when 'all' matching user screenshot) */}
+                              {baseFilter === 'all' && (
+                                <div className="grid grid-cols-4 gap-2.5 text-center">
+                                  <div className={`relative group ${isEditingBeta ? 'animate-jiggle' : ''}`}>
+                                    {isEditingBeta && (
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleFavorite('cliks-bus')}
+                                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center z-20 hover:scale-110 cursor-pointer transition-transform"
+                                        title={favoriteAppIds.includes('cliks-bus') ? "Remove from Favorites" : "Add to Favorites"}
+                                      >
+                                        <span className="text-[#f59e0b] text-xs leading-none select-none">★</span>
+                                      </button>
+                                    )}
+                                    <a
+                                      href={isEditingBeta ? undefined : "https://business.cliks.co.in"}
+                                      target={isEditingBeta ? undefined : "_blank"}
+                                      rel="noopener noreferrer"
+                                      onClick={() => !isEditingBeta && handleAppLaunch({ id: 'cliks-bus', name: 'CliksBusiness', url: 'https://business.cliks.co.in', icon: 'cliks', bg: 'bg-[#00875a]/10', color: 'text-[#00875a]' })}
+                                      className="p-2.5 rounded-[18px] border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900/40 flex flex-col items-center justify-center gap-1.5 hover:shadow-xs transition-all group hover:scale-[1.03] cursor-pointer w-full"
+                                    >
+                                      <div className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                        <CheckCircle2 size={22} className="text-[#00875a]" />
+                                      </div>
+                                      <span className="text-[11px] font-black text-slate-900 dark:text-slate-100 truncate w-full tracking-tight">
+                                        CliksBus...
+                                      </span>
+                                    </a>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Coming Soon Beta Labs Card - Centered with rolling spinning star */}
+                      <div className="relative pt-6 pb-2 my-auto">
+                        {/* Rolling/Spinning 4-pointed Ninja Star Sparkle Icon Badge */}
+                        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white dark:bg-slate-800 border border-purple-200 dark:border-purple-800/60 shadow-md flex items-center justify-center text-purple-600 z-10">
+                          <svg 
+                            className="w-4 h-4 text-[#7c3aed] animate-spin" 
+                            style={{ animationDuration: '3s' }}
+                            viewBox="0 0 24 24" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            strokeWidth="2.5" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                          >
+                            {/* 4-pointed Ninja Star / Sparkle blade */}
+                            <path d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z" fill="currentColor" fillOpacity="0.15" />
+                            <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                          </svg>
+                        </div>
+
+                        {/* Coming Soon Card Body */}
+                        <div className="rounded-[22px] border border-purple-100 dark:border-purple-900/40 p-4 pt-5 text-center bg-gradient-to-b from-purple-50/50 via-white to-purple-50/30 dark:from-purple-950/20 dark:via-slate-900/40 dark:to-transparent space-y-2 shadow-xs">
+                          <div>
+                            <span className="px-3 py-1 rounded-full bg-[#f3e8ff] dark:bg-purple-900/60 text-[#7c3aed] dark:text-purple-300 text-[9.5px] font-black uppercase tracking-wider inline-block">
+                              BETA LABS RELEASE
+                            </span>
+                          </div>
+                          <h4 className="text-base font-black text-[#8b5cf6] dark:text-purple-400 tracking-wide uppercase font-sans">
+                            COMING SOON
+                          </h4>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed font-normal">
+                            Building the next generation of Beta applications.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Permanently Settled Bottom Footer - Exact match to screenshot */}
+                    <div className="py-3 px-4 bg-slate-50/60 dark:bg-slate-950/40 border-t border-slate-100 dark:border-white/5 shrink-0 text-center select-none">
+                      <span className="text-[10px] font-black tracking-widest text-[#94a3b8] dark:text-slate-500 uppercase">
+                        BETA ECOSYSTEM • FUTURE READY
+                      </span>
                     </div>
                   </div>
                 )}
@@ -888,141 +1757,210 @@ export function UtilityDrawer({
             )}
           </AnimatePresence>
 
-          {/* Right Sidebar Rail (50px wide) - BokSpot Signature Glass Rail */}
-          <div className="w-[50px] h-full flex flex-col items-center py-4 bg-slate-50/80 dark:bg-[#0e121a]/95 backdrop-blur-xl border-l border-slate-200/80 dark:border-slate-800/80 shrink-0 select-none">
-            {/* Top Brand Badge */}
-            <div className="h-7 w-7 rounded-xl bg-gradient-to-br from-[#ff6325]/20 to-[#033266]/20 border border-[#ff6325]/30 flex items-center justify-center mb-5 shrink-0 shadow-2xs">
-              <Sparkles size={13} className="text-[#ff6325] animate-pulse" />
-            </div>
-
-            {/* List of active application icons stacked vertically */}
-            <div className="flex flex-col gap-3.5 items-center w-full">
-              {/* 1. Calendar circular button */}
-              <button
-                type="button"
-                onClick={() => setActiveTab(activeTab === 'calendar' ? null : 'calendar')}
-                className="relative group focus:outline-hidden cursor-pointer"
-              >
-                <div className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all ${
-                  activeTab === 'calendar'
-                    ? 'bg-gradient-to-br from-[#ff6325] to-[#ea580c] text-white shadow-[0_4px_12px_rgba(255,99,37,0.4)] scale-105'
-                    : 'bg-white dark:bg-[#161c27] hover:bg-orange-50/80 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-[#ff6325] hover:scale-105 shadow-2xs'
-                }`}>
-                  <div className={`relative w-[18px] h-[18px] rounded-[4px] overflow-hidden flex flex-col items-center justify-center shadow-2xs ${
-                    activeTab === 'calendar' ? 'bg-white/20' : 'bg-[#ff6325]'
-                  }`}>
-                    <div className={`w-full h-[5px] ${activeTab === 'calendar' ? 'bg-white/40' : 'bg-[#d94e09]'}`} />
-                    <div className={`flex-1 w-full flex items-center justify-center text-[7.5px] font-black leading-none ${
-                      activeTab === 'calendar' ? 'text-white' : 'bg-white dark:bg-[#161c27] text-[#ff6325]'
-                    }`}>
-                      {new Date().getDate()}
-                    </div>
-                  </div>
-                </div>
-                {/* Tooltip */}
-                {!activeTab && (
-                  <div className="absolute right-12 top-1/2 -translate-y-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                    Calendar Schedule
-                  </div>
-                )}
-              </button>
-
-              {/* 2. Calculator / Smart Split button */}
-              <button
-                type="button"
-                onClick={() => setActiveTab(activeTab === 'calc' ? null : 'calc')}
-                className="relative group focus:outline-hidden cursor-pointer"
-              >
-                <div className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all ${
-                  activeTab === 'calc'
-                    ? 'bg-gradient-to-br from-[#ff6325] to-[#ea580c] text-white shadow-[0_4px_12px_rgba(255,99,37,0.4)] scale-105'
-                    : 'bg-white dark:bg-[#161c27] hover:bg-orange-50/80 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-[#ff6325] hover:scale-105 shadow-2xs'
-                }`}>
-                  <Lightbulb size={16} className={activeTab === 'calc' ? 'text-white' : 'text-amber-500'} />
-                </div>
-                {/* Tooltip */}
-                {!activeTab && (
-                  <div className="absolute right-12 top-1/2 -translate-y-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                    Price &amp; Split Calc
-                  </div>
-                )}
-              </button>
-
-              {/* 3. Tasks / Checklist button */}
-              <button
-                type="button"
-                onClick={() => setActiveTab(activeTab === 'tasks' ? null : 'tasks')}
-                className="relative group focus:outline-hidden cursor-pointer"
-              >
-                <div className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all ${
-                  activeTab === 'tasks'
-                    ? 'bg-gradient-to-br from-[#ff6325] to-[#ea580c] text-white shadow-[0_4px_12px_rgba(255,99,37,0.4)] scale-105'
-                    : 'bg-white dark:bg-[#161c27] hover:bg-orange-50/80 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-[#ff6325] hover:scale-105 shadow-2xs'
-                }`}>
-                  <CheckSquare size={16} className={activeTab === 'tasks' ? 'text-white' : 'text-sky-500'} />
-                </div>
-                {/* Tooltip */}
-                {!activeTab && (
-                  <div className="absolute right-12 top-1/2 -translate-y-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                    Quick Tasks
-                  </div>
-                )}
-              </button>
-
-              {/* 4. Contacts / Hosts button */}
-              <button
-                type="button"
-                onClick={() => setActiveTab(activeTab === 'contacts' ? null : 'contacts')}
-                className="relative group focus:outline-hidden cursor-pointer"
-              >
-                <div className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all ${
-                  activeTab === 'contacts'
-                    ? 'bg-gradient-to-br from-[#ff6325] to-[#ea580c] text-white shadow-[0_4px_12px_rgba(255,99,37,0.4)] scale-105'
-                    : 'bg-white dark:bg-[#161c27] hover:bg-orange-50/80 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-[#ff6325] hover:scale-105 shadow-2xs'
-                }`}>
-                  <User size={16} className={activeTab === 'contacts' ? 'text-white' : 'text-indigo-500'} />
-                </div>
-                {/* Tooltip */}
-                {!activeTab && (
-                  <div className="absolute right-12 top-1/2 -translate-y-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                    Host &amp; Support Contacts
-                  </div>
-                )}
-              </button>
-
-              <hr className="w-6 border-t border-slate-200 dark:border-slate-800 my-1 shrink-0" />
-
-              {/* Plus button */}
-              <button
-                type="button"
-                onClick={() => setActiveTab(activeTab === 'calc' ? null : 'calc')}
-                className="w-8 h-8 rounded-xl bg-white dark:bg-[#161c27] hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-all flex items-center justify-center relative group shadow-2xs focus:outline-hidden cursor-pointer hover:scale-105"
-              >
-                <Plus size={14} />
-                {/* Tooltip */}
-                {!activeTab && (
-                  <div className="absolute right-12 top-1/2 -translate-y-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                    New Utility Entry
-                  </div>
-                )}
-              </button>
-            </div>
-
-            {/* Collapse sidebar button at the bottom */}
+          {/* Right Sidebar (60px wide) - Beta signature modern utility rail */}
+          <div className="w-[60px] h-full flex flex-col items-center py-3 bg-white/95 dark:bg-[#0a0f1d] border-l border-slate-200/80 dark:border-white/10 shrink-0 select-none shadow-xs">
+            {/* 1. Top Beta "B" Monogram Button - Exact match to user screenshot */}
             <button
               type="button"
-              onClick={onClose}
-              className="w-8 h-8 rounded-xl bg-white dark:bg-[#161c27] hover:bg-orange-50 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 text-slate-500 hover:text-[#ff6325] transition-all flex items-center justify-center mt-auto relative group shadow-2xs focus:outline-hidden cursor-pointer hover:scale-105"
-              title="Close panel"
+              onClick={() => {
+                if (isEditingPins) setIsEditingPins(false);
+                setActiveTab(activeTab === 'beta' ? null : 'beta');
+              }}
+              className="relative group focus:outline-hidden cursor-pointer"
+              title="Beta Ecosystem Apps"
             >
-              <ChevronRight size={15} />
-              {/* Tooltip */}
+              <div className={`w-11 h-11 rounded-[16px] flex items-center justify-center shrink-0 transition-all bg-white hover:bg-slate-50 border border-[#b8c9dc] dark:border-slate-700 shadow-2xs hover:scale-105 ${
+                activeTab === 'beta' ? 'ring-2 ring-[#0052cc] border-transparent scale-105' : ''
+              }`}>
+                <img 
+                  src="/beta-logo.png" 
+                  alt="Beta" 
+                  className="w-5 h-5 object-contain select-none pointer-events-none drop-shadow-[0_1px_1px_rgba(0,82,204,0.3)] contrast-125 brightness-95" 
+                />
+              </div>
               {!activeTab && (
-                <div className="absolute right-12 top-1/2 -translate-y-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                  Close Panel
+                <div className="absolute right-14 top-1/2 -translate-y-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                  Beta Apps Hub
                 </div>
               )}
             </button>
+
+            {/* Subtle Horizontal Divider */}
+            <div className="w-9 h-[1.5px] bg-[#dbe3eb] dark:bg-white/10 my-2 shrink-0" />
+
+            {/* EDIT PINS Header Label - Only visible when editing pins */}
+            {isEditingPins && (
+              <div className="text-[8.5px] font-extrabold tracking-tight text-[#8392a5] dark:text-slate-400 uppercase text-center mb-1.5 whitespace-nowrap select-none font-sans leading-none animate-in fade-in duration-200">
+                EDIT PINS
+              </div>
+            )}
+
+            {/* List of active application icons stacked vertically */}
+            <div className="flex flex-col gap-2 items-center w-full">
+              {/* All available tools that can be pinned/unpinned */}
+              {[
+                {
+                  id: 'calendar',
+                  label: 'Calendar',
+                  icon: <CalendarDays size={20} className="stroke-[2.2]" />,
+                  color: 'text-amber-500',
+                  bg: 'bg-amber-50 dark:bg-amber-950/30',
+                  border: 'border-amber-400 dark:border-amber-500',
+                  activeBg: 'bg-amber-500 text-white',
+                },
+                {
+                  id: 'calc',
+                  label: 'Calculator',
+                  icon: <Calculator size={20} className="stroke-[2.2]" />,
+                  color: 'text-emerald-500',
+                  bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+                  border: 'border-emerald-500',
+                  activeBg: 'bg-emerald-600 text-white',
+                },
+                {
+                  id: 'contacts',
+                  label: 'Contacts',
+                  icon: <User size={20} className="stroke-[2.2]" />,
+                  color: 'text-blue-500',
+                  bg: 'bg-blue-50 dark:bg-blue-950/30',
+                  border: 'border-blue-400 dark:border-blue-500',
+                  activeBg: 'bg-blue-600 text-white',
+                },
+                {
+                  id: 'keyboard',
+                  label: 'Keyboard & Hotkeys',
+                  icon: <Keyboard size={18} className="stroke-[2.2]" />,
+                  color: 'text-indigo-500',
+                  bg: 'bg-indigo-50 dark:bg-indigo-950/30',
+                  border: 'border-indigo-400 dark:border-indigo-500',
+                  activeBg: 'bg-indigo-600 text-white',
+                },
+                {
+                  id: 'tasks',
+                  label: 'Notes & Tasks',
+                  icon: <FileText size={18} className="stroke-[2.2]" />,
+                  color: 'text-[#ff6325]',
+                  bg: 'bg-orange-50 dark:bg-orange-950/30',
+                  border: 'border-[#ff6325]',
+                  activeBg: 'bg-[#ff6325] text-white',
+                },
+                {
+                  id: 'weather',
+                  label: 'Weather',
+                  icon: <CloudSun size={19} className="stroke-[2.2]" />,
+                  color: 'text-teal-500',
+                  bg: 'bg-teal-50 dark:bg-teal-950/30',
+                  border: 'border-teal-400 dark:border-teal-500',
+                  activeBg: 'bg-teal-600 text-white',
+                },
+              ].map((tool) => {
+                const isPinned = pinnedToolIds.includes(tool.id);
+                // When not in edit mode, STRICTLY ONLY show pinned items! Unpinned items are completely hidden!
+                if (!isEditingPins && !isPinned) return null;
+
+                return (
+                  <button
+                    key={tool.id}
+                    type="button"
+                    onClick={() => {
+                      if (isEditingPins) {
+                        togglePin(tool.id);
+                      } else {
+                        setActiveTab(activeTab === tool.id ? null : (tool.id as any));
+                      }
+                    }}
+                    className="relative group focus:outline-hidden cursor-pointer"
+                  >
+                    <div
+                      className={`w-10 h-10 rounded-[18px] flex items-center justify-center transition-all ${
+                        isEditingPins
+                          ? isPinned
+                            ? `${tool.bg} border-2 ${tool.border} ${tool.color} shadow-xs scale-100 ring-2 ring-[#0a3161]/20`
+                            : 'bg-transparent border-2 border-dashed border-[#b8c2cc] dark:border-slate-700 text-[#64748b] dark:text-slate-400 hover:border-[#ff6325] hover:text-[#ff6325]'
+                          : activeTab === tool.id
+                            ? `${tool.activeBg} shadow-[0_4px_14px_rgba(0,0,0,0.15)] scale-105 border-2 border-transparent`
+                            : `${tool.bg} border-2 ${tool.border} ${tool.color} hover:scale-105 shadow-2xs`
+                      }`}
+                    >
+                      {tool.icon}
+                    </div>
+
+                    {/* Tooltip */}
+                    {!activeTab && (
+                      <div className="absolute right-14 top-1/2 -translate-y-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                        {isEditingPins ? (isPinned ? `Remove ${tool.label}` : `Add ${tool.label}`) : tool.label}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+
+              {/* Single morphing button: '+' when closed, '✓' when editing pins */}
+              <button
+                type="button"
+                onClick={() => setIsEditingPins(!isEditingPins)}
+                className={`w-10 h-10 rounded-[18px] flex items-center justify-center transition-all cursor-pointer hover:scale-105 relative group mt-0.5 ${
+                  isEditingPins
+                    ? 'bg-[#ff6325] hover:bg-[#e0531c] text-white shadow-[0_4px_14px_rgba(255,99,37,0.4)]'
+                    : 'border-2 border-dashed border-slate-300 dark:border-white/20 hover:border-[#ff6325] dark:hover:border-[#ff6325] bg-transparent text-slate-400 hover:text-[#ff6325] dark:hover:text-[#ff6325] shadow-2xs'
+                }`}
+                title={isEditingPins ? "Save Pinned Tools" : "Customize Pinned Tools"}
+              >
+                {isEditingPins ? (
+                  <Check size={22} className="stroke-[3.5]" />
+                ) : (
+                  <Plus size={18} className="stroke-[2.2]" />
+                )}
+                {!activeTab && (
+                  <div className="absolute right-14 top-1/2 -translate-y-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                    {isEditingPins ? "Done / Save Pins" : "Customize Pins"}
+                  </div>
+                )}
+              </button>
+            </div>
+
+            {/* Bottom Actions: Pencil Icon to Edit Pins + Controls */}
+            <div className="mt-auto flex flex-col gap-2 items-center w-full">
+              {/* Subtle Divider */}
+              <div className="w-8 h-[1px] bg-slate-200/80 dark:bg-white/10 mb-0.5 shrink-0" />
+
+              {/* Pencil Icon Button: Toggles EDIT PINS Customize mode matching BokSpot theme */}
+              <button
+                type="button"
+                onClick={() => setIsEditingPins(!isEditingPins)}
+                className={`w-10 h-10 rounded-[16px] flex items-center justify-center transition-all cursor-pointer shadow-2xs hover:scale-105 relative group ${
+                  isEditingPins
+                    ? 'bg-[#0a3161] text-white shadow-[0_4px_12px_rgba(10,49,97,0.35)]'
+                    : 'bg-[#f4f7fa] dark:bg-white/5 hover:bg-[#eef2f6] dark:hover:bg-white/10 border border-[#e2e8f0] dark:border-white/10 text-[#475569] dark:text-slate-300 hover:text-[#ff6325]'
+                }`}
+                title={isEditingPins ? "Save Pins" : "Edit Pinned Icons"}
+              >
+                <svg className="w-5 h-5 stroke-[2] text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                  <path d="m15 5 4 4"/>
+                </svg>
+                {!activeTab && (
+                  <div className="absolute right-14 top-1/2 -translate-y-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                    {isEditingPins ? "Done Editing" : "Edit Pins"}
+                  </div>
+                )}
+              </button>
+
+              {/* Sliders / Utility Settings Button */}
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-10 h-10 rounded-[16px] bg-[#f4f7fa] dark:bg-white/5 hover:bg-[#eef2f6] dark:hover:bg-white/10 border border-[#e2e8f0] dark:border-white/10 flex items-center justify-center text-[#475569] dark:text-slate-300 hover:text-[#ff6325] transition-all cursor-pointer shadow-2xs hover:scale-105 relative group"
+                title="Toggle Utility Panel"
+              >
+                <Sliders size={17} className="stroke-[2]" />
+                {!activeTab && (
+                  <div className="absolute right-14 top-1/2 -translate-y-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                    Close Rails
+                  </div>
+                )}
+              </button>
+            </div>
           </div>
         </motion.div>
       )}

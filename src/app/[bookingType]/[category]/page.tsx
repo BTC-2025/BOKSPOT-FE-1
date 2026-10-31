@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { useLocationStore, useBookingFlowStore, useUserStore } from '../../../lib/store';
+import { useLocationStore, useBookingFlowStore, useUserStore, ALL_CITIES, POPULAR_CITIES } from '../../../lib/store';
 import { api, Service } from '../../../lib/api';
 import { calculateDistance } from '../../../lib/mockData';
 
@@ -1530,7 +1530,7 @@ export default function ProviderDiscoveryPage() {
   const rawCategory = params?.category as string;
   const effectiveCategory = rawCategory === 'stayhotel' || rawCategory === 'stay-hotel' || rawCategory === 'hotel' ? 'hotels' : (rawCategory === 'resort' ? 'resorts' : (rawCategory === 'villa' ? 'villas' : rawCategory));
   const category = effectiveCategory;
-  const { city, latitude, longitude } = useLocationStore();
+  const { city, latitude, longitude, setCity, setLocation } = useLocationStore();
   const [sortBy, setSortBy] = useState('distance');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
@@ -1584,8 +1584,28 @@ export default function ProviderDiscoveryPage() {
   const [petFriendlyOnly, setPetFriendlyOnly] = useState<boolean>(false);
 
 
-  const [servicesList, setServicesList] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [servicesList, setServicesList] = useState<Service[]>(() => {
+    try {
+      const cacheKey = JSON.stringify({ categorySlug: effectiveCategory, ...(city ? { city } : {}) });
+      if ((api.services as any)._cache && (api.services as any)._cache[cacheKey]) {
+        return (api.services as any)._cache[cacheKey].data?.data || [];
+      }
+    } catch {
+      // ignore
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      const cacheKey = JSON.stringify({ categorySlug: effectiveCategory, ...(city ? { city } : {}) });
+      if ((api.services as any)._cache && (api.services as any)._cache[cacheKey]) {
+        return false;
+      }
+    } catch {
+      // ignore
+    }
+    return true;
+  });
   const [error, setError] = useState<string | null>(null);
 
   const [mounted, setMounted] = useState(false);
@@ -1605,7 +1625,8 @@ export default function ProviderDiscoveryPage() {
     if (!mounted) return;
     let active = true;
     const fetchServices = async () => {
-      setLoading(true);
+      // Background revalidation: keep existing data visible while fetching
+      setLoading((prev) => (servicesList.length === 0 ? true : prev));
       setError(null);
       try {
         const params: Record<string, string> = {
@@ -1613,10 +1634,6 @@ export default function ProviderDiscoveryPage() {
         };
         if (city) {
           params.city = city;
-        }
-        if (latitude !== null && longitude !== null) {
-          params.latitude = String(latitude);
-          params.longitude = String(longitude);
         }
         let response = await api.services.list(params);
         let list = Array.isArray(response?.data) ? response.data : (Array.isArray(response) ? response : []);
@@ -1656,11 +1673,7 @@ export default function ProviderDiscoveryPage() {
     return () => {
       active = false;
     };
-  }, [category, city, latitude, longitude, mounted]);
-
-  if (!mounted) {
-    return <BokspotLoader message="Initializing terminal..." />;
-  }
+  }, [category, city, mounted]);
 
   // Intercept the custom booking flows for custom dashboard category views
   const isCustomBooking = ['cabs', 'flights', 'trains', 'buses', 'metro'].includes(category);
@@ -1775,10 +1788,6 @@ export default function ProviderDiscoveryPage() {
     return matchName || matchMerchant || matchCity || matchAddress || matchDesc || matchMeta;
   });
 
-  if (loading && !isCustomBooking) {
-    return <BokspotLoader message={`Scanning for ${categoryName}...`} />;
-  }
-
   return (
     <main className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] transition-colors duration-300 relative overflow-hidden pt-[98px] lg:pt-[104px]">
       {/* Ambient Luxury Background Glows */}
@@ -1889,6 +1898,26 @@ export default function ProviderDiscoveryPage() {
                         setShowAutocomplete(true);
                       }}
                       placeholder={`Search city, villa, hotel or resort...`}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          const q = searchQuery.trim().toLowerCase();
+                          if (q) {
+                            const matchedCity = ALL_CITIES.find(c => c.toLowerCase() === q);
+                            if (matchedCity) {
+                              const popMatch = POPULAR_CITIES.find(p => p.name.toLowerCase() === matchedCity.toLowerCase());
+                              if (popMatch) {
+                                setLocation(popMatch.lat, popMatch.lng, popMatch.name);
+                              } else {
+                                setCity(matchedCity);
+                              }
+                              setSearchQuery('');
+                            }
+                          }
+                          setShowAutocomplete(false);
+                          const el = document.getElementById('hotel-results-anchor');
+                          el?.scrollIntoView({ behavior: 'smooth' });
+                        }
+                      }}
                       className="w-full bg-transparent text-xs sm:text-sm font-bold text-slate-800 dark:text-white placeholder:text-slate-400 placeholder:font-medium outline-none truncate"
                     />
                   </div>
@@ -1916,30 +1945,49 @@ export default function ProviderDiscoveryPage() {
                         <span className="text-[9px] text-[#ff6325]">{city || 'All India'}</span>
                       </div>
                       {(() => {
-                        const allSuggestions: Array<{ label: string; type: string; icon: string; city?: string }> = [
-                          { label: city || 'Bangalore', type: 'City', icon: '📍', city: city || 'Bangalore' },
-                          { label: `${city || 'Bangalore'} Central`, type: 'City Hub', icon: '🏙️', city: city || 'Bangalore' },
-                          { label: `${city || 'Bangalore'} North / Airport Road`, type: 'Transit Hub', icon: '🛫', city: city || 'Bangalore' },
-                          { label: 'Scenic Outskirts & Luxury Villas', type: 'Villas', icon: '🏡', city: city || 'Bangalore' },
-                          { label: 'Hilltop Resort & Spa', type: 'Resorts', icon: '🌄', city: city || 'Bangalore' },
-                          ...servicesList.map((s: any) => ({
+                        const q = searchQuery.toLowerCase().trim();
+
+                        // 1. Matching cities from ALL_CITIES
+                        const matchingCities = q
+                          ? ALL_CITIES.filter(c => c.toLowerCase().includes(q)).slice(0, 5).map(c => ({
+                              label: c,
+                              type: 'City Destination',
+                              icon: '📍',
+                              city: c,
+                              isCity: true
+                            }))
+                          : [
+                              { label: city || 'Chennai', type: 'Current City', icon: '📍', city: city || 'Chennai', isCity: true },
+                              ...POPULAR_CITIES.filter(p => p.name !== city).slice(0, 4).map(p => ({
+                                label: p.name,
+                                type: 'Popular City',
+                                icon: '📍',
+                                city: p.name,
+                                isCity: true
+                              }))
+                            ];
+
+                        // 2. Matching stays from loaded servicesList
+                        const matchingStays = (servicesList || [])
+                          .filter((s: any) => {
+                            if (!q) return true;
+                            const sName = (s.name || '').toLowerCase();
+                            const sCat = (s.category?.name || '').toLowerCase();
+                            const sCity = (s.city || s.merchant?.city || '').toLowerCase();
+                            return sName.includes(q) || sCat.includes(q) || sCity.includes(q);
+                          })
+                          .slice(0, 5)
+                          .map((s: any) => ({
                             label: s.name,
                             type: s.category?.name || 'Verified Stay',
                             icon: '🏨',
-                            city: s.city || s.merchant?.city || city
-                          }))
-                        ];
+                            city: s.city || s.merchant?.city || city,
+                            isCity: false
+                          }));
 
-                        const q = searchQuery.toLowerCase().trim();
-                        const filteredSuggestions = q
-                          ? allSuggestions.filter(item =>
-                              item.label.toLowerCase().includes(q) ||
-                              item.type.toLowerCase().includes(q) ||
-                              (item.city && item.city.toLowerCase().includes(q))
-                            ).slice(0, 8)
-                          : allSuggestions.slice(0, 6);
+                        const combinedSuggestions = [...matchingCities, ...matchingStays];
 
-                        if (filteredSuggestions.length === 0) {
+                        if (combinedSuggestions.length === 0) {
                           return (
                             <div className="px-3 py-4 text-center text-xs text-slate-400">
                               No matching stays or cities found for "{searchQuery}". Press Search to explore all options.
@@ -1947,12 +1995,23 @@ export default function ProviderDiscoveryPage() {
                           );
                         }
 
-                        return filteredSuggestions.map((item, idx) => (
+                        return combinedSuggestions.map((item, idx) => (
                           <button
                             key={idx}
                             type="button"
                             onClick={() => {
-                              setSearchQuery(item.label);
+                              if (item.isCity) {
+                                // Switch city in global store so services are fetched for this location
+                                const popMatch = POPULAR_CITIES.find(p => p.name.toLowerCase() === item.label.toLowerCase());
+                                if (popMatch) {
+                                  setLocation(popMatch.lat, popMatch.lng, popMatch.name);
+                                } else {
+                                  setCity(item.label);
+                                }
+                                setSearchQuery('');
+                              } else {
+                                setSearchQuery(item.label);
+                              }
                               setShowAutocomplete(false);
                             }}
                             className="w-full text-left flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 cursor-pointer transition-colors"
@@ -1996,7 +2055,6 @@ export default function ProviderDiscoveryPage() {
                       })()}
                     </span>
                   </div>
-                  <Calendar size={15} className="text-[#ff6325] shrink-0" />
                   <ChevronDown size={14} className={`text-slate-400 shrink-0 transition-transform ${activeDatePicker === 'checkin' ? 'rotate-180' : ''}`} />
                 </button>
 
@@ -2122,7 +2180,6 @@ export default function ProviderDiscoveryPage() {
                       })()}
                     </span>
                   </div>
-                  <Calendar size={15} className="text-[#ff6325] shrink-0" />
                   <ChevronDown size={14} className={`text-slate-400 shrink-0 transition-transform ${activeDatePicker === 'checkout' ? 'rotate-180' : ''}`} />
                 </button>
 
@@ -2380,6 +2437,19 @@ export default function ProviderDiscoveryPage() {
                 <button
                   type="button"
                   onClick={() => {
+                    const q = searchQuery.trim().toLowerCase();
+                    if (q) {
+                      const matchedCity = ALL_CITIES.find(c => c.toLowerCase() === q);
+                      if (matchedCity) {
+                        const popMatch = POPULAR_CITIES.find(p => p.name.toLowerCase() === matchedCity.toLowerCase());
+                        if (popMatch) {
+                          setLocation(popMatch.lat, popMatch.lng, popMatch.name);
+                        } else {
+                          setCity(matchedCity);
+                        }
+                        setSearchQuery('');
+                      }
+                    }
                     const el = document.getElementById('hotel-results-anchor');
                     el?.scrollIntoView({ behavior: 'smooth' });
                   }}
@@ -2606,7 +2676,21 @@ export default function ProviderDiscoveryPage() {
               )}
 
               <div id="hotel-results-anchor" className="scroll-mt-6">
-                {filteredServices.length === 0 ? (
+                {loading ? (
+                  <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5' : 'grid-cols-1 gap-4'}`}>
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <div key={`skel-${i}`} className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 p-3 shadow-xs animate-pulse">
+                        <div className="w-full h-48 bg-slate-200 dark:bg-slate-800 rounded-2xl mb-3" />
+                        <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded-md w-3/4 mb-2" />
+                        <div className="h-3 bg-slate-100 dark:bg-slate-800/60 rounded-md w-1/2 mb-4" />
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/5">
+                          <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded-md w-1/3" />
+                          <div className="h-8 bg-slate-200 dark:bg-slate-800 rounded-xl w-24" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : filteredServices.length === 0 ? (
                   <div className="col-span-full py-20 px-6 rounded-3xl border border-dashed border-slate-200 bg-white flex flex-col items-center justify-center text-center shadow-xs">
                     <div className="h-16 w-16 bg-[#033266]/10 border border-[#033266]/20 rounded-2xl flex items-center justify-center mb-4 text-[#033266] shadow-inner">
                       <Search size={30} />

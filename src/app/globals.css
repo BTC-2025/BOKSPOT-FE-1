@@ -1451,3 +1451,89 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
   color: #334155 !important;
   stroke: #334155 !important;
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   APPLE HUMAN INTERFACE GUIDELINES (HIG) INTERACTION & HAPTIC SYSTEM
+   Fluid springs, dynamic press depth, 44pt tactile targets, zero-lag response
+   ════════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --apple-ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --apple-ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --apple-ease-fluid: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Apple Smooth Touch & Momentum Inertia */
+html {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  scroll-behavior: smooth;
+}
+
+/* Universal Apple Click / Tactile Compression Response */
+button:not([disabled]),
+a[role="button"]:not([disabled]),
+.apple-tap,
+[data-apple-tap="true"] {
+  will-change: transform;
+  transition: transform 180ms var(--apple-ease-spring), opacity 180ms ease, box-shadow 220ms ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+button:not([disabled]):active,
+a[role="button"]:not([disabled]):active,
+.apple-tap:active,
+[data-apple-tap="true"]:active {
+  transform: scale(0.962) translateY(0.5px);
+  filter: brightness(0.97);
+}
+
+/* Apple Card Click Response: Subtle cushion press with dynamic shadow deflation */
+.apple-card {
+  will-change: transform, box-shadow;
+  transition: transform 260ms var(--apple-ease-spring), box-shadow 260ms var(--apple-ease-spring), border-color 200ms ease;
+}
+
+.apple-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+}
+
+.apple-card:active {
+  transform: scale(0.985) translateY(0);
+  box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.06);
+  transition-duration: 120ms;
+}
+
+/* Apple Pills & Segmented Controls Tactile Press */
+.apple-pill {
+  transition: transform 160ms var(--apple-ease-fluid), background-color 160ms ease, color 160ms ease;
+}
+.apple-pill:active {
+  transform: scale(0.94);
+}
+
+/* ─── iOS / App Launcher Edit Mode Jiggle/Shake Animation ─── */
+@keyframes jiggle {
+  0% {
+    transform: rotate(-1.5deg) scale(1);
+  }
+  50% {
+    transform: rotate(1.5deg) scale(1.02);
+  }
+  100% {
+    transform: rotate(-1.5deg) scale(1);
+  }
+}
+
+.animate-jiggle {
+  animation: jiggle 0.24s infinite ease-in-out;
+  transform-origin: center center;
+}
+
+.animate-jiggle-reverse {
+  animation: jiggle 0.24s infinite ease-in-out reverse;
+  animation-delay: -0.12s;
+  transform-origin: center center;
+}

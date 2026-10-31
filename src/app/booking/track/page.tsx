@@ -4,7 +4,11 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useBookingFlowStore } from '../../../lib/store';
 import Link from 'next/link';
-import { CheckCircle2, XCircle, Clock, ArrowLeft, MapPin, Calendar, Download, Share2, Check, AlertCircle, Key, Lock, Unlock } from 'lucide-react';
+import { 
+  CheckCircle2, XCircle, Clock, ArrowLeft, MapPin, Calendar, Download, Share2, Check, 
+  AlertCircle, Key, Lock, Unlock, CreditCard, ShieldCheck, Ticket, User, Wallet, 
+  Sparkles, RefreshCcw, Bus, Hotel, Trophy, ArrowRight, Info
+} from 'lucide-react';
 
 // ─── Status colour schemes ────────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -184,91 +188,177 @@ Show this at the reception counter.
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/60 dark:bg-[#0b0f17] text-slate-900 dark:text-slate-100 pt-24 sm:pt-28 pb-20">
-      {/* ── Top App-Style Success Hero Card ─────────────────────────────────────── */}
-      <div className="max-w-xl mx-auto px-4">
-        <div className="bg-white dark:bg-[#111726] rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-sm p-6 sm:p-8 text-center relative overflow-hidden">
-          {/* Subtle Confetti/Accent background */}
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500" />
-          
-          {/* Status Icon */}
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 mb-4 ring-8 ring-emerald-500/5">
-            <CheckCircle2 size={36} className="stroke-[2.3]" />
-          </div>
-
-          <span className="inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40 mb-2">
-            ✓ Booking Confirmed & Guaranteed
+    <div className="page-content min-h-screen bg-slate-50/60 dark:bg-[#0b0f17] text-slate-900 dark:text-slate-100 pb-16 w-full px-4 sm:px-6 lg:px-8">
+      <div className="w-full space-y-4 pt-1">
+        
+        {/* ── Breadcrumb & Back Action Bar ── */}
+        <div className="flex items-center justify-between">
+          <Link
+            href="/bookings"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shadow-2xs"
+          >
+            <ArrowLeft size={14} />
+            <span>Back to My Bookings</span>
+          </Link>
+          <span className="text-xs font-bold text-slate-400 dark:text-slate-500 font-mono">
+            REF #{booking.ref}
           </span>
-
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            Booking Confirmed!
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-1.5 max-w-sm mx-auto">
-            Your reservation at <strong className="text-slate-800 dark:text-slate-200">{booking.merchantName}</strong> is locked in. Instant QR check-in pass is active below.
-          </p>
-
-          {/* Stepper Pill */}
-          <div className="mt-6 pt-5 border-t border-slate-100 dark:border-white/10 grid grid-cols-3 gap-2">
-            <div className="text-center">
-              <div className="w-6 h-6 mx-auto rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black">✓</div>
-              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 mt-1 block">Payment</span>
-            </div>
-            <div className="text-center">
-              <div className="w-6 h-6 mx-auto rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black">✓</div>
-              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 mt-1 block">Slot Locked</span>
-            </div>
-            <div className="text-center">
-              <div className="w-6 h-6 mx-auto rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black">✓</div>
-              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 mt-1 block">Gate Pass Ready</span>
-            </div>
-          </div>
         </div>
-      </div>
 
-      {/* ── Booking Details Card ────────────────────────────────────────────── */}
-      <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
-        <div className={`rounded-3xl border-2 ${config.borderColor} bg-white shadow-sm overflow-hidden`}>
-          <div className={`bg-gradient-to-r ${config.bgGradient} px-5 py-4 border-b ${config.borderColor}`}>
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black text-gray-500 uppercase tracking-wider">Booking Reference</span>
-              <span className={`font-mono font-black text-base ${config.textColor}`}>{booking.ref}</span>
-            </div>
-          </div>
+        {/* ── Top Confetti & Skyline Celebration Hero Card (Full Width) ── */}
+        <div className="relative rounded-2xl bg-white dark:bg-[#111726] border border-emerald-100 dark:border-white/10 shadow-xs p-5 sm:p-6 overflow-hidden w-full">
+          {/* Skyline Silhouette Background Vector Graphic */}
+          <div className="absolute right-0 bottom-0 top-0 w-2/5 pointer-events-none opacity-20 dark:opacity-10 bg-no-repeat bg-right-bottom"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 150' fill='%23059669'%3E%3Cpath d='M0,150 L20,150 L20,90 L40,90 L40,150 L60,150 L60,60 L80,60 L80,150 L110,150 L110,40 L135,40 L135,150 L160,150 L160,80 L180,80 L180,150 L210,150 L210,50 L240,50 L240,150 L270,150 L270,70 L300,70 L300,150 L340,150 L340,30 L370,30 L370,150 L400,150 L400,85 L420,85 L420,150 L460,150 L460,65 L500,65 L500,150 Z'/%3E%3C/svg%3E")`,
+              backgroundSize: 'contain'
+            }}
+          />
 
-          <div className="p-5 space-y-3 text-sm">
-            {[
-              { label: 'Service', value: booking.serviceName },
-              { label: 'Venue', value: booking.merchantName },
-              { label: 'Date', value: booking.date },
-              { label: 'Time Slot', value: booking.time },
-              { label: 'Customer', value: booking.customerName },
-              { label: 'Total Booking Value', value: `₹${booking.amount?.toLocaleString()}` },
-              ...(booking.advancePaid && booking.balanceAtVenue > 0 ? [
-                { label: 'Advance Paid Online', value: `₹${booking.advancePaid?.toLocaleString()}`, bold: true },
-                { label: 'Balance Payable at Venue', value: `₹${booking.balanceAtVenue?.toLocaleString()}`, bold: true }
-              ] : booking.isSplitEnabled ? [
-                { 
-                  label: 'Amount Paid', 
-                  value: `₹${(booking.amountPaidByLeader !== undefined ? booking.amountPaidByLeader : (booking.splitInitiatorPaysNow ? booking.splitPerPerson : 0))?.toLocaleString()}`, 
-                  bold: true 
-                },
-                ...(splitPaidCount < (booking.splitCount || 2) ? [
-                  { 
-                    label: 'Pending From Friends', 
-                    value: `₹${Math.max(0, (booking.amount || 0) - (booking.amountPaidByLeader !== undefined ? booking.amountPaidByLeader : (booking.splitInitiatorPaysNow ? booking.splitPerPerson : 0))).toLocaleString()}` 
-                  }
-                ] : [])
-              ] : [
-                { label: 'Amount Paid', value: `₹${(booking.amountPaidByLeader !== undefined ? booking.amountPaidByLeader : booking.amount)?.toLocaleString()}`, bold: true }
-              ])
-            ].map((row, i) => (
-              <div key={i} className="flex justify-between items-center py-1 border-b border-gray-100 last:border-0">
-                <span className="text-gray-500 font-medium">{row.label}</span>
-                <span className={`font-bold ${row.bold ? config.textColor + ' text-base' : 'text-gray-900'}`}>{row.value}</span>
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-5">
+            
+            {/* Left: Confetti Icon + Booking Confirmed Header */}
+            <div className="flex items-center gap-4 w-full md:w-auto">
+              <div className="relative shrink-0 flex items-center justify-center w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950/40 ring-10 ring-emerald-100/60 dark:ring-emerald-900/20">
+                <span className="absolute -top-1 -left-1 w-2 h-2 rounded-full bg-amber-400" />
+                <span className="absolute -bottom-1 -left-1.5 w-1.5 h-1.5 rounded-full bg-orange-400" />
+                <span className="absolute -top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-400" />
+                <span className="absolute -bottom-0.5 right-0.5 w-2.5 h-1 rounded-xs bg-teal-400 rotate-45" />
+                
+                <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/25">
+                  <Check size={20} className="stroke-[3.5]" />
+                </div>
               </div>
-            ))}
+
+              <div>
+                <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 mb-1">
+                  ✓ BOOKING CONFIRMED &amp; GUARANTEED
+                </span>
+                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                  Booking Confirmed!
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+                  Your reservation at <strong className="text-slate-900 dark:text-white font-black">{booking.merchantName}</strong> is locked in. Instant QR check-in pass is active below.
+                </p>
+              </div>
+            </div>
+
+            {/* Right: Compact Stepper */}
+            <div className="w-full md:w-auto shrink-0 bg-slate-50/90 dark:bg-slate-800/80 rounded-2xl px-5 py-2.5 border border-slate-200/80 dark:border-white/10 flex items-center justify-around gap-5 sm:gap-7">
+              <div className="text-center flex flex-col items-center">
+                <div className="w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center shadow-xs">
+                  <CreditCard size={15} />
+                </div>
+                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mt-1">Payment</span>
+              </div>
+              <div className="text-center flex flex-col items-center">
+                <div className="w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center shadow-xs">
+                  <Lock size={15} />
+                </div>
+                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mt-1">Slot Locked</span>
+              </div>
+              <div className="text-center flex flex-col items-center">
+                <div className="w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center shadow-xs">
+                  <Check size={16} className="stroke-[3]" />
+                </div>
+                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mt-1">Gate Pass</span>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* ── 2-Column Responsive Dashboard Layout (Full Width 50/50 Grid) ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch w-full">
+          
+          {/* Left Column: Details Breakdown & Actions (7 cols) */}
+          <div className="lg:col-span-7 space-y-4 flex flex-col justify-between">
+            
+            {/* Booking Reference Card */}
+            <div className="rounded-2xl border-2 border-emerald-300/80 dark:border-emerald-700/50 bg-white dark:bg-[#111726] shadow-xs overflow-hidden p-5 sm:p-6 flex-1">
+              {/* Header: Vehicle/Category Icon + Title + REF Pill */}
+              <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-100 dark:border-white/5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 flex items-center justify-center">
+                    <Bus size={17} className="stroke-[2.2]" />
+                  </div>
+                  <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                    BOOKING REFERENCE
+                  </h3>
+                </div>
+
+                <span className="px-2.5 py-0.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-mono font-black text-xs tracking-wide">
+                  {booking.ref}
+                </span>
+              </div>
+
+              {/* Rows with Colorful Crisp Icons & Dot Leaders to eliminate center gap */}
+              <div className="space-y-1.5 pt-1 text-xs">
+                {[
+                  {
+                    icon: <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 shadow-2xs"><Sparkles size={15} /></div>,
+                    label: 'Service',
+                    value: booking.serviceName,
+                    bold: true,
+                  },
+                  {
+                    icon: <div className="w-8 h-8 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 shadow-2xs"><MapPin size={15} /></div>,
+                    label: 'Venue',
+                    value: booking.merchantName,
+                    bold: true,
+                  },
+                  {
+                    icon: <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0 shadow-2xs"><Calendar size={15} /></div>,
+                    label: 'Date',
+                    value: booking.date,
+                    bold: true,
+                  },
+                  {
+                    icon: <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 shadow-2xs"><Clock size={15} /></div>,
+                    label: 'Time Slot',
+                    value: booking.time,
+                    bold: true,
+                  },
+                  {
+                    icon: <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 shadow-2xs"><User size={15} /></div>,
+                    label: 'Customer',
+                    value: booking.customerName || 'Premium Traveler',
+                    bold: true,
+                  },
+                  {
+                    icon: <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 shadow-2xs"><Wallet size={15} /></div>,
+                    label: 'Total Booking Value',
+                    value: `₹${booking.amount?.toLocaleString()}`,
+                    bold: true,
+                  },
+                  {
+                    icon: <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-2xs"><CreditCard size={15} /></div>,
+                    label: 'Amount Paid',
+                    value: `₹${(booking.amountPaidByLeader !== undefined ? booking.amountPaidByLeader : booking.amount)?.toLocaleString()}`,
+                    bold: true,
+                    highlight: 'text-emerald-600 dark:text-emerald-400 font-black text-base',
+                  },
+                ].map((row, idx) => (
+                  <div 
+                    key={idx} 
+                    className="flex items-center justify-between py-2 px-2.5 rounded-xl hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group"
+                  >
+                    {/* Left: Icon & Label */}
+                    <div className="flex items-center gap-3 shrink-0">
+                      {row.icon}
+                      <span className="text-slate-600 dark:text-slate-400 font-semibold">{row.label}</span>
+                    </div>
+
+                    {/* Middle: Subtle Dotted Connector Line (Fills empty center space cleanly) */}
+                    <div className="flex-1 mx-3 border-b border-dotted border-slate-200 dark:border-white/10 group-hover:border-slate-300 dark:group-hover:border-white/20 transition-colors" />
+
+                    {/* Right: Value Pill */}
+                    <span className={`text-right shrink-0 px-2 py-0.5 rounded-lg ${row.highlight || 'text-slate-900 dark:text-white font-bold bg-slate-50/60 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5'}`}>
+                      {row.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
 
         {/* ── District-Style Split with Friends Group Share Card ── */}
         {booking?.isSplitEnabled && (
@@ -476,182 +566,166 @@ Show this at the reception counter.
           </div>
         )}
 
-        {/* QR code – shown once confirmed */}
-        {status === 'CONFIRMED' && (() => {
-          const cat = (booking.category || '').toLowerCase();
-          const svc = (booking.serviceName || '').toLowerCase();
-          const isStay = cat.includes('resort') || cat.includes('hotel') || cat.includes('stay') || cat.includes('villa') || svc.includes('resort') || svc.includes('hotel');
-          const isTransit = cat.includes('flight') || cat.includes('train') || cat.includes('bus') || cat.includes('metro');
 
-          const badgeTitle = isStay
-            ? 'Fast Check-In Pass'
-            : isTransit
-              ? 'Digital Boarding Pass'
-              : 'Digital Entry Pass';
+              {/* SLA Cancellation Button (Underneath the table) */}
+              {status !== 'CANCELLED' && (status as string) !== 'COMPLETED' && (
+                <div className="pt-4 mt-2 border-t border-slate-100 dark:border-white/5">
+                  <button
+                    onClick={async () => {
+                      const cat = (booking.category || '').toLowerCase();
+                      let policyMessage = '';
+                      let refundPercent = 100;
 
-          const refLabel = isTransit
-            ? `PNR: ${booking.ref?.replace('BK-', 'PNR-')}`
-            : `REF: ${booking.ref}`;
+                      if (['buses', 'flights', 'trains', 'movies', 'concerts', 'theatre', 'events'].includes(cat)) {
+                        policyMessage = 'STRICTLY NON-REFUNDABLE: Under PassEntry policy, tickets/passes are non-refundable once barcode/PNR is generated. Event cancellation provides 100% refund.';
+                        refundPercent = 0;
+                      } else if (cat.includes('turf') || cat.includes('cricket') || cat.includes('court') || cat.includes('football')) {
+                        policyMessage = 'PARTIAL REFUND SLA: Turf cancellation allows 70% refund when cancelled >4 hours prior. 30% advance is forfeited as slot collision hold.';
+                        refundPercent = 70;
+                      } else if (cat.includes('hotel') || cat.includes('resort') || cat.includes('stay') || cat.includes('villa')) {
+                        policyMessage = 'FREE CANCELLATION: 100% full refund available when cancelled 24 hours prior to standard check-in time.';
+                        refundPercent = 100;
+                      } else {
+                        policyMessage = 'STANDARD SLA: Free cancellation with 100% refund available prior to technician/specialist dispatch.';
+                        refundPercent = 100;
+                      }
 
-          const helpText = isStay
-            ? 'Present this QR code or Reference ID at the resort reception for instant key handover'
-            : isTransit
-              ? 'Hold this QR code or Barcode to the turnstile / conductor scanner for instant boarding'
-              : 'Present this QR code or Reference ID at the venue gate for instant check-in';
+                      const refundAmount = Math.round((booking.amount || 0) * (refundPercent / 100));
+                      const confirmCancel = window.confirm(
+                        `${policyMessage}\n\nExpected Refund: ₹${refundAmount.toLocaleString()} (${refundPercent}% of ₹${booking.amount})\n\nDo you wish to confirm cancellation?`
+                      );
 
-          return (
-            <div className="rounded-3xl border-2 border-emerald-200 bg-white shadow-sm p-6 flex flex-col items-center animate-fade-in relative overflow-hidden">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-[10px] font-black tracking-widest uppercase px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">
-                  {badgeTitle}
-                </span>
-                <span className="text-[10px] font-black tracking-widest uppercase px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full font-mono">
-                  {refLabel}
-                </span>
-              </div>
+                      if (confirmCancel) {
+                        try {
+                          const updated = { ...booking, status: 'CANCELLED' as const };
+                          setRemoteBooking(updated);
+                          updateBooking?.(booking.id, { status: 'CANCELLED' });
 
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(booking.ref)}`}
-                alt="QR Code"
-                className="h-36 w-36 rounded-2xl border border-gray-100 shadow p-2 bg-white"
-              />
-
-              {/* Barcode Strip */}
-              <div className="mt-4 w-full max-w-[260px] py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-col items-center">
-                <div className="w-full flex items-center justify-between gap-1 h-8 opacity-80">
-                  {[4, 2, 5, 1, 3, 2, 4, 1, 6, 2, 3, 5, 2, 4, 1, 3, 2, 5, 1, 4, 2, 3, 1, 4].map((w, idx) => (
-                    <div key={idx} className="bg-slate-800 h-full rounded-xs" style={{ width: `${w * 2}px` }} />
-                  ))}
+                          await fetch('/api/v1/bookings/sync', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(updated),
+                          });
+                          alert(`Booking cancelled successfully. Refund of ₹${refundAmount} initiated.`);
+                        } catch (err) {
+                          alert('Cancelled locally. Syncing back to server...');
+                        }
+                      }
+                    }}
+                    className="w-full py-3 rounded-2xl border border-red-200/90 bg-red-50/60 hover:bg-red-50 text-red-500 font-extrabold text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 shadow-2xs"
+                  >
+                    <RefreshCcw size={14} className="stroke-[2.5]" />
+                    <span>CANCEL BOOKING &amp; REQUEST SLA REFUND</span>
+                  </button>
                 </div>
-                <span className="font-mono text-[10px] text-slate-500 font-bold mt-1 tracking-widest">*{booking.ref}*</span>
-              </div>
-
-              <p className="text-xs text-gray-500 font-medium mt-3 text-center">
-                {helpText}
-              </p>
+              )}
             </div>
-          );
-        })()}
 
-        {/* Digital Room Keycard Access (Only for Hotel and Hostel; Not applicable for Camping) */}
-        {booking?.keycardIssued && (() => {
-          const categoryLower = (booking.category || '').toLowerCase();
-          const merchantLower = (booking.merchantName || '').toLowerCase();
-          const isCamp = categoryLower.includes('camp') || merchantLower.includes('camp') || (booking.roomNumber || '').startsWith('T-') || (booking.roomNumber || '').startsWith('D-') || (booking.roomNumber || '').startsWith('P-');
-          if (isCamp) return null; // Camping does not use digital NFC door keycard
+          {/* ── RIGHT COLUMN: PASS QR CODE & DIGITAL ACCESS & ACTIONS (5 cols) ── */}
+          <div className="lg:col-span-5 space-y-4">
+            
+            {/* QR code – shown once confirmed */}
+            {status === 'CONFIRMED' && (() => {
+              const cat = (booking.category || '').toLowerCase();
+              const svc = (booking.serviceName || '').toLowerCase();
+              const isStay = cat.includes('resort') || cat.includes('hotel') || cat.includes('stay') || cat.includes('villa') || svc.includes('resort') || svc.includes('hotel');
+              const isTransit = cat.includes('flight') || cat.includes('train') || cat.includes('bus') || cat.includes('metro');
 
-          const isHostel = categoryLower.includes('hostel') || merchantLower.includes('hostel') || (booking.roomNumber || '').startsWith('B-');
-          const unitTitle = isHostel ? 'Dorm & Locker Digital Key' : 'Digital Smart Keycard';
-          const unitPrefix = isHostel ? 'Bed / Locker' : 'Room';
-          const badgeText = 'Active NFC Key';
-          const unitNumber = booking.roomNumber || '102';
+              const badgeTitle = isStay
+                ? 'FAST CHECK-IN PASS'
+                : isTransit
+                  ? 'DIGITAL BOARDING PASS'
+                  : 'DIGITAL ENTRY PASS';
 
-          return (
-            <div className="rounded-3xl border-2 border-[#ff6325]/30 bg-gradient-to-br from-[#ff6325]/5 via-white to-orange-50 shadow-md p-6 animate-fade-in space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-9 h-9 rounded-xl bg-[#ff6325] text-white flex items-center justify-center shadow-sm">
-                    <Key size={18} />
+              const refLabel = isTransit
+                ? `PNR : ${booking.ref}`
+                : `REF : ${booking.ref}`;
+
+              const helpText = isStay
+                ? 'Present this QR code or Reference ID at the resort reception for instant key handover'
+                : isTransit
+                  ? 'Hold this QR code or Barcode to the turnstile / conductor scanner for instant boarding'
+                  : 'Present this QR code or Reference ID at the venue gate for instant check-in';
+
+              return (
+                <div className="rounded-2xl border-2 border-emerald-300/80 dark:border-emerald-700/50 bg-white dark:bg-[#111726] shadow-xs p-4 sm:p-5 flex flex-col items-center animate-fade-in relative overflow-hidden">
+                  
+                  {/* Top Header: Ticket Icon + Badge Title + PNR Pill */}
+                  <div className="w-full flex items-center justify-between pb-3 mb-2.5 border-b border-slate-100 dark:border-white/5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-xl bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 flex items-center justify-center">
+                        <Ticket size={15} className="stroke-[2.5]" />
+                      </div>
+                      <span className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                        {badgeTitle}
+                      </span>
+                    </div>
+
+                    <span className="px-2.5 py-0.5 rounded-lg bg-blue-100/80 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 font-mono font-black text-[11px] tracking-wider">
+                      {refLabel}
+                    </span>
                   </div>
-                  <div>
-                    <h4 className="font-extrabold text-sm text-gray-900">{unitTitle}</h4>
-                    <p className="text-[11px] text-[#ff6325] font-bold">{unitPrefix} {unitNumber} Door Access</p>
+
+                  {/* QR Code */}
+                  <div className="p-1.5 bg-white rounded-xl shadow-xs border border-slate-100 dark:border-white/10 my-0.5">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(booking.ref)}`}
+                      alt="QR Code"
+                      className="h-32 w-32 object-contain"
+                    />
+                  </div>
+
+                  {/* Barcode Strip with PNR text below */}
+                  <div className="mt-3 w-full max-w-[240px] py-1.5 px-3 rounded-xl bg-slate-100/80 dark:bg-slate-800/80 flex flex-col items-center">
+                    <div className="w-full flex items-center justify-between gap-1 h-7 opacity-85">
+                      {[4, 2, 5, 1, 3, 2, 4, 1, 6, 2, 3, 5, 2, 4, 1, 3, 2, 5, 1, 4, 2, 3, 1, 4].map((w, idx) => (
+                        <div key={idx} className="bg-slate-900 dark:bg-white h-full rounded-xs" style={{ width: `${w * 1.8}px` }} />
+                      ))}
+                    </div>
+                    <span className="font-mono text-[9px] text-slate-600 dark:text-slate-400 font-black mt-0.5 tracking-widest uppercase">
+                      *{booking.ref}*
+                    </span>
+                  </div>
+
+                  {/* Info Notice Line */}
+                  <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-[11px] font-medium mt-3 text-center">
+                    <div className="w-3.5 h-3.5 rounded-full bg-blue-500 text-white flex items-center justify-center shrink-0 text-[9px] font-black">
+                      i
+                    </div>
+                    <span>{helpText}</span>
                   </div>
                 </div>
-                <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-700 border border-emerald-300 animate-pulse">
-                  {badgeText}
-                </span>
-              </div>
+              );
+            })()}
 
-              <p className="text-xs text-gray-600 leading-relaxed">
-                Your digital key has been authorized by the front desk. Hold your mobile near {unitPrefix} {unitNumber} smart lock or tap below.
-              </p>
-
+            {/* Action buttons (Save Ticket & Share) with Emerald Outlines */}
+            <div className="grid grid-cols-2 gap-2.5 pt-0.5">
               <button
-                onClick={() => alert(`${unitPrefix} ${unitNumber} door unlocked! Welcome in.`)}
-                className="w-full py-3 bg-gradient-to-r from-[#ff6325] to-[#ff8452] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md hover:opacity-95 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                onClick={handleDownload}
+                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 border-emerald-500 text-emerald-700 dark:text-emerald-400 bg-white dark:bg-[#111726] hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-black text-xs tracking-wide transition-all shadow-2xs cursor-pointer"
               >
-                <Unlock size={16} /> Tap to Unlock {unitPrefix} {unitNumber}
+                <Download size={14} className="stroke-[2.5]" />
+                <span>Save Ticket</span>
+              </button>
+              <button
+                onClick={handleShare}
+                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 border-emerald-500 text-emerald-700 dark:text-emerald-400 bg-white dark:bg-[#111726] hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-black text-xs tracking-wide transition-all shadow-2xs cursor-pointer"
+              >
+                {copied ? <><Check size={14} /> Copied!</> : <><Share2 size={14} className="stroke-[2.5]" /> Share</>}
               </button>
             </div>
-          );
-        })()}
 
-        {/* Action buttons */}
-        <div className="flex gap-3">
-          <button
-            onClick={handleDownload}
-            className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl border-2 ${config.borderColor} font-bold text-sm ${config.textColor} hover:opacity-80 transition-all cursor-pointer`}
-          >
-            <Download size={16} /> Save Ticket
-          </button>
-          <button
-            onClick={handleShare}
-            className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl border-2 ${config.borderColor} font-bold text-sm ${config.textColor} hover:opacity-80 transition-all cursor-pointer`}
-          >
-            {copied ? <><Check size={16} /> Copied!</> : <><Share2 size={16} /> Share</>}
-          </button>
-        </div>
-
-        {/* ── Cancellation & Refund SLA Policy Button ── */}
-        {status !== 'CANCELLED' && (status as string) !== 'COMPLETED' && (
-          <div className="pt-2">
-            <button
-              onClick={async () => {
-                const cat = (booking.category || '').toLowerCase();
-                let policyMessage = '';
-                let refundPercent = 100;
-
-                if (['buses', 'flights', 'trains', 'movies', 'concerts', 'theatre', 'events'].includes(cat)) {
-                  policyMessage = 'STRICTLY NON-REFUNDABLE: Under PassEntry policy, tickets/passes are non-refundable once barcode/PNR is generated. Event cancellation provides 100% refund.';
-                  refundPercent = 0;
-                } else if (cat.includes('turf') || cat.includes('cricket') || cat.includes('court') || cat.includes('football')) {
-                  policyMessage = 'PARTIAL REFUND SLA: Turf cancellation allows 70% refund when cancelled >4 hours prior. 30% advance is forfeited as slot collision hold.';
-                  refundPercent = 70;
-                } else if (cat.includes('hotel') || cat.includes('resort') || cat.includes('stay') || cat.includes('villa')) {
-                  policyMessage = 'FREE CANCELLATION: 100% full refund available when cancelled 24 hours prior to standard check-in time.';
-                  refundPercent = 100;
-                } else {
-                  policyMessage = 'STANDARD SLA: Free cancellation with 100% refund available prior to technician/specialist dispatch.';
-                  refundPercent = 100;
-                }
-
-                const refundAmount = Math.round((booking.amount || 0) * (refundPercent / 100));
-                const confirmCancel = window.confirm(
-                  `${policyMessage}\n\nExpected Refund: ₹${refundAmount.toLocaleString()} (${refundPercent}% of ₹${booking.amount})\n\nDo you wish to confirm cancellation?`
-                );
-
-                if (confirmCancel) {
-                  try {
-                    const updated = { ...booking, status: 'CANCELLED' as const };
-                    setRemoteBooking(updated);
-                    updateBooking?.(booking.id, { status: 'CANCELLED' });
-
-                    await fetch('/api/v1/bookings/sync', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify(updated),
-                    });
-                    alert(`Booking cancelled successfully. Refund of ₹${refundAmount} initiated.`);
-                  } catch (err) {
-                    alert('Cancelled locally. Syncing back to server...');
-                  }
-                }
-              }}
-              className="w-full py-3 rounded-2xl border border-red-200 bg-red-50/50 hover:bg-red-50 text-red-600 font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2"
+            {/* Emerald Solid CTA Button: View All My Bookings */}
+            <Link
+              href="/bookings"
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-center font-black text-white text-xs uppercase tracking-wider bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-md hover:shadow-lg transition-all cursor-pointer"
             >
-              Cancel Booking & Request SLA Refund
-            </button>
+              <Ticket size={15} />
+              <span>View All My Bookings</span>
+              <ArrowRight size={14} />
+            </Link>
           </div>
-        )}
-
-        {/* Navigate to bookings */}
-        <Link
-          href="/bookings"
-          className={`block w-full py-4 rounded-2xl text-center font-extrabold text-white text-sm bg-gradient-to-r ${config.gradient} shadow-lg hover:opacity-90 transition-all`}
-        >
-          View All My Bookings
-        </Link>
+        </div>
       </div>
     </div>
   );
@@ -659,28 +733,17 @@ Show this at the reception counter.
 
 export default function BookingTrackPage() {
   return (
-    <main>
-      {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200 shadow-sm">
-        <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-3">
-          <Link href="/" className="p-2 rounded-full hover:bg-gray-100 transition-colors">
-            <ArrowLeft size={20} />
-          </Link>
-          <h1 className="font-extrabold text-base">Booking Status</h1>
-        </div>
-      </nav>
-      <div className="pt-14">
-        <Suspense fallback={
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-10 h-10 border-4 border-amber-400 border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm text-gray-500 font-medium">Loading booking status...</p>
-            </div>
+    <main className="min-h-screen">
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-10 h-10 border-4 border-amber-400 border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-gray-500 font-medium">Loading booking status...</p>
           </div>
-        }>
-          <TrackingPageContent />
-        </Suspense>
-      </div>
+        </div>
+      }>
+        <TrackingPageContent />
+      </Suspense>
     </main>
   );
 }

@@ -82,9 +82,28 @@ export default function VenueProfilePage() {
     }
   }, [checkIn, checkOut]);
 
-  const [liveServices, setLiveServices] = useState<any[]>([]);
-  const [merchantData, setMerchantData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [liveServices, setLiveServices] = useState<any[]>(() => {
+    try {
+      if ((api.services as any)._cache) {
+        for (const k in (api.services as any)._cache) {
+          const list = (api.services as any)._cache[k]?.data?.data;
+          if (Array.isArray(list)) {
+            const matches = list.filter((s: any) => (s.merchantId === merchantId) || (s.merchantObj?.id === merchantId) || (s.merchant === merchantId) || (s.merchantObj?.name === merchantId) || (s.merchant === decodeURIComponent(merchantId)));
+            if (matches.length > 0) return matches;
+          }
+        }
+      }
+    } catch {}
+    return [];
+  });
+  const [merchantData, setMerchantData] = useState<any>(() => {
+    try {
+      return (api.merchants as any)._cache?.[merchantId]?.data || null;
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(() => liveServices.length === 0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
@@ -139,18 +158,15 @@ export default function VenueProfilePage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch full merchant details for the Venue Profile (About, Gallery, Amenities)
-        // If merchantId is the dummy megamerchant, we just fall back, but for real merchants this will get the filled details.
-        let mData = null;
-        if (merchantId !== '2cf63fd7-6710-4ac6-a3fa-8cbda29fdc0e') {
-          try {
-            mData = await api.merchants.get(merchantId);
-          } catch (e) {
-            console.warn('Could not fetch merchant:', e);
-          }
-        }
+        // Parallel instant fetch for venue profile + services catalog
+        const [mDataRes, res] = await Promise.all([
+          merchantId !== '2cf63fd7-6710-4ac6-a3fa-8cbda29fdc0e'
+            ? api.merchants.get(merchantId).catch(() => null)
+            : Promise.resolve(null),
+          api.services.list({})
+        ]);
+        const mData = mDataRes;
 
-        const res = await api.services.list({});
         if (active && res && res.data) {
           const merchantServices = res.data.filter((s: any) => {
             const isMatchMerchant = (s.merchantId === merchantId) || (s.merchantObj?.id === merchantId) || (s.merchant === merchantId) || (s.merchantObj?.name === merchantId) || (s.merchant === decodeURIComponent(merchantId));

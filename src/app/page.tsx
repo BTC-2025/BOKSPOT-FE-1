@@ -126,10 +126,6 @@ export default function HomePage() {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-    return <BokspotLoader message="Waking up server..." />;
-  }
-
   const activeCount = Array.isArray(bookings) ? bookings.filter(b => b.status === 'CONFIRMED').length : 0;
   const activeNote = activeCount === 1 ? '1 active reservation' : `${activeCount} active reservations`;
 

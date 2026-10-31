@@ -38,8 +38,8 @@ const getNearestCityName = (lat: number, lng: number): string => {
 interface TopNavProps {
   utilityDrawerOpen?: boolean;
   setUtilityDrawerOpen?: (open: boolean) => void;
-  activeUtilityTab?: 'calendar' | 'calc' | 'tasks' | 'contacts' | null;
-  setActiveUtilityTab?: (tab: 'calendar' | 'calc' | 'tasks' | 'contacts' | null) => void;
+  activeUtilityTab?: 'beta' | 'calendar' | 'calc' | 'tasks' | 'contacts' | 'weather' | 'keyboard' | null;
+  setActiveUtilityTab?: (tab: 'beta' | 'calendar' | 'calc' | 'tasks' | 'contacts' | 'weather' | 'keyboard' | null) => void;
 }
 
 export function TopNav({
@@ -394,7 +394,7 @@ export function TopNav({
               {(() => {
                 const isHomeActive = pathname === '/' || pathname === '/home' || pathname.startsWith('/home/');
                 const isCategoriesActive = pathname === '/categories' || pathname.startsWith('/service') || pathname.startsWith('/venue');
-                const isBookingsActive = pathname === '/bookings' || pathname === '/tracks' || pathname.startsWith('/bookings/') || pathname.startsWith('/split');
+                const isBookingsActive = pathname === '/bookings' || pathname === '/booking' || pathname.startsWith('/bookings/') || pathname.startsWith('/split') || pathname === '/tracks';
 
                 const currentActiveId = isHomeActive ? 'home' : isCategoriesActive ? 'categories' : isBookingsActive ? 'bookings' : 'home';
 

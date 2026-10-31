@@ -45,32 +45,12 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const router = useRouter();
   const lastPathRef = useRef<string>(pathname);
   const [utilityDrawerOpen, setUtilityDrawerOpen] = useState(false);
-  const [activeUtilityTab, setActiveUtilityTab] = useState<'calendar' | 'calc' | 'tasks' | 'contacts' | null>(null);
+  const [activeUtilityTab, setActiveUtilityTab] = useState<'beta' | 'calendar' | 'calc' | 'tasks' | 'contacts' | 'weather' | 'keyboard' | null>(null);
 
   // We exclude administrative dashboard portals /sales and /superadmin
   const isExcluded = pathname?.startsWith('/sales') || pathname?.startsWith('/superadmin');
 
-  useEffect(() => {
-    if (isExcluded) return;
-
-    const handlePopState = (event: PopStateEvent) => {
-      const prevPath = lastPathRef.current;
-      const nextPath = window.location.pathname;
-
-      const parentPath = getHierarchicalParent(prevPath);
-      // If the destination of back/forward navigation is NOT the hierarchical parent,
-      // override and programmatically push to the hierarchical parent instead.
-      if (parentPath && nextPath !== parentPath) {
-        event.preventDefault();
-        router.push(parentPath);
-      }
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [isExcluded, router]);
+  // Clean native browser history without synthetic popstate interventions
 
   useEffect(() => {
     lastPathRef.current = pathname;

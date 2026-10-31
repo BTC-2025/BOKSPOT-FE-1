@@ -196,9 +196,19 @@ export const api = {
       return [];
     },
     list: async (params?: Record<string, string>) => {
+      // Client-side instant memory cache (60s TTL)
+      const cacheKey = JSON.stringify(params || {});
+      const now = Date.now();
+      if ((api.services as any)._cache && (api.services as any)._cache[cacheKey]) {
+        const entry = (api.services as any)._cache[cacheKey];
+        if (now - entry.timestamp < 60000) {
+          return entry.data;
+        }
+      }
+
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout for Render cold start
+        const timeoutId = setTimeout(() => controller.abort(), 4500); // 4.5s max timeout to prevent UI freezes
         const baseUrl = API_BASE;
 
         // Build query string
@@ -262,19 +272,27 @@ export const api = {
           }));
           // Return actual data, even if empty, so the UI can show an empty state instead of dummy cards
           // Filter out dummy/mock fallback cards for hotel listings so only real publisher units appear
+          let finalResult;
           if (params?.categorySlug && (params.categorySlug.includes('hotel') || params.categorySlug.includes('room'))) {
-            return {
+            finalResult = {
               data: mappedServices.filter((s: any) => {
                 const name = (s.merchant || s.name || '').toLowerCase();
                 return !name.includes('bokspot verified');
               }),
               meta: { total: mappedServices.length, page: 1, limit: 100, totalPages: 1 }
             };
+          } else {
+            finalResult = {
+              data: mappedServices,
+              meta: { total: body.data?.meta?.total || mappedServices.length, page: 1, limit: 100, totalPages: 1 }
+            };
           }
-          return {
-            data: mappedServices,
-            meta: { total: body.data?.meta?.total || mappedServices.length, page: 1, limit: 100, totalPages: 1 }
-          };
+
+          // Cache in memory
+          if (!(api.services as any)._cache) (api.services as any)._cache = {};
+          (api.services as any)._cache[cacheKey] = { data: finalResult, timestamp: Date.now() };
+
+          return finalResult;
         }
       } catch (err) {
         console.warn('Backend services list error:', err);
@@ -592,8 +610,29 @@ export const api = {
       const qs = new URLSearchParams({ lat: String(lat), lng: String(lng), ...params }).toString();
       return apiFetch<Merchant[]>(`/geo/nearby?${qs}`);
     },
-    bySlug: (slug: string) => apiFetch<Merchant>(`/merchants/slug/${slug}`),
-    get: (id: string) => apiFetch<Merchant>(`/merchants/${id}`),
+    get: async (id: string) => {
+      // 5-minute memory cache for instant sub-page transitions
+      if ((api.merchants as any)._cache && (api.merchants as any)._cache[id]) {
+        const entry = (api.merchants as any)._cache[id];
+        if (Date.now() - entry.timestamp < 300000) return entry.data;
+      }
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        const res = await fetch(`${API_BASE}/merchants/${id}`, { signal: controller.signal, cache: 'no-store' });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          const data = await res.json();
+          const result = data.data || data;
+          if (!(api.merchants as any)._cache) (api.merchants as any)._cache = {};
+          (api.merchants as any)._cache[id] = { data: result, timestamp: Date.now() };
+          return result;
+        }
+      } catch (e) {
+        console.warn('merchants.get timeout or error:', e);
+      }
+      return null;
+    },
   },
 };
 
