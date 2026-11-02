@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Map, Clock, CheckCircle2, ChevronRight, ChevronLeft, Info, ShieldCheck, Search, Users, Utensils, X, Calendar, Bed, Star, Heart, Check, MapPin, ExternalLink, Headphones, Award, Minus, Plus } from 'lucide-react';
+import { ArrowLeft, Map, Clock, CheckCircle2, ChevronRight, ChevronLeft, ChevronDown, Info, ShieldCheck, Search, Users, Utensils, X, Calendar, Bed, Star, Heart, Check, MapPin, ExternalLink, Headphones, Award, Minus, Plus, Sparkles } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useLocationStore, useBookingFlowStore } from '@/lib/store';
 import { BokspotLoader } from '@/components/ui/BokspotLoader';
@@ -93,7 +93,7 @@ export default function VenueProfilePage() {
           }
         }
       }
-    } catch {}
+    } catch { }
     return [];
   });
   const [merchantData, setMerchantData] = useState<any>(() => {
@@ -151,7 +151,54 @@ export default function VenueProfilePage() {
   const [copiedShare, setCopiedShare] = useState(false);
   const [isEditSearchOpen, setIsEditSearchOpen] = useState(false);
   const [isAboutExpanded, setIsAboutExpanded] = useState(false);
-  const [activeSubNavTab, setActiveSubNavTab] = useState<'overview' | 'facilities' | 'location' | 'policies'>('overview');
+  const [activeSubNavTab, setActiveSubNavTab] = useState<'overview' | 'facilities' | 'location' | 'policies' | 'mini-space'>('overview');
+  // Mini Space (Luggage & Cloakroom Drop) booking state
+  const [miniSpaceBagCount, setMiniSpaceBagCount] = useState<number>(1);
+  const [miniSpaceHours, setMiniSpaceHours] = useState<number>(3);
+  const [miniSpaceDropDate, setMiniSpaceDropDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [isMiniSpaceCalOpen, setIsMiniSpaceCalOpen] = useState<boolean>(false);
+  const [miniSpaceCalMonth, setMiniSpaceCalMonth] = useState<Date>(() => new Date());
+  const [miniSpaceDropHour, setMiniSpaceDropHour] = useState<string>('11');
+  const [miniSpaceDropMinute, setMiniSpaceDropMinute] = useState<string>('00');
+  const [miniSpaceDropPeriod, setMiniSpaceDropPeriod] = useState<'AM' | 'PM'>('AM');
+  const [miniSpaceBagDesc, setMiniSpaceBagDesc] = useState<string>('Trolley Bag / Backpack');
+  const [hotelLuggageHourlyRate, setHotelLuggageHourlyRate] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(`hotel_luggage_rate_${merchantId}`) ||
+          localStorage.getItem('hotel_luggage_rate_default');
+        if (stored) return Number(stored);
+        const busState = localStorage.getItem('vendor-portal-storage-v10');
+        if (busState) {
+          const parsed = JSON.parse(busState);
+          if (parsed.state?.currentMerchant?.luggageHourlyRate) {
+            return Number(parsed.state.currentMerchant.luggageHourlyRate);
+          }
+        }
+      } catch { }
+    }
+    return 150;
+  });
+  const [isHotelLuggageEnabled, setIsHotelLuggageEnabled] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const busState = localStorage.getItem('vendor-portal-storage-v10');
+        if (busState) {
+          const parsed = JSON.parse(busState);
+          const curM = parsed.state?.currentMerchant;
+          const customM = parsed.state?.customMerchants?.[merchantId];
+          const target = (curM?.id === merchantId || curM?.merchantName === merchantId) ? curM : (customM || curM);
+          if (target?.metadata?.isLuggageStorageEnabled !== undefined) {
+            return Boolean(target.metadata.isLuggageStorageEnabled);
+          }
+        }
+        const stored = localStorage.getItem(`hotel_luggage_enabled_${merchantId}`) ??
+          localStorage.getItem('hotel_luggage_enabled_default');
+        if (stored !== null) return stored === 'true';
+      } catch {}
+    }
+    return false;
+  });
 
   useEffect(() => {
     let active = true;
@@ -195,9 +242,9 @@ export default function VenueProfilePage() {
               const expCat = (expectedCategoryName || '').toLowerCase();
               const urlCat = (category || '').toLowerCase().replace(/-/g, ' ');
 
-              isMatchType = sCat === expCat || 
-                catSlug === category.toLowerCase() || 
-                sCat.includes(urlCat) || 
+              isMatchType = sCat === expCat ||
+                catSlug === category.toLowerCase() ||
+                sCat.includes(urlCat) ||
                 sName.includes(urlCat) ||
                 (urlCat.includes('turf') && (sCat.includes('turf') || sName.includes('turf')));
             }
@@ -221,9 +268,53 @@ export default function VenueProfilePage() {
 
           setLiveServices(finalServices);
           if (mData) {
-            setMerchantData((mData as any).data || mData);
+            const parsedM = (mData as any).data || mData;
+            setMerchantData(parsedM);
+            if (parsedM?.luggageHourlyRate) setHotelLuggageHourlyRate(Number(parsedM.luggageHourlyRate));
+            if (parsedM?.metadata?.isLuggageStorageEnabled !== undefined) {
+              setIsHotelLuggageEnabled(Boolean(parsedM.metadata.isLuggageStorageEnabled));
+            } else {
+              // Fallback to local storage state if DB metadata not yet set
+              try {
+                const stored = localStorage.getItem(`hotel_luggage_enabled_${merchantId}`) ??
+                  localStorage.getItem('hotel_luggage_enabled_default');
+                if (stored !== null) setIsHotelLuggageEnabled(stored === 'true');
+              } catch {}
+            }
           } else if (finalServices.length > 0) {
-            setMerchantData(finalServices[0].merchantObj || {});
+            const mObj = finalServices[0].merchantObj || {};
+            setMerchantData(mObj);
+            if (mObj?.luggageHourlyRate) setHotelLuggageHourlyRate(Number(mObj.luggageHourlyRate));
+            
+            // Priority 1: Check live vendor portal storage state across local browser sessions
+            let resolvedLuggageState: boolean | null = null;
+            try {
+              const busState = localStorage.getItem('vendor-portal-storage-v10');
+              if (busState) {
+                const parsed = JSON.parse(busState);
+                const curM = parsed.state?.currentMerchant;
+                const customM = parsed.state?.customMerchants?.[merchantId];
+                const target = (curM?.id === merchantId || curM?.merchantName === merchantId) ? curM : (customM || curM);
+                if (target?.metadata?.isLuggageStorageEnabled !== undefined) {
+                  resolvedLuggageState = Boolean(target.metadata.isLuggageStorageEnabled);
+                }
+              }
+            } catch {}
+
+            if (resolvedLuggageState !== null) {
+              setIsHotelLuggageEnabled(resolvedLuggageState);
+            } else {
+              const meta = mObj?.metadata || finalServices[0]?.metadata;
+              if (meta?.isLuggageStorageEnabled !== undefined) {
+                setIsHotelLuggageEnabled(Boolean(meta.isLuggageStorageEnabled));
+              } else {
+                try {
+                  const stored = localStorage.getItem(`hotel_luggage_enabled_${merchantId}`) ??
+                    localStorage.getItem('hotel_luggage_enabled_default');
+                  if (stored !== null) setIsHotelLuggageEnabled(stored === 'true');
+                } catch {}
+              }
+            }
           }
         }
       } catch (err) {
@@ -237,14 +328,43 @@ export default function VenueProfilePage() {
     return () => { active = false; };
   }, [merchantId, bookingType]);
 
-  const venueName = (liveServices.length > 0 && (liveServices[0].metadata?.facilityName || liveServices[0].metadata?.branchName || liveServices[0].metadata?.merchantName || liveServices[0].merchantObj?.name)) ||
+  const isLuxury = searchParams?.get('isLuxury') === 'true';
+
+  const rawVenueName = (liveServices.length > 0 && (liveServices[0].metadata?.facilityName || liveServices[0].metadata?.branchName || liveServices[0].metadata?.merchantName || liveServices[0].merchantObj?.name)) ||
     merchantData?.name ||
     merchantData?.merchantName ||
     (liveServices.length > 0 ? (liveServices[0].merchant || 'Venue') : 'Loading...');
 
-  const address = (liveServices.length > 0 && (liveServices[0].metadata?.address || liveServices[0].merchantObj?.address)) ||
+  const isMysteryOptedIn = merchantData?.isMysteryModeOptIn !== false && merchantData?.metadata?.isMysteryModeOptIn !== false;
+
+  const venueName = (() => {
+    if (isLuxury && isHotel && isMysteryOptedIn) {
+      const raw = `${rawVenueName} ${JSON.stringify(merchantData || {})} ${JSON.stringify(liveServices[0]?.metadata || {})}`.toLowerCase();
+      let archetype = 'Luxury Suite';
+      if (raw.includes('villa') || category.includes('villa')) archetype = 'Architectural Villa';
+      else if (raw.includes('resort') || category.includes('resort')) archetype = 'Beachfront Resort';
+      else if (raw.includes('palace') || raw.includes('heritage')) archetype = 'Heritage Palace Suite';
+      else if (raw.includes('penthouse')) archetype = 'Skyline Penthouse';
+      else if (raw.includes('haven') || raw.includes('retreat')) archetype = 'Private Luxury Retreat';
+
+      let standoutFeature = 'with Private Butler & Dining';
+      if (raw.includes('pool') || raw.includes('swimming')) standoutFeature = 'with Private Infinity Pool';
+      else if (raw.includes('beach') || raw.includes('sea') || raw.includes('ocean')) standoutFeature = 'with Panoramic Ocean View';
+      else if (raw.includes('spa') || raw.includes('jacuzzi')) standoutFeature = 'with Hydrotherapy Jacuzzi';
+      else if (raw.includes('garden') || raw.includes('lawn')) standoutFeature = 'with Private Courtyard Garden';
+
+      return `${archetype} ${standoutFeature}`;
+    }
+    return rawVenueName;
+  })();
+
+  const rawAddress = (liveServices.length > 0 && (liveServices[0].metadata?.address || liveServices[0].merchantObj?.address)) ||
     merchantData?.address ||
     `${city || 'Chennai'}`;
+
+  const address = (isLuxury && isHotel && isMysteryOptedIn)
+    ? `${city || 'Prime District'} • Full address revealed on booking confirmation`
+    : rawAddress;
 
   if (loading) {
     const isHotel = category === 'resorts' || category === 'hotels' || category === 'villas' || category === 'hostels' || category === 'camping';
@@ -278,8 +398,8 @@ export default function VenueProfilePage() {
       const lower = url.toLowerCase();
       // Filter out temporary blobs, UI screenshots, and previous dummy temple or card preview captures
       if (
-        !url.startsWith('blob:') && 
-        !lower.includes('screenshot') && 
+        !url.startsWith('blob:') &&
+        !lower.includes('screenshot') &&
         !lower.includes('temple') &&
         !lower.includes('darshan') &&
         !lower.includes('dummy')
@@ -329,9 +449,9 @@ export default function VenueProfilePage() {
 
   const firstSvc = liveServices[0];
   const firstListing = firstSvc?.metadata?.listings?.[0] || firstSvc?.rawConfig?.metadata?.listings?.[0];
-  
+
   // Venue profile about text (distinct from court/pitch listing description)
-  const aboutText = isFacility 
+  const aboutText = isFacility
     ? (firstSvc?.description ||
       firstListing?.description ||
       firstSvc?.metadata?.about ||
@@ -348,15 +468,15 @@ export default function VenueProfilePage() {
 
   const amenities = isFacility
     ? ((firstListing?.metadata?.amenities && firstListing.metadata.amenities.length > 0)
-        ? firstListing.metadata.amenities
-        : ((firstSvc?.metadata?.amenities && firstSvc.metadata.amenities.length > 0)
-            ? firstSvc.metadata.amenities
-            : defaultFacilityAmenities))
+      ? firstListing.metadata.amenities
+      : ((firstSvc?.metadata?.amenities && firstSvc.metadata.amenities.length > 0)
+        ? firstSvc.metadata.amenities
+        : defaultFacilityAmenities))
     : ((finalMerchantObj.amenities && finalMerchantObj.amenities.length > 0)
-        ? finalMerchantObj.amenities
-        : (finalMerchantObj.thingsToKnow && finalMerchantObj.thingsToKnow.length > 0)
-          ? finalMerchantObj.thingsToKnow
-          : (firstSvc?.metadata?.amenities || firstListing?.metadata?.amenities || []));
+      ? finalMerchantObj.amenities
+      : (finalMerchantObj.thingsToKnow && finalMerchantObj.thingsToKnow.length > 0)
+        ? finalMerchantObj.thingsToKnow
+        : (firstSvc?.metadata?.amenities || firstListing?.metadata?.amenities || []));
 
   const handleShare = () => {
     if (typeof window !== 'undefined') {
@@ -573,13 +693,12 @@ export default function VenueProfilePage() {
                                         }
                                         setActiveDatePicker(null);
                                       }}
-                                      className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs transition-all cursor-pointer ${
-                                        isSelected
-                                          ? 'bg-[#1a56db] text-white shadow-md shadow-blue-500/40 ring-2 ring-blue-400/30 font-extrabold'
-                                          : isToday
+                                      className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs transition-all cursor-pointer ${isSelected
+                                        ? 'bg-[#1a56db] text-white shadow-md shadow-blue-500/40 ring-2 ring-blue-400/30 font-extrabold'
+                                        : isToday
                                           ? 'border border-[#1a56db] text-[#1a56db] dark:text-blue-400 font-extrabold'
                                           : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                      }`}
+                                        }`}
                                     >
                                       {d}
                                     </button>
@@ -694,13 +813,12 @@ export default function VenueProfilePage() {
                                         }
                                         setActiveDatePicker(null);
                                       }}
-                                      className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs transition-all cursor-pointer ${
-                                        isSelected
-                                          ? 'bg-[#1a56db] text-white shadow-md shadow-blue-500/40 ring-2 ring-blue-400/30 font-extrabold'
-                                          : isToday
+                                      className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs transition-all cursor-pointer ${isSelected
+                                        ? 'bg-[#1a56db] text-white shadow-md shadow-blue-500/40 ring-2 ring-blue-400/30 font-extrabold'
+                                        : isToday
                                           ? 'border border-[#1a56db] text-[#1a56db] dark:text-blue-400 font-extrabold'
                                           : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                      }`}
+                                        }`}
                                     >
                                       {d}
                                     </button>
@@ -956,10 +1074,10 @@ export default function VenueProfilePage() {
                       src={imgUrl}
                       alt={`${venueName} preview ${idx + 2}`}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                      onError={(e) => { 
-                        e.currentTarget.src = isFacility 
-                          ? defaultTurfPhotos[(idx + 1) % defaultTurfPhotos.length] 
-                          : defaultHotelPhotos[(idx + 1) % defaultHotelPhotos.length]; 
+                      onError={(e) => {
+                        e.currentTarget.src = isFacility
+                          ? defaultTurfPhotos[(idx + 1) % defaultTurfPhotos.length]
+                          : defaultHotelPhotos[(idx + 1) % defaultHotelPhotos.length];
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -1016,6 +1134,12 @@ export default function VenueProfilePage() {
 
             {/* Property Title & Quick Actions Header */}
             <div>
+              {isLuxury && isHotel && (
+                <div className="mb-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-400/40 text-amber-700 dark:text-amber-300 text-[10px] font-black uppercase tracking-wider">
+                  <Sparkles size={11} className="text-amber-500" />
+                  <span>BokSpot Luxe • Confidential Blind Booking</span>
+                </div>
+              )}
               <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-white/10 mb-3">
                 <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight truncate">
                   {venueName}
@@ -1190,11 +1314,10 @@ export default function VenueProfilePage() {
                               setSelectedHourSlot(null);
                               setPricingResult(null);
                             }}
-                            className={`p-3.5 rounded-2xl border text-left cursor-pointer transition-all flex flex-col justify-between ${
-                              isPitchSelected
-                                ? 'bg-gradient-to-br from-[#033266]/10 to-[#ff6325]/10 border-[#ff6325] ring-2 ring-[#ff6325]/20 shadow-sm'
-                                : 'bg-slate-50/80 dark:bg-slate-800/60 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
-                            }`}
+                            className={`p-3.5 rounded-2xl border text-left cursor-pointer transition-all flex flex-col justify-between ${isPitchSelected
+                              ? 'bg-gradient-to-br from-[#033266]/10 to-[#ff6325]/10 border-[#ff6325] ring-2 ring-[#ff6325]/20 shadow-sm'
+                              : 'bg-slate-50/80 dark:bg-slate-800/60 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                              }`}
                           >
                             <div className="flex items-start justify-between gap-2">
                               <span className="text-xs font-black text-slate-900 dark:text-white line-clamp-1">
@@ -1217,7 +1340,7 @@ export default function VenueProfilePage() {
 
                   {/* Playo-Style Court Profile Card */}
                   <div className="p-4 sm:p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-5">
-                    
+
                     {/* Top Row: Pitch Cover, Title, Crown Badge, Description & Big Price Box */}
                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
                       <div className="flex items-start gap-3.5">
@@ -1332,10 +1455,10 @@ export default function VenueProfilePage() {
                       const courtImages = (Array.isArray(activeListing.images) && activeListing.images.length > 0)
                         ? activeListing.images
                         : [
-                            'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=1200&q=80',
-                            'https://images.unsplash.com/photo-1574629810360-7efbb49fec90?w=1200&q=80',
-                            'https://images.unsplash.com/photo-1551958219-acbc608c6377?w=1200&q=80'
-                          ];
+                          'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=1200&q=80',
+                          'https://images.unsplash.com/photo-1574629810360-7efbb49fec90?w=1200&q=80',
+                          'https://images.unsplash.com/photo-1551958219-acbc608c6377?w=1200&q=80'
+                        ];
 
                       return (
                         <div className="space-y-3 pt-2">
@@ -1381,8 +1504,8 @@ export default function VenueProfilePage() {
 
             {/* Date Quick Selector */}
             {(() => {
-              const currentListing = selectedTurfService?.rawListing || 
-                liveServices[0]?.metadata?.listings?.[0] || 
+              const currentListing = selectedTurfService?.rawListing ||
+                liveServices[0]?.metadata?.listings?.[0] ||
                 liveServices[0]?.rawConfig?.metadata?.listings?.[0];
 
               const publishedSchedule: Array<{ dayOfWeek?: string; specificDate?: string; startTime: string; endTime: string; price: number }> =
@@ -1441,8 +1564,8 @@ export default function VenueProfilePage() {
               const targetDayOfWeek = new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' });
 
               // Find active listing or service
-              const currentListing = selectedTurfService?.rawListing || 
-                liveServices[0]?.metadata?.listings?.[0] || 
+              const currentListing = selectedTurfService?.rawListing ||
+                liveServices[0]?.metadata?.listings?.[0] ||
                 liveServices[0]?.rawConfig?.metadata?.listings?.[0];
 
               const publishedSchedule: Array<{ dayOfWeek?: string; specificDate?: string; startTime: string; endTime: string; price: number }> =
@@ -1451,8 +1574,8 @@ export default function VenueProfilePage() {
               // Priority 1: Specific Date match (e.g. 2026-10-28)
               // Priority 2: Fallback or combine with recurring day of week match
               const dateSpecificSlots = publishedSchedule.filter(s => s.specificDate === selectedDate);
-              const daySlots = (dateSpecificSlots.length > 0 
-                ? dateSpecificSlots 
+              const daySlots = (dateSpecificSlots.length > 0
+                ? dateSpecificSlots
                 : publishedSchedule.filter(s => !s.specificDate && s.dayOfWeek?.toLowerCase() === targetDayOfWeek.toLowerCase())
               ).sort((a, b) => a.startTime.localeCompare(b.startTime));
 
@@ -1516,11 +1639,10 @@ export default function VenueProfilePage() {
                             });
                             setIsPricingCalculating(false);
                           }}
-                          className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
-                            isSelected
-                              ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md scale-102'
-                              : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#033266] dark:hover:border-[#ff6325] text-slate-900 dark:text-white'
-                          }`}
+                          className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${isSelected
+                            ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md scale-102'
+                            : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#033266] dark:hover:border-[#ff6325] text-slate-900 dark:text-white'
+                            }`}
                         >
                           <span className="text-xs font-black block">{slot.startTime}</span>
                           <span className="text-[10px] opacity-75 font-semibold mt-0.5 block">to {slot.endTime}</span>
@@ -1648,25 +1770,75 @@ export default function VenueProfilePage() {
               };
 
               return (
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-slate-200 dark:border-white/10 pb-3">
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                      {dynamicHeading.title}
-                    </h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      {dynamicHeading.subtitle}
-                    </p>
+                <div className="space-y-4 border-b border-slate-200 dark:border-white/10 pb-4">
+                  {/* High-Visibility Bag Locker (Luggage Drop) Transit Strip for Travelers */}
+                  {isHotel && isHotelLuggageEnabled && (
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-orange-500/15 border border-amber-500/30 p-4 sm:p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                      <div className="flex items-start sm:items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center text-xl shrink-0 shadow-sm font-black">
+                          🧳
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
+                              Arriving Early or Departing Late?
+                            </span>
+                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500 text-slate-950">
+                              Instant Cloakroom
+                            </span>
+                          </div>
+                          <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                            Drop your heavy bags at the frontdesk before 12 PM check-in and explore freely. Starting at just <span className="font-extrabold text-amber-600 dark:text-amber-400">₹49/bag/hr</span>.
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveSubNavTab('mini-space');
+                          setTimeout(() => {
+                            const el = document.getElementById('agoda-overview-section');
+                            el?.scrollIntoView({ behavior: 'smooth' });
+                          }, 100);
+                        }}
+                        className="self-stretch sm:self-auto px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-black text-xs uppercase tracking-wider shrink-0 transition-all shadow-md shadow-amber-500/20 flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <span>Book Luggage Drop</span>
+                        <span>&rarr;</span>
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pt-1">
+                    <div>
+                      <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                        {dynamicHeading.title}
+                      </h2>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {dynamicHeading.subtitle}
+                      </p>
+                    </div>
+                    <span className="text-xs font-bold px-3 py-1 bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] rounded-full border border-[#033266]/20 dark:border-[#ff6325]/30 self-start sm:self-auto">
+                      {(() => {
+                        const seen = new Set<string>();
+                        liveServices.filter((svc: any) => svc.name !== '__BOKSPOT_GROUP__').forEach((svc: any) => {
+                          const listings = svc.metadata?.listings || svc.rawConfig?.metadata?.listings || [];
+                          if (listings.length > 0) {
+                            listings.forEach((l: any) => {
+                              const name = (l.name || svc.name || '').trim().toLowerCase();
+                              if (name) seen.add(name);
+                            });
+                          } else {
+                            const name = (svc.name || '').trim().toLowerCase();
+                            if (name) seen.add(name);
+                          }
+                        });
+                        const total = seen.size > 0 ? seen.size : 1;
+                        return `${total} ${dynamicHeading.unitName}${total !== 1 ? 's' : ''} Available`;
+                      })()}
+                    </span>
                   </div>
-                  <span className="text-xs font-bold px-3 py-1 bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] rounded-full border border-[#033266]/20 dark:border-[#ff6325]/30 self-start sm:self-auto">
-                    {(() => {
-                      let total = 0;
-                      liveServices.filter((svc: any) => svc.name !== '__BOKSPOT_GROUP__').forEach((svc: any) => {
-                        const cnt = (svc.metadata?.listings || svc.rawConfig?.metadata?.listings || []).length;
-                        total += cnt > 0 ? cnt : 1;
-                      });
-                      return `${total} ${dynamicHeading.unitName}${total !== 1 ? 's' : ''} Available`;
-                    })()}
-                  </span>
                 </div>
               );
             })()}
@@ -1737,7 +1909,19 @@ export default function VenueProfilePage() {
                   }
                 });
 
-                if (roomItems.length === 0) {
+                // Deduplicate roomItems strictly by normalized room name & price
+                const seenRoomNames = new Set<string>();
+                const uniqueRoomItems = roomItems.filter((item) => {
+                  const normalizedName = (item.name || '').trim().toLowerCase();
+                  if (!normalizedName) return true;
+                  if (seenRoomNames.has(normalizedName)) {
+                    return false;
+                  }
+                  seenRoomNames.add(normalizedName);
+                  return true;
+                });
+
+                if (uniqueRoomItems.length === 0) {
                   return (
                     <p className="text-sm text-slate-500 dark:text-slate-400 italic p-8 rounded-2xl border border-slate-200 dark:border-white/10 text-center bg-white dark:bg-[#0f1219] shadow-xs">
                       No specific rooms have been listed by the property yet.
@@ -1745,7 +1929,7 @@ export default function VenueProfilePage() {
                   );
                 }
 
-                return roomItems.map((roomItem, rIdx) => {
+                return uniqueRoomItems.map((roomItem, rIdx) => {
                   const startingPrice = roomItem.price;
                   const stayTotal = startingPrice * nights * rooms;
                   const maxGuests = roomItem.maxGuests;
@@ -1811,7 +1995,7 @@ export default function VenueProfilePage() {
 
                   return (
                     <div
-                      key={roomItem.id || rIdx}
+                      key={`room-card-${roomItem.id || 'item'}-${rIdx}`}
                       className="bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 rounded-3xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-all duration-300"
                     >
                       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
@@ -2151,8 +2335,23 @@ export default function VenueProfilePage() {
                             </button>
 
                             {/* Micro guarantee badge */}
-                            <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 text-center mt-2.5">
-                              FREE Cancellation • Pay later available
+                            <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 text-center mt-2.5 flex items-center justify-center gap-2 flex-wrap">
+                              <span>FREE Cancellation • Pay later available</span>
+                              <span className="text-slate-300 dark:text-slate-600">•</span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveSubNavTab('mini-space');
+                                  setTimeout(() => {
+                                    const el = document.getElementById('agoda-overview-section');
+                                    el?.scrollIntoView({ behavior: 'smooth' });
+                                  }, 100);
+                                }}
+                                className="text-amber-600 dark:text-amber-400 hover:underline font-extrabold flex items-center gap-1 cursor-pointer"
+                              >
+                                <span>🧳 Luggage Drop (₹49/hr)</span>
+                              </button>
                             </div>
 
                             {/* Urgent Scarcity Callout Box with Dynamic Merchant Offer Badge */}
@@ -2204,47 +2403,59 @@ export default function VenueProfilePage() {
               <button
                 type="button"
                 onClick={() => setActiveSubNavTab('overview')}
-                className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all ${
-                  activeSubNavTab === 'overview'
-                    ? 'bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border-b-2 border-[#033266] dark:border-[#ff6325] font-black'
-                    : 'hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
+                className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all ${activeSubNavTab === 'overview'
+                  ? 'bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border-b-2 border-[#033266] dark:border-[#ff6325] font-black'
+                  : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`}
               >
                 Overview
               </button>
               <button
                 type="button"
                 onClick={() => setActiveSubNavTab('facilities')}
-                className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all ${
-                  activeSubNavTab === 'facilities'
-                    ? 'bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border-b-2 border-[#033266] dark:border-[#ff6325] font-black'
-                    : 'hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
+                className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all ${activeSubNavTab === 'facilities'
+                  ? 'bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border-b-2 border-[#033266] dark:border-[#ff6325] font-black'
+                  : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`}
               >
                 Facilities
               </button>
               <button
                 type="button"
                 onClick={() => setActiveSubNavTab('location')}
-                className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all ${
-                  activeSubNavTab === 'location'
-                    ? 'bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border-b-2 border-[#033266] dark:border-[#ff6325] font-black'
-                    : 'hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
+                className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all ${activeSubNavTab === 'location'
+                  ? 'bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border-b-2 border-[#033266] dark:border-[#ff6325] font-black'
+                  : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`}
               >
                 Location
               </button>
               <button
                 type="button"
                 onClick={() => setActiveSubNavTab('policies')}
-                className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all ${
-                  activeSubNavTab === 'policies'
-                    ? 'bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border-b-2 border-[#033266] dark:border-[#ff6325] font-black'
-                    : 'hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
+                className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all ${activeSubNavTab === 'policies'
+                  ? 'bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border-b-2 border-[#033266] dark:border-[#ff6325] font-black'
+                  : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`}
               >
                 Policies
               </button>
+              {isHotel && isHotelLuggageEnabled && (
+                <button
+                  type="button"
+                  onClick={() => setActiveSubNavTab('mini-space')}
+                  className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${activeSubNavTab === 'mini-space'
+                    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-b-2 border-amber-500 font-black'
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-amber-600/90 dark:text-amber-400'
+                    }`}
+                >
+                  <span>🧳</span>
+                  <span>Bag Locker</span>
+                  <span className="px-1.5 py-0.2 rounded text-[9px] bg-amber-500 text-slate-950 font-black uppercase">
+                    Hourly
+                  </span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -2286,216 +2497,216 @@ export default function VenueProfilePage() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-                {/* Left Column (8 cols) */}
-                <div className="lg:col-span-8 space-y-6">
-                  {/* Highlights */}
-                  <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-4">
-                    <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
-                      Highlights
-                    </h3>
-                    <div className="space-y-3.5">
-                      {(() => {
-                        const defaultStayHighlights = [
-                          {
-                            icon: '🍳',
-                            title: 'Great breakfast & inclusions',
-                            description: finalMerchantObj.metadata?.breakfastDetails || 'Breakfast buffet gets strong praise for its wide spread, varied choices, and fresh multi-cuisine preparations.'
-                          },
-                          {
-                            icon: '🍽️',
-                            title: 'Great food & dining',
-                            description: 'In-house multi-cuisine dining options with seafood specialties and room service options praised by guests.'
-                          },
-                          {
-                            icon: '🛎️',
-                            title: 'Professional guest services',
-                            description: 'Dedicated 24/7 front desk, warm concierge, express check-in, and personalized butler assistance.'
-                          },
-                          {
-                            icon: '✨',
-                            title: 'Sparkling clean & hygienic',
-                            description: 'Rooms are regularly sanitized and described as clean, neat, and well kept with spotless linen.'
-                          },
-                          {
-                            icon: '🏊',
-                            title: 'Top property leisure facilities',
-                            description: 'Private swimming pool, lawn garden, sun deck, and entertainment conveniences designed for staycations.'
-                          }
-                        ];
+                  {/* Left Column (8 cols) */}
+                  <div className="lg:col-span-8 space-y-6">
+                    {/* Highlights */}
+                    <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-4">
+                      <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                        Highlights
+                      </h3>
+                      <div className="space-y-3.5">
+                        {(() => {
+                          const defaultStayHighlights = [
+                            {
+                              icon: '🍳',
+                              title: 'Great breakfast & inclusions',
+                              description: finalMerchantObj.metadata?.breakfastDetails || 'Breakfast buffet gets strong praise for its wide spread, varied choices, and fresh multi-cuisine preparations.'
+                            },
+                            {
+                              icon: '🍽️',
+                              title: 'Great food & dining',
+                              description: 'In-house multi-cuisine dining options with seafood specialties and room service options praised by guests.'
+                            },
+                            {
+                              icon: '🛎️',
+                              title: 'Professional guest services',
+                              description: 'Dedicated 24/7 front desk, warm concierge, express check-in, and personalized butler assistance.'
+                            },
+                            {
+                              icon: '✨',
+                              title: 'Sparkling clean & hygienic',
+                              description: 'Rooms are regularly sanitized and described as clean, neat, and well kept with spotless linen.'
+                            },
+                            {
+                              icon: '🏊',
+                              title: 'Top property leisure facilities',
+                              description: 'Private swimming pool, lawn garden, sun deck, and entertainment conveniences designed for staycations.'
+                            }
+                          ];
 
-                        const defaultFacilityHighlights = [
-                          {
-                            icon: '⚽',
-                            title: 'FIFA Standard Astro Turf',
-                            description: 'High-density 50mm monofilament synthetic grass with shock-absorbing rubber infill engineered for all-weather play.'
-                          },
-                          {
-                            icon: '💡',
-                            title: 'High-Mast LED Floodlights',
-                            description: 'Stadium-grade anti-glare illumination across all pitch zones ensuring seamless evening and late-night matches.'
-                          },
-                          {
-                            icon: '🚿',
-                            title: 'Player Changing Rooms & Showers',
-                            description: 'Hygienic private dressing rooms, lockers, and clean showers ready for teams before and after games.'
-                          },
-                          {
-                            icon: '🪑',
-                            title: 'Covered Team Dugouts & Spectator Seating',
-                            description: 'Weather-protected substitutes benches, scoring tables, and viewing spaces for fans and guests.'
-                          },
-                          {
-                            icon: '🚗',
-                            title: 'Dedicated Parking & Amenities',
-                            description: 'Spacious on-site two-wheeler and car parking, RO drinking water dispenser, and first-aid support.'
-                          }
-                        ];
+                          const defaultFacilityHighlights = [
+                            {
+                              icon: '⚽',
+                              title: 'FIFA Standard Astro Turf',
+                              description: 'High-density 50mm monofilament synthetic grass with shock-absorbing rubber infill engineered for all-weather play.'
+                            },
+                            {
+                              icon: '💡',
+                              title: 'High-Mast LED Floodlights',
+                              description: 'Stadium-grade anti-glare illumination across all pitch zones ensuring seamless evening and late-night matches.'
+                            },
+                            {
+                              icon: '🚿',
+                              title: 'Player Changing Rooms & Showers',
+                              description: 'Hygienic private dressing rooms, lockers, and clean showers ready for teams before and after games.'
+                            },
+                            {
+                              icon: '🪑',
+                              title: 'Covered Team Dugouts & Spectator Seating',
+                              description: 'Weather-protected substitutes benches, scoring tables, and viewing spaces for fans and guests.'
+                            },
+                            {
+                              icon: '🚗',
+                              title: 'Dedicated Parking & Amenities',
+                              description: 'Spacious on-site two-wheeler and car parking, RO drinking water dispenser, and first-aid support.'
+                            }
+                          ];
 
-                        const activeHighlights = isFacility
-                          ? ((Array.isArray(firstSvc?.metadata?.highlights) && firstSvc.metadata.highlights.length > 0)
+                          const activeHighlights = isFacility
+                            ? ((Array.isArray(firstSvc?.metadata?.highlights) && firstSvc.metadata.highlights.length > 0)
                               ? firstSvc.metadata.highlights
                               : defaultFacilityHighlights)
-                          : ((Array.isArray(finalMerchantObj.metadata?.highlights) && finalMerchantObj.metadata.highlights.length > 0)
+                            : ((Array.isArray(finalMerchantObj.metadata?.highlights) && finalMerchantObj.metadata.highlights.length > 0)
                               ? finalMerchantObj.metadata.highlights
                               : defaultStayHighlights);
 
-                        return activeHighlights.map((hl: any, idx: number) => {
-                          const iconBgColors = [
-                            'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-                            'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-                            'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-                            'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400',
-                            'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
-                            'bg-rose-500/10 text-rose-600 dark:text-rose-400'
-                          ];
-                          const colorClass = iconBgColors[idx % iconBgColors.length];
+                          return activeHighlights.map((hl: any, idx: number) => {
+                            const iconBgColors = [
+                              'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+                              'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+                              'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+                              'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400',
+                              'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
+                              'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                            ];
+                            const colorClass = iconBgColors[idx % iconBgColors.length];
 
-                          return (
-                            <div key={idx} className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5">
-                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg shrink-0 ${colorClass}`}>
-                                {hl.icon || '⭐'}
+                            return (
+                              <div key={idx} className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg shrink-0 ${colorClass}`}>
+                                  {hl.icon || '⭐'}
+                                </div>
+                                <div className="min-w-0">
+                                  <h4 className="text-xs font-black text-slate-900 dark:text-white">
+                                    {hl.title}
+                                  </h4>
+                                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                                    {hl.description}
+                                  </p>
+                                </div>
                               </div>
-                              <div className="min-w-0">
-                                <h4 className="text-xs font-black text-slate-900 dark:text-white">
-                                  {hl.title}
-                                </h4>
-                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                                  {hl.description}
-                                </p>
-                              </div>
-                            </div>
-                          );
-                        });
-                      })()}
+                            );
+                          });
+                        })()}
+                      </div>
+                    </div>
+
+
+                    {/* About Us */}
+                    <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-3">
+                      <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                        About us
+                      </h3>
+                      <div className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
+                        <p>
+                          {aboutText
+                            ? (isAboutExpanded || aboutText.length <= 260 ? aboutText : `${aboutText.slice(0, 260)}...`)
+                            : `Indulge in a luxurious stay at ${venueName} situated on the scenic ${city || 'Chennai'} corridor. Immerse yourself in the vibrant culture while exploring nearby beaches, entertainment hubs, and serene gardens. Experience signature hospitality, private pools, and bespoke concierge care.`}
+                        </p>
+                        {aboutText && aboutText.length > 260 && (
+                          <button
+                            type="button"
+                            onClick={() => setIsAboutExpanded(!isAboutExpanded)}
+                            className="mt-2 text-xs font-extrabold text-[#033266] dark:text-[#ff6325] hover:underline cursor-pointer block"
+                          >
+                            {isAboutExpanded ? 'Show less ↑' : 'Read more →'}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
 
+                  {/* Right Column (4 cols) Map Sidebar */}
+                  <div className="lg:col-span-4 space-y-6">
+                    <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-4">
+                      {/* Map Preview */}
+                      {(() => {
+                        const lat = finalMerchantObj.latitude || liveServices[0]?.merchantObj?.latitude;
+                        const lng = finalMerchantObj.longitude || liveServices[0]?.merchantObj?.longitude;
+                        const mapQuery = (lat && lng) ? `${lat},${lng}` : encodeURIComponent(address || venueName || 'Chennai');
 
-                  {/* About Us */}
-                  <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-3">
-                    <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                      About us
-                    </h3>
-                    <div className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
-                      <p>
-                        {aboutText
-                          ? (isAboutExpanded || aboutText.length <= 260 ? aboutText : `${aboutText.slice(0, 260)}...`)
-                          : `Indulge in a luxurious stay at ${venueName} situated on the scenic ${city || 'Chennai'} corridor. Immerse yourself in the vibrant culture while exploring nearby beaches, entertainment hubs, and serene gardens. Experience signature hospitality, private pools, and bespoke concierge care.`}
-                      </p>
-                      {aboutText && aboutText.length > 260 && (
-                        <button
-                          type="button"
-                          onClick={() => setIsAboutExpanded(!isAboutExpanded)}
-                          className="mt-2 text-xs font-extrabold text-[#033266] dark:text-[#ff6325] hover:underline cursor-pointer block"
-                        >
-                          {isAboutExpanded ? 'Show less ↑' : 'Read more →'}
-                        </button>
+                        return (
+                          <div className="relative rounded-2xl overflow-hidden border border-slate-200/90 dark:border-white/10 bg-slate-100 dark:bg-slate-800 group shadow-sm">
+                            <div className="h-40 w-full relative">
+                              <iframe
+                                title="Property Location Map"
+                                width="100%"
+                                height="100%"
+                                frameBorder="0"
+                                style={{ border: 0 }}
+                                src={`https://maps.google.com/maps?q=${mapQuery}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                                loading="lazy"
+                                allowFullScreen
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setActiveSubNavTab('location')}
+                              className="absolute inset-0 bg-black/30 hover:bg-black/40 flex items-center justify-center transition-colors group cursor-pointer"
+                            >
+                              <span className="px-3.5 py-1.5 rounded-xl bg-white text-slate-900 font-black text-xs shadow-md group-hover:scale-105 transition-transform">
+                                SEE MAP
+                              </span>
+                            </button>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Location Score Pill */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-black text-slate-900 dark:text-white">
+                            8.2 Excellent
+                          </span>
+                          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/40">
+                            Top Rated Area
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                          Excellent location — situated conveniently near beaches and transport routes in {city || 'Chennai'}.
+                        </p>
+                      </div>
+
+                      {/* Parking Tag */}
+                      <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                        <span className="flex items-center gap-1.5">🅿️ Parking</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 uppercase font-black text-[11px]">FREE</span>
+                      </div>
+
+                      {/* What's Nearby Distances */}
+                      {Array.isArray(finalMerchantObj.metadata?.aroundProperty) && finalMerchantObj.metadata.aroundProperty.length > 0 && (
+                        <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-white/10">
+                          <span className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block tracking-wider">
+                            See nearby places
+                          </span>
+                          <div className="space-y-2">
+                            {finalMerchantObj.metadata.aroundProperty.slice(0, 4).map((item: any, idx: number) => (
+                              <div key={idx} className="flex items-center justify-between text-xs">
+                                <span className="text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[180px]">
+                                  📍 {item.name || item.title}
+                                </span>
+                                <span className="text-slate-500 dark:text-slate-400 font-bold text-[11px] shrink-0">
+                                  {item.distance || ''}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       )}
                     </div>
                   </div>
                 </div>
-
-                {/* Right Column (4 cols) Map Sidebar */}
-                <div className="lg:col-span-4 space-y-6">
-                  <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-4">
-                    {/* Map Preview */}
-                    {(() => {
-                      const lat = finalMerchantObj.latitude || liveServices[0]?.merchantObj?.latitude;
-                      const lng = finalMerchantObj.longitude || liveServices[0]?.merchantObj?.longitude;
-                      const mapQuery = (lat && lng) ? `${lat},${lng}` : encodeURIComponent(address || venueName || 'Chennai');
-
-                      return (
-                        <div className="relative rounded-2xl overflow-hidden border border-slate-200/90 dark:border-white/10 bg-slate-100 dark:bg-slate-800 group shadow-sm">
-                          <div className="h-40 w-full relative">
-                            <iframe
-                              title="Property Location Map"
-                              width="100%"
-                              height="100%"
-                              frameBorder="0"
-                              style={{ border: 0 }}
-                              src={`https://maps.google.com/maps?q=${mapQuery}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
-                              loading="lazy"
-                              allowFullScreen
-                            />
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setActiveSubNavTab('location')}
-                            className="absolute inset-0 bg-black/30 hover:bg-black/40 flex items-center justify-center transition-colors group cursor-pointer"
-                          >
-                            <span className="px-3.5 py-1.5 rounded-xl bg-white text-slate-900 font-black text-xs shadow-md group-hover:scale-105 transition-transform">
-                              SEE MAP
-                            </span>
-                          </button>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Location Score Pill */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-black text-slate-900 dark:text-white">
-                          8.2 Excellent
-                        </span>
-                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/40">
-                          Top Rated Area
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                        Excellent location — situated conveniently near beaches and transport routes in {city || 'Chennai'}.
-                      </p>
-                    </div>
-
-                    {/* Parking Tag */}
-                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
-                      <span className="flex items-center gap-1.5">🅿️ Parking</span>
-                      <span className="text-emerald-600 dark:text-emerald-400 uppercase font-black text-[11px]">FREE</span>
-                    </div>
-
-                    {/* What's Nearby Distances */}
-                    {Array.isArray(finalMerchantObj.metadata?.aroundProperty) && finalMerchantObj.metadata.aroundProperty.length > 0 && (
-                      <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-white/10">
-                        <span className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block tracking-wider">
-                          See nearby places
-                        </span>
-                        <div className="space-y-2">
-                          {finalMerchantObj.metadata.aroundProperty.slice(0, 4).map((item: any, idx: number) => (
-                            <div key={idx} className="flex items-center justify-between text-xs">
-                              <span className="text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[180px]">
-                                📍 {item.name || item.title}
-                              </span>
-                              <span className="text-slate-500 dark:text-slate-400 font-bold text-[11px] shrink-0">
-                                {item.distance || ''}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
               </div>
-            </div>
             )}
 
             {/* TAB CONTENT: FACILITIES (Full Grid) */}
@@ -2631,6 +2842,507 @@ export default function VenueProfilePage() {
                       <span className="leading-relaxed">{policy}</span>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* TAB CONTENT: MINI SPACE (Luggage & Cloakroom Temporary Drop) */}
+            {isHotelLuggageEnabled && activeSubNavTab === 'mini-space' && (
+              <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-white/10 pb-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                        BokSpot Cloakroom Network
+                      </span>
+                      <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                        <CheckCircle2 size={13} /> CCTV Monitored & Insured
+                      </span>
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                      <span>🧳</span> Mini Space — Luggage & Item Drop
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xl">
+                      Traveling or waiting for your train/flight? Drop your heavy trolley bags, backpacks, or shopping bags safely at {venueName} frontdesk and collect later with your digital QR token.
+                    </p>
+                  </div>
+
+                  <div className="text-right shrink-0 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 p-3 rounded-2xl">
+                    <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider block">Storage Tariff</span>
+                    <span className="text-xl font-black text-amber-600 dark:text-amber-400">₹{hotelLuggageHourlyRate}</span>
+                    <span className="text-xs text-slate-500 font-semibold"> / bag / hour</span>
+                    <span className="text-[10px] text-slate-400 block mt-0.5">Flexible Custom Hours (1 - 24 hrs)</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
+                  {/* Left: Input Selection */}
+                  <div className="md:col-span-2 space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Number of Bags */}
+                      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 space-y-2">
+                        <label className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 block tracking-wider">
+                          Number of Luggage / Bags
+                        </label>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                            {miniSpaceBagCount} {miniSpaceBagCount > 1 ? 'Bags' : 'Bag'}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              disabled={miniSpaceBagCount <= 1}
+                              onClick={() => setMiniSpaceBagCount(Math.max(1, miniSpaceBagCount - 1))}
+                              className="w-8 h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-700 hover:bg-slate-100 flex items-center justify-center font-black disabled:opacity-30 cursor-pointer"
+                            >
+                              -
+                            </button>
+                            <span className="w-6 text-center font-black text-sm">{miniSpaceBagCount}</span>
+                            <button
+                              type="button"
+                              disabled={miniSpaceBagCount >= 10}
+                              onClick={() => setMiniSpaceBagCount(Math.min(10, miniSpaceBagCount + 1))}
+                              className="w-8 h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-700 hover:bg-slate-100 flex items-center justify-center font-black cursor-pointer"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Customized Storage Hours Stepper */}
+                      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 block tracking-wider">
+                            Storage Duration (Custom Hours)
+                          </label>
+                          <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
+                            @ ₹{hotelLuggageHourlyRate}/hr
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                            {miniSpaceHours} {miniSpaceHours > 1 ? 'Hours' : 'Hour'}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              disabled={miniSpaceHours <= 1}
+                              onClick={() => setMiniSpaceHours(Math.max(1, miniSpaceHours - 1))}
+                              className="w-8 h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-700 hover:bg-slate-100 flex items-center justify-center font-black disabled:opacity-30 cursor-pointer"
+                            >
+                              -
+                            </button>
+                            <span className="w-8 text-center font-black text-sm">{miniSpaceHours}h</span>
+                            <button
+                              type="button"
+                              disabled={miniSpaceHours >= 24}
+                              onClick={() => setMiniSpaceHours(Math.min(24, miniSpaceHours + 1))}
+                              className="w-8 h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-700 hover:bg-slate-100 flex items-center justify-center font-black cursor-pointer"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Drop-off Date & Handover Time Selector Card */}
+                    <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/80 dark:border-white/10 pb-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-base">📅</span>
+                            <span className="text-xs uppercase font-black text-slate-900 dark:text-white tracking-wider">
+                              Luggage Handover Date & Time
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            Frontdesk bell desk operates 24x7. Select the exact date & time you will arrive to drop your bags.
+                          </p>
+                        </div>
+
+                        {/* Live Auto Pick-up calculation badge */}
+                        {(() => {
+                          const h = parseInt(miniSpaceDropHour, 10);
+                          const m = parseInt(miniSpaceDropMinute, 10);
+                          let h24 = miniSpaceDropPeriod === 'PM' ? (h === 12 ? 12 : h + 12) : (h === 12 ? 0 : h);
+                          const totalH = (h24 + miniSpaceHours) % 24;
+                          const pickPeriod = totalH >= 12 ? 'PM' : 'AM';
+                          const displayH = totalH % 12 || 12;
+                          const formattedPick = `${displayH}:${m < 10 ? '0' : ''}${m} ${pickPeriod}`;
+                          return (
+                            <div className="px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-950 dark:text-amber-300 font-bold text-xs flex items-center gap-1.5 shrink-0 self-start sm:self-auto">
+                              <span className="text-[10px] text-amber-700 dark:text-amber-400 uppercase font-black">Est. Collection:</span>
+                              <span className="font-black font-mono">{formattedPick}</span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* 1) Drop-off Date - Custom BokSpot Calendar */}
+                        <div className="space-y-1.5 relative">
+                          <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block tracking-wider">
+                            Handover / Drop Date
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const d = miniSpaceDropDate ? new Date(miniSpaceDropDate) : new Date();
+                              setMiniSpaceCalMonth(isNaN(d.getTime()) ? new Date() : d);
+                              setIsMiniSpaceCalOpen(!isMiniSpaceCalOpen);
+                            }}
+                            className="w-full bg-white dark:bg-slate-700/80 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-white flex items-center justify-between outline-none cursor-pointer transition-colors focus:border-amber-500 shadow-xs"
+                          >
+                            <span className="flex items-center gap-2">
+                              <Calendar size={14} className="text-[#ff6325] shrink-0" />
+                              <span>
+                                {(() => {
+                                  try {
+                                    const parsed = new Date(miniSpaceDropDate);
+                                    if (isNaN(parsed.getTime())) return miniSpaceDropDate;
+                                    return parsed.toLocaleDateString('en-GB', {
+                                      weekday: 'short',
+                                      day: 'numeric',
+                                      month: 'short',
+                                      year: 'numeric'
+                                    });
+                                  } catch {
+                                    return miniSpaceDropDate;
+                                  }
+                                })()}
+                              </span>
+                            </span>
+                            <span className="flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:text-amber-700">
+                              <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${isMiniSpaceCalOpen ? 'rotate-180 text-amber-600' : ''}`} />
+                            </span>
+                          </button>
+
+                          {/* Custom Popover Calendar */}
+                          <AnimatePresence>
+                            {isMiniSpaceCalOpen && (
+                              <>
+                                <div
+                                  className="fixed inset-0 z-40"
+                                  onClick={() => setIsMiniSpaceCalOpen(false)}
+                                />
+                                <motion.div
+                                  initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                                  transition={{ duration: 0.16 }}
+                                  className="absolute top-full left-0 mt-2 z-50 w-72 sm:w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-3.5 space-y-3"
+                                >
+                                  {/* Month & Navigation Header */}
+                                  <div className="flex items-center justify-between">
+                                    <div className="font-black text-xs text-slate-800 dark:text-white">
+                                      {miniSpaceCalMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setMiniSpaceCalMonth(new Date(miniSpaceCalMonth.getFullYear(), miniSpaceCalMonth.getMonth() - 1, 1));
+                                        }}
+                                        className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 flex items-center justify-center cursor-pointer transition-colors"
+                                      >
+                                        <ChevronLeft size={14} />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setMiniSpaceCalMonth(new Date(miniSpaceCalMonth.getFullYear(), miniSpaceCalMonth.getMonth() + 1, 1));
+                                        }}
+                                        className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 flex items-center justify-center cursor-pointer transition-colors"
+                                      >
+                                        <ChevronRight size={14} />
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* Days Header */}
+                                  <div className="grid grid-cols-7 text-center text-[10px] font-black text-slate-400 uppercase">
+                                    {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                                      <div key={day} className="py-1">{day}</div>
+                                    ))}
+                                  </div>
+
+                                  {/* Calendar Grid */}
+                                  <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                                    {(() => {
+                                      const year = miniSpaceCalMonth.getFullYear();
+                                      const month = miniSpaceCalMonth.getMonth();
+                                      const firstDay = new Date(year, month, 1).getDay();
+                                      const daysInMonth = new Date(year, month + 1, 0).getDate();
+                                      const cells = [];
+                                      const todayObj = new Date();
+                                      todayObj.setHours(0, 0, 0, 0);
+
+                                      for (let i = 0; i < firstDay; i++) {
+                                        cells.push(<div key={`empty-${i}`} className="h-8" />);
+                                      }
+
+                                      for (let d = 1; d <= daysInMonth; d++) {
+                                        const cellDate = new Date(year, month, d);
+                                        cellDate.setHours(0, 0, 0, 0);
+                                        const isPast = cellDate < todayObj;
+                                        const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                                        const isSelected = miniSpaceDropDate === dStr;
+                                        const isToday = cellDate.getTime() === todayObj.getTime();
+
+                                        cells.push(
+                                          <div key={d} className="flex items-center justify-center">
+                                            <button
+                                              type="button"
+                                              disabled={isPast}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setMiniSpaceDropDate(dStr);
+                                                setIsMiniSpaceCalOpen(false);
+                                              }}
+                                              className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs transition-all ${isSelected
+                                                  ? 'bg-[#ff6325] text-white shadow-md shadow-orange-500/30 font-black'
+                                                  : isToday
+                                                    ? 'border-2 border-[#ff6325] text-[#ff6325] font-black'
+                                                    : isPast
+                                                      ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                                                      : 'text-slate-700 dark:text-slate-200 hover:bg-amber-500/15 hover:text-[#ff6325] cursor-pointer'
+                                                }`}
+                                            >
+                                              {d}
+                                            </button>
+                                          </div>
+                                        );
+                                      }
+                                      return cells;
+                                    })()}
+                                  </div>
+
+                                  {/* Quick Jump: Today & Close */}
+                                  <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[11px]">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const todayStr = new Date().toISOString().split('T')[0];
+                                        setMiniSpaceDropDate(todayStr);
+                                        setMiniSpaceCalMonth(new Date());
+                                        setIsMiniSpaceCalOpen(false);
+                                      }}
+                                      className="font-bold text-[#ff6325] hover:underline cursor-pointer"
+                                    >
+                                      Today
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsMiniSpaceCalOpen(false);
+                                      }}
+                                      className="font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
+                                    >
+                                      Done
+                                    </button>
+                                  </div>
+                                </motion.div>
+                              </>
+                            )}
+                          </AnimatePresence>
+                        </div>
+
+                        {/* 2) Drop-off Time Custom Pickers (Hour, Minute, AM/PM) */}
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block tracking-wider">
+                            Handover Time (Hour : Min : AM/PM)
+                          </label>
+                          <div className="flex items-center gap-2">
+                            {/* Hour Select */}
+                            <select
+                              value={miniSpaceDropHour}
+                              onChange={(e) => setMiniSpaceDropHour(e.target.value)}
+                              className="w-1/3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-xl px-2.5 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer focus:border-amber-500 text-center"
+                            >
+                              {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map(hr => (
+                                <option key={hr} value={hr}>{hr}</option>
+                              ))}
+                            </select>
+
+                            <span className="font-black text-slate-400">:</span>
+
+                            {/* Minute Select */}
+                            <select
+                              value={miniSpaceDropMinute}
+                              onChange={(e) => setMiniSpaceDropMinute(e.target.value)}
+                              className="w-1/3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-xl px-2.5 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer focus:border-amber-500 text-center"
+                            >
+                              {['00', '15', '30', '45'].map(min => (
+                                <option key={min} value={min}>{min}</option>
+                              ))}
+                            </select>
+
+                            {/* AM/PM Switch Buttons */}
+                            <div className="flex rounded-xl bg-slate-200/80 dark:bg-slate-800 p-0.5 border border-slate-200 dark:border-white/10 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => setMiniSpaceDropPeriod('AM')}
+                                className={`px-2.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${miniSpaceDropPeriod === 'AM'
+                                    ? 'bg-amber-500 text-slate-950 shadow-xs'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                  }`}
+                              >
+                                AM
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setMiniSpaceDropPeriod('PM')}
+                                className={`px-2.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${miniSpaceDropPeriod === 'PM'
+                                    ? 'bg-amber-500 text-slate-950 shadow-xs'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                  }`}
+                              >
+                                PM
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Guest Luggage Details */}
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 tracking-wider">
+                          Luggage Details & Special Instructions
+                        </span>
+                        <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
+                          Tagging & Luggage Protection
+                        </span>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Bag Description (Colors / Brands / Items)</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 1 Blue American Tourister Trolley + 1 Black Laptop Bag"
+                          value={miniSpaceBagDesc}
+                          onChange={(e) => setMiniSpaceBagDesc(e.target.value)}
+                          className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-amber-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Security Guarantees */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                      <div className="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40">
+                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                        <span>Tamper-proof seal tags</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40">
+                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                        <span>₹10,000 Bag Guarantee</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40">
+                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                        <span>Instant QR Pass upon checkout</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Price Summary & Book Drop Button */}
+                  <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 space-y-4">
+                    <h4 className="text-xs font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider">
+                      Cloakroom Summary
+                    </h4>
+
+                    <div className="space-y-2 text-xs border-b border-slate-200 dark:border-white/10 pb-3">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Storage Unit</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200">{miniSpaceBagCount} Bags × {miniSpaceHours} hrs</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Facility Location</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200">Frontdesk Bell Desk</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Security Tag Fee</span>
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400">FREE</span>
+                      </div>
+                    </div>
+
+                    {(() => {
+                      const totalAmount = miniSpaceBagCount * miniSpaceHours * hotelLuggageHourlyRate;
+
+                      return (
+                        <>
+                          <div className="flex items-baseline justify-between">
+                            <div>
+                              <span className="text-sm font-black text-slate-900 dark:text-white block">Total Amount</span>
+                              <span className="text-[10px] text-slate-400 font-semibold">
+                                {miniSpaceBagCount} Bag{miniSpaceBagCount > 1 ? 's' : ''} × {miniSpaceHours}h × ₹{hotelLuggageHourlyRate}
+                              </span>
+                            </div>
+                            <span className="text-2xl font-black text-amber-600 dark:text-amber-400">₹{totalAmount}</span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const formattedDropTime = `${miniSpaceDropHour}:${miniSpaceDropMinute} ${miniSpaceDropPeriod}`;
+                              const slotDate = miniSpaceDropDate || new Date().toISOString().split('T')[0];
+
+                              setSelectedService({
+                                id: `svc-minispace-${merchantId || 'hotel'}`,
+                                name: `${venueName} — Mini Space Cloakroom`,
+                                merchant: venueName || 'BokSpot Partner Hotel',
+                                merchantId: merchantId || liveServices[0]?.merchantId || (merchantData as any)?.id || '',
+                                merchantObj: merchantData || liveServices[0]?.merchantObj || { id: merchantId, name: venueName },
+                                price: totalAmount,
+                                basePrice: totalAmount,
+                                currency: 'INR',
+                                city: city || 'Chennai',
+                                category: 'hotels', // keeps in Accommodation archetype for the hotel business dashboard
+                                duration: miniSpaceHours * 60,
+                                metadata: {
+                                  facilityName: `${venueName} Frontdesk Cloakroom`,
+                                  merchantId: merchantId || liveServices[0]?.merchantId || (merchantData as any)?.id || '',
+                                  returnHotelUrl: `/${bookingType}/${rawCategory}/${merchantId}`,
+                                  miniSpace: {
+                                    bagCount: miniSpaceBagCount,
+                                    durationHours: miniSpaceHours,
+                                    hourlyRate: hotelLuggageHourlyRate,
+                                    dropDate: slotDate,
+                                    dropTime: formattedDropTime,
+                                    bagDesc: miniSpaceBagDesc || 'Luggage & Backpacks',
+                                    totalAmount,
+                                    hotelName: venueName,
+                                    returnHotelUrl: `/${bookingType}/${rawCategory}/${merchantId}`
+                                  }
+                                }
+                              });
+
+                              setSelectedSlot({
+                                id: `slot-minispace-${Date.now()}`,
+                                date: slotDate,
+                                timeStr: `${formattedDropTime} (${miniSpaceHours} Hours)`,
+                                available: true
+                              });
+
+                              router.push('/booking/checkout');
+                            }}
+                            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 active:scale-95 text-slate-950 font-black text-xs uppercase tracking-wider shadow-md shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                          >
+                            <span>PROCEED TO CHECKOUT &rarr;</span>
+                          </button>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 text-center font-medium">
+                            Select guest details & payment method on checkout page. Digital QR Pass generated upon confirmation.
+                          </p>
+                        </>
+                      );
+                    })()}
+                  </div>
                 </div>
               </div>
             )}
@@ -3368,12 +4080,12 @@ export default function VenueProfilePage() {
 
           const availableAddons = (Array.isArray(activeMetaObj.addons) && activeMetaObj.addons.length > 0)
             ? activeMetaObj.addons.map((a: any, i: number) => ({
-                id: a.id || a.name || `addon-${i}`,
-                name: a.name || 'Custom Add-on',
-                price: Number(a.price) || 0,
-                icon: a.icon || '⭐',
-                desc: a.description || 'Enhance your match experience.'
-              }))
+              id: a.id || a.name || `addon-${i}`,
+              name: a.name || 'Custom Add-on',
+              price: Number(a.price) || 0,
+              icon: a.icon || '⭐',
+              desc: a.description || 'Enhance your match experience.'
+            }))
             : defaultAddonsList;
 
           const addonsTotal = selectedTurfAddons.reduce((sum, addName) => {
@@ -3477,11 +4189,10 @@ export default function VenueProfilePage() {
                               setSelectedTurfAddons(prev => [...prev, addon.name]);
                             }
                           }}
-                          className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${
-                            isChecked
-                              ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-500 ring-2 ring-blue-500/20 shadow-md'
-                              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
-                          }`}
+                          className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${isChecked
+                            ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-500 ring-2 ring-blue-500/20 shadow-md'
+                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                            }`}
                         >
                           <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-white/10 flex items-center justify-center text-lg shrink-0">
                             {addon.icon}
@@ -3499,11 +4210,10 @@ export default function VenueProfilePage() {
                               {addon.desc}
                             </p>
                           </div>
-                          <div className={`h-5 w-5 rounded-md border flex items-center justify-center text-xs font-black shrink-0 mt-0.5 ${
-                            isChecked 
-                              ? 'bg-blue-600 text-white border-blue-600' 
-                              : 'border-slate-300 dark:border-white/20'
-                          }`}>
+                          <div className={`h-5 w-5 rounded-md border flex items-center justify-center text-xs font-black shrink-0 mt-0.5 ${isChecked
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'border-slate-300 dark:border-white/20'
+                            }`}>
                             {isChecked && '✓'}
                           </div>
                         </div>

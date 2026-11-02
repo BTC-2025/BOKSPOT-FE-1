@@ -1582,6 +1582,7 @@ export default function ProviderDiscoveryPage() {
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [freeCancellationOnly, setFreeCancellationOnly] = useState<boolean>(false);
   const [petFriendlyOnly, setPetFriendlyOnly] = useState<boolean>(false);
+  const [isLuxuryMode, setIsLuxuryMode] = useState<boolean>(false);
 
 
   const [servicesList, setServicesList] = useState<Service[]>(() => {
@@ -1649,7 +1650,7 @@ export default function ProviderDiscoveryPage() {
             return true;
           }).map((item: any) => ({
             ...item,
-            merchant: item.merchant || { name: item.merchantName || 'Grand Hotel', id: item.merchantId || item.id },
+            merchant: typeof item.merchant === 'object' ? item.merchant : { name: item.merchantName || 'Grand Hotel', id: item.merchantId || item.id },
             basePrice: item.basePrice || item.price || '2500'
           }));
         }
@@ -1746,19 +1747,48 @@ export default function ProviderDiscoveryPage() {
 
     // Pet friendly only
     if (petFriendlyOnly || pets || petCount > 0) {
-      const rawText = `${s.name} ${s.description || ''} ${JSON.stringify(s.metadata || {})} ${JSON.stringify(s.merchant?.metadata || {})}`.toLowerCase();
-      if (rawText.includes('no pets') || rawText.includes('pets not allowed') || rawText.includes('strictly no pets')) {
+      const mMeta = s.merchant?.metadata || s.merchantObj?.metadata || s.metadata || {};
+      const isExplicitlyPetFriendly = s.merchant?.isPetFriendly === true ||
+        s.merchantObj?.isPetFriendly === true ||
+        s.isPetFriendly === true ||
+        mMeta.isPetFriendly === true ||
+        s.metadata?.isPetFriendly === true;
+
+      const rawText = `${s.name || ''} ${s.description || ''} ${s.merchant?.name || ''} ${JSON.stringify(s.metadata || {})} ${JSON.stringify(mMeta)}`.toLowerCase();
+      
+      const hasStrictNoPets = rawText.includes('no pets') || rawText.includes('pets not allowed') || rawText.includes('strictly no pets') || rawText.includes('pets are not permitted');
+      if (hasStrictNoPets && !isExplicitlyPetFriendly) {
         return false;
       }
-      // If user explicitly activated pet friendly filter, verify positive pet allowance
-      if (petFriendlyOnly) {
-        const isPetFriendly = rawText.includes('pet friendly') ||
-          rawText.includes('pets allowed') ||
+
+      if (petFriendlyOnly || pets || petCount > 0) {
+        const hasPetFriendlyKeyword = isExplicitlyPetFriendly ||
+          rawText.includes('pet friendly') ||
           rawText.includes('pet-friendly') ||
+          rawText.includes('petfriendly') ||
+          rawText.includes('pets allowed') ||
           rawText.includes('pets welcome') ||
-          rawText.includes('dog friendly');
-        if (!isPetFriendly) return false;
+          rawText.includes('dog friendly') ||
+          rawText.includes('cat friendly') ||
+          rawText.includes('bring your pet') ||
+          rawText.includes('pet policy') ||
+          rawText.includes('pet stay');
+        if (!hasPetFriendlyKeyword) return false;
       }
+    }
+
+    // Just Luxury Mystery Mode: Strictly show authentic top-rated luxury stays (Customer Rating >= 4.5★)
+    if (isLuxuryMode) {
+      const customerRating = Number(s.rating || s.merchantObj?.rating || s.merchant?.rating || 0);
+      const isTopCustomerRated = customerRating >= 4.5;
+      
+      const mMeta = s.merchant?.metadata || s.merchantObj?.metadata || s.metadata || {};
+      const rawText = `${s.name || ''} ${s.description || ''} ${s.merchant?.name || ''} ${s.category || ''} ${JSON.stringify(mMeta)}`.toLowerCase();
+      const hasLuxeKeywords = rawText.includes('luxury') || rawText.includes('luxe') || rawText.includes('villa') || rawText.includes('resort') || rawText.includes('suite') || rawText.includes('palace') || rawText.includes('heritage') || rawText.includes('5-star') || rawText.includes('5 star');
+
+      // Genuine verification: Must have top customer review (4.5★+) and luxury hospitality offering
+      const isEligibleLuxe = isTopCustomerRated && (hasLuxeKeywords || customerRating >= 4.8);
+      if (!isEligibleLuxe) return false;
     }
 
     // Unified Intelligent Search Query
@@ -1950,22 +1980,22 @@ export default function ProviderDiscoveryPage() {
                         // 1. Matching cities from ALL_CITIES
                         const matchingCities = q
                           ? ALL_CITIES.filter(c => c.toLowerCase().includes(q)).slice(0, 5).map(c => ({
-                              label: c,
-                              type: 'City Destination',
+                            label: c,
+                            type: 'City Destination',
+                            icon: '📍',
+                            city: c,
+                            isCity: true
+                          }))
+                          : [
+                            { label: city || 'Chennai', type: 'Current City', icon: '📍', city: city || 'Chennai', isCity: true },
+                            ...POPULAR_CITIES.filter(p => p.name !== city).slice(0, 4).map(p => ({
+                              label: p.name,
+                              type: 'Popular City',
                               icon: '📍',
-                              city: c,
+                              city: p.name,
                               isCity: true
                             }))
-                          : [
-                              { label: city || 'Chennai', type: 'Current City', icon: '📍', city: city || 'Chennai', isCity: true },
-                              ...POPULAR_CITIES.filter(p => p.name !== city).slice(0, 4).map(p => ({
-                                label: p.name,
-                                type: 'Popular City',
-                                icon: '📍',
-                                city: p.name,
-                                isCity: true
-                              }))
-                            ];
+                          ];
 
                         // 2. Matching stays from loaded servicesList
                         const matchingStays = (servicesList || [])
@@ -2136,11 +2166,10 @@ export default function ProviderDiscoveryPage() {
                                   }
                                   setActiveDatePicker('checkout');
                                 }}
-                                className={`h-9 w-9 mx-auto rounded-full text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
-                                  isSelected
+                                className={`h-9 w-9 mx-auto rounded-full text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${isSelected
                                     ? 'bg-[#1d4ed8] text-white shadow-md shadow-blue-500/30 font-black scale-105'
                                     : 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                }`}
+                                  }`}
                               >
                                 {day}
                               </button>
@@ -2255,13 +2284,12 @@ export default function ProviderDiscoveryPage() {
                                   setCheckOutDate(dateStr);
                                   setActiveDatePicker(null);
                                 }}
-                                className={`h-9 w-9 mx-auto rounded-full text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
-                                  isSelected
+                                className={`h-9 w-9 mx-auto rounded-full text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${isSelected
                                     ? 'bg-[#1d4ed8] text-white shadow-md shadow-blue-500/30 font-black scale-105'
                                     : isPastCheckIn
-                                    ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
-                                    : 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                }`}
+                                      ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                                      : 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                  }`}
                               >
                                 {day}
                               </button>
@@ -2475,11 +2503,10 @@ export default function ProviderDiscoveryPage() {
                 <select
                   value={priceRange}
                   onChange={(e) => setPriceRange(Number(e.target.value))}
-                  className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${
-                    priceRange < 50000
+                  className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${priceRange < 50000
                       ? 'bg-[#ff6325]/10 border-[#ff6325] text-[#ff6325]'
                       : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20 shadow-xs'
-                  }`}
+                    }`}
                 >
                   <option value={50000}>₹ Any Price</option>
                   <option value={3500}>Under ₹3,500</option>
@@ -2495,11 +2522,10 @@ export default function ProviderDiscoveryPage() {
                 <select
                   value={minRating}
                   onChange={(e) => setMinRating(Number(e.target.value))}
-                  className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${
-                    minRating > 0
+                  className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${minRating > 0
                       ? 'bg-[#ff6325]/10 border-[#ff6325] text-[#ff6325]'
                       : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20 shadow-xs'
-                  }`}
+                    }`}
                 >
                   <option value={0}>★ Any Rating</option>
                   <option value={4.0}>★ 4.0+ Above</option>
@@ -2513,11 +2539,10 @@ export default function ProviderDiscoveryPage() {
               <button
                 type="button"
                 onClick={() => setFreeCancellationOnly(!freeCancellationOnly)}
-                className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
-                  freeCancellationOnly
+                className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${freeCancellationOnly
                     ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
                     : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 hover:bg-slate-50'
-                }`}
+                  }`}
               >
                 <span>Free Cancellation</span>
               </button>
@@ -2526,17 +2551,35 @@ export default function ProviderDiscoveryPage() {
               <button
                 type="button"
                 onClick={() => setPetFriendlyOnly(!petFriendlyOnly)}
-                className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
-                  petFriendlyOnly || pets
+                className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${petFriendlyOnly || pets
                     ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
                     : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 hover:bg-slate-50'
-                }`}
+                  }`}
               >
                 <span>🐾 Pet Friendly</span>
               </button>
 
+              {/* Just Luxury (Golden Mystery Pill) */}
+              <button
+                type="button"
+                onClick={() => setIsLuxuryMode(!isLuxuryMode)}
+                className={`px-4 py-1.5 rounded-full border text-xs font-black transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-sm ${isLuxuryMode
+                    ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 border-amber-300 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/30'
+                    : 'bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300 hover:border-amber-400 hover:bg-amber-500/15'
+                  }`}
+                title="Filter only 5-Star & Ultra Luxury stays with confidential blind booking"
+              >
+                <Sparkles size={13} className={isLuxuryMode ? 'text-slate-950 animate-spin' : 'text-amber-500'} />
+                <span>✨ Just Luxury</span>
+                {isLuxuryMode && (
+                  <span className="text-[9px] uppercase px-1.5 py-0.2 bg-black/80 text-amber-300 rounded font-black tracking-wider">
+                    Secret Mode
+                  </span>
+                )}
+              </button>
+
               {/* Reset Filters (Only appears when any filter is active) */}
-              {(priceRange < 50000 || minRating > 0 || freeCancellationOnly || petFriendlyOnly) && (
+              {(priceRange < 50000 || minRating > 0 || freeCancellationOnly || petFriendlyOnly || isLuxuryMode) && (
                 <button
                   type="button"
                   onClick={() => {
@@ -2544,6 +2587,7 @@ export default function ProviderDiscoveryPage() {
                     setMinRating(0);
                     setFreeCancellationOnly(false);
                     setPetFriendlyOnly(false);
+                    setIsLuxuryMode(false);
                   }}
                   className="px-2.5 py-1 rounded-full text-[11px] font-bold text-slate-400 hover:text-[#ff6325] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 >
@@ -2771,12 +2815,15 @@ export default function ProviderDiscoveryPage() {
                         >
                           <Link
                             href={isHotelCategory
-                              ? `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?checkIn=${checkInDate}&checkOut=${checkOutDate}&adults=${adults}&children=${children}&childAges=${encodeURIComponent(JSON.stringify(childAges))}&rooms=${rooms}&pets=${pets}&petCount=${petCount}`
+                              ? `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?checkIn=${checkInDate}&checkOut=${checkOutDate}&adults=${adults}&children=${children}&childAges=${encodeURIComponent(JSON.stringify(childAges))}&rooms=${rooms}&pets=${pets}&petCount=${petCount}${isLuxuryMode ? '&isLuxury=true' : ''}`
                               : `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}`
                             }
                             className="block h-full"
                           >
-                            <div className={`group relative flex flex-col h-full bg-[color:var(--color-surface)] rounded-2xl overflow-hidden border border-[color:var(--color-outline-variant)]/30 hover:border-[#ff6325]/50 hover:shadow-xl hover:shadow-[#ff6325]/10 transition-all duration-300 cursor-pointer ${viewMode === 'list' ? 'sm:flex-row' : ''}`}>
+                            <div className={`group relative flex flex-col h-full bg-[color:var(--color-surface)] rounded-2xl overflow-hidden border transition-all duration-300 cursor-pointer ${isLuxuryMode && isHotelCategory
+                                ? 'border-amber-400/50 hover:border-amber-400 hover:shadow-xl hover:shadow-amber-500/15'
+                                : 'border-[color:var(--color-outline-variant)]/30 hover:border-[#ff6325]/50 hover:shadow-xl hover:shadow-[#ff6325]/10'
+                              } ${viewMode === 'list' ? 'sm:flex-row' : ''}`}>
                               {/* Compact Image Header with Hover Zoom */}
                               <div className={`relative overflow-hidden bg-[color:var(--color-surface-dim)] shrink-0 ${viewMode === 'list' ? 'sm:w-64 h-44 sm:h-auto' : 'h-40 sm:h-44 w-full'}`}>
                                 <img
@@ -2808,10 +2855,16 @@ export default function ProviderDiscoveryPage() {
 
                                 {/* Verified Pill / Rating Badge */}
                                 <div className="absolute top-2.5 left-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white text-[10px] font-bold shadow-sm">
-                                  <Star size={11} className="text-[#ff6325] fill-[#ff6325]" />
+                                  <Star size={11} className={isLuxuryMode && isHotelCategory ? 'text-amber-400 fill-amber-400' : 'text-[#ff6325] fill-[#ff6325]'} />
                                   <span>{group.rating || '4.8'}</span>
                                   <span className="text-white/60 text-[9px]">({group.reviewCount || '20+'})</span>
                                 </div>
+
+                                {isLuxuryMode && isHotelCategory && (
+                                  <div className="absolute top-2.5 left-24 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 font-black text-[9px] uppercase tracking-wider shadow-sm flex items-center gap-1">
+                                    <Sparkles size={9} /> BokSpot Luxe
+                                  </div>
+                                )}
 
                                 <div className="absolute top-2.5 right-2.5 p-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-white/80 hover:text-[#ff6325] hover:scale-110 transition-all shadow-sm">
                                   <Heart size={13} />
@@ -2819,7 +2872,10 @@ export default function ProviderDiscoveryPage() {
 
                                 {/* Bottom of Image: Price tag preview if available */}
                                 {group.minPrice && (
-                                  <div className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md bg-gradient-to-r from-[#ff6325] to-[#e04e13] text-white font-extrabold text-[11px] shadow-md">
+                                  <div className={`absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md text-white font-extrabold text-[11px] shadow-md ${isLuxuryMode && isHotelCategory
+                                      ? 'bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950'
+                                      : 'bg-gradient-to-r from-[#ff6325] to-[#e04e13]'
+                                    }`}>
                                     From ₹{group.minPrice}
                                   </div>
                                 )}
@@ -2829,15 +2885,46 @@ export default function ProviderDiscoveryPage() {
                               <div className="p-3.5 sm:p-4 flex flex-col flex-1 justify-between">
                                 <div>
                                   <div className="flex items-start justify-between gap-1.5 mb-1">
-                                    <h3 className="font-bold text-sm sm:text-base text-[color:var(--color-on-surface)] group-hover:text-[#ff6325] transition-colors line-clamp-1 tracking-tight">
-                                      {group.branchName || s?.branchName || s?.metadata?.branchName || m.name || 'Merchant'}
+                                    <h3 className={`font-bold text-sm sm:text-base line-clamp-1 tracking-tight transition-colors ${isLuxuryMode && isHotelCategory
+                                        ? 'text-amber-500 dark:text-amber-300 font-extrabold'
+                                        : 'text-[color:var(--color-on-surface)] group-hover:text-[#ff6325]'
+                                      }`}>
+                                      {isLuxuryMode && isHotelCategory
+                                        ? (() => {
+                                            const mMeta = m?.metadata || s?.metadata || {};
+                                            const isOptedIn = m?.isMysteryModeOptIn !== false && mMeta?.isMysteryModeOptIn !== false;
+                                            
+                                            if (!isOptedIn) {
+                                              return group.branchName || s?.branchName || s?.metadata?.branchName || s?.name || m.name || 'BokSpot Stay';
+                                            }
+
+                                            const primaryUnit = group.listings?.[0]?.name || Array.from(group.categories)[0] || '';
+                                            const raw = `${group.branchName || ''} ${s?.name || ''} ${primaryUnit} ${category}`.toLowerCase();
+                                            
+                                            let archetype = '5-Star Luxury Stay';
+                                            if (raw.includes('villa') || category.includes('villa')) archetype = 'Secret Luxury Villa';
+                                            else if (raw.includes('resort') || category.includes('resort')) archetype = 'Secret Luxury Resort';
+                                            else if (raw.includes('palace') || raw.includes('heritage')) archetype = 'Secret Heritage Palace';
+                                            else if (raw.includes('beach') || raw.includes('ocean')) archetype = 'Secret Coastal Haven';
+                                            else if (raw.includes('city') || raw.includes('executive')) archetype = 'Secret Executive Sanctuary';
+                                            else if (raw.includes('deluxe') || raw.includes('premier')) archetype = 'Secret Premier Residence';
+
+                                            if (primaryUnit) {
+                                              return `${archetype} • ${primaryUnit.replace(/\b(Standard|Non-AC|AC|Room)\b/gi, '').trim() || primaryUnit}`;
+                                            }
+                                            return archetype;
+                                          })()
+                                        : (group.branchName || s?.branchName || s?.metadata?.branchName || s?.name || m.name || 'BokSpot Stay')}
                                     </h3>
                                   </div>
 
-
                                   <div className="flex items-center text-[11px] font-medium text-[color:var(--color-on-surface-variant)] mb-2">
-                                    <MapPin size={12} className="text-[#ff6325]/80 mr-1 shrink-0" />
-                                    <span className="truncate max-w-[200px]">{group.address || group.groupCity || m.address || city || 'Chennai'}</span>
+                                    <MapPin size={12} className={isLuxuryMode && isHotelCategory ? 'text-amber-500 mr-1 shrink-0' : 'text-[#ff6325]/80 mr-1 shrink-0'} />
+                                    <span className="truncate max-w-[200px]">
+                                      {isLuxuryMode && isHotelCategory && (m?.isMysteryModeOptIn !== false && (m?.metadata?.isMysteryModeOptIn !== false))
+                                        ? `${city || 'Prime District'} • Full address revealed on booking`
+                                        : (group.address || group.groupCity || m.address || city || 'Chennai')}
+                                    </span>
                                     {group.dist && (
                                       <>
                                         <span className="mx-1.5 text-[color:var(--color-outline-variant)]">•</span>

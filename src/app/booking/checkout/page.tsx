@@ -79,18 +79,18 @@ export default function CheckoutPage() {
       ? meta.addons
       : (selectedService.selectedListing?.addons || selectedService.metadata?.addons || []);
   const addonsTotal = selectedAddons.reduce((sum: number, idx: number) => sum + (availableAddons[idx]?.price || 0), 0);
-  
-  const basePrice = isHotel 
+
+  const basePrice = isHotel
     ? Math.round(selectedService.price / 1.12) // extract pre-tax price from inclusive total
     : (listing?.price || selectedService.price || 0);
 
   const platformFee = 29;
-  const gst = isHotel 
+  const gst = isHotel
     ? (selectedService.price - basePrice) // exact 12% GST calculated in template
     : Math.round((basePrice + addonsTotal) * 0.18);
 
-  const total = isHotel 
-    ? (selectedService.price + addonsTotal + platformFee) 
+  const total = isHotel
+    ? (selectedService.price + addonsTotal + platformFee)
     : (basePrice + addonsTotal + platformFee + gst);
 
   // Partial Advance calculation (e.g. 30% online advance for venues/turfs, 70% at venue)
@@ -99,7 +99,7 @@ export default function CheckoutPage() {
 
   // Split Billing calculation
   const splitPerPersonAmt = isSplitEnabled ? Math.round(advanceAmount / splitCount) : advanceAmount;
-  const amountToPayNow = isSplitEnabled 
+  const amountToPayNow = isSplitEnabled
     ? (splitInitiatorPaysNow ? splitPerPersonAmt : 0)
     : advanceAmount;
 
@@ -157,8 +157,13 @@ export default function CheckoutPage() {
         durationMinutes: selectedService.duration,
         customerName: name,
         customerEmail: email,
-        customerPhone: phone,
-        notes: notes || '',
+        notes: selectedService.metadata?.miniSpace
+          ? `[Mini Space Cloakroom] ${selectedService.metadata.miniSpace.bagCount} Bags • ${selectedService.metadata.miniSpace.durationHours}h Storage | Desc: ${selectedService.metadata.miniSpace.bagDesc || 'None'} | ${notes || ''}`
+          : (notes || ''),
+        metadata: {
+          ...(selectedService.metadata || {}),
+          miniSpace: selectedService.metadata?.miniSpace || undefined,
+        },
         bookedAt: new Date().toISOString(),
         paymentMethod,
         payMode,
@@ -275,6 +280,41 @@ export default function CheckoutPage() {
                         </div>
                       )}
                     </div>
+                  ) : selectedService.metadata?.miniSpace ? (
+                    <div className="space-y-2 mt-3 pt-3 border-t border-gray-100">
+                      <div className="flex flex-wrap gap-2">
+                        <span className="text-xs font-bold px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full border border-amber-200 flex items-center gap-1">
+                          🧳 {selectedService.metadata.miniSpace.bagCount} Luggage / Bags
+                        </span>
+                        <span className="text-xs font-bold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-200 flex items-center gap-1">
+                          <Clock size={12} /> {selectedService.metadata.miniSpace.durationHours} Hours Storage {selectedService.metadata.miniSpace.hourlyRate ? `(@ ₹${selectedService.metadata.miniSpace.hourlyRate}/hr)` : ''}
+                        </span>
+                        <span className="text-xs font-bold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200 flex items-center gap-1">
+                          🛡️ Tamper-proof Insured
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 pt-2 bg-amber-50/50 p-2.5 rounded-xl border border-amber-100 text-xs">
+                        <div>
+                          <span className="text-slate-400 font-bold block text-[10px] uppercase">Drop Date</span>
+                          <span className="font-extrabold text-slate-800">{selectedService.metadata.miniSpace.dropDate || selectedSlot.date}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 font-bold block text-[10px] uppercase">Drop Time</span>
+                          <span className="font-extrabold text-slate-800">{selectedService.metadata.miniSpace.dropTime || '11:00 AM'}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 font-bold block text-[10px] uppercase">Drop Location</span>
+                          <span className="font-extrabold text-slate-800 truncate block">Frontdesk Bell Desk</span>
+                        </div>
+                      </div>
+
+                      {selectedService.metadata.miniSpace.bagDesc && (
+                        <div className="text-[11px] text-slate-500 font-medium">
+                          <strong>Luggage Notes:</strong> {selectedService.metadata.miniSpace.bagDesc}
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <div className="flex flex-wrap gap-2 mt-2">
                       {meta.roomType && (
@@ -301,7 +341,7 @@ export default function CheckoutPage() {
                   )}
                 </div>
               </div>
-              
+
               {/* Add-ons Section */}
               {availableAddons.length > 0 && (
                 <div className="p-5 border-t border-gray-100 bg-gray-50/50">
@@ -421,13 +461,11 @@ export default function CheckoutPage() {
                       setPayMode('FULL_ONLINE');
                     }
                   }}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                    isSplitEnabled ? 'bg-indigo-600' : 'bg-gray-200'
-                  }`}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${isSplitEnabled ? 'bg-indigo-600' : 'bg-gray-200'
+                    }`}
                 >
-                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${
-                    isSplitEnabled ? 'translate-x-5' : 'translate-x-0'
-                  }`} />
+                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${isSplitEnabled ? 'translate-x-5' : 'translate-x-0'
+                    }`} />
                 </button>
               </div>
 
@@ -438,11 +476,10 @@ export default function CheckoutPage() {
                     <button
                       type="button"
                       onClick={() => setSplitInitiatorPaysNow(false)}
-                      className={`p-3 rounded-xl border-2 text-left transition-all ${
-                        !splitInitiatorPaysNow
+                      className={`p-3 rounded-xl border-2 text-left transition-all ${!splitInitiatorPaysNow
                           ? 'border-indigo-600 bg-white shadow-sm ring-2 ring-indigo-600/10'
                           : 'border-gray-200 bg-gray-50/50 hover:bg-white'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-black text-indigo-950 flex items-center gap-1.5">
@@ -458,11 +495,10 @@ export default function CheckoutPage() {
                     <button
                       type="button"
                       onClick={() => setSplitInitiatorPaysNow(true)}
-                      className={`p-3 rounded-xl border-2 text-left transition-all ${
-                        splitInitiatorPaysNow
+                      className={`p-3 rounded-xl border-2 text-left transition-all ${splitInitiatorPaysNow
                           ? 'border-indigo-600 bg-white shadow-sm ring-2 ring-indigo-600/10'
                           : 'border-gray-200 bg-gray-50/50 hover:bg-white'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-black text-indigo-950 flex items-center gap-1.5">
@@ -482,7 +518,7 @@ export default function CheckoutPage() {
                         {splitInitiatorPaysNow ? 'Total Group Members (You + Friends)' : 'Total People in Group'}
                       </span>
                       <span className="text-[11px] text-gray-400">
-                        {splitInitiatorPaysNow 
+                        {splitInitiatorPaysNow
                           ? `Total bill divided by ${splitCount} (You + ${splitCount - 1} friend${splitCount - 1 > 1 ? 's' : ''})`
                           : `Total bill will be divided into ${splitCount} equal shares`}
                       </span>
@@ -496,9 +532,8 @@ export default function CheckoutPage() {
                             setSplitPayerNames(p => p.slice(0, -1));
                           }
                         }}
-                        className={`w-8 h-8 rounded-lg font-black text-sm flex items-center justify-center transition-colors ${
-                          splitCount <= 2 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 cursor-pointer'
-                        }`}
+                        className={`w-8 h-8 rounded-lg font-black text-sm flex items-center justify-center transition-colors ${splitCount <= 2 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 cursor-pointer'
+                          }`}
                         title="Split requires at least 2 people"
                       >
                         -
@@ -532,7 +567,7 @@ export default function CheckoutPage() {
                         {!splitInitiatorPaysNow ? 'Amount to Pay Now (Organizer):' : 'Your Share Due Now (1 Person):'}
                       </span>
                       <span className="text-[11px] text-indigo-600">
-                        {!splitInitiatorPaysNow 
+                        {!splitInitiatorPaysNow
                           ? `₹${splitPerPersonAmt.toLocaleString()} per person across ${splitCount} unique links`
                           : `₹${splitPerPersonAmt.toLocaleString()} per person • Remaining ${splitCount - 1} link${splitCount - 1 > 1 ? 's' : ''} for friends`}
                       </span>
@@ -562,11 +597,10 @@ export default function CheckoutPage() {
                   <button
                     type="button"
                     onClick={() => setPayMode('FULL_ONLINE')}
-                    className={`p-3.5 rounded-xl border-2 text-left transition-all cursor-pointer ${
-                      payMode === 'FULL_ONLINE'
+                    className={`p-3.5 rounded-xl border-2 text-left transition-all cursor-pointer ${payMode === 'FULL_ONLINE'
                         ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]/5 shadow-sm'
                         : 'border-gray-100 hover:border-gray-200'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-bold text-xs text-gray-900">100% Online Payment</span>
@@ -578,11 +612,10 @@ export default function CheckoutPage() {
                   <button
                     type="button"
                     onClick={() => setPayMode('PARTIAL_ADVANCE')}
-                    className={`p-3.5 rounded-xl border-2 text-left transition-all cursor-pointer ${
-                      payMode === 'PARTIAL_ADVANCE'
+                    className={`p-3.5 rounded-xl border-2 text-left transition-all cursor-pointer ${payMode === 'PARTIAL_ADVANCE'
                         ? 'border-amber-500 bg-amber-50/60 shadow-sm'
                         : 'border-gray-100 hover:border-gray-200'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-bold text-xs text-gray-900">30% Advance + Venue Pay</span>
@@ -608,11 +641,10 @@ export default function CheckoutPage() {
                 ].map(method => (
                   <label
                     key={method.id}
-                    className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      paymentMethod === method.id
+                    className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === method.id
                         ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]/5'
                         : 'border-gray-100 hover:border-gray-200'
-                    }`}
+                      }`}
                   >
                     <input
                       type="radio"
@@ -627,9 +659,8 @@ export default function CheckoutPage() {
                       <p className="font-bold text-sm text-gray-900">{method.label}</p>
                       <p className="text-xs text-gray-500">{method.sub}</p>
                     </div>
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                      paymentMethod === method.id ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]' : 'border-gray-300'
-                    }`}>
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${paymentMethod === method.id ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]' : 'border-gray-300'
+                      }`}>
                       {paymentMethod === method.id && <div className="w-2 h-2 rounded-full bg-white" />}
                     </div>
                   </label>
@@ -724,13 +755,12 @@ export default function CheckoutPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting || timeLeft === 0}
-                  className={`w-full py-4 rounded-xl font-extrabold text-base transition-all shadow-lg flex items-center justify-center gap-2 ${
-                    isSubmitting
+                  className={`w-full py-4 rounded-xl font-extrabold text-base transition-all shadow-lg flex items-center justify-center gap-2 ${isSubmitting
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : timeLeft === 0
-                      ? 'bg-red-100 text-red-400 cursor-not-allowed'
-                      : 'bg-[color:var(--color-primary)] hover:bg-[color:var(--color-primary)]/90 text-white shadow-[color:var(--color-primary)]/30 hover:scale-[1.02] active:scale-[0.98]'
-                  }`}
+                        ? 'bg-red-100 text-red-400 cursor-not-allowed'
+                        : 'bg-[color:var(--color-primary)] hover:bg-[color:var(--color-primary)]/90 text-white shadow-[color:var(--color-primary)]/30 hover:scale-[1.02] active:scale-[0.98]'
+                    }`}
                 >
                   {isSubmitting ? (
                     <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Processing...</>

@@ -196,12 +196,12 @@ export const api = {
       return [];
     },
     list: async (params?: Record<string, string>) => {
-      // Client-side instant memory cache (60s TTL)
+      // Client-side instant memory cache (2s TTL for re-render debouncing only)
       const cacheKey = JSON.stringify(params || {});
       const now = Date.now();
       if ((api.services as any)._cache && (api.services as any)._cache[cacheKey]) {
         const entry = (api.services as any)._cache[cacheKey];
-        if (now - entry.timestamp < 60000) {
+        if (now - entry.timestamp < 2000) {
           return entry.data;
         }
       }
@@ -225,59 +225,113 @@ export const api = {
           // Map Backend output (whether { data: [...] } or { data: { data: [...] } } or array)
           const servicesArray = Array.isArray(body)
             ? body
-            : Array.isArray(body.data)
-              ? body.data
-              : body.data?.data || [];
-          const mappedServices = servicesArray.map((srv: any) => ({
-            id: srv.id,
-            name: srv.name,
-            slug: srv.slug || srv.id,
-            description: srv.description,
-            shortDescription: srv.shortDescription || srv.description?.substring(0, 50),
-            serviceType: srv.serviceType || srv.name,
-            basePrice: srv.basePrice || 0,
-            currency: srv.currency || 'INR',
-            durationMinutes: srv.durationMinutes || 60,
-            images: (srv.images && srv.images.length > 0 && srv.images[0]) ? srv.images : (srv.metadata?.images && srv.metadata.images.length > 0) ? srv.metadata.images : (srv.metadata?.mainImageUrl ? [srv.metadata.mainImageUrl] : ['https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&q=80']),
-            image: (srv.images && srv.images.length > 0 && srv.images[0]) ? srv.images[0] : (srv.metadata?.mainImageUrl || srv.metadata?.images?.[0] || 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&q=80'),
-            rating: srv.rating || 5,
-            reviewCount: srv.reviewCount || 10,
-            isFeatured: srv.isFeatured || false,
-            metadata: srv.metadata || {},
-            branchName: srv.branchName || srv.metadata?.branchName || srv.metadata?.facilityName,
-            address: srv.address || srv.metadata?.address || srv.metadata?.facilityAddress,
-            merchantId: srv.merchantId || srv.merchant?.id,
-            merchant: srv.metadata?.merchantName || srv.merchant?.name || 'Merchant',
-            merchantObj: srv.merchant ? {
-              id: srv.merchant.id || srv.merchantId,
-              name: srv.metadata?.merchantName || srv.merchant.name,
-              city: srv.merchant.city,
-              address: `${srv.merchant.city} Main Road`,
-              rating: srv.merchant.rating || 5,
-              reviewCount: srv.merchant.reviewCount || 10,
-              images: srv.images && srv.images.length > 0 ? srv.images : [],
-              tags: [],
-              amenities: [],
-              allCategories: srv.merchant.allCategories || []
-            } : undefined,
-            categoryObj: (typeof srv.category === 'object' && srv.category) ? {
-              id: srv.category.id,
-              name: srv.category.name,
-              slug: srv.category.slug
-            } : undefined,
-            city: srv.merchant?.city || 'Chennai',
-            category: (typeof srv.category === 'string' && srv.category) ? srv.category : (srv.category?.name || srv.metadata?.originalCategory || 'Category'),
-            // Pass the dynamic configurations straight to UI
-            rawConfig: srv
-          }));
+            : Array.isArray(body.data?.data)
+              ? body.data.data
+              : Array.isArray(body.data)
+                ? body.data
+                : body.data?.services || [];
+          // Check vendor-portal-storage-v10 for local merchant customizations
+          let localVendorMap: Record<string, any> = {};
+          if (typeof window !== 'undefined') {
+            try {
+              const rawVp = localStorage.getItem('vendor-portal-storage-v10');
+              if (rawVp) {
+                const parsedVp = JSON.parse(rawVp);
+                const curM = parsedVp.state?.currentMerchant;
+                if (curM && curM.id) {
+                  localVendorMap[curM.id] = curM;
+                  if (curM.merchantName) localVendorMap[curM.merchantName.toLowerCase()] = curM;
+                }
+                const customM = parsedVp.state?.customMerchants || {};
+                Object.keys(customM).forEach(k => {
+                  localVendorMap[k] = { ...(localVendorMap[k] || {}), ...customM[k] };
+                });
+              }
+            } catch (e) {
+              console.warn('Error reading vendor portal storage:', e);
+            }
+          }
+
+          const mappedServices = servicesArray.map((srv: any) => {
+            const mId = srv.merchantId || srv.merchant?.id;
+            const mName = srv.metadata?.merchantName || srv.merchant?.name || 'Merchant';
+            const localCustom = (mId && localVendorMap[mId]) || localVendorMap[mName.toLowerCase()] || {};
+            const mergedMerchantMeta = {
+              ...(srv.merchant?.metadata || {}),
+              ...(localCustom.metadata || {}),
+              ...(localCustom.isPetFriendly !== undefined ? { isPetFriendly: localCustom.isPetFriendly } : {}),
+              ...(localCustom.isLuxeVerified !== undefined ? { isLuxeVerified: localCustom.isLuxeVerified } : {}),
+              ...(localCustom.starRating !== undefined ? { starRating: localCustom.starRating } : {}),
+              ...(localCustom.tier !== undefined ? { tier: localCustom.tier } : {}),
+              ...(localCustom.luggageHourlyRate !== undefined ? { luggageHourlyRate: localCustom.luggageHourlyRate } : {}),
+              ...(localCustom.metadata?.isLuggageStorageEnabled !== undefined ? { isLuggageStorageEnabled: localCustom.metadata.isLuggageStorageEnabled } : {})
+            };
+
+            return {
+              id: srv.id,
+              name: srv.name,
+              slug: srv.slug || srv.id,
+              description: srv.description,
+              shortDescription: srv.shortDescription || srv.description?.substring(0, 50),
+              serviceType: srv.serviceType || srv.name,
+              basePrice: srv.basePrice || 0,
+              currency: srv.currency || 'INR',
+              durationMinutes: srv.durationMinutes || 60,
+              images: (srv.images && srv.images.length > 0 && srv.images[0]) ? srv.images : (srv.metadata?.images && srv.metadata.images.length > 0) ? srv.metadata.images : (srv.metadata?.mainImageUrl ? [srv.metadata.mainImageUrl] : ['https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&q=80']),
+              image: (srv.images && srv.images.length > 0 && srv.images[0]) ? srv.images[0] : (srv.metadata?.mainImageUrl || srv.metadata?.images?.[0] || 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&q=80'),
+              rating: srv.rating || 5,
+              reviewCount: srv.reviewCount || 10,
+              isFeatured: srv.isFeatured || false,
+              metadata: { ...srv.metadata, ...localCustom.metadata, isPetFriendly: localCustom.isPetFriendly ?? srv.metadata?.isPetFriendly },
+              branchName: srv.branchName || srv.metadata?.branchName || srv.metadata?.facilityName,
+              address: srv.address || srv.metadata?.address || srv.metadata?.facilityAddress,
+              merchantId: mId,
+              merchant: {
+                ...(typeof srv.merchant === 'object' ? srv.merchant : { name: mName }),
+                ...localCustom,
+                metadata: mergedMerchantMeta,
+                isPetFriendly: localCustom.isPetFriendly ?? srv.merchant?.isPetFriendly,
+                isLuxeVerified: localCustom.isLuxeVerified ?? srv.merchant?.isLuxeVerified,
+                starRating: localCustom.starRating ?? srv.merchant?.starRating,
+                tier: localCustom.tier ?? srv.merchant?.tier
+              },
+              merchantObj: {
+                id: mId,
+                name: mName,
+                city: localCustom.city || srv.merchant?.city || 'Chennai',
+                address: localCustom.address || `${srv.merchant?.city || 'Chennai'} Main Road`,
+                rating: localCustom.starRating || srv.merchant?.rating || 5,
+                reviewCount: srv.merchant?.reviewCount || 10,
+                images: srv.images && srv.images.length > 0 ? srv.images : [],
+                tags: [],
+                amenities: localCustom.amenities || [],
+                allCategories: srv.merchant?.allCategories || [],
+                metadata: mergedMerchantMeta,
+                isPetFriendly: localCustom.isPetFriendly ?? srv.merchant?.isPetFriendly,
+                isLuxeVerified: localCustom.isLuxeVerified ?? srv.merchant?.isLuxeVerified,
+                starRating: localCustom.starRating ?? srv.merchant?.starRating,
+                tier: localCustom.tier ?? srv.merchant?.tier
+              },
+              categoryObj: (typeof srv.category === 'object' && srv.category) ? {
+                id: srv.category.id,
+                name: srv.category.name,
+                slug: srv.category.slug
+              } : undefined,
+              city: localCustom.city || srv.merchant?.city || 'Chennai',
+              category: (typeof srv.category === 'string' && srv.category) ? srv.category : (srv.category?.name || srv.metadata?.originalCategory || 'Category'),
+              rawConfig: srv
+            };
+          });
           // Return actual data, even if empty, so the UI can show an empty state instead of dummy cards
           // Filter out dummy/mock fallback cards for hotel listings so only real publisher units appear
           let finalResult;
           if (params?.categorySlug && (params.categorySlug.includes('hotel') || params.categorySlug.includes('room'))) {
             finalResult = {
               data: mappedServices.filter((s: any) => {
-                const name = (s.merchant || s.name || '').toLowerCase();
-                return !name.includes('bokspot verified');
+                const mName = (typeof s.merchant === 'object' ? s.merchant?.name : s.merchant) || '';
+                const sName = s.name || '';
+                const combined = `${mName} ${sName}`.toLowerCase();
+                return !combined.includes('bokspot verified');
               }),
               meta: { total: mappedServices.length, page: 1, limit: 100, totalPages: 1 }
             };

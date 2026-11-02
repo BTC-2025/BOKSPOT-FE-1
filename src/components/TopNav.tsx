@@ -118,19 +118,17 @@ export function TopNav({
       if (!ticking) {
         window.requestAnimationFrame(() => {
           if (currentScrollY <= 40) {
-            // At the top of page: both main and secondary headers are visible
+            // At the top of page: headers are visible
             setIsMainHeaderVisible(true);
             setIsSecondaryHeaderVisible(true);
           } else {
             const scrollDelta = currentScrollY - lastScrollYRef.current;
             if (scrollDelta > 10) {
-              // Scrolling DOWN: hide both headers
+              // Scrolling DOWN: hide header
               setIsMainHeaderVisible(false);
-              setIsSecondaryHeaderVisible(false);
             } else if (scrollDelta < -8) {
-              // Scrolling UP: reveal ONLY main header while scrolling, secondary remains hidden until reaching top
+              // Scrolling UP: reveal header
               setIsMainHeaderVisible(true);
-              setIsSecondaryHeaderVisible(false);
             }
           }
 
@@ -350,11 +348,12 @@ export function TopNav({
 
   return (
     <>
-      <header 
-        className={`fixed top-0 left-0 right-0 custom-navbar transition-transform duration-300 ease-in-out ${
-          isMainHeaderVisible ? 'translate-y-0' : '-translate-y-full'
-        }`} 
-        style={{ zIndex: 9999 }}
+      <header
+        className={`fixed top-0 left-0 right-0 custom-navbar transition-transform duration-300 ease-in-out ${isMainHeaderVisible ? 'translate-y-0' : '-translate-y-full'
+          }`}
+        style={{
+          zIndex: 9999,
+        }}
       >
         <div className="flex justify-between items-center w-full pl-6 lg:pl-12 pr-0 py-1.5 lg:py-2 max-w-full">
           {/* Left Column: Logo & Brand + Location Selector (Desktop) */}
@@ -401,9 +400,9 @@ export function TopNav({
                 const navItems = [
                   { label: 'Home', href: '/', id: 'home' },
                   { label: 'Categories', href: '/categories', id: 'categories' },
-                  { 
-                    label: 'Bookings', 
-                    href: '/bookings', 
+                  {
+                    label: 'Bookings',
+                    href: '/bookings',
                     id: 'bookings'
                   },
                 ];
@@ -418,9 +417,8 @@ export function TopNav({
                           key={item.id}
                           href={item.href}
                           scroll={false}
-                          className={`flex items-center justify-center gap-1.5 px-5 py-1.5 text-[12px] font-black tracking-wide relative z-10 custom-nav-link select-none transition-colors duration-150 ${
-                            isActive ? 'custom-nav-link-active' : 'custom-nav-link-inactive'
-                          }`}
+                          className={`flex items-center justify-center gap-1.5 px-5 py-1.5 text-[12px] font-black tracking-wide relative z-10 custom-nav-link select-none transition-colors duration-150 ${isActive ? 'custom-nav-link-active' : 'custom-nav-link-inactive'
+                            }`}
                         >
                           {isActive && (
                             <motion.div
@@ -503,8 +501,8 @@ export function TopNav({
                           onClick={() => handleSelectSuggestion(service)}
                           onMouseEnter={() => setActiveIndex(index)}
                           className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors duration-200 ${isActive
-                              ? 'bg-primary/10 text-primary font-bold'
-                              : 'text-on-surface hover:bg-surface-container-highest'
+                            ? 'bg-primary/10 text-primary font-bold'
+                            : 'text-on-surface hover:bg-surface-container-highest'
                             }`}
                         >
                           <div className="flex items-center gap-3">
@@ -654,33 +652,30 @@ export function TopNav({
                         <button
                           type="button"
                           onClick={() => setTheme('light')}
-                          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                            theme === 'light'
+                          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${theme === 'light'
                               ? 'bg-white text-slate-900 shadow-sm'
                               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                          }`}
+                            }`}
                         >
                           <Sun size={13} className={theme === 'light' ? 'text-amber-500' : ''} /> Light
                         </button>
                         <button
                           type="button"
                           onClick={() => setTheme('dark')}
-                          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                            theme === 'dark'
+                          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${theme === 'dark'
                               ? 'bg-slate-900 text-white shadow-sm'
                               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                          }`}
+                            }`}
                         >
                           <Moon size={13} className={theme === 'dark' ? 'text-blue-400' : ''} /> Dark
                         </button>
                         <button
                           type="button"
                           onClick={() => setTheme('system')}
-                          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                            theme === 'system'
+                          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${theme === 'system'
                               ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
                               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                          }`}
+                            }`}
                         >
                           <Laptop size={13} /> Auto
                         </button>
@@ -764,8 +759,8 @@ export function TopNav({
             <button
               onClick={() => setUtilityDrawerOpen(!utilityDrawerOpen)}
               className={`relative flex items-center justify-center transition-all cursor-pointer shadow-md custom-nav-icon-container custom-nav-icon-btn w-9 h-9 ${utilityDrawerOpen
-                  ? 'opacity-100 scale-105 shadow-[0_0_10px_rgba(252,238,167,0.3)]'
-                  : 'opacity-85 hover:opacity-100 hover:scale-105'
+                ? 'opacity-100 scale-105 shadow-[0_0_10px_rgba(252,238,167,0.3)]'
+                : 'opacity-85 hover:opacity-100 hover:scale-105'
                 }`}
               title="Bokspot Utilities"
             >
@@ -775,12 +770,11 @@ export function TopNav({
         </div>
 
         {/* Secondary Subnav Bar (Appears when at the very top of page; hidden during middle scrolling) */}
-        <div 
-          className={`w-full overflow-hidden transition-all duration-300 ease-in-out ${
-            isSecondaryHeaderVisible 
-              ? 'max-h-14 opacity-100' 
+        <div
+          className={`w-full overflow-hidden transition-all duration-300 ease-in-out ${isSecondaryHeaderVisible
+              ? 'max-h-14 opacity-100'
               : 'max-h-0 opacity-0 pointer-events-none'
-          }`}
+            }`}
         >
           <div className="w-full secondary-subnav-bar px-4 lg:px-8 py-1.5 flex items-center justify-between text-xs select-none">
             {/* Left Side: High-intent booking shortcuts */}
@@ -818,7 +812,7 @@ export function TopNav({
               </Link>
             </div>
 
-                        {/* Right Side: Support and Settings (As requested by user) */}
+            {/* Right Side: Support and Settings (As requested by user) */}
             <div className="flex items-center gap-2 sm:gap-3 pl-3 shrink-0">
               <Link
                 href="/support"
@@ -996,12 +990,13 @@ export function TopNav({
           </div>
         </div>
       )}
-      <UtilityDrawer 
-        isOpen={utilityDrawerOpen} 
-        onClose={() => setUtilityDrawerOpen(false)} 
-        activeTab={activeUtilityTab} 
-        setActiveTab={setActiveUtilityTab} 
+      <UtilityDrawer
+        isOpen={utilityDrawerOpen}
+        onClose={() => setUtilityDrawerOpen(false)}
+        activeTab={activeUtilityTab}
+        setActiveTab={setActiveUtilityTab}
         isSecondaryHeaderVisible={isSecondaryHeaderVisible}
+        isMainHeaderVisible={isMainHeaderVisible}
       />
       <LocationSelectorModal isOpen={isLocationModalOpen} onClose={() => setIsLocationModalOpen(false)} />
     </>

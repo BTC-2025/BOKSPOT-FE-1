@@ -4,9 +4,9 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useBookingFlowStore } from '../../../lib/store';
 import Link from 'next/link';
-import { 
-  CheckCircle2, XCircle, Clock, ArrowLeft, MapPin, Calendar, Download, Share2, Check, 
-  AlertCircle, Key, Lock, Unlock, CreditCard, ShieldCheck, Ticket, User, Wallet, 
+import {
+  CheckCircle2, XCircle, Clock, ArrowLeft, MapPin, Calendar, Download, Share2, Check,
+  AlertCircle, Key, Lock, Unlock, CreditCard, ShieldCheck, Ticket, User, Wallet,
   Sparkles, RefreshCcw, Bus, Hotel, Trophy, ArrowRight, Info
 } from 'lucide-react';
 
@@ -91,8 +91,8 @@ function TrackingPageContent() {
   // Accurately compute how many members have actually paid in group split
   const splitPaidCount = booking?.isSplitEnabled
     ? (Array.isArray(booking.splitPayments)
-        ? booking.splitPayments.filter((s: any) => s.status === 'PAID').length
-        : (typeof booking.splitPaidMembers === 'number' ? booking.splitPaidMembers : 0))
+      ? booking.splitPayments.filter((s: any) => s.status === 'PAID').length
+      : (typeof booking.splitPaidMembers === 'number' ? booking.splitPaidMembers : 0))
     : 0;
   const isSplitComplete = !booking?.isSplitEnabled || splitPaidCount >= (booking?.splitCount || 2);
 
@@ -190,7 +190,7 @@ Show this at the reception counter.
   return (
     <div className="page-content min-h-screen bg-slate-50/60 dark:bg-[#0b0f17] text-slate-900 dark:text-slate-100 pb-16 w-full px-4 sm:px-6 lg:px-8">
       <div className="w-full space-y-4 pt-1">
-        
+
         {/* ── Breadcrumb & Back Action Bar ── */}
         <div className="flex items-center justify-between">
           <Link
@@ -216,7 +216,7 @@ Show this at the reception counter.
           />
 
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-5">
-            
+
             {/* Left: Confetti Icon + Booking Confirmed Header */}
             <div className="flex items-center gap-4 w-full md:w-auto">
               <div className="relative shrink-0 flex items-center justify-center w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950/40 ring-10 ring-emerald-100/60 dark:ring-emerald-900/20">
@@ -224,7 +224,7 @@ Show this at the reception counter.
                 <span className="absolute -bottom-1 -left-1.5 w-1.5 h-1.5 rounded-full bg-orange-400" />
                 <span className="absolute -top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-400" />
                 <span className="absolute -bottom-0.5 right-0.5 w-2.5 h-1 rounded-xs bg-teal-400 rotate-45" />
-                
+
                 <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/25">
                   <Check size={20} className="stroke-[3.5]" />
                 </div>
@@ -267,12 +267,56 @@ Show this at the reception counter.
           </div>
         </div>
 
+        {/* ── SPECIAL BANNER FOR MINI SPACE LUGGAGE DROP: Seamless return to Room Booking ── */}
+        {((booking.serviceName || '').toLowerCase().includes('mini space') ||
+          (booking.notes || '').includes('Mini Space') ||
+          Boolean(booking.metadata?.miniSpace)) && (() => {
+            const hotelUrl = booking.metadata?.returnHotelUrl ||
+              booking.metadata?.miniSpace?.returnHotelUrl ||
+              (booking.merchantId ? `/stay-accommodation/hotels/${booking.merchantId}` : '/stay-accommodation/hotels');
+            const hotelName = booking.metadata?.miniSpace?.hotelName || booking.merchantName || 'the Hotel';
+
+            return (
+              <div className="rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-950 p-4 sm:p-5 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in border-2 border-amber-300">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 text-2xl shadow-inner">
+                    🧳
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-white text-slate-950 shadow-xs">
+                        Luggage Drop Confirmed
+                      </span>
+                      <span className="text-xs font-bold text-amber-950">
+                        Frontdesk Token: <strong>{booking.ref}</strong>
+                      </span>
+                    </div>
+                    <h3 className="text-base sm:text-lg font-black text-slate-950 mt-0.5 leading-snug">
+                      Ready to Book Your Room at {hotelName}?
+                    </h3>
+                    <p className="text-xs text-amber-950 font-medium max-w-xl leading-relaxed">
+                      Your luggage slot is locked. You can now explore the rooms and complete your hotel stay booking seamlessly without searching from scratch.
+                    </p>
+                  </div>
+                </div>
+
+                <Link
+                  href={hotelUrl}
+                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-slate-950 hover:bg-slate-900 active:scale-95 text-white font-black text-xs uppercase tracking-wider shrink-0 transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer group"
+                >
+                  <span>CONTINUE ROOM BOOKING</span>
+                  <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                </Link>
+              </div>
+            );
+          })()}
+
         {/* ── 2-Column Responsive Dashboard Layout (Full Width 50/50 Grid) ── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch w-full">
-          
+
           {/* Left Column: Details Breakdown & Actions (7 cols) */}
           <div className="lg:col-span-7 space-y-4 flex flex-col justify-between">
-            
+
             {/* Booking Reference Card */}
             <div className="rounded-2xl border-2 border-emerald-300/80 dark:border-emerald-700/50 bg-white dark:bg-[#111726] shadow-xs overflow-hidden p-5 sm:p-6 flex-1">
               {/* Header: Vehicle/Category Icon + Title + REF Pill */}
@@ -338,8 +382,8 @@ Show this at the reception counter.
                     highlight: 'text-emerald-600 dark:text-emerald-400 font-black text-base',
                   },
                 ].map((row, idx) => (
-                  <div 
-                    key={idx} 
+                  <div
+                    key={idx}
                     className="flex items-center justify-between py-2 px-2.5 rounded-xl hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group"
                   >
                     {/* Left: Icon & Label */}
@@ -360,296 +404,303 @@ Show this at the reception counter.
               </div>
             </div>
 
-        {/* ── District-Style Split with Friends Group Share Card ── */}
-        {booking?.isSplitEnabled && (
-          <div className="rounded-3xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/70 shadow-sm p-6 space-y-4 animate-fade-in">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold text-base shadow-md shadow-indigo-600/30">
-                  👥
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-sm text-gray-900">
-                    Group Split ({splitPaidCount}/{booking.splitCount || 2} Paid)
-                  </h3>
-                  <p className="text-[11px] text-indigo-700 font-bold">
-                    Per Head: ₹{(booking.splitPerPerson || Math.round(booking.amount / (booking.splitCount || 2))).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-              <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${isSplitComplete
-                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                  : 'bg-indigo-100 text-indigo-800 border-indigo-300'
-                }`}>
-                {isSplitComplete ? '✓ Fully Paid' : 'Split Active'}
-              </span>
-            </div>
-
-            {/* Split Progress Bar */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-[11px] font-bold">
-                <span className="text-gray-600">Payment Progress</span>
-                <span className="text-indigo-700 font-mono">
-                  {splitPaidCount} of {booking.splitCount || 2} Members
-                </span>
-              </div>
-              <div className="w-full h-2.5 bg-indigo-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full transition-all duration-500"
-                  style={{
-                    width: `${Math.min(100, ((splitPaidCount / (booking.splitCount || 2)) * 100))}%`
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Distinct Individual Split Links (Link 1, Link 2...) */}
-            <div className="space-y-3 pt-1">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold text-gray-800">
-                  Individual Payment Links ({booking.splitCount || 2} Links)
-                </span>
-                <span className="text-[10px] text-gray-500 font-medium">1 unique link per person</span>
-              </div>
-
-              <div className="space-y-2">
-                {(booking.splitPayments || Array.from({ length: booking.splitCount || 2 }).map((_, i) => ({
-                  slotIndex: i + 1,
-                  linkKey: `slot-${i + 1}`,
-                  name: `Friend ${i + 1}`,
-                  amount: booking.splitPerPerson || Math.round(booking.amount / (booking.splitCount || 2)),
-                  status: i === 0 && booking.amountPaidByLeader > 0 ? 'PAID' : 'PENDING'
-                }))).map((slot: any, idx: number) => {
-                  const slotNum = slot.slotIndex || idx + 1;
-                  const linkKey = slot.linkKey || `slot-${slotNum}`;
-                  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://bokspot.com';
-                  const individualUrl = `${baseUrl}/split/pay?ref=${booking.ref}&slot=${linkKey}`;
-                  const isPaid = slot.status === 'PAID';
-                  const shareText = encodeURIComponent(
-                    `Hey ${slot.name || 'Friend'}! Here is your individual link to pay your share of ₹${(slot.amount || booking.splitPerPerson)?.toLocaleString()} for our booking at ${booking.merchantName || 'Bokspot'}:\n${individualUrl}`
-                  );
-
-                  return (
-                    <div
-                      key={idx}
-                      className={`p-3 rounded-2xl border transition-all ${isPaid
-                          ? 'bg-emerald-50/60 border-emerald-200'
-                          : 'bg-white border-indigo-100 shadow-sm hover:border-indigo-300'
-                        }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className={`w-6 h-6 rounded-lg flex items-center justify-center font-mono font-bold text-xs ${isPaid ? 'bg-emerald-600 text-white' : 'bg-indigo-100 text-indigo-700'
-                            }`}>
-                            {slotNum}
-                          </span>
-                          <div>
-                            <span className="font-extrabold text-xs text-gray-900 block">
-                              Link {slotNum}: {slot.name || `Friend ${slotNum}`} {slot.role === 'LEADER' ? '(Organizer)' : ''}
-                            </span>
-                            <span className="text-[10px] text-gray-500 font-mono">
-                              Share: ₹{(slot.amount || booking.splitPerPerson)?.toLocaleString()}
-                            </span>
-                          </div>
-                        </div>
-
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${isPaid
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                            : 'bg-amber-100 text-amber-800 border-amber-300'
-                          }`}>
-                          {isPaid ? '✓ Paid' : '⏳ Pending'}
-                        </span>
-                      </div>
-
-                      {/* Link Actions */}
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          readOnly
-                          value={individualUrl}
-                          className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-1.5 text-[11px] font-mono text-gray-600 truncate select-all"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            navigator.clipboard.writeText(individualUrl);
-                            alert(`Link ${slotNum} copied to clipboard! Share it with ${slot.name || `Friend ${slotNum}`}.`);
-                          }}
-                          className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer transition-all shrink-0"
-                        >
-                          Copy
-                        </button>
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            const rawShareText = `Hey ${slot.name || 'Friend'}! Here is your individual link to pay your share of ₹${(slot.amount || booking.splitPerPerson)?.toLocaleString()} for our booking at ${booking.merchantName || 'Bokspot'}:\n${individualUrl}`;
-                            if (navigator.share) {
-                              try {
-                                await navigator.share({
-                                  title: `Bokspot Split Share for ${slot.name || 'Friend'}`,
-                                  text: rawShareText,
-                                  url: individualUrl,
-                                });
-                              } catch (err) {
-                                // User dismissed or fallback
-                              }
-                            } else {
-                              // Fallback opens WhatsApp Web / App directly
-                              window.open(`https://wa.me/?text=${shareText}`, '_blank');
-                            }
-                          }}
-                          className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all shrink-0 flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <Share2 size={13} />
-                          <span>Share</span>
-                        </button>
-                      </div>
+            {/* ── District-Style Split with Friends Group Share Card ── */}
+            {booking?.isSplitEnabled && (
+              <div className="rounded-3xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/70 shadow-sm p-6 space-y-4 animate-fade-in">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold text-base shadow-md shadow-indigo-600/30">
+                      👥
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Safety Fallback Actions: Cover Remaining OR Cancel & Instant Refund */}
-            {splitPaidCount < (booking.splitCount || 2) && (
-              <div className="pt-3 border-t border-indigo-100 space-y-2">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Split Controls</span>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!confirm('Would you like to pay the remaining share yourself and confirm this booking immediately?')) return;
-                      const remainingAmt = (booking.amount || 0) - (booking.amountPaidByLeader || (booking.amount / 2));
-                      const updatedBooking = {
-                        ...booking,
-                        splitPaidMembers: booking.splitCount || 2,
-                        status: 'CONFIRMED',
-                        amountPaidByLeader: booking.amount,
-                      };
-                      await fetch('/api/v1/bookings/sync', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(updatedBooking),
-                      });
-                      setRemoteBooking(updatedBooking);
-                      alert('Remaining balance cleared! Booking confirmed.');
-                    }}
-                    className="p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all text-center cursor-pointer"
-                  >
-                    Pay Remaining Myself
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!confirm('Are you sure you want to cancel? Your paid share will be 100% refunded immediately to your account.')) return;
-                      const updatedBooking = {
-                        ...booking,
-                        status: 'CANCELLED',
-                        cancellationReason: 'Cancelled by user due to split timeout / friend delay',
-                      };
-                      await fetch('/api/v1/bookings/sync', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(updatedBooking),
-                      });
-                      setRemoteBooking(updatedBooking);
-                      alert('Booking cancelled. 100% full refund initiated to your original payment method!');
-                    }}
-                    className="p-2.5 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-bold text-xs transition-all text-center cursor-pointer"
-                  >
-                    Cancel & Refund 100%
-                  </button>
+                    <div>
+                      <h3 className="font-extrabold text-sm text-gray-900">
+                        Group Split ({splitPaidCount}/{booking.splitCount || 2} Paid)
+                      </h3>
+                      <p className="text-[11px] text-indigo-700 font-bold">
+                        Per Head: ₹{(booking.splitPerPerson || Math.round(booking.amount / (booking.splitCount || 2))).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${isSplitComplete
+                    ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                    : 'bg-indigo-100 text-indigo-800 border-indigo-300'
+                    }`}>
+                    {isSplitComplete ? '✓ Fully Paid' : 'Split Active'}
+                  </span>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
 
+                {/* Split Progress Bar */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-[11px] font-bold">
+                    <span className="text-gray-600">Payment Progress</span>
+                    <span className="text-indigo-700 font-mono">
+                      {splitPaidCount} of {booking.splitCount || 2} Members
+                    </span>
+                  </div>
+                  <div className="w-full h-2.5 bg-indigo-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.min(100, ((splitPaidCount / (booking.splitCount || 2)) * 100))}%`
+                      }}
+                    />
+                  </div>
+                </div>
 
-              {/* SLA Cancellation Button (Underneath the table) */}
-              {status !== 'CANCELLED' && (status as string) !== 'COMPLETED' && (
-                <div className="pt-4 mt-2 border-t border-slate-100 dark:border-white/5">
-                  <button
-                    onClick={async () => {
-                      const cat = (booking.category || '').toLowerCase();
-                      let policyMessage = '';
-                      let refundPercent = 100;
+                {/* Distinct Individual Split Links (Link 1, Link 2...) */}
+                <div className="space-y-3 pt-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-extrabold text-gray-800">
+                      Individual Payment Links ({booking.splitCount || 2} Links)
+                    </span>
+                    <span className="text-[10px] text-gray-500 font-medium">1 unique link per person</span>
+                  </div>
 
-                      if (['buses', 'flights', 'trains', 'movies', 'concerts', 'theatre', 'events'].includes(cat)) {
-                        policyMessage = 'STRICTLY NON-REFUNDABLE: Under PassEntry policy, tickets/passes are non-refundable once barcode/PNR is generated. Event cancellation provides 100% refund.';
-                        refundPercent = 0;
-                      } else if (cat.includes('turf') || cat.includes('cricket') || cat.includes('court') || cat.includes('football')) {
-                        policyMessage = 'PARTIAL REFUND SLA: Turf cancellation allows 70% refund when cancelled >4 hours prior. 30% advance is forfeited as slot collision hold.';
-                        refundPercent = 70;
-                      } else if (cat.includes('hotel') || cat.includes('resort') || cat.includes('stay') || cat.includes('villa')) {
-                        policyMessage = 'FREE CANCELLATION: 100% full refund available when cancelled 24 hours prior to standard check-in time.';
-                        refundPercent = 100;
-                      } else {
-                        policyMessage = 'STANDARD SLA: Free cancellation with 100% refund available prior to technician/specialist dispatch.';
-                        refundPercent = 100;
-                      }
-
-                      const refundAmount = Math.round((booking.amount || 0) * (refundPercent / 100));
-                      const confirmCancel = window.confirm(
-                        `${policyMessage}\n\nExpected Refund: ₹${refundAmount.toLocaleString()} (${refundPercent}% of ₹${booking.amount})\n\nDo you wish to confirm cancellation?`
+                  <div className="space-y-2">
+                    {(booking.splitPayments || Array.from({ length: booking.splitCount || 2 }).map((_, i) => ({
+                      slotIndex: i + 1,
+                      linkKey: `slot-${i + 1}`,
+                      name: `Friend ${i + 1}`,
+                      amount: booking.splitPerPerson || Math.round(booking.amount / (booking.splitCount || 2)),
+                      status: i === 0 && booking.amountPaidByLeader > 0 ? 'PAID' : 'PENDING'
+                    }))).map((slot: any, idx: number) => {
+                      const slotNum = slot.slotIndex || idx + 1;
+                      const linkKey = slot.linkKey || `slot-${slotNum}`;
+                      const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://bokspot.com';
+                      const individualUrl = `${baseUrl}/split/pay?ref=${booking.ref}&slot=${linkKey}`;
+                      const isPaid = slot.status === 'PAID';
+                      const shareText = encodeURIComponent(
+                        `Hey ${slot.name || 'Friend'}! Here is your individual link to pay your share of ₹${(slot.amount || booking.splitPerPerson)?.toLocaleString()} for our booking at ${booking.merchantName || 'Bokspot'}:\n${individualUrl}`
                       );
 
-                      if (confirmCancel) {
-                        try {
-                          const updated = { ...booking, status: 'CANCELLED' as const };
-                          setRemoteBooking(updated);
-                          updateBooking?.(booking.id, { status: 'CANCELLED' });
+                      return (
+                        <div
+                          key={idx}
+                          className={`p-3 rounded-2xl border transition-all ${isPaid
+                            ? 'bg-emerald-50/60 border-emerald-200'
+                            : 'bg-white border-indigo-100 shadow-sm hover:border-indigo-300'
+                            }`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className={`w-6 h-6 rounded-lg flex items-center justify-center font-mono font-bold text-xs ${isPaid ? 'bg-emerald-600 text-white' : 'bg-indigo-100 text-indigo-700'
+                                }`}>
+                                {slotNum}
+                              </span>
+                              <div>
+                                <span className="font-extrabold text-xs text-gray-900 block">
+                                  Link {slotNum}: {slot.name || `Friend ${slotNum}`} {slot.role === 'LEADER' ? '(Organizer)' : ''}
+                                </span>
+                                <span className="text-[10px] text-gray-500 font-mono">
+                                  Share: ₹{(slot.amount || booking.splitPerPerson)?.toLocaleString()}
+                                </span>
+                              </div>
+                            </div>
 
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${isPaid
+                              ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                              : 'bg-amber-100 text-amber-800 border-amber-300'
+                              }`}>
+                              {isPaid ? '✓ Paid' : '⏳ Pending'}
+                            </span>
+                          </div>
+
+                          {/* Link Actions */}
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              readOnly
+                              value={individualUrl}
+                              className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-1.5 text-[11px] font-mono text-gray-600 truncate select-all"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(individualUrl);
+                                alert(`Link ${slotNum} copied to clipboard! Share it with ${slot.name || `Friend ${slotNum}`}.`);
+                              }}
+                              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer transition-all shrink-0"
+                            >
+                              Copy
+                            </button>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const rawShareText = `Hey ${slot.name || 'Friend'}! Here is your individual link to pay your share of ₹${(slot.amount || booking.splitPerPerson)?.toLocaleString()} for our booking at ${booking.merchantName || 'Bokspot'}:\n${individualUrl}`;
+                                if (navigator.share) {
+                                  try {
+                                    await navigator.share({
+                                      title: `Bokspot Split Share for ${slot.name || 'Friend'}`,
+                                      text: rawShareText,
+                                      url: individualUrl,
+                                    });
+                                  } catch (err) {
+                                    // User dismissed or fallback
+                                  }
+                                } else {
+                                  // Fallback opens WhatsApp Web / App directly
+                                  window.open(`https://wa.me/?text=${shareText}`, '_blank');
+                                }
+                              }}
+                              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all shrink-0 flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Share2 size={13} />
+                              <span>Share</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Safety Fallback Actions: Cover Remaining OR Cancel & Instant Refund */}
+                {splitPaidCount < (booking.splitCount || 2) && (
+                  <div className="pt-3 border-t border-indigo-100 space-y-2">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Split Controls</span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!confirm('Would you like to pay the remaining share yourself and confirm this booking immediately?')) return;
+                          const remainingAmt = (booking.amount || 0) - (booking.amountPaidByLeader || (booking.amount / 2));
+                          const updatedBooking = {
+                            ...booking,
+                            splitPaidMembers: booking.splitCount || 2,
+                            status: 'CONFIRMED',
+                            amountPaidByLeader: booking.amount,
+                          };
                           await fetch('/api/v1/bookings/sync', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(updated),
+                            body: JSON.stringify(updatedBooking),
                           });
-                          alert(`Booking cancelled successfully. Refund of ₹${refundAmount} initiated.`);
-                        } catch (err) {
-                          alert('Cancelled locally. Syncing back to server...');
-                        }
+                          setRemoteBooking(updatedBooking);
+                          alert('Remaining balance cleared! Booking confirmed.');
+                        }}
+                        className="p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all text-center cursor-pointer"
+                      >
+                        Pay Remaining Myself
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!confirm('Are you sure you want to cancel? Your paid share will be 100% refunded immediately to your account.')) return;
+                          const updatedBooking = {
+                            ...booking,
+                            status: 'CANCELLED',
+                            cancellationReason: 'Cancelled by user due to split timeout / friend delay',
+                          };
+                          await fetch('/api/v1/bookings/sync', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(updatedBooking),
+                          });
+                          setRemoteBooking(updatedBooking);
+                          alert('Booking cancelled. 100% full refund initiated to your original payment method!');
+                        }}
+                        className="p-2.5 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-bold text-xs transition-all text-center cursor-pointer"
+                      >
+                        Cancel & Refund 100%
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+
+            {/* SLA Cancellation Button (Underneath the table) */}
+            {status !== 'CANCELLED' && (status as string) !== 'COMPLETED' && (
+              <div className="pt-4 mt-2 border-t border-slate-100 dark:border-white/5">
+                <button
+                  onClick={async () => {
+                    const cat = (booking.category || '').toLowerCase();
+                    let policyMessage = '';
+                    let refundPercent = 100;
+
+                    if (['buses', 'flights', 'trains', 'movies', 'concerts', 'theatre', 'events'].includes(cat)) {
+                      policyMessage = 'STRICTLY NON-REFUNDABLE: Under PassEntry policy, tickets/passes are non-refundable once barcode/PNR is generated. Event cancellation provides 100% refund.';
+                      refundPercent = 0;
+                    } else if (cat.includes('turf') || cat.includes('cricket') || cat.includes('court') || cat.includes('football')) {
+                      policyMessage = 'PARTIAL REFUND SLA: Turf cancellation allows 70% refund when cancelled >4 hours prior. 30% advance is forfeited as slot collision hold.';
+                      refundPercent = 70;
+                    } else if (cat.includes('hotel') || cat.includes('resort') || cat.includes('stay') || cat.includes('villa')) {
+                      policyMessage = 'FREE CANCELLATION: 100% full refund available when cancelled 24 hours prior to standard check-in time.';
+                      refundPercent = 100;
+                    } else {
+                      policyMessage = 'STANDARD SLA: Free cancellation with 100% refund available prior to technician/specialist dispatch.';
+                      refundPercent = 100;
+                    }
+
+                    const refundAmount = Math.round((booking.amount || 0) * (refundPercent / 100));
+                    const confirmCancel = window.confirm(
+                      `${policyMessage}\n\nExpected Refund: ₹${refundAmount.toLocaleString()} (${refundPercent}% of ₹${booking.amount})\n\nDo you wish to confirm cancellation?`
+                    );
+
+                    if (confirmCancel) {
+                      try {
+                        const updated = { ...booking, status: 'CANCELLED' as const };
+                        setRemoteBooking(updated);
+                        updateBooking?.(booking.id, { status: 'CANCELLED' });
+
+                        await fetch('/api/v1/bookings/sync', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(updated),
+                        });
+                        alert(`Booking cancelled successfully. Refund of ₹${refundAmount} initiated.`);
+                      } catch (err) {
+                        alert('Cancelled locally. Syncing back to server...');
                       }
-                    }}
-                    className="w-full py-3 rounded-2xl border border-red-200/90 bg-red-50/60 hover:bg-red-50 text-red-500 font-extrabold text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 shadow-2xs"
-                  >
-                    <RefreshCcw size={14} className="stroke-[2.5]" />
-                    <span>CANCEL BOOKING &amp; REQUEST SLA REFUND</span>
-                  </button>
-                </div>
-              )}
-            </div>
+                    }
+                  }}
+                  className="w-full py-3 rounded-2xl border border-red-200/90 bg-red-50/60 hover:bg-red-50 text-red-500 font-extrabold text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 shadow-2xs"
+                >
+                  <RefreshCcw size={14} className="stroke-[2.5]" />
+                  <span>CANCEL BOOKING &amp; REQUEST SLA REFUND</span>
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* ── RIGHT COLUMN: PASS QR CODE & DIGITAL ACCESS & ACTIONS (5 cols) ── */}
           <div className="lg:col-span-5 space-y-4">
-            
+
             {/* QR code – shown once confirmed */}
             {status === 'CONFIRMED' && (() => {
               const cat = (booking.category || '').toLowerCase();
               const svc = (booking.serviceName || '').toLowerCase();
+              const isLuggage = cat.includes('luggage') || cat.includes('cloakroom') || svc.includes('mini space') || svc.includes('luggage');
               const isStay = cat.includes('resort') || cat.includes('hotel') || cat.includes('stay') || cat.includes('villa') || svc.includes('resort') || svc.includes('hotel');
               const isTransit = cat.includes('flight') || cat.includes('train') || cat.includes('bus') || cat.includes('metro');
 
-              const badgeTitle = isStay
-                ? 'FAST CHECK-IN PASS'
-                : isTransit
-                  ? 'DIGITAL BOARDING PASS'
-                  : 'DIGITAL ENTRY PASS';
+              const badgeTitle = isLuggage
+                ? 'CLOAKROOM DIGITAL PASS'
+                : isStay
+                  ? 'FAST CHECK-IN PASS'
+                  : isTransit
+                    ? 'DIGITAL BOARDING PASS'
+                    : 'DIGITAL ENTRY PASS';
 
-              const refLabel = isTransit
-                ? `PNR : ${booking.ref}`
-                : `REF : ${booking.ref}`;
-
-              const helpText = isStay
-                ? 'Present this QR code or Reference ID at the resort reception for instant key handover'
+              const refLabel = isLuggage
+                ? `TOKEN : ${booking.ref}`
                 : isTransit
-                  ? 'Hold this QR code or Barcode to the turnstile / conductor scanner for instant boarding'
-                  : 'Present this QR code or Reference ID at the venue gate for instant check-in';
+                  ? `PNR : ${booking.ref}`
+                  : `REF : ${booking.ref}`;
+
+              const helpText = isLuggage
+                ? 'Present this QR pass code at the frontdesk bell desk to tag or release your luggage'
+                : isStay
+                  ? 'Present this QR code or Reference ID at the resort reception for instant key handover'
+                  : isTransit
+                    ? 'Hold this QR code or Barcode to the turnstile / conductor scanner for instant boarding'
+                    : 'Present this QR code or Reference ID at the venue gate for instant check-in';
 
               return (
                 <div className="rounded-2xl border-2 border-emerald-300/80 dark:border-emerald-700/50 bg-white dark:bg-[#111726] shadow-xs p-4 sm:p-5 flex flex-col items-center animate-fade-in relative overflow-hidden">
-                  
+
                   {/* Top Header: Ticket Icon + Badge Title + PNR Pill */}
                   <div className="w-full flex items-center justify-between pb-3 mb-2.5 border-b border-slate-100 dark:border-white/5">
                     <div className="flex items-center gap-2">
@@ -714,6 +765,18 @@ Show this at the reception counter.
                 {copied ? <><Check size={14} /> Copied!</> : <><Share2 size={14} className="stroke-[2.5]" /> Share</>}
               </button>
             </div>
+
+            {/* If luggage drop, provide immediate 1-click room booking button */}
+            {((booking.serviceName || '').toLowerCase().includes('mini space') || Boolean(booking.metadata?.miniSpace)) && (
+              <Link
+                href={booking.metadata?.returnHotelUrl || booking.metadata?.miniSpace?.returnHotelUrl || (booking.merchantId ? `/stay-accommodation/hotels/${booking.merchantId}` : '/stay-accommodation/hotels')}
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-center font-black text-slate-950 text-xs uppercase tracking-wider bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 shadow-md hover:shadow-lg transition-all cursor-pointer"
+              >
+                <span>🏨</span>
+                <span>Continue Room Booking at {booking.merchantName}</span>
+                <ArrowRight size={14} />
+              </Link>
+            )}
 
             {/* Emerald Solid CTA Button: View All My Bookings */}
             <Link

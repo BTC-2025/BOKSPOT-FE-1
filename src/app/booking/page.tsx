@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   CheckCircle2, Clock, MapPin, XCircle,
   Train, Bus, Plane, Car, Navigation, Compass,
-  Calendar, ChevronRight, Bookmark, Radio, ShieldCheck,
+  Calendar, ChevronRight, ChevronLeft, Bookmark, Radio, ShieldCheck,
   Shield, Hotel, Coffee, Zap, User, Mail, Phone, Building2, Key, QrCode, DoorClosed, Lock, Unlock, Search
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -121,6 +121,7 @@ function TracksContent() {
   const [remoteMetadata, setRemoteMetadata] = useState<Record<string, { keycardIssued?: boolean; roomNumber?: string }>>({});
   const [unlockedRooms, setUnlockedRooms] = useState<Record<string, boolean>>({});
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED'>('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const FILTERS = [
     { id: 'ALL', label: 'All Bookings' },
@@ -128,6 +129,11 @@ function TracksContent() {
     { id: 'COMPLETED', label: 'Completed' },
     { id: 'CANCELLED', label: 'Cancelled' },
   ];
+
+  // Reset pagination to page 1 whenever search query or status filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter, searchBookingsQuery]);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -209,6 +215,13 @@ function TracksContent() {
 
     return true;
   });
+
+  // Pagination calculation: 3 columns x 3 rows = 9 items per page (Max 3 rows)
+  const ITEMS_PER_PAGE = 9;
+  const totalPages = Math.ceil(filteredBookings.length / ITEMS_PER_PAGE) || 1;
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedBookings = filteredBookings.slice(startIndex, endIndex);
 
   const handleCancel = async (booking: any) => {
     if (confirm(`Cancel reservation ${booking.ref}?`)) {
@@ -419,7 +432,7 @@ function TracksContent() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               <AnimatePresence mode="popLayout">
-                {filteredBookings.map((b: any, i) => {
+                {paginatedBookings.map((b: any, i) => {
                   const st = STATUS_STYLE[b.status] || STATUS_STYLE.PENDING;
 
                   const formatDate = (iso: string) => {
@@ -604,6 +617,95 @@ function TracksContent() {
                   );
                 })}
               </AnimatePresence>
+            </div>
+          )}
+
+          {/* Pagination Controls (Max 3 rows = 9 cards per page) */}
+          {filteredBookings.length > ITEMS_PER_PAGE && (
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-3 border-t border-black/5 dark:border-white/10 select-none">
+              <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                Showing <span className="font-bold text-slate-800 dark:text-slate-100">{startIndex + 1}</span> to{' '}
+                <span className="font-bold text-slate-800 dark:text-slate-100">{Math.min(endIndex, filteredBookings.length)}</span> of{' '}
+                <span className="font-bold text-slate-800 dark:text-slate-100">{filteredBookings.length}</span> bookings
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                {/* Prev Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentPage((prev) => Math.max(prev - 1, 1));
+                    window.scrollTo({ top: 300, behavior: 'smooth' });
+                  }}
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer shadow-2xs"
+                  aria-label="Previous Page"
+                >
+                  <ChevronLeft size={14} />
+                  <span>Prev</span>
+                </button>
+
+                {/* Page Number Buttons */}
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, idx) => idx + 1)
+                    .filter((pageNum) => {
+                      // Always show first, last, and pages around current page
+                      if (pageNum === 1 || pageNum === totalPages) return true;
+                      if (Math.abs(pageNum - currentPage) <= 1) return true;
+                      return false;
+                    })
+                    .reduce<number[]>((acc, pageNum) => {
+                      // Add ellipsis logic if gap exists
+                      if (acc.length > 0 && pageNum - acc[acc.length - 1] > 1) {
+                        acc.push(-1); // Indicator for ellipsis
+                      }
+                      acc.push(pageNum);
+                      return acc;
+                    }, [])
+                    .map((item, idx) => {
+                      if (item === -1) {
+                        return (
+                          <span key={`ellipsis-${idx}`} className="px-2 text-xs text-slate-400 select-none">
+                            ...
+                          </span>
+                        );
+                      }
+                      const isActive = item === currentPage;
+                      return (
+                        <button
+                          key={item}
+                          type="button"
+                          onClick={() => {
+                            setCurrentPage(item);
+                            window.scrollTo({ top: 300, behavior: 'smooth' });
+                          }}
+                          className={`w-8 h-8 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                            isActive
+                              ? 'bg-[#003580] text-white shadow-md scale-105 dark:bg-[#ff6325]'
+                              : 'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs'
+                          }`}
+                        >
+                          {item}
+                        </button>
+                      );
+                    })}
+                </div>
+
+                {/* Next Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+                    window.scrollTo({ top: 300, behavior: 'smooth' });
+                  }}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer shadow-2xs"
+                  aria-label="Next Page"
+                >
+                  <span>Next</span>
+                  <ChevronRight size={14} />
+                </button>
+              </div>
             </div>
           )}
         </div>
