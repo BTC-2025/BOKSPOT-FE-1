@@ -50,6 +50,7 @@ const CATEGORY_NAMES: Record<string, string> = {
   villas: 'Homestay / Villa',
   villa: 'Homestay / Villa',
   hostels: 'Hostel Booking',
+  'pg-hostels': 'PG & Co-Living Stays',
   camping: 'Camping Booking',
 
   // Entertainment & Events
@@ -1533,9 +1534,13 @@ export default function ProviderDiscoveryPage() {
   const { city, latitude, longitude, setCity, setLocation } = useLocationStore();
   const [sortBy, setSortBy] = useState('distance');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(() => city || 'Chennai');
 
-  const isHotelCategory = category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'camping' || bookingType === 'stay-accommodation' || bookingType === 'home';
+  const isHotelCategory = category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'pg-hostels' || category === 'camping' || bookingType === 'stay-accommodation' || bookingType === 'home';
+  const isPgCategory = category === 'pg-hostels';
+  const [pgGenderFilter, setPgGenderFilter] = useState<'all' | 'gents' | 'ladies' | 'coliving'>('all');
+  const [pgFoodFilter, setPgFoodFilter] = useState<'all' | 'with-food' | 'self-cooking'>('all');
+  const [pgSharingFilter, setPgSharingFilter] = useState<'all' | 'single' | '2-sharing' | '3-sharing' | '4-sharing'>('all');
   const [hotelDestination, setHotelDestination] = useState('');
   const [checkInDate, setCheckInDate] = useState(() => {
     const d = new Date();
@@ -1569,9 +1574,19 @@ export default function ProviderDiscoveryPage() {
         setGuestDropdownOpen(false);
       }
     };
+
+    // Instant update when business portal changes PG configurations
+    const handlePgConfigUpdate = () => {
+      setMounted(m => !m); // trigger immediate rerender with new dynamic values
+    };
+    window.addEventListener('pg_config_updated', handlePgConfigUpdate);
+    window.addEventListener('storage', handlePgConfigUpdate);
+
     document.addEventListener('mousedown', handleGlobalClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleGlobalClickOutside);
+      window.removeEventListener('pg_config_updated', handlePgConfigUpdate);
+      window.removeEventListener('storage', handlePgConfigUpdate);
     };
   }, []);
 
@@ -1612,7 +1627,10 @@ export default function ProviderDiscoveryPage() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
-  }, []);
+    if (city) {
+      setSearchQuery(city);
+    }
+  }, [city]);
 
   let categoryName = CATEGORY_NAMES[category] || category;
   if (bookingType === 'accomodation' && category === 'camping') {
@@ -1640,7 +1658,7 @@ export default function ProviderDiscoveryPage() {
         let list = Array.isArray(response?.data) ? response.data : (Array.isArray(response) ? response : []);
 
         // Format real merchant services if returned from backend
-        if (category === 'hotels' || category === 'hotel-booking' || category.includes('hotel') || category.includes('room')) {
+        if (category === 'hotels' || category === 'hotel-booking' || category === 'pg-hostels' || category.includes('hotel') || category.includes('room')) {
           list = list.filter((item: any) => {
             const mName = (item.merchant?.name || item.merchantName || '').toLowerCase();
             const sName = (item.name || '').toLowerCase();
@@ -1651,8 +1669,156 @@ export default function ProviderDiscoveryPage() {
           }).map((item: any) => ({
             ...item,
             merchant: typeof item.merchant === 'object' ? item.merchant : { name: item.merchantName || 'Grand Hotel', id: item.merchantId || item.id },
-            basePrice: item.basePrice || item.price || '2500'
+            basePrice: item.basePrice || item.price || (category === 'pg-hostels' ? '6500' : '2500')
           }));
+        }
+
+        // Add Realistic Verified PG / Co-Living sample stays if pg-hostels is empty from backend
+        if (category === 'pg-hostels' && list.length === 0) {
+          const pgTargetCity = city || 'Chennai';
+          list = [
+            {
+              id: 'pg-1',
+              name: 'Zolo Starlight Luxury Coliving & PG',
+              category: { name: 'PG & Co-Living Stays', slug: 'pg-hostels' },
+              rating: 4.8,
+              reviewCount: 312,
+              basePrice: '7500',
+              image: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=800&q=80',
+              merchant: {
+                id: 'm-pg-1',
+                name: 'Zolo Starlight Coliving',
+                city: pgTargetCity,
+                address: `Near IT Tech Park, OMR, ${pgTargetCity}`,
+                rating: 4.8,
+                metadata: {
+                  pgType: 'coliving',
+                  hasFood: true,
+                  foodModel: 'with-food',
+                  curfewTime: '24/7 Biometric Entry (No Curfew)',
+                  noticePeriod: '15 Days',
+                  refundableDeposit: 3000,
+                  tokenAdvance: 999,
+                  foodMenu: {
+                    breakfast: 'Idli, Dosa, Pongal, Tea/Coffee',
+                    lunch: 'Unlimited South/North Meals, Sambar, Curd',
+                    dinner: 'Chapathi, Veg Fried Rice, Chicken Gravy (Wed & Sun)'
+                  }
+                }
+              },
+              metadata: {
+                sharing: '2-sharing',
+                roomType: '2-Sharing AC with 3-Time Food',
+                hasFood: true,
+                gender: 'coliving',
+                refundableDeposit: 3000,
+                tokenAdvance: 999,
+                amenities: ['3 Times Food', 'High-Speed Wi-Fi', 'Washing Machine', 'Housekeeping', 'Power Backup', 'AC', 'RO Water']
+              }
+            },
+            {
+              id: 'pg-2',
+              name: 'Comfort Zone Gents Luxury PG',
+              category: { name: 'PG & Co-Living Stays', slug: 'pg-hostels' },
+              rating: 4.7,
+              reviewCount: 184,
+              basePrice: '6200',
+              image: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=800&q=80',
+              merchant: {
+                id: 'm-pg-2',
+                name: 'Comfort Zone Gents PG',
+                city: pgTargetCity,
+                address: `Main Road, Near Metro Station, ${pgTargetCity}`,
+                rating: 4.7,
+                metadata: {
+                  pgType: 'gents',
+                  hasFood: true,
+                  foodModel: 'with-food',
+                  curfewTime: '11:00 PM Gate Closing',
+                  noticePeriod: '30 Days',
+                  refundableDeposit: 2500,
+                  tokenAdvance: 999
+                }
+              },
+              metadata: {
+                sharing: '3-sharing',
+                roomType: '3-Sharing Non-AC with Homely Meals',
+                hasFood: true,
+                gender: 'gents',
+                refundableDeposit: 2500,
+                tokenAdvance: 999,
+                amenities: ['3 Times Food', 'Free Wi-Fi', 'Washing Machine', 'RO Water', 'CCTV Security']
+              }
+            },
+            {
+              id: 'pg-3',
+              name: 'Royal Orchid Ladies Premium PG',
+              category: { name: 'PG & Co-Living Stays', slug: 'pg-hostels' },
+              rating: 4.9,
+              reviewCount: 246,
+              basePrice: '8500',
+              image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80',
+              merchant: {
+                id: 'm-pg-3',
+                name: 'Royal Orchid Ladies PG',
+                city: pgTargetCity,
+                address: `Safe Residential Colony, ${pgTargetCity}`,
+                rating: 4.9,
+                metadata: {
+                  pgType: 'ladies',
+                  hasFood: true,
+                  foodModel: 'with-food',
+                  curfewTime: '10:00 PM (Biometric Attendance)',
+                  noticePeriod: '15 Days',
+                  refundableDeposit: 3500,
+                  tokenAdvance: 999
+                }
+              },
+              metadata: {
+                sharing: '2-sharing',
+                roomType: '2-Sharing AC with North/South Cuisine',
+                hasFood: true,
+                gender: 'ladies',
+                refundableDeposit: 3500,
+                tokenAdvance: 999,
+                amenities: ['3 Times Hygienic Food', '24x7 Female Warden', 'Wi-Fi', 'Gym Access', 'Automatic Washing Machine']
+              }
+            },
+            {
+              id: 'pg-4',
+              name: 'Urban Nest Single Studio PG & Coliving',
+              category: { name: 'PG & Co-Living Stays', slug: 'pg-hostels' },
+              rating: 4.6,
+              reviewCount: 98,
+              basePrice: '12000',
+              image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80',
+              merchant: {
+                id: 'm-pg-4',
+                name: 'Urban Nest Studio',
+                city: pgTargetCity,
+                address: `Central City Hub, ${pgTargetCity}`,
+                rating: 4.6,
+                metadata: {
+                  pgType: 'coliving',
+                  hasFood: false,
+                  foodModel: 'self-cooking',
+                  curfewTime: 'No Curfew (Digital Key)',
+                  noticePeriod: '15 Days',
+                  refundableDeposit: 5000,
+                  tokenAdvance: 999
+                }
+              },
+              metadata: {
+                sharing: 'single',
+                roomType: 'Private Single Studio (Self-Cooking Kitchen)',
+                hasFood: false,
+                gender: 'coliving',
+                refundableDeposit: 5000,
+                tokenAdvance: 999,
+                amenities: ['Fully Equipped Kitchen', 'Refrigerator', 'Attached Balcony', 'High-Speed Wi-Fi', 'Housekeeping']
+              }
+            }
+          ];
         }
 
         if (active) {
@@ -1791,9 +1957,44 @@ export default function ProviderDiscoveryPage() {
       if (!isEligibleLuxe) return false;
     }
 
+    // PG & Hostel Specific Filters (Gender, Food Model, Sharing)
+    const isThisPgOrHostel = isPgCategory || 
+      category === 'hostels' || 
+      (categoryName || '').toLowerCase().includes('hostel') ||
+      (s.name || '').toLowerCase().includes('hostel') ||
+      (s.name || '').toLowerCase().includes('dorm') ||
+      Boolean(s.merchant?.metadata?.isPgProperty || s.merchantObj?.metadata?.isPgProperty);
+
+    if (isThisPgOrHostel) {
+      const sGender = (s.metadata?.gender || s.merchant?.metadata?.pgGenderType || s.merchantObj?.metadata?.pgGenderType || s.merchant?.metadata?.pgType || '').toLowerCase();
+      if (pgGenderFilter !== 'all') {
+        if (pgGenderFilter === 'ladies' && !sGender.includes('ladies') && !s.name?.toLowerCase().includes('ladies')) return false;
+        if (pgGenderFilter === 'gents' && !sGender.includes('gents') && !s.name?.toLowerCase().includes('gents')) return false;
+        if (pgGenderFilter === 'coliving' && !sGender.includes('coliving') && !sGender.includes('unisex')) return false;
+      }
+
+      const sFood = s.metadata?.hasFood ?? s.merchant?.metadata?.pgFoodIncluded ?? s.merchantObj?.metadata?.pgFoodIncluded ?? s.merchant?.metadata?.hasFood;
+      if (pgFoodFilter === 'with-food' && sFood === false) {
+        return false;
+      }
+      if (pgFoodFilter === 'self-cooking') {
+        const foodModel = (s.merchant?.metadata?.foodModel || s.metadata?.foodModel || '').toLowerCase();
+        const hasKitchen = JSON.stringify(s.metadata || {}).toLowerCase().includes('kitchen');
+        if (foodModel !== 'self-cooking' && !hasKitchen && sFood !== false) return false;
+      }
+
+      if (pgSharingFilter !== 'all') {
+        const sSharing = (s.metadata?.sharing || s.name || '').toLowerCase();
+        if (!sSharing.includes(pgSharingFilter.toLowerCase())) return false;
+      }
+    }
+
     // Unified Intelligent Search Query
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
+
+    // If query matches the current selected city, keep all hotels in this city visible
+    if (query === (city || '').toLowerCase().trim()) return true;
 
     // Check query for special keywords (e.g. "top rated", "pet", "cheap", "ac", "pool")
     if (query.includes('top rated') || query.includes('best') || query.includes('5 star')) {
@@ -1882,7 +2083,7 @@ export default function ProviderDiscoveryPage() {
 
               <div className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#ff6325] text-white shadow-md">
                 <MapPin size={11} className="text-white" />
-                <span>{categoryName.toUpperCase()} • {city || 'AHMEDNAGAR'}</span>
+                <span>{categoryName.toUpperCase()} • {city || 'CHENNAI'}</span>
               </div>
             </div>
 
@@ -1922,12 +2123,15 @@ export default function ProviderDiscoveryPage() {
                     <input
                       type="text"
                       value={searchQuery}
-                      onFocus={() => setShowAutocomplete(true)}
+                      onFocus={(e) => {
+                        setShowAutocomplete(true);
+                        e.target.select();
+                      }}
                       onChange={(e) => {
                         setSearchQuery(e.target.value);
                         setShowAutocomplete(true);
                       }}
-                      placeholder={`Search city, villa, hotel or resort...`}
+                      placeholder="Search destination, hotel or city..."
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           const q = searchQuery.trim().toLowerCase();
@@ -1940,7 +2144,6 @@ export default function ProviderDiscoveryPage() {
                               } else {
                                 setCity(matchedCity);
                               }
-                              setSearchQuery('');
                             }
                           }
                           setShowAutocomplete(false);
@@ -1948,13 +2151,16 @@ export default function ProviderDiscoveryPage() {
                           el?.scrollIntoView({ behavior: 'smooth' });
                         }
                       }}
-                      className="w-full bg-transparent text-xs sm:text-sm font-bold text-slate-800 dark:text-white placeholder:text-slate-400 placeholder:font-medium outline-none truncate"
+                      className="w-full bg-transparent text-xs sm:text-sm font-bold text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-normal outline-none truncate"
                     />
                   </div>
                   {searchQuery ? (
                     <button
                       type="button"
-                      onClick={() => setSearchQuery('')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSearchQuery('');
+                      }}
                       className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1"
                       title="Clear"
                     >
@@ -2029,16 +2235,16 @@ export default function ProviderDiscoveryPage() {
                           <button
                             key={idx}
                             type="button"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               if (item.isCity) {
-                                // Switch city in global store so services are fetched for this location
                                 const popMatch = POPULAR_CITIES.find(p => p.name.toLowerCase() === item.label.toLowerCase());
                                 if (popMatch) {
                                   setLocation(popMatch.lat, popMatch.lng, popMatch.name);
                                 } else {
                                   setCity(item.label);
                                 }
-                                setSearchQuery('');
+                                setSearchQuery(item.label);
                               } else {
                                 setSearchQuery(item.label);
                               }
@@ -2475,9 +2681,9 @@ export default function ProviderDiscoveryPage() {
                         } else {
                           setCity(matchedCity);
                         }
-                        setSearchQuery('');
                       }
                     }
+                    setShowAutocomplete(false);
                     const el = document.getElementById('hotel-results-anchor');
                     el?.scrollIntoView({ behavior: 'smooth' });
                   }}
@@ -2495,106 +2701,172 @@ export default function ProviderDiscoveryPage() {
       <div className={`container-main max-w-7xl mx-auto ${isHotelCategory ? 'pt-0 pb-6' : 'py-4'}`}>
         {/* Sleek Airbnb-Style Luxury Filter & Sort Capsule Toolbar */}
         {isHotelCategory && (
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-6 px-1">
-            {/* Left: Interactive Filter Pills */}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-              {/* Price Range Pill */}
-              <div className="relative">
-                <select
-                  value={priceRange}
-                  onChange={(e) => setPriceRange(Number(e.target.value))}
-                  className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${priceRange < 50000
-                      ? 'bg-[#ff6325]/10 border-[#ff6325] text-[#ff6325]'
-                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20 shadow-xs'
-                    }`}
-                >
-                  <option value={50000}>₹ Any Price</option>
-                  <option value={3500}>Under ₹3,500</option>
-                  <option value={7500}>Under ₹7,500</option>
-                  <option value={15000}>Under ₹15,000</option>
-                  <option value={30000}>Under ₹30,000</option>
-                </select>
-                <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
+          <div className="flex flex-col gap-3 mb-6 px-1">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              {/* Unified Interactive Filter Pills */}
+              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                {/* 1. Price Range Pill */}
+                <div className="relative">
+                  <select
+                    value={priceRange}
+                    onChange={(e) => setPriceRange(Number(e.target.value))}
+                    className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${priceRange < 50000
+                        ? 'bg-[#ff6325]/10 border-[#ff6325] text-[#ff6325]'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20 shadow-xs'
+                      }`}
+                  >
+                    <option value={50000}>₹ Any Price</option>
+                    <option value={3500}>Under ₹3,500</option>
+                    <option value={7500}>Under ₹7,500</option>
+                    <option value={15000}>Under ₹15,000</option>
+                    <option value={30000}>Under ₹30,000</option>
+                  </select>
+                  <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
 
-              {/* Rating Pill */}
-              <div className="relative">
-                <select
-                  value={minRating}
-                  onChange={(e) => setMinRating(Number(e.target.value))}
-                  className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${minRating > 0
-                      ? 'bg-[#ff6325]/10 border-[#ff6325] text-[#ff6325]'
-                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20 shadow-xs'
-                    }`}
-                >
-                  <option value={0}>★ Any Rating</option>
-                  <option value={4.0}>★ 4.0+ Above</option>
-                  <option value={4.5}>★ 4.5+ Top Rated</option>
-                  <option value={4.8}>★ 4.8+ Luxury</option>
-                </select>
-                <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
+                {/* 2. Rating Pill */}
+                <div className="relative">
+                  <select
+                    value={minRating}
+                    onChange={(e) => setMinRating(Number(e.target.value))}
+                    className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${minRating > 0
+                        ? 'bg-[#ff6325]/10 border-[#ff6325] text-[#ff6325]'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20 shadow-xs'
+                      }`}
+                  >
+                    <option value={0}>★ Any Rating</option>
+                    <option value={4.0}>★ 4.0+ Above</option>
+                    <option value={4.5}>★ 4.5+ Top Rated</option>
+                    <option value={4.8}>★ 4.8+ Luxury</option>
+                  </select>
+                  <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
 
-              {/* Free Cancellation Pill */}
-              <button
-                type="button"
-                onClick={() => setFreeCancellationOnly(!freeCancellationOnly)}
-                className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${freeCancellationOnly
-                    ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
-                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 hover:bg-slate-50'
-                  }`}
-              >
-                <span>Free Cancellation</span>
-              </button>
+                {/* 3. PG & Hostel Contextual Dropdowns (Gender & Food) seamlessly in the same row */}
+                {(isPgCategory || category === 'hostels' || (categoryName || '').toLowerCase().includes('hostel')) && (
+                  <>
+                    {/* Gender Dropdown Pill */}
+                    <div className="relative">
+                      <select
+                        value={pgGenderFilter}
+                        onChange={(e) => setPgGenderFilter(e.target.value as any)}
+                        className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${
+                          pgGenderFilter !== 'all'
+                            ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
+                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                        }`}
+                      >
+                        <option value="all">👥 All Genders (PG)</option>
+                        <option value="gents">🚹 Gents Only</option>
+                        <option value="ladies">🚺 Ladies Only</option>
+                        <option value="coliving">👥 Coliving Stay</option>
+                      </select>
+                      <ChevronDown size={12} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${pgGenderFilter !== 'all' ? 'text-white' : 'text-slate-400'}`} />
+                    </div>
 
-              {/* Pet Friendly Pill */}
-              <button
-                type="button"
-                onClick={() => setPetFriendlyOnly(!petFriendlyOnly)}
-                className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${petFriendlyOnly || pets
-                    ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
-                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 hover:bg-slate-50'
-                  }`}
-              >
-                <span>🐾 Pet Friendly</span>
-              </button>
+                    {/* Food Model Pill */}
+                    <div className="relative">
+                      <select
+                        value={pgFoodFilter}
+                        onChange={(e) => setPgFoodFilter(e.target.value as any)}
+                        className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${
+                          pgFoodFilter !== 'all'
+                            ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
+                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                        }`}
+                      >
+                        <option value="all">🍛 Any Meal Plan</option>
+                        <option value="with-food">🍲 3 Meals Included</option>
+                        <option value="self-cooking">🍳 Self-Cooking</option>
+                      </select>
+                      <ChevronDown size={12} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${pgFoodFilter !== 'all' ? 'text-white' : 'text-slate-400'}`} />
+                    </div>
 
-              {/* Just Luxury (Golden Mystery Pill) */}
-              <button
-                type="button"
-                onClick={() => setIsLuxuryMode(!isLuxuryMode)}
-                className={`px-4 py-1.5 rounded-full border text-xs font-black transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-sm ${isLuxuryMode
-                    ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 border-amber-300 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/30'
-                    : 'bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300 hover:border-amber-400 hover:bg-amber-500/15'
-                  }`}
-                title="Filter only 5-Star & Ultra Luxury stays with confidential blind booking"
-              >
-                <Sparkles size={13} className={isLuxuryMode ? 'text-slate-950 animate-spin' : 'text-amber-500'} />
-                <span>✨ Just Luxury</span>
-                {isLuxuryMode && (
-                  <span className="text-[9px] uppercase px-1.5 py-0.2 bg-black/80 text-amber-300 rounded font-black tracking-wider">
-                    Secret Mode
-                  </span>
+                    {/* Sharing Room Dropdown */}
+                    <div className="relative">
+                      <select
+                        value={pgSharingFilter}
+                        onChange={(e) => setPgSharingFilter(e.target.value as any)}
+                        className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${
+                          pgSharingFilter !== 'all'
+                            ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
+                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                        }`}
+                      >
+                        <option value="all">🛏️ Any Sharing</option>
+                        <option value="single">Single Room</option>
+                        <option value="2-sharing">2-Sharing</option>
+                        <option value="3-sharing">3-Sharing</option>
+                        <option value="4-sharing">4-Sharing</option>
+                      </select>
+                      <ChevronDown size={12} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${pgSharingFilter !== 'all' ? 'text-white' : 'text-slate-400'}`} />
+                    </div>
+                  </>
                 )}
-              </button>
 
-              {/* Reset Filters (Only appears when any filter is active) */}
-              {(priceRange < 50000 || minRating > 0 || freeCancellationOnly || petFriendlyOnly || isLuxuryMode) && (
+                {/* 4. Free Cancellation Pill */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setPriceRange(50000);
-                    setMinRating(0);
-                    setFreeCancellationOnly(false);
-                    setPetFriendlyOnly(false);
-                    setIsLuxuryMode(false);
-                  }}
-                  className="px-2.5 py-1 rounded-full text-[11px] font-bold text-slate-400 hover:text-[#ff6325] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  onClick={() => setFreeCancellationOnly(!freeCancellationOnly)}
+                  className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${freeCancellationOnly
+                      ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
                 >
-                  Reset all
+                  <span>Free Cancellation</span>
                 </button>
-              )}
-            </div>
+
+                {/* 5. Pet Friendly Pill */}
+                <button
+                  type="button"
+                  onClick={() => setPetFriendlyOnly(!petFriendlyOnly)}
+                  className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${petFriendlyOnly || pets
+                      ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                >
+                  <span>🐾 Pet Friendly</span>
+                </button>
+
+                {/* 6. Just Luxury (Golden Mystery Pill) */}
+                <button
+                  type="button"
+                  onClick={() => setIsLuxuryMode(!isLuxuryMode)}
+                  className={`px-4 py-1.5 rounded-full border text-xs font-black transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-sm ${isLuxuryMode
+                      ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 border-amber-300 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/30'
+                      : 'bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300 hover:border-amber-400 hover:bg-amber-500/15'
+                    }`}
+                  title="Filter only 5-Star & Ultra Luxury stays with confidential blind booking"
+                >
+                  <Sparkles size={13} className={isLuxuryMode ? 'text-slate-950 animate-spin' : 'text-amber-500'} />
+                  <span>✨ Just Luxury</span>
+                  {isLuxuryMode && (
+                    <span className="text-[9px] uppercase px-1.5 py-0.2 bg-black/80 text-amber-300 rounded font-black tracking-wider">
+                      Secret Mode
+                    </span>
+                  )}
+                </button>
+
+                {/* Reset Filters (Only appears when any filter is active) */}
+                {(priceRange < 50000 || minRating > 0 || freeCancellationOnly || petFriendlyOnly || isLuxuryMode || pgGenderFilter !== 'all' || pgFoodFilter !== 'all' || pgSharingFilter !== 'all') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPriceRange(50000);
+                      setMinRating(0);
+                      setFreeCancellationOnly(false);
+                      setPetFriendlyOnly(false);
+                      setIsLuxuryMode(false);
+                      setPgGenderFilter('all');
+                      setPgFoodFilter('all');
+                      setPgSharingFilter('all');
+                    }}
+                    className="px-2.5 py-1 rounded-full text-[11px] font-bold text-slate-400 hover:text-[#ff6325] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    Reset all
+                  </button>
+                )}
+              </div>
 
             {/* Right: Clean Sort Pill */}
             <div className="flex items-center gap-2 ml-auto">
@@ -2612,6 +2884,7 @@ export default function ProviderDiscoveryPage() {
                 </select>
                 <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
+            </div>
             </div>
           </div>
         )}
@@ -2796,15 +3069,65 @@ export default function ProviderDiscoveryPage() {
                       }
 
                       if (mObj.allCategories && Array.isArray(mObj.allCategories)) {
-                        mObj.allCategories.forEach((cat: string) => acc[groupKey].categories.add(cat));
+                        mObj.allCategories.forEach((cat: any) => {
+                          if (typeof cat === 'string') acc[groupKey].categories.add(cat);
+                          else if (cat?.name) acc[groupKey].categories.add(cat.name);
+                        });
                       } else if (service.name && service.name !== '__BOKSPOT_GROUP__') {
-                        acc[groupKey].categories.add(service.name);
+                        if (typeof service.name === 'string') acc[groupKey].categories.add(service.name);
+                        else if ((service.name as any)?.name) acc[groupKey].categories.add((service.name as any).name);
                       }
                       return acc;
                     }, {})).map((group: any, i: number) => {
                       const m = group.merchantObj;
                       const s = group.service;
-                      const chips = Array.from(group.categories).slice(0, 3);
+
+                      // Detect PG / Hostel stay context
+                      const isItemPgOrHostel = isPgCategory || 
+                        category === 'hostels' || 
+                        (categoryName || '').toLowerCase().includes('hostel') || 
+                        (m?.name || '').toLowerCase().includes('hostel') || 
+                        (s?.name || '').toLowerCase().includes('dorm') ||
+                        Boolean(m?.metadata?.isPgProperty);
+
+                      // Resolve live PG Configs dynamically from localStorage (Business Portal updates) or merchant metadata
+                      let livePgConfig: any = null;
+                      if (typeof window !== 'undefined') {
+                        try {
+                          const keys = [
+                            `pg_config_${m?.id}`,
+                            `pg_config_${m?.username}`,
+                            'pg_config_default'
+                          ];
+                          for (const k of keys) {
+                            const val = localStorage.getItem(k);
+                            if (val) {
+                              livePgConfig = JSON.parse(val);
+                              break;
+                            }
+                          }
+                          // Also check vendor-portal-storage-v10 if user edited in business portal
+                          if (!livePgConfig) {
+                            const busStore = localStorage.getItem('vendor-portal-storage-v10');
+                            if (busStore) {
+                              const parsed = JSON.parse(busStore);
+                              const curM = parsed.state?.currentMerchant;
+                              if (curM?.metadata?.pgGenderType) {
+                                livePgConfig = curM.metadata;
+                              }
+                            }
+                          }
+                        } catch {}
+                      }
+
+                      const pgGenderVal = livePgConfig?.pgGenderType || m?.metadata?.pgGenderType || (m?.name?.toLowerCase().includes('ladies') ? 'ladies' : (m?.name?.toLowerCase().includes('gents') ? 'gents' : 'coliving'));
+                      const pgFoodVal = livePgConfig?.pgFoodIncluded !== undefined ? livePgConfig.pgFoodIncluded : (m?.metadata?.pgFoodIncluded !== false);
+                      const pgCurfewVal = livePgConfig?.pgGateCurfew || m?.metadata?.pgGateCurfew || '24/7 Biometric Entry';
+
+                      const chips = Array.from(group.categories)
+                        .map((c: any) => (typeof c === 'string' ? c : (c?.name || '')))
+                        .filter(Boolean)
+                        .slice(0, 3);
                       return (
                         <motion.div
                           key={group.groupKey || `${m.id || 'm'}-${group.branchName || i}-${i}`}
@@ -2854,10 +3177,28 @@ export default function ProviderDiscoveryPage() {
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
                                 {/* Verified Pill / Rating Badge */}
-                                <div className="absolute top-2.5 left-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white text-[10px] font-bold shadow-sm">
-                                  <Star size={11} className={isLuxuryMode && isHotelCategory ? 'text-amber-400 fill-amber-400' : 'text-[#ff6325] fill-[#ff6325]'} />
-                                  <span>{group.rating || '4.8'}</span>
-                                  <span className="text-white/60 text-[9px]">({group.reviewCount || '20+'})</span>
+                                <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 flex-wrap max-w-[80%]">
+                                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white text-[10px] font-bold shadow-sm">
+                                    <Star size={11} className={isLuxuryMode && isHotelCategory ? 'text-amber-400 fill-amber-400' : 'text-[#ff6325] fill-[#ff6325]'} />
+                                    <span>{group.rating || '4.8'}</span>
+                                    <span className="text-white/60 text-[9px]">({group.reviewCount || '20+'})</span>
+                                  </div>
+
+                                  {/* PG / Hostel Gender Exclusivity & Food Badges Directly on the Card Header */}
+                                  {isItemPgOrHostel && (
+                                    <div className="flex items-center gap-1">
+                                      <span className={`px-2.5 py-0.5 rounded-full text-white text-[10px] font-black uppercase tracking-wider backdrop-blur-md shadow-sm ${
+                                        pgGenderVal === 'ladies' ? 'bg-pink-600/95 ring-1 ring-white/20' : pgGenderVal === 'gents' ? 'bg-blue-600/95 ring-1 ring-white/20' : 'bg-purple-600/95 ring-1 ring-white/20'
+                                      }`}>
+                                        {pgGenderVal === 'ladies' ? '🚺 Ladies PG' : pgGenderVal === 'gents' ? '🚹 Gents PG' : '👥 Coliving'}
+                                      </span>
+                                      {pgFoodVal && (
+                                        <span className="px-2 py-0.5 rounded-full bg-emerald-600/95 text-white text-[9px] font-bold backdrop-blur-md shadow-sm hidden sm:inline-block">
+                                          🍲 3 Meals
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
 
                                 {isLuxuryMode && isHotelCategory && (
@@ -2895,11 +3236,13 @@ export default function ProviderDiscoveryPage() {
                                             const isOptedIn = m?.isMysteryModeOptIn !== false && mMeta?.isMysteryModeOptIn !== false;
                                             
                                             if (!isOptedIn) {
-                                              return group.branchName || s?.branchName || s?.metadata?.branchName || s?.name || m.name || 'BokSpot Stay';
+                                              const bName = group.branchName || s?.branchName || s?.metadata?.branchName || s?.name || m.name || 'BokSpot Stay';
+                                              return typeof bName === 'string' ? bName : (bName?.name || 'BokSpot Stay');
                                             }
 
-                                            const primaryUnit = group.listings?.[0]?.name || Array.from(group.categories)[0] || '';
-                                            const raw = `${group.branchName || ''} ${s?.name || ''} ${primaryUnit} ${category}`.toLowerCase();
+                                            const rawPrimary = group.listings?.[0]?.name || Array.from(group.categories)[0] || '';
+                                            const primaryUnit = typeof rawPrimary === 'string' ? rawPrimary : (rawPrimary?.name || '');
+                                            const raw = `${typeof group.branchName === 'string' ? group.branchName : ''} ${typeof s?.name === 'string' ? s.name : ''} ${primaryUnit} ${category}`.toLowerCase();
                                             
                                             let archetype = '5-Star Luxury Stay';
                                             if (raw.includes('villa') || category.includes('villa')) archetype = 'Secret Luxury Villa';
@@ -2914,7 +3257,10 @@ export default function ProviderDiscoveryPage() {
                                             }
                                             return archetype;
                                           })()
-                                        : (group.branchName || s?.branchName || s?.metadata?.branchName || s?.name || m.name || 'BokSpot Stay')}
+                                        : (() => {
+                                            const finalName = group.branchName || s?.branchName || s?.metadata?.branchName || s?.name || m?.name || 'BokSpot Stay';
+                                            return typeof finalName === 'string' ? finalName : (finalName?.name || 'BokSpot Stay');
+                                          })()}
                                     </h3>
                                   </div>
 
@@ -2932,6 +3278,25 @@ export default function ProviderDiscoveryPage() {
                                       </>
                                     )}
                                   </div>
+
+                                  {/* Prominent PG / Hostel Quick Facts Badge Bar */}
+                                  {isItemPgOrHostel && (
+                                    <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
+                                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-2xs ${
+                                        pgGenderVal === 'ladies' ? 'bg-pink-500/15 text-pink-700 dark:text-pink-300 border border-pink-400/30' :
+                                        pgGenderVal === 'gents' ? 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-400/30' :
+                                        'bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-400/30'
+                                      }`}>
+                                        {pgGenderVal === 'ladies' ? '🚺 Ladies PG' : pgGenderVal === 'gents' ? '🚹 Gents Only PG' : '👥 Coliving Stay'}
+                                      </span>
+                                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-400/30 flex items-center gap-1">
+                                        <span>🍲</span> {pgFoodVal ? '3 Meals Included' : 'Self-Cooking'}
+                                      </span>
+                                      <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 hidden sm:inline-flex items-center gap-1">
+                                        <span>🔒</span> {pgCurfewVal}
+                                      </span>
+                                    </div>
+                                  )}
                                 </div>
 
                                 {/* Tags / Service Offerings */}
@@ -2947,23 +3312,32 @@ export default function ProviderDiscoveryPage() {
                                             : 'bg-[color:var(--color-surface-dim)]/80 border border-[color:var(--color-outline-variant)]/30 text-[color:var(--color-on-surface)]/90 hover:border-[#ff6325]/40'
                                             }`}
                                         >
-                                          {chip}
+                                          {typeof chip === 'string' ? chip : (chip?.name || '')}
                                         </span>
                                       );
                                     })}
                                   </div>
                                 )}
 
-                                {/* Action Footer for Hotels - Compact */}
+                                {/* Action Footer for Hotels & PGs - Compact */}
                                 {isHotelCategory && (
                                   <div className="mt-2.5 pt-2.5 border-t border-[color:var(--color-outline-variant)]/15 flex items-center justify-between">
                                     <div>
-                                      <span className="text-[9px] text-[color:var(--color-outline)] font-bold uppercase tracking-wider block leading-tight">Starting from</span>
-                                      <span className="text-sm sm:text-base font-black text-[#ff6325]">₹{group.minPrice || '2,499'}</span>
-                                      <span className="text-[9px] text-[color:var(--color-on-surface-variant)] font-medium"> / night</span>
+                                      <span className="text-[9px] text-[color:var(--color-outline)] font-bold uppercase tracking-wider block leading-tight">
+                                        {isItemPgOrHostel ? 'Monthly Rent' : 'Starting from'}
+                                      </span>
+                                      <span className="text-sm sm:text-base font-black text-[#ff6325]">₹{group.minPrice || (isItemPgOrHostel ? '6,500' : '2,499')}</span>
+                                      <span className="text-[9px] text-[color:var(--color-on-surface-variant)] font-medium">
+                                        {isItemPgOrHostel ? ' / month' : ' / night'}
+                                      </span>
+                                      {isItemPgOrHostel && pgFoodVal && (
+                                        <span className="block text-[9px] text-emerald-600 dark:text-emerald-400 font-bold">
+                                          ✓ 3 Meals Included
+                                        </span>
+                                      )}
                                     </div>
                                     <span className="px-2.5 py-1.5 rounded-lg bg-[#0a3161] dark:bg-[#ff6325] text-white text-[11px] font-bold group-hover:brightness-110 flex items-center gap-1 shadow-xs transition-all">
-                                      <span>View Rooms</span>
+                                      <span>{isItemPgOrHostel ? 'View Beds' : 'View Rooms'}</span>
                                       <ChevronRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
                                     </span>
                                   </div>

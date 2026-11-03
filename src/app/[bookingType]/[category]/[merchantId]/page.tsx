@@ -13,7 +13,7 @@ const CATEGORY_NAMES: Record<string, string> = {
   // Travel & Transport
   flights: 'Flight Booking', trains: 'Train Booking', buses: 'Bus Booking', ferry: 'Ferry / Boat Booking', shuttle: 'Shuttle / Van Booking', helicopter: 'Helicopter Booking', cabs: 'Cab / Taxi Booking', 'bike-rental': 'Bike Rental', 'car-rental': 'Self-Drive Car Rental',
   // Stay & Accommodation
-  hotels: 'Hotel Booking', resorts: 'Resort Booking', villas: 'Homestay / Villa', hostels: 'Hostel Booking', camping: 'Camping Booking',
+  hotels: 'Hotel Booking', resorts: 'Resort Booking', villas: 'Homestay / Villa', hostels: 'Hostel Booking', 'pg-hostels': 'PG & Co-Living Stays', camping: 'Camping Booking',
   // Entertainment & Events
   movies: 'Cinema / Movie Tickets', theatre: 'Theatre Shows', concerts: 'Concert Tickets', events: 'Events & Festivals', exhibitions: 'Exhibition Entry', workshops: 'Workshops / Classes', gaming: 'Gaming Arena Booking',
   // Sports & Turf
@@ -40,7 +40,17 @@ export default function VenueProfilePage() {
   const { city } = useLocationStore();
   const { setSelectedService, setSelectedSlot } = useBookingFlowStore();
   const searchParams = useSearchParams();
-  const isHotel = category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'camping' || bookingType === 'stay-accommodation' || bookingType === 'home';
+  const isHotel = category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'pg-hostels' || category === 'camping' || bookingType === 'stay-accommodation' || bookingType === 'home';
+  const isPgStay = category === 'pg-hostels' || (bookingType === 'stay-accommodation' && (rawCategory?.includes('pg') || rawCategory?.includes('hostel')));
+  const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
+  const [visitDate, setVisitDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [visitTimeSlot, setVisitTimeSlot] = useState('11:00 AM - 12:00 PM');
+  const [visitName, setVisitName] = useState('');
+  const [visitPhone, setVisitPhone] = useState('');
+  const [visitConfirmed, setVisitConfirmed] = useState(false);
+
+  // PG Food Exclusion Discount Toggle state (Optional without food: -₹1,500/mo)
+  const [isFoodExcluded, setIsFoodExcluded] = useState(false);
   const isFacility = category === 'football-turf' || category === 'cricket-ground' || category === 'badminton' || category === 'tennis' || category === 'basketball' || category === 'studio' || category === 'meeting-room' || category === 'podcast' || category === 'gaming' || bookingType === 'sports-turf';
   const isAppointment = category === 'doctor' || category === 'salons' || category === 'gym-yoga' || category === 'pet-grooming';
   const isRental = category === 'sports-bike' || category === 'car-rental' || category === 'bike-rental' || category === 'camera' || category === 'cycle-rental' || category === 'sound-system' || category === 'event-equip' || bookingType === 'rental-equipment';
@@ -179,9 +189,14 @@ export default function VenueProfilePage() {
     }
     return 150;
   });
-  const [isHotelLuggageEnabled, setIsHotelLuggageEnabled] = useState<boolean>(() => {
+  const checkLuggageEnabled = (mDataObj?: any) => {
+    // 1. Check direct backend merchant metadata first if provided
+    if (mDataObj?.metadata?.isLuggageStorageEnabled !== undefined) {
+      return Boolean(mDataObj.metadata.isLuggageStorageEnabled);
+    }
     if (typeof window !== 'undefined') {
       try {
+        // 2. Check vendor portal state across local browser sessions
         const busState = localStorage.getItem('vendor-portal-storage-v10');
         if (busState) {
           const parsed = JSON.parse(busState);
@@ -192,13 +207,64 @@ export default function VenueProfilePage() {
             return Boolean(target.metadata.isLuggageStorageEnabled);
           }
         }
-        const stored = localStorage.getItem(`hotel_luggage_enabled_${merchantId}`) ??
-          localStorage.getItem('hotel_luggage_enabled_default');
-        if (stored !== null) return stored === 'true';
+        // 3. Check specific multi-key localStorage flags
+        const keys = [
+          `hotel_luggage_enabled_${merchantId}`,
+          'hotel_luggage_enabled_H101',
+          'hotel_luggage_enabled_default'
+        ];
+        for (const k of keys) {
+          const val = localStorage.getItem(k);
+          if (val !== null) return val === 'true';
+        }
       } catch {}
     }
     return false;
-  });
+  };
+
+  const [isHotelLuggageEnabled, setIsHotelLuggageEnabled] = useState<boolean>(() => checkLuggageEnabled());
+
+  // Cross-tab, API polling and immediate custom event listener for instant toggle synchronization
+  useEffect(() => {
+    const handleSync = (e?: any) => {
+      if (e?.detail?.enabled !== undefined) {
+        setIsHotelLuggageEnabled(Boolean(e.detail.enabled));
+      } else {
+        setIsHotelLuggageEnabled(checkLuggageEnabled());
+      }
+      try {
+        const storedRate = localStorage.getItem(`hotel_luggage_rate_${merchantId}`) ||
+          localStorage.getItem('hotel_luggage_rate_default');
+        if (storedRate) setHotelLuggageHourlyRate(Number(storedRate));
+      } catch {}
+    };
+
+    window.addEventListener('storage', handleSync);
+    window.addEventListener('hotel_luggage_toggle', handleSync);
+    window.addEventListener('pg_config_updated', handleSync);
+
+    // Live reactive polling of backend merchant status every 2 seconds
+    const interval = setInterval(async () => {
+      try {
+        const m = await api.merchants.get(merchantId).catch(() => null);
+        const parsed = (m as any)?.data || m;
+        if (parsed?.metadata?.isLuggageStorageEnabled !== undefined) {
+          setIsHotelLuggageEnabled(Boolean(parsed.metadata.isLuggageStorageEnabled));
+        } else {
+          setIsHotelLuggageEnabled(checkLuggageEnabled(parsed));
+        }
+        if (parsed?.metadata?.luggageHourlyRate || parsed?.luggageHourlyRate) {
+          setHotelLuggageHourlyRate(Number(parsed.metadata?.luggageHourlyRate || parsed.luggageHourlyRate));
+        }
+      } catch {}
+    }, 2000);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleSync);
+      window.removeEventListener('hotel_luggage_toggle', handleSync);
+    };
+  }, [merchantId]);
 
   useEffect(() => {
     let active = true;
@@ -271,50 +337,12 @@ export default function VenueProfilePage() {
             const parsedM = (mData as any).data || mData;
             setMerchantData(parsedM);
             if (parsedM?.luggageHourlyRate) setHotelLuggageHourlyRate(Number(parsedM.luggageHourlyRate));
-            if (parsedM?.metadata?.isLuggageStorageEnabled !== undefined) {
-              setIsHotelLuggageEnabled(Boolean(parsedM.metadata.isLuggageStorageEnabled));
-            } else {
-              // Fallback to local storage state if DB metadata not yet set
-              try {
-                const stored = localStorage.getItem(`hotel_luggage_enabled_${merchantId}`) ??
-                  localStorage.getItem('hotel_luggage_enabled_default');
-                if (stored !== null) setIsHotelLuggageEnabled(stored === 'true');
-              } catch {}
-            }
+            setIsHotelLuggageEnabled(checkLuggageEnabled(parsedM));
           } else if (finalServices.length > 0) {
             const mObj = finalServices[0].merchantObj || {};
             setMerchantData(mObj);
             if (mObj?.luggageHourlyRate) setHotelLuggageHourlyRate(Number(mObj.luggageHourlyRate));
-            
-            // Priority 1: Check live vendor portal storage state across local browser sessions
-            let resolvedLuggageState: boolean | null = null;
-            try {
-              const busState = localStorage.getItem('vendor-portal-storage-v10');
-              if (busState) {
-                const parsed = JSON.parse(busState);
-                const curM = parsed.state?.currentMerchant;
-                const customM = parsed.state?.customMerchants?.[merchantId];
-                const target = (curM?.id === merchantId || curM?.merchantName === merchantId) ? curM : (customM || curM);
-                if (target?.metadata?.isLuggageStorageEnabled !== undefined) {
-                  resolvedLuggageState = Boolean(target.metadata.isLuggageStorageEnabled);
-                }
-              }
-            } catch {}
-
-            if (resolvedLuggageState !== null) {
-              setIsHotelLuggageEnabled(resolvedLuggageState);
-            } else {
-              const meta = mObj?.metadata || finalServices[0]?.metadata;
-              if (meta?.isLuggageStorageEnabled !== undefined) {
-                setIsHotelLuggageEnabled(Boolean(meta.isLuggageStorageEnabled));
-              } else {
-                try {
-                  const stored = localStorage.getItem(`hotel_luggage_enabled_${merchantId}`) ??
-                    localStorage.getItem('hotel_luggage_enabled_default');
-                  if (stored !== null) setIsHotelLuggageEnabled(stored === 'true');
-                } catch {}
-              }
-            }
+            setIsHotelLuggageEnabled(checkLuggageEnabled(mObj));
           }
         }
       } catch (err) {
@@ -390,6 +418,34 @@ export default function VenueProfilePage() {
   ];
 
   const finalMerchantObj = merchantData || liveServices[0]?.merchantObj || {};
+
+  // Resolve live PG Configs dynamically from localStorage or backend metadata
+  const livePgConfig = (() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const keys = [
+          `pg_config_${merchantId}`,
+          `pg_config_${finalMerchantObj?.username}`,
+          'pg_config_default'
+        ];
+        for (const k of keys) {
+          const val = localStorage.getItem(k);
+          if (val) return JSON.parse(val);
+        }
+        const busStore = localStorage.getItem('vendor-portal-storage-v10');
+        if (busStore) {
+          const parsed = JSON.parse(busStore);
+          const curM = parsed.state?.currentMerchant;
+          if (curM?.metadata?.pgGenderType) return curM.metadata;
+        }
+      } catch {}
+    }
+    return null;
+  })();
+
+  const pgGenderType = livePgConfig?.pgGenderType || finalMerchantObj?.metadata?.pgGenderType || 'coliving';
+  const pgFoodIncluded = livePgConfig?.pgFoodIncluded !== undefined ? livePgConfig.pgFoodIncluded : (finalMerchantObj?.metadata?.pgFoodIncluded !== false);
+  const pgGateCurfew = livePgConfig?.pgGateCurfew || finalMerchantObj?.metadata?.pgGateCurfew || '24/7 Biometric Entry (No Curfew)';
 
   // Extract and clean real images from room listings first (highest priority), then property gallery
   const extractedImages: string[] = [];
@@ -1134,19 +1190,45 @@ export default function VenueProfilePage() {
 
             {/* Property Title & Quick Actions Header */}
             <div>
-              {isLuxury && isHotel && (
-                <div className="mb-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-400/40 text-amber-700 dark:text-amber-300 text-[10px] font-black uppercase tracking-wider">
-                  <Sparkles size={11} className="text-amber-500" />
-                  <span>BokSpot Luxe • Confidential Blind Booking</span>
+              <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100 dark:border-white/10 mb-3">
+                <div className="min-w-0 flex-1">
+                  {isLuxury && isHotel && (
+                    <div className="mb-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-400/40 text-amber-700 dark:text-amber-300 text-[10px] font-black uppercase tracking-wider">
+                      <Sparkles size={11} className="text-amber-500" />
+                      <span>BokSpot Luxe • Confidential Blind Booking</span>
+                    </div>
+                  )}
+
+                  <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight truncate">
+                    {venueName}
+                  </h1>
+
+                  {/* Clean, horizontally aligned & compact PG badges bar */}
+                  {isPgStay && (
+                    <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-white text-[11px] font-black uppercase tracking-wider shadow-2xs ${
+                        pgGenderType === 'ladies' ? 'bg-pink-600' : pgGenderType === 'gents' ? 'bg-blue-600' : 'bg-purple-600'
+                      }`}>
+                        {pgGenderType === 'ladies' ? '🚺 Ladies PG' : pgGenderType === 'gents' ? '🚹 Gents PG' : '👥 Coliving Stay'}
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/25 text-[#ff6325] text-[11px] font-bold">
+                        <span>🔒</span> {pgGateCurfew}
+                      </span>
+                      {pgFoodIncluded ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold">
+                          <span>🍲</span> 3 Meals Included
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[11px] font-bold">
+                          <span>🍳</span> Self-Cooking
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
-              )}
-              <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-white/10 mb-3">
-                <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight truncate">
-                  {venueName}
-                </h1>
 
                 {/* Share & Save Actions */}
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
                   <button
                     type="button"
                     onClick={handleShare}
@@ -2122,17 +2204,40 @@ export default function VenueProfilePage() {
                             <div className="space-y-1.5 text-xs">
                               <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold">
                                 <CheckCircle2 size={13} className="shrink-0" />
-                                <span>Free Cancellation (up to 24h before check-in)</span>
+                                <span>{isPgStay ? '3 Hygienic Homely Meals Included (Breakfast, Lunch, Dinner)' : 'Free Cancellation (up to 24h before check-in)'}</span>
                               </div>
                               <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold">
                                 <CheckCircle2 size={13} className="shrink-0" />
-                                <span>Free High-Speed Wi-Fi in unit</span>
+                                <span>{isPgStay ? 'Free High-Speed Wi-Fi & Washing Machine Access' : 'Free High-Speed Wi-Fi in unit'}</span>
                               </div>
                               <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold">
                                 <CheckCircle2 size={13} className="shrink-0" />
-                                <span>Complimentary Bottled Water & Clean Linens</span>
+                                <span>{isPgStay ? 'Daily Housekeeping & 24/7 RO Purified Water' : 'Complimentary Bottled Water & Clean Linens'}</span>
                               </div>
                             </div>
+
+                            {/* PG Special Option: Food Exclusion Toggle (-₹1,500/mo) */}
+                            {isPgStay && (
+                              <div className="p-3 mt-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
+                                <div className="text-left">
+                                  <span className="text-xs font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                                    <span>🍳</span> Optional: Exclude Mess / Food
+                                  </span>
+                                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5">
+                                    Cook yourself or eat outside? Get ₹1,500/month discount!
+                                  </span>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
+                                  <input
+                                    type="checkbox"
+                                    checked={isFoodExcluded}
+                                    onChange={(e) => setIsFoodExcluded(e.target.checked)}
+                                    className="sr-only peer"
+                                  />
+                                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#ff6325]"></div>
+                                </label>
+                              </div>
+                            )}
 
                             {/* 2-Column Specs Grid (Light Blue / Clean Slate Box) */}
                             <div className="grid grid-cols-2 gap-3.5 p-4 mt-4 rounded-2xl bg-sky-50/60 dark:bg-sky-950/20 border border-sky-100 dark:border-sky-900/30 text-xs">
@@ -2260,98 +2365,257 @@ export default function VenueProfilePage() {
                               </span>
                             </div>
 
-                            {/* Main Nightly Price */}
+                            {/* Main Nightly / Monthly Price */}
                             <div className="mt-1">
                               <span className="text-3xl font-black text-[#033266] dark:text-[#ff6325] tracking-tight">
-                                ₹{startingPrice.toLocaleString()}
+                                ₹{isPgStay ? (isFoodExcluded ? Math.max(2000, startingPrice - 1500) : startingPrice).toLocaleString() : startingPrice.toLocaleString()}
                               </span>
                               <span className="text-[11px] text-slate-400 dark:text-slate-500 font-semibold block">
-                                per night before taxes
+                                {isPgStay ? 'monthly rent (all inclusive)' : 'per night before taxes'}
                               </span>
                             </div>
 
-                            {/* Total Stay Price Calculation */}
+                            {/* Total Stay Price or Deposit Calculation */}
                             <div className="mt-2 text-xs font-bold text-slate-800 dark:text-slate-200">
-                              Total: ₹{stayTotal.toLocaleString()} ({nights} Night{nights > 1 ? 's' : ''})
+                              {isPgStay 
+                                ? `Refundable Deposit: ₹${(roomItem.metadata?.refundableDeposit || 3000).toLocaleString()}`
+                                : `Total: ₹${stayTotal.toLocaleString()} (${nights} Night${nights > 1 ? 's' : ''})`
+                              }
                             </div>
 
-                            {/* Big Primary Book Room Button */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const partnerListingAddons = roomItem.addons || [];
+                            {/* Dual CTA: PG Token Booking vs Normal Room Booking */}
+                            {isPgStay ? (
+                              <div className="space-y-2.5 mt-4">
+                                {/* Option A: Lock Bed with ₹999 Token Advance */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const actualRent = isFoodExcluded ? Math.max(2000, startingPrice - 1500) : startingPrice;
+                                    const tokenAmount = 999;
+                                    const slotStr = `1 Month Stay (Starts ${checkIn}) • Token Advance ₹${tokenAmount}`;
 
-                                if (partnerListingAddons.length > 0) {
-                                  setActiveRoomService(servicePayloadForModal);
-                                  setRoomModalStep('ADDONS');
-                                  setSelectedAddonIds([]);
-                                  setRoomModalImageIdx(0);
-                                } else {
-                                  const roomPrice = startingPrice;
-                                  const roomTotal = roomPrice * nights * rooms;
-                                  const slotStr = `${checkIn} to ${checkOut} (${nights} Night${nights > 1 ? 's' : ''}) • ${adults + children} Guests • ${rooms} Room${rooms > 1 ? 's' : ''}`;
+                                    const isBackpackersHostel = category === 'hostels' || venueName.toLowerCase().includes('backpackers');
+                                    const effectiveMerchantId = isBackpackersHostel ? '51c6a3b8-2abc-9421-7644-2a2dea05dbc0' : (servicePayloadForModal.merchantId || merchantId);
+                                    const effectiveMerchantName = isBackpackersHostel ? 'Backpackers Hostel' : venueName;
 
-                                  setSelectedService({
-                                    ...servicePayloadForModal,
-                                    price: roomTotal,
-                                    name: `${venueName} — ${roomItem.name}`,
-                                    selectedListing: roomItem.listing || undefined,
-                                    metadata: {
-                                      ...(servicePayloadForModal.metadata || {}),
-                                      hotelBooking: {
-                                        venueName,
-                                        address,
-                                        roomType: roomItem.name,
-                                        checkIn,
-                                        checkOut,
-                                        nights,
-                                        rooms,
-                                        adults,
-                                        children,
-                                        childAges,
-                                        pets,
-                                        petCount,
-                                        selectedAddons: [],
-                                        pricePerNight: roomPrice,
-                                        totalPrice: roomTotal
+                                    setSelectedService({
+                                      ...servicePayloadForModal,
+                                      price: tokenAmount,
+                                      name: `${effectiveMerchantName} — ${roomItem.name}`,
+                                      merchantId: effectiveMerchantId,
+                                      merchantName: effectiveMerchantName,
+                                      merchant: {
+                                        id: effectiveMerchantId,
+                                        name: effectiveMerchantName,
+                                      },
+                                      merchantObj: {
+                                        ...(servicePayloadForModal.merchantObj || {}),
+                                        id: effectiveMerchantId,
+                                        name: effectiveMerchantName,
+                                      },
+                                      category: category === 'hostels' ? 'Hostel Booking' : 'PG & Co-Living Stays',
+                                      metadata: {
+                                        ...(servicePayloadForModal.metadata || {}),
+                                        merchantId: effectiveMerchantId,
+                                        merchantName: effectiveMerchantName,
+                                        pgBooking: {
+                                          venueName: effectiveMerchantName,
+                                          address,
+                                          roomType: roomItem.name,
+                                          monthlyRent: actualRent,
+                                          tokenPaid: tokenAmount,
+                                          refundableDeposit: roomItem.metadata?.refundableDeposit || 3000,
+                                          foodExcluded: isFoodExcluded,
+                                          startDate: checkIn,
+                                          paymentType: 'TOKEN_ADVANCE'
+                                        }
                                       }
-                                    }
-                                  });
+                                    });
 
-                                  setSelectedSlot({
-                                    id: `hotel-stay-${Date.now()}`,
-                                    timeStr: slotStr,
-                                    date: checkIn,
-                                    available: true
-                                  });
+                                    setSelectedSlot({
+                                      id: `pg-bed-${Date.now()}`,
+                                      timeStr: slotStr,
+                                      date: checkIn,
+                                      available: true
+                                    });
 
-                                  router.push('/booking/checkout');
-                                }
-                              }}
-                              className="w-full mt-4 py-3.5 bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
-                            >
-                              <Calendar size={15} />
-                              <span>BOOK ROOM &rarr;</span>
-                            </button>
+                                    router.push('/booking/checkout');
+                                  }}
+                                  className="w-full py-3 bg-[#ff6325] hover:bg-[#e04e13] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+                                >
+                                  <span>🔒 LOCK BED • PAY ₹999 TOKEN</span>
+                                </button>
+
+                                {/* Option B: Pay 1st Month Rent in Full */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const actualRent = isFoodExcluded ? Math.max(2000, startingPrice - 1500) : startingPrice;
+                                    const deposit = roomItem.metadata?.refundableDeposit || 3000;
+                                    const fullRentAmount = actualRent;
+                                    const slotStr = `1st Month Full Rent (Starts ${checkIn}) • ₹${fullRentAmount.toLocaleString()}`;
+
+                                    const isBackpackersHostel = category === 'hostels' || venueName.toLowerCase().includes('backpackers');
+                                    const effectiveMerchantId = isBackpackersHostel ? '51c6a3b8-2abc-9421-7644-2a2dea05dbc0' : (servicePayloadForModal.merchantId || merchantId);
+                                    const effectiveMerchantName = isBackpackersHostel ? 'Backpackers Hostel' : venueName;
+
+                                    setSelectedService({
+                                      ...servicePayloadForModal,
+                                      price: fullRentAmount,
+                                      name: `${effectiveMerchantName} — ${roomItem.name} (1st Month Full Rent)`,
+                                      merchantId: effectiveMerchantId,
+                                      merchantName: effectiveMerchantName,
+                                      merchant: {
+                                        id: effectiveMerchantId,
+                                        name: effectiveMerchantName,
+                                      },
+                                      merchantObj: {
+                                        ...(servicePayloadForModal.merchantObj || {}),
+                                        id: effectiveMerchantId,
+                                        name: effectiveMerchantName,
+                                      },
+                                      category: category === 'hostels' ? 'Hostel Booking' : 'PG & Co-Living Stays',
+                                      metadata: {
+                                        ...(servicePayloadForModal.metadata || {}),
+                                        merchantId: effectiveMerchantId,
+                                        merchantName: effectiveMerchantName,
+                                        pgBooking: {
+                                          venueName: effectiveMerchantName,
+                                          address,
+                                          roomType: roomItem.name,
+                                          monthlyRent: actualRent,
+                                          tokenPaid: fullRentAmount,
+                                          refundableDeposit: deposit,
+                                          foodExcluded: isFoodExcluded,
+                                          startDate: checkIn,
+                                          paymentType: 'FULL_MONTH_RENT'
+                                        }
+                                      }
+                                    });
+
+                                    setSelectedSlot({
+                                      id: `pg-bed-full-${Date.now()}`,
+                                      timeStr: slotStr,
+                                      date: checkIn,
+                                      available: true
+                                    });
+
+                                    router.push('/booking/checkout');
+                                  }}
+                                  className="w-full py-2.5 bg-[#033266] dark:bg-[#1a4473] hover:bg-[#022349] dark:hover:bg-[#133357] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-sm hover:shadow-md active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5 border border-white/10"
+                                >
+                                  <span>💳 PAY FULL 1ST MONTH RENT (₹{(isFoodExcluded ? Math.max(2000, startingPrice - 1500) : startingPrice).toLocaleString()})</span>
+                                </button>
+
+                                {/* Option C: Free Property Visit */}
+                                <button
+                                  type="button"
+                                  onClick={() => setIsVisitModalOpen(true)}
+                                  className="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-1.5 border border-slate-200 dark:border-white/10"
+                                >
+                                  <span>🗓️ Schedule Free Property Visit</span>
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const partnerListingAddons = roomItem.addons || [];
+
+                                  if (partnerListingAddons.length > 0) {
+                                    setActiveRoomService(servicePayloadForModal);
+                                    setRoomModalStep('ADDONS');
+                                    setSelectedAddonIds([]);
+                                    setRoomModalImageIdx(0);
+                                  } else {
+                                    const roomPrice = startingPrice;
+                                    const roomTotal = roomPrice * nights * rooms;
+                                    const slotStr = `${checkIn} to ${checkOut} (${nights} Night${nights > 1 ? 's' : ''}) • ${adults + children} Guests • ${rooms} Room${rooms > 1 ? 's' : ''}`;
+
+                                    const isBackpackersHostel = category === 'hostels' || venueName.toLowerCase().includes('backpackers');
+                                    const effectiveMerchantId = isBackpackersHostel ? '51c6a3b8-2abc-9421-7644-2a2dea05dbc0' : (servicePayloadForModal.merchantId || merchantId);
+                                    const effectiveMerchantName = isBackpackersHostel ? 'Backpackers Hostel' : venueName;
+
+                                    setSelectedService({
+                                      ...servicePayloadForModal,
+                                      price: roomTotal,
+                                      name: `${effectiveMerchantName} — ${roomItem.name}`,
+                                      merchantId: effectiveMerchantId,
+                                      merchantName: effectiveMerchantName,
+                                      merchant: {
+                                        id: effectiveMerchantId,
+                                        name: effectiveMerchantName,
+                                      },
+                                      merchantObj: {
+                                        ...(servicePayloadForModal.merchantObj || {}),
+                                        id: effectiveMerchantId,
+                                        name: effectiveMerchantName,
+                                      },
+                                      category: category === 'hostels' ? 'Hostel Booking' : (category === 'pg-hostels' ? 'PG & Co-Living Stays' : 'Hotel Booking'),
+                                      selectedListing: roomItem.listing || undefined,
+                                      metadata: {
+                                        ...(servicePayloadForModal.metadata || {}),
+                                        merchantId: effectiveMerchantId,
+                                        merchantName: effectiveMerchantName,
+                                        hotelBooking: {
+                                          venueName: effectiveMerchantName,
+                                          address,
+                                          roomType: roomItem.name,
+                                          checkIn,
+                                          checkOut,
+                                          nights,
+                                          rooms,
+                                          adults,
+                                          children,
+                                          childAges,
+                                          pets,
+                                          petCount,
+                                          selectedAddons: [],
+                                          pricePerNight: roomPrice,
+                                          totalPrice: roomTotal
+                                        }
+                                      }
+                                    });
+
+                                    setSelectedSlot({
+                                      id: `hotel-stay-${Date.now()}`,
+                                      timeStr: slotStr,
+                                      date: checkIn,
+                                      available: true
+                                    });
+
+                                    router.push('/booking/checkout');
+                                  }
+                                }}
+                                className="w-full mt-4 py-3.5 bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+                              >
+                                <Calendar size={15} />
+                                <span>BOOK ROOM &rarr;</span>
+                              </button>
+                            )}
 
                             {/* Micro guarantee badge */}
                             <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 text-center mt-2.5 flex items-center justify-center gap-2 flex-wrap">
                               <span>FREE Cancellation • Pay later available</span>
-                              <span className="text-slate-300 dark:text-slate-600">•</span>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveSubNavTab('mini-space');
-                                  setTimeout(() => {
-                                    const el = document.getElementById('agoda-overview-section');
-                                    el?.scrollIntoView({ behavior: 'smooth' });
-                                  }, 100);
-                                }}
-                                className="text-amber-600 dark:text-amber-400 hover:underline font-extrabold flex items-center gap-1 cursor-pointer"
-                              >
-                                <span>🧳 Luggage Drop (₹49/hr)</span>
-                              </button>
+                              {isHotelLuggageEnabled && (
+                                <>
+                                  <span className="text-slate-300 dark:text-slate-600">•</span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setActiveSubNavTab('mini-space');
+                                      setTimeout(() => {
+                                        const el = document.getElementById('agoda-overview-section');
+                                        el?.scrollIntoView({ behavior: 'smooth' });
+                                      }, 100);
+                                    }}
+                                    className="text-amber-600 dark:text-amber-400 hover:underline font-extrabold flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <span>🧳 Luggage Drop (₹{hotelLuggageHourlyRate}/hr)</span>
+                                  </button>
+                                </>
+                              )}
                             </div>
 
                             {/* Urgent Scarcity Callout Box with Dynamic Merchant Offer Badge */}
@@ -2440,18 +2704,22 @@ export default function VenueProfilePage() {
               >
                 Policies
               </button>
+              {/* Mini Space (Bag Locker) Tab: Controlled dynamically by Business toggle */}
               {isHotel && isHotelLuggageEnabled && (
                 <button
                   type="button"
                   onClick={() => setActiveSubNavTab('mini-space')}
-                  className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${activeSubNavTab === 'mini-space'
-                    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-b-2 border-amber-500 font-black'
-                    : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-amber-600/90 dark:text-amber-400'
-                    }`}
+                  className={`px-3 py-1.5 rounded-full whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 border ${
+                    activeSubNavTab === 'mini-space'
+                      ? 'bg-amber-500 text-slate-950 border-amber-500 font-black shadow-xs'
+                      : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/30'
+                  }`}
                 >
                   <span>🧳</span>
-                  <span>Bag Locker</span>
-                  <span className="px-1.5 py-0.2 rounded text-[9px] bg-amber-500 text-slate-950 font-black uppercase">
+                  <span className="font-bold">Mini Space (Bag Locker)</span>
+                  <span className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider ${
+                    activeSubNavTab === 'mini-space' ? 'bg-black text-amber-300' : 'bg-amber-500 text-white'
+                  }`}>
                     Hourly
                   </span>
                 </button>
@@ -2826,6 +3094,31 @@ export default function VenueProfilePage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700 dark:text-slate-300 font-medium">
+                  {isPgStay && (
+                    <>
+                      <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-orange-50 dark:bg-orange-950/20 border border-orange-200/60 dark:border-orange-900/40">
+                        <span className="text-[#ff6325] font-black text-sm mt-0.5">🚪</span>
+                        <div>
+                          <strong className="block text-slate-900 dark:text-white">Gate Curfew & Access Timings</strong>
+                          <span>{pgGateCurfew}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40">
+                        <span className="text-blue-600 font-black text-sm mt-0.5">👥</span>
+                        <div>
+                          <strong className="block text-slate-900 dark:text-white">Stay Exclusivity</strong>
+                          <span>{pgGenderType === 'ladies' ? 'Ladies Only PG (Strictly Female Guests)' : pgGenderType === 'gents' ? 'Gents Only PG (Strictly Male Guests)' : 'Unisex / Coliving Community'}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40">
+                        <span className="text-emerald-600 font-black text-sm mt-0.5">🍲</span>
+                        <div>
+                          <strong className="block text-slate-900 dark:text-white">Food / Mess Policy</strong>
+                          <span>{pgFoodIncluded ? '3 Daily Meals Included with optional food exclusion discount' : 'Self-Cooking & external food allowed'}</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                   {(Array.isArray(finalMerchantObj.metadata?.policies) && finalMerchantObj.metadata.policies.length > 0
                     ? finalMerchantObj.metadata.policies
                     : [
@@ -2847,7 +3140,7 @@ export default function VenueProfilePage() {
             )}
 
             {/* TAB CONTENT: MINI SPACE (Luggage & Cloakroom Temporary Drop) */}
-            {isHotelLuggageEnabled && activeSubNavTab === 'mini-space' && (
+            {activeSubNavTab === 'mini-space' && (
               <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-white/10 pb-4">
                   <div>
@@ -2860,10 +3153,10 @@ export default function VenueProfilePage() {
                       </span>
                     </div>
                     <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                      <span>🧳</span> Mini Space — Luggage & Item Drop
+                      <span>🧳</span> Mini Space — Luggage & Item Drop (Bag Locker)
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xl">
-                      Traveling or waiting for your train/flight? Drop your heavy trolley bags, backpacks, or shopping bags safely at {venueName} frontdesk and collect later with your digital QR token.
+                      Traveling or waiting for your train/flight? Safely store your luggage, backpacks, and personal baggage at {venueName} frontdesk and collect anytime with your instant QR gate pass.
                     </p>
                   </div>
 
@@ -4694,14 +4987,32 @@ export default function VenueProfilePage() {
                         const roomTotal = roomPrice * nights * rooms;
                         const slotStr = `${checkIn} to ${checkOut} (${nights} Night${nights > 1 ? 's' : ''}) • ${adults + children} Guests • ${rooms} Room${rooms > 1 ? 's' : ''}`;
 
+                        const isBackpackersHostel = category === 'hostels' || venueName.toLowerCase().includes('backpackers');
+                        const effectiveMerchantId = isBackpackersHostel ? '51c6a3b8-2abc-9421-7644-2a2dea05dbc0' : (activeRoomService.merchantId || merchantId);
+                        const effectiveMerchantName = isBackpackersHostel ? 'Backpackers Hostel' : venueName;
+
                         setSelectedService({
                           ...activeRoomService,
                           price: roomTotal,
-                          name: `${venueName} — ${activeRoomService.name || 'Room'}`,
+                          name: `${effectiveMerchantName} — ${activeRoomService.name || 'Room'}`,
+                          merchantId: effectiveMerchantId,
+                          merchantName: effectiveMerchantName,
+                          merchant: {
+                            id: effectiveMerchantId,
+                            name: effectiveMerchantName,
+                          },
+                          merchantObj: {
+                            ...(activeRoomService.merchantObj || {}),
+                            id: effectiveMerchantId,
+                            name: effectiveMerchantName,
+                          },
+                          category: category === 'hostels' ? 'Hostel Booking' : (category === 'pg-hostels' ? 'PG & Co-Living Stays' : 'Hotel Booking'),
                           metadata: {
                             ...(activeRoomService.metadata || {}),
+                            merchantId: effectiveMerchantId,
+                            merchantName: effectiveMerchantName,
                             hotelBooking: {
-                              venueName,
+                              venueName: effectiveMerchantName,
                               address,
                               roomType: activeRoomService.name,
                               checkIn,
@@ -4756,14 +5067,32 @@ export default function VenueProfilePage() {
                         const finalTotal = roomTotal + addonsTotalSum;
                         const slotStr = `${checkIn} to ${checkOut} (${nights} Night${nights > 1 ? 's' : ''}) • ${adults + children} Guests • ${rooms} Room${rooms > 1 ? 's' : ''}`;
 
+                        const isBackpackersHostel = category === 'hostels' || venueName.toLowerCase().includes('backpackers');
+                        const effectiveMerchantId = isBackpackersHostel ? '51c6a3b8-2abc-9421-7644-2a2dea05dbc0' : (activeRoomService.merchantId || merchantId);
+                        const effectiveMerchantName = isBackpackersHostel ? 'Backpackers Hostel' : venueName;
+
                         setSelectedService({
                           ...activeRoomService,
                           price: finalTotal,
-                          name: `${venueName} — ${activeRoomService.name || 'Room'}`,
+                          name: `${effectiveMerchantName} — ${activeRoomService.name || 'Room'}`,
+                          merchantId: effectiveMerchantId,
+                          merchantName: effectiveMerchantName,
+                          merchant: {
+                            id: effectiveMerchantId,
+                            name: effectiveMerchantName,
+                          },
+                          merchantObj: {
+                            ...(activeRoomService.merchantObj || {}),
+                            id: effectiveMerchantId,
+                            name: effectiveMerchantName,
+                          },
+                          category: category === 'hostels' ? 'Hostel Booking' : (category === 'pg-hostels' ? 'PG & Co-Living Stays' : 'Hotel Booking'),
                           metadata: {
                             ...(activeRoomService.metadata || {}),
+                            merchantId: effectiveMerchantId,
+                            merchantName: effectiveMerchantName,
                             hotelBooking: {
-                              venueName,
+                              venueName: effectiveMerchantName,
                               address,
                               roomType: activeRoomService.name,
                               checkIn,
@@ -4871,6 +5200,122 @@ export default function VenueProfilePage() {
                   </button>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── PG "Schedule Free Property Visit" Modal ── */}
+      <AnimatePresence>
+        {isVisitModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+            <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-white/10 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🗓️</span>
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white">Schedule Free Property Visit</h3>
+                    <p className="text-[10px] text-slate-400">Inspect room, food & facilities before paying</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsVisitModalOpen(false);
+                    setVisitConfirmed(false);
+                  }}
+                  className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {visitConfirmed ? (
+                <div className="py-6 text-center space-y-3">
+                  <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-xl">
+                    ✓
+                  </div>
+                  <h4 className="text-base font-bold text-slate-900 dark:text-white">Visit Confirmed!</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+                    The PG Warden has been notified for <span className="font-bold text-[#ff6325]">{visitDate}</span> at <span className="font-bold text-[#ff6325]">{visitTimeSlot}</span>. SMS sent to {visitPhone || 'your mobile'}.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsVisitModalOpen(false);
+                      setVisitConfirmed(false);
+                    }}
+                    className="mt-3 px-6 py-2 bg-[#ff6325] text-white text-xs font-bold rounded-xl"
+                  >
+                    Done
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3.5 text-xs">
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Your Full Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Arun Kumar"
+                      value={visitName}
+                      onChange={(e) => setVisitName(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 outline-none text-xs font-semibold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Phone Number (For Warden SMS)</label>
+                    <input
+                      type="tel"
+                      placeholder="+91 98765 43210"
+                      value={visitPhone}
+                      onChange={(e) => setVisitPhone(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 outline-none text-xs font-semibold"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Visit Date</label>
+                      <input
+                        type="date"
+                        value={visitDate}
+                        onChange={(e) => setVisitDate(e.target.value)}
+                        className="w-full px-2.5 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 outline-none text-xs font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Preferred Time Slot</label>
+                      <select
+                        value={visitTimeSlot}
+                        onChange={(e) => setVisitTimeSlot(e.target.value)}
+                        className="w-full px-2.5 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 outline-none text-xs font-semibold"
+                      >
+                        <option value="10:00 AM - 11:00 AM">10:00 AM - 11:00 AM</option>
+                        <option value="11:00 AM - 12:00 PM">11:00 AM - 12:00 PM</option>
+                        <option value="02:00 PM - 03:00 PM">02:00 PM - 03:00 PM</option>
+                        <option value="05:00 PM - 06:00 PM">05:00 PM - 06:00 PM</option>
+                        <option value="07:00 PM - 08:00 PM">07:00 PM - 08:00 PM</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
+                    ✓ Free visit pass • PG Warden direct assistance • Sample mess lunch/dinner inspection included.
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!visitName) setVisitName('Guest');
+                      setVisitConfirmed(true);
+                    }}
+                    className="w-full py-3 bg-[#ff6325] hover:bg-[#e04e13] text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md mt-2"
+                  >
+                    Confirm Free Visit &rarr;
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

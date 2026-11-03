@@ -61,14 +61,25 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full min-h-screen flex flex-col transition-all duration-300 ease-in-out">
       <TopNav
         utilityDrawerOpen={utilityDrawerOpen}
         setUtilityDrawerOpen={setUtilityDrawerOpen}
         activeUtilityTab={activeUtilityTab}
         setActiveUtilityTab={setActiveUtilityTab}
       />
-      {children}
+      <div 
+        style={{
+          marginRight: !utilityDrawerOpen 
+            ? '0px' 
+            : activeUtilityTab 
+              ? (activeUtilityTab === 'beta' ? '390px' : '370px') 
+              : '50px'
+        }}
+        className="flex-1 w-auto transition-[margin-right] duration-200 ease-out"
+      >
+        {children}
+      </div>
       <BottomNav />
     </div>
   );

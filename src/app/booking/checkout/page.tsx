@@ -72,7 +72,13 @@ export default function CheckoutPage() {
 
   const listing = selectedService.selectedListing;
   const meta = listing?.metadata || {};
-  const isHotel = Boolean(selectedService.metadata?.hotelBooking);
+  const isHotel = Boolean(selectedService.metadata?.hotelBooking || selectedService.metadata?.pgBooking);
+  const merchantDisplayName = typeof selectedService.merchant === 'string'
+    ? selectedService.merchant
+    : (selectedService.merchant?.name || selectedService.merchantObj?.name || 'BokSpot Verified Partner');
+  const serviceDisplayName = typeof selectedService.name === 'string'
+    ? selectedService.name
+    : (selectedService.name?.name || 'Service Booking');
   const availableAddons = (listing?.addons && listing.addons.length > 0)
     ? listing.addons
     : (meta.addons && meta.addons.length > 0)
@@ -141,14 +147,36 @@ export default function CheckoutPage() {
         };
       }) : undefined;
 
+      const resolvedMerchantName = selectedService.metadata?.hotelBooking?.venueName ||
+        selectedService.metadata?.pgBooking?.venueName ||
+        selectedService.metadata?.venueName ||
+        (typeof selectedService.merchant === 'object' ? selectedService.merchant?.name : selectedService.merchant) ||
+        (typeof selectedService.merchantObj === 'object' ? selectedService.merchantObj?.name : selectedService.merchantObj) ||
+        merchantDisplayName ||
+        'BokSpot Partner';
+
+      const isHostelBooking = Boolean(
+        (selectedService.name || '').toLowerCase().includes('hostel') ||
+        (selectedService.category?.name || selectedService.category || '').toLowerCase().includes('hostel') ||
+        resolvedMerchantName.toLowerCase().includes('hostel')
+      );
+
+      const resolvedMerchantId = isHostelBooking
+        ? '51c6a3b8-2abc-9421-7644-2a2dea05dbc0'
+        : (selectedService.merchantObj?.id || selectedService.merchantId || (typeof selectedService.merchant === 'string' ? selectedService.merchant : selectedService.merchant?.id) || '');
+
+      const resolvedCategory = isHostelBooking
+        ? 'Hostel Booking'
+        : (typeof selectedService.category === 'object' ? selectedService.category?.name : selectedService.category) || 'Hotel Booking';
+
       const newBooking = {
         id: String(Date.now()),
         ref,
         serviceId: selectedService.id,
         serviceName: listing?.name || selectedService.name,
-        merchantName: selectedService.merchant?.name || selectedService.merchant || '',
-        merchantId: selectedService.merchantObj?.id || selectedService.merchantId || (typeof selectedService.merchant === 'string' ? selectedService.merchant : selectedService.merchant?.id) || '',
-        category: selectedService.category?.name || selectedService.category || 'Default',
+        merchantName: resolvedMerchantName,
+        merchantId: resolvedMerchantId,
+        category: resolvedCategory,
         date: selectedSlot.date,
         time: bookingTime,
         amount: total,
@@ -208,7 +236,7 @@ export default function CheckoutPage() {
           </button>
           <div>
             <h1 className="font-extrabold text-lg">Complete Your Booking</h1>
-            <p className="text-xs text-gray-500 font-medium">{selectedService.merchant}</p>
+            <p className="text-xs text-gray-500 font-medium">{merchantDisplayName}</p>
           </div>
           {timeLeft > 0 && (
             <div className="ml-auto flex items-center gap-1.5 text-xs font-bold bg-amber-50 border border-amber-200 text-amber-700 px-3 py-1.5 rounded-full">
@@ -239,11 +267,40 @@ export default function CheckoutPage() {
                   </div>
                 )}
                 <div className="flex-1 space-y-2">
-                  <h3 className="font-extrabold text-lg text-gray-900">{listing?.name || selectedService.name}</h3>
-                  <p className="text-sm text-gray-500 font-medium">{selectedService.name} · {selectedService.merchant}</p>
+                  <h3 className="font-extrabold text-lg text-gray-900">{listing?.name || serviceDisplayName}</h3>
+                  <p className="text-sm text-gray-500 font-medium">{serviceDisplayName} · {merchantDisplayName}</p>
 
-                  {/* Dynamic Hotel / Listing Details */}
-                  {selectedService.metadata?.hotelBooking ? (
+                  {/* Dynamic Hotel / PG / Listing Details */}
+                  {selectedService.metadata?.pgBooking ? (
+                    <div className="space-y-2 mt-3 pt-3 border-t border-gray-100">
+                      <div className="flex flex-wrap gap-2">
+                        <span className="text-xs font-bold px-2.5 py-1 bg-orange-50 text-orange-700 rounded-full border border-orange-200 flex items-center gap-1">
+                          <Bed size={12} /> {selectedService.metadata.pgBooking.roomType}
+                        </span>
+                        <span className="text-xs font-bold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100 flex items-center gap-1">
+                          {selectedService.metadata.pgBooking.foodExcluded ? '🍳 Self Cooking / Mess Excluded' : '🍛 3 Meals Included (Homely Food)'}
+                        </span>
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full border flex items-center gap-1 ${
+                          selectedService.metadata.pgBooking.paymentType === 'FULL_MONTH_RENT'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-blue-50 text-blue-700 border-blue-100'
+                        }`}>
+                          {selectedService.metadata.pgBooking.paymentType === 'FULL_MONTH_RENT' ? '💳 1st Month Full Rent' : `🔒 Token Advance Paid: ₹${selectedService.metadata.pgBooking.tokenPaid || 999}`}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 pt-2 bg-gray-50 p-2.5 rounded-xl border border-gray-100 text-xs">
+                        <div>
+                          <span className="text-gray-400 font-bold block text-[10px] uppercase">Monthly Rent</span>
+                          <span className="font-extrabold text-gray-800">₹{selectedService.metadata.pgBooking.monthlyRent?.toLocaleString() || '6,500'}/month</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-400 font-bold block text-[10px] uppercase">Refundable Deposit</span>
+                          <span className="font-extrabold text-gray-800">₹{selectedService.metadata.pgBooking.refundableDeposit?.toLocaleString() || '3,000'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : selectedService.metadata?.hotelBooking ? (
                     <div className="space-y-2 mt-3 pt-3 border-t border-gray-100">
                       <div className="flex flex-wrap gap-2">
                         <span className="text-xs font-bold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100 flex items-center gap-1">

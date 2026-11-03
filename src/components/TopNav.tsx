@@ -757,9 +757,18 @@ export function TopNav({
           {/* Utility Drawer Button Box (50px wide column to align with right sidebar) */}
           <div className="w-[50px] shrink-0 h-full flex items-center justify-center border-l border-white/10">
             <button
-              onClick={() => setUtilityDrawerOpen(!utilityDrawerOpen)}
+              onClick={() => {
+                if (utilityDrawerOpen) {
+                  // Closing: reset active tab so next time it opens fresh (clean rail only)
+                  setUtilityDrawerOpen(false);
+                  setActiveUtilityTab(null);
+                } else {
+                  setUtilityDrawerOpen(true);
+                  setActiveUtilityTab(null);
+                }
+              }}
               className={`relative flex items-center justify-center transition-all cursor-pointer shadow-md custom-nav-icon-container custom-nav-icon-btn w-9 h-9 ${utilityDrawerOpen
-                ? 'opacity-100 scale-105 shadow-[0_0_10px_rgba(252,238,167,0.3)]'
+                ? 'opacity-100 scale-105'
                 : 'opacity-85 hover:opacity-100 hover:scale-105'
                 }`}
               title="Bokspot Utilities"
@@ -776,7 +785,12 @@ export function TopNav({
               : 'max-h-0 opacity-0 pointer-events-none'
             }`}
         >
-          <div className="w-full secondary-subnav-bar px-4 lg:px-8 py-1.5 flex items-center justify-between text-xs select-none">
+          <div 
+            style={{
+              paddingRight: utilityDrawerOpen ? '50px' : '0px'
+            }}
+            className="w-full secondary-subnav-bar px-4 lg:px-8 py-1.5 flex items-center justify-between text-xs select-none transition-[padding-right] duration-200 ease-out"
+          >
             {/* Left Side: High-intent booking shortcuts */}
             <div className="flex items-center gap-1.5 md:gap-2.5 overflow-x-auto custom-scrollbar scrollbar-none py-0.5">
               <Link
