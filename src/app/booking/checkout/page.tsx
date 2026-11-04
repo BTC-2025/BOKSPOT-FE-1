@@ -268,7 +268,19 @@ export default function CheckoutPage() {
                 )}
                 <div className="flex-1 space-y-2">
                   <h3 className="font-extrabold text-lg text-gray-900">{listing?.name || serviceDisplayName}</h3>
-                  <p className="text-sm text-gray-500 font-medium">{serviceDisplayName} · {merchantDisplayName}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm text-gray-500 font-medium">{serviceDisplayName} · {merchantDisplayName}</p>
+                    {((listing as any)?.priceUnit || meta.priceUnit) && (
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-100">
+                        {(listing as any)?.priceUnit || meta.priceUnit}
+                      </span>
+                    )}
+                    {((listing as any)?.securityDeposit || meta.securityDeposit) && (
+                      <span className="text-xs font-bold px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200">
+                        Refundable Deposit: ₹{Number((listing as any)?.securityDeposit || meta.securityDeposit).toLocaleString('en-IN')}
+                      </span>
+                    )}
+                  </div>
 
                   {/* Dynamic Hotel / PG / Listing Details */}
                   {selectedService.metadata?.pgBooking ? (
@@ -759,6 +771,17 @@ export default function CheckoutPage() {
                   </div>
                   <span className="font-bold text-gray-900">₹{gst.toLocaleString()}</span>
                 </div>
+
+                {/* Refundable Security Deposit Note */}
+                {((listing as any)?.securityDeposit || meta.securityDeposit) && (
+                  <div className="flex justify-between items-center text-sm p-2 rounded-xl bg-amber-50/70 border border-amber-200/80">
+                    <div>
+                      <span className="text-amber-900 font-bold block text-xs">Refundable Security Deposit</span>
+                      <span className="text-[10px] text-amber-700">100% refunded after checkout / inspection</span>
+                    </div>
+                    <span className="font-extrabold text-amber-900">₹{Number((listing as any)?.securityDeposit || meta.securityDeposit).toLocaleString('en-IN')}</span>
+                  </div>
+                )}
 
                 <div className="border-t border-gray-100 pt-3 mt-3 space-y-2">
                   <div className="flex justify-between items-center">

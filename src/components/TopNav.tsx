@@ -362,7 +362,7 @@ export function TopNav({
               href="/"
               className="flex items-center hover:scale-102 active:scale-98 transition-all duration-300 shrink-0"
             >
-              <img src="/logo.png?v=3" alt="BokSpot" className="h-10 md:h-12 object-contain" />
+              <img src="/logo.png?v=original_restored" alt="BokSpot" className="h-10 md:h-12 object-contain" />
             </Link>
 
             <div className="relative hidden lg:inline-block">
@@ -444,10 +444,10 @@ export function TopNav({
           </div>
 
           {/* Right Column: Actions Capsule */}
-          <div className="flex-1 flex justify-end items-center gap-3 pr-4 lg:pr-6">
+          <div className="flex-1 flex justify-end items-center gap-2.5 pr-3">
             {/* Desktop Actions Capsule (>= lg) */}
             {/* Desktop Actions (Separated Glass Circles) */}
-            <div className="hidden lg:flex items-center gap-2 mr-2">
+            <div className="hidden lg:flex items-center gap-2">
               {/* Search Icon Container Wrapper */}
               <div className="relative" ref={searchContainerRef}>
                 <div
@@ -754,8 +754,8 @@ export function TopNav({
 
           </div>
 
-          {/* Utility Drawer Button Box (50px wide column to align with right sidebar) */}
-          <div className="w-[50px] shrink-0 h-full flex items-center justify-center border-l border-white/10">
+          {/* Utility Drawer Button Box (56px width matching drawer rail width so the border line perfectly aligns vertically) */}
+          <div className="w-[56px] shrink-0 h-full flex items-center justify-center border-l border-white/10">
             <button
               onClick={() => {
                 if (utilityDrawerOpen) {
@@ -773,7 +773,7 @@ export function TopNav({
                 }`}
               title="Bokspot Utilities"
             >
-              <img src="/utility-icon.png?v=3" alt="Utilities" className="w-[22px] h-[22px] object-contain" />
+              <img src="/utility-icon.png?v=3" alt="Utilities" className="w-[20px] h-[20px] object-contain" />
             </button>
           </div>
         </div>
@@ -787,9 +787,13 @@ export function TopNav({
         >
           <div 
             style={{
-              paddingRight: utilityDrawerOpen ? '50px' : '0px'
+              paddingRight: !utilityDrawerOpen
+                ? '16px'
+                : activeUtilityTab
+                  ? (activeUtilityTab === 'beta' ? '412px' : '392px')
+                  : '72px'
             }}
-            className="w-full secondary-subnav-bar px-4 lg:px-8 py-1.5 flex items-center justify-between text-xs select-none transition-[padding-right] duration-200 ease-out"
+            className="w-full secondary-subnav-bar px-4 lg:px-8 py-1 flex items-center justify-between text-xs select-none transition-[padding-right] duration-200 ease-out"
           >
             {/* Left Side: High-intent booking shortcuts */}
             <div className="flex items-center gap-1.5 md:gap-2.5 overflow-x-auto custom-scrollbar scrollbar-none py-0.5">

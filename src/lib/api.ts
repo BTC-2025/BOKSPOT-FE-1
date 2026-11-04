@@ -664,9 +664,9 @@ export const api = {
       const qs = new URLSearchParams({ lat: String(lat), lng: String(lng), ...params }).toString();
       return apiFetch<Merchant[]>(`/geo/nearby?${qs}`);
     },
-    get: async (id: string) => {
-      // 5-minute memory cache for instant sub-page transitions
-      if ((api.merchants as any)._cache && (api.merchants as any)._cache[id]) {
+    get: async (id: string, bypassCache = false) => {
+      // 5-minute memory cache for instant sub-page transitions (bypassed on live polling/edit)
+      if (!bypassCache && (api.merchants as any)._cache && (api.merchants as any)._cache[id]) {
         const entry = (api.merchants as any)._cache[id];
         if (Date.now() - entry.timestamp < 300000) return entry.data;
       }
