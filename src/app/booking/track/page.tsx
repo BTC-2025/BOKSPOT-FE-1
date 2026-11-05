@@ -311,6 +311,30 @@ Show this at the reception counter.
             );
           })()}
 
+        {/* ── SPECIAL BANNER FOR LUXE MYSTERY SECRET REVEAL: Instant celebration banner ── */}
+        {(Boolean(booking?.isLuxeBlindBooking) || Boolean(booking?.maskedSecretName)) && (
+          <div className="rounded-3xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 p-6 shadow-xl border-2 border-yellow-300 relative overflow-hidden animate-fade-in">
+            <div className="absolute top-0 right-0 -mt-6 -mr-6 w-32 h-32 bg-white/20 rounded-full blur-xl pointer-events-none" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+              <div className="space-y-1.5">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950 text-amber-300 text-[10px] font-black uppercase tracking-wider shadow-sm">
+                  <Sparkles size={11} className="text-amber-400 animate-spin" />
+                  <span>BokSpot Luxe • Secret Revealed!</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">
+                  🎉 Congratulations! You are staying at {booking.realHotelName || booking.merchantName}
+                </h2>
+                <p className="text-xs sm:text-sm font-semibold text-slate-900 max-w-2xl leading-relaxed">
+                  Your confidential 5-Star mystery reservation was successfully secured at exclusive privileged partner rates. Present the digital QR pass below during check-in.
+                </p>
+              </div>
+              <div className="px-4 py-2.5 rounded-2xl bg-white/80 backdrop-blur-md border border-white text-slate-950 font-black text-xs uppercase tracking-wider text-center shrink-0 shadow-sm">
+                ⭐ Luxe Verified Partner
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── 2-Column Responsive Dashboard Layout (Full Width 50/50 Grid) ── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch w-full">
 

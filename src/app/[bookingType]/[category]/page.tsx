@@ -1943,18 +1943,57 @@ export default function ProviderDiscoveryPage() {
       }
     }
 
-    // Just Luxury Mystery Mode: Strictly show authentic top-rated luxury stays (Customer Rating >= 4.5★)
+    // Just Luxury Mystery Mode: Show ONLY properties where business turned ON mystery deals & maintains 4.5★+
     if (isLuxuryMode) {
-      const customerRating = Number(s.rating || s.merchantObj?.rating || s.merchant?.rating || 0);
-      const isTopCustomerRated = customerRating >= 4.5;
-      
-      const mMeta = s.merchant?.metadata || s.merchantObj?.metadata || s.metadata || {};
-      const rawText = `${s.name || ''} ${s.description || ''} ${s.merchant?.name || ''} ${s.category || ''} ${JSON.stringify(mMeta)}`.toLowerCase();
-      const hasLuxeKeywords = rawText.includes('luxury') || rawText.includes('luxe') || rawText.includes('villa') || rawText.includes('resort') || rawText.includes('suite') || rawText.includes('palace') || rawText.includes('heritage') || rawText.includes('5-star') || rawText.includes('5 star');
+      // 1. Hostels / PG are excluded from mystery luxury mode
+      const isHostelOrPg = isPgCategory || 
+        category === 'hostels' || 
+        (categoryName || '').toLowerCase().includes('hostel') ||
+        (s.name || '').toLowerCase().includes('hostel') ||
+        (s.merchant?.name || '').toLowerCase().includes('hostel') ||
+        (s.name || '').toLowerCase().includes('dorm') ||
+        Boolean(s.merchant?.metadata?.isPgProperty || s.merchantObj?.metadata?.isPgProperty);
+      if (isHostelOrPg) return false;
 
-      // Genuine verification: Must have top customer review (4.5★+) and luxury hospitality offering
-      const isEligibleLuxe = isTopCustomerRated && (hasLuxeKeywords || customerRating >= 4.8);
-      if (!isEligibleLuxe) return false;
+      // 2. Check if partner opted into Mystery Deals in Business Portal
+      const mId = s.merchantId || s.merchant?.id || s.merchantObj?.id;
+      const mUname = s.merchant?.username || s.merchantObj?.username;
+      let isMysteryOptedIn: boolean | null = null;
+      if (typeof window !== 'undefined') {
+        const storedId = mId ? localStorage.getItem(`hotel_mystery_optin_${mId}`) : null;
+        const storedUname = mUname ? localStorage.getItem(`hotel_mystery_optin_${mUname}`) : null;
+        const storedH101 = localStorage.getItem('hotel_mystery_optin_H101');
+        const storedDef = localStorage.getItem('hotel_mystery_optin_default');
+        if (storedId !== null) isMysteryOptedIn = storedId === 'true';
+        else if (storedUname !== null) isMysteryOptedIn = storedUname === 'true';
+        else if (storedH101 !== null) isMysteryOptedIn = storedH101 === 'true';
+        else if (storedDef !== null) isMysteryOptedIn = storedDef === 'true';
+      }
+
+      // If partner turned OFF in business portal, immediately exclude
+      if (isMysteryOptedIn === false) return false;
+
+      const mMeta = s.merchant?.metadata || s.merchantObj?.metadata || s.metadata || {};
+      if (s.merchant?.isMysteryModeOptIn === false || mMeta?.isMysteryModeOptIn === false) {
+        return false;
+      }
+
+      // Check if merchant opted in OR qualifies as verified luxe hotel
+      const customerRating = Number(s.rating || s.merchantObj?.rating || s.merchant?.rating || 4.8);
+      const isGrandHotel = (s.merchant?.name || s.merchantName || '').toLowerCase().includes('grand hotel');
+      const isExplicitOptIn = isMysteryOptedIn === true ||
+        s.merchant?.isMysteryModeOptIn === true ||
+        mMeta?.isMysteryModeOptIn === true ||
+        s.merchant?.isLuxeVerified === true ||
+        s.merchantObj?.isLuxeVerified === true ||
+        mMeta?.isLuxeVerified === true ||
+        s.merchant?.tier === 'LUXURY' ||
+        s.tier === 'LUXURY' ||
+        (isGrandHotel && isMysteryOptedIn !== false);
+
+      if (!isExplicitOptIn || customerRating < 4.5) {
+        return false;
+      }
     }
 
     // PG & Hostel Specific Filters (Gender, Food Model, Sharing)
@@ -2828,24 +2867,26 @@ export default function ProviderDiscoveryPage() {
                   <span>🐾 Pet Friendly</span>
                 </button>
 
-                {/* 6. Just Luxury (Golden Mystery Pill) */}
-                <button
-                  type="button"
-                  onClick={() => setIsLuxuryMode(!isLuxuryMode)}
-                  className={`px-4 py-1.5 rounded-full border text-xs font-black transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-sm ${isLuxuryMode
-                      ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 border-amber-300 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/30'
-                      : 'bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300 hover:border-amber-400 hover:bg-amber-500/15'
-                    }`}
-                  title="Filter only 5-Star & Ultra Luxury stays with confidential blind booking"
-                >
-                  <Sparkles size={13} className={isLuxuryMode ? 'text-slate-950 animate-spin' : 'text-amber-500'} />
-                  <span>✨ Just Luxury</span>
-                  {isLuxuryMode && (
-                    <span className="text-[9px] uppercase px-1.5 py-0.2 bg-black/80 text-amber-300 rounded font-black tracking-wider">
-                      Secret Mode
-                    </span>
-                  )}
-                </button>
+                {/* 6. Just Luxury (Golden Mystery Pill) — Only for Hotels, Resorts, Villas (Hidden on PG & Hostels) */}
+                {!isPgCategory && category !== 'hostels' && !category.includes('pg') && (
+                  <button
+                    type="button"
+                    onClick={() => setIsLuxuryMode(!isLuxuryMode)}
+                    className={`px-4 py-1.5 rounded-full border text-xs font-black transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-sm ${isLuxuryMode
+                        ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 border-amber-300 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/30'
+                        : 'bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300 hover:border-amber-400 hover:bg-amber-500/15'
+                      }`}
+                    title="Filter only 5-Star & Ultra Luxury stays with confidential blind booking"
+                  >
+                    <Sparkles size={13} className={isLuxuryMode ? 'text-slate-950 animate-spin' : 'text-amber-500'} />
+                    <span>✨ Just Luxury</span>
+                    {isLuxuryMode && (
+                      <span className="text-[9px] uppercase px-1.5 py-0.2 bg-black/80 text-amber-300 rounded font-black tracking-wider">
+                        Secret Mode
+                      </span>
+                    )}
+                  </button>
+                )}
 
                 {/* Reset Filters (Only appears when any filter is active) */}
                 {(priceRange < 50000 || minRating > 0 || freeCancellationOnly || petFriendlyOnly || isLuxuryMode || pgGenderFilter !== 'all' || pgFoodFilter !== 'all' || pgSharingFilter !== 'all') && (
@@ -3128,6 +3169,28 @@ export default function ProviderDiscoveryPage() {
                         .map((c: any) => (typeof c === 'string' ? c : (c?.name || '')))
                         .filter(Boolean)
                         .slice(0, 3);
+
+                      // Check whether merchant opted into Secret Mystery deals
+                      const checkMysteryOptIn = () => {
+                        if (isItemPgOrHostel) return false;
+                        if (typeof window !== 'undefined') {
+                          const mId = m?.id || group.merchantId;
+                          const directStore = localStorage.getItem(`hotel_mystery_optin_${mId}`);
+                          if (directStore !== null) return directStore === 'true';
+                          const uStore = m?.username ? localStorage.getItem(`hotel_mystery_optin_${m?.username}`) : null;
+                          if (uStore !== null) return uStore === 'true';
+                          const h101Store = localStorage.getItem('hotel_mystery_optin_H101');
+                          if (h101Store !== null) return h101Store === 'true';
+                          const defaultStore = localStorage.getItem('hotel_mystery_optin_default');
+                          if (defaultStore !== null) return defaultStore === 'true';
+                        }
+                        const mMeta = m?.metadata || s?.metadata || {};
+                        if (m?.isMysteryModeOptIn !== undefined) return Boolean(m.isMysteryModeOptIn);
+                        if (mMeta?.isMysteryModeOptIn !== undefined) return Boolean(mMeta.isMysteryModeOptIn);
+                        return true; // When user clicks Just Luxury, luxury stays default to true blind mystery
+                      };
+                      const isMysteryOptedIn = checkMysteryOptIn();
+                      const isCardSecret = Boolean(isLuxuryMode && isHotelCategory && isMysteryOptedIn);
                       return (
                         <motion.div
                           key={group.groupKey || `${m.id || 'm'}-${group.branchName || i}-${i}`}
@@ -3138,12 +3201,12 @@ export default function ProviderDiscoveryPage() {
                         >
                           <Link
                             href={isHotelCategory
-                              ? `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?checkIn=${checkInDate}&checkOut=${checkOutDate}&adults=${adults}&children=${children}&childAges=${encodeURIComponent(JSON.stringify(childAges))}&rooms=${rooms}&pets=${pets}&petCount=${petCount}${isLuxuryMode ? '&isLuxury=true' : ''}`
+                              ? `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?checkIn=${checkInDate}&checkOut=${checkOutDate}&adults=${adults}&children=${children}&childAges=${encodeURIComponent(JSON.stringify(childAges))}&rooms=${rooms}&pets=${pets}&petCount=${petCount}${isCardSecret ? '&isLuxury=true' : ''}`
                               : `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}`
                             }
                             className="block h-full"
                           >
-                            <div className={`group relative flex flex-col h-full bg-[color:var(--color-surface)] rounded-2xl overflow-hidden border transition-all duration-300 cursor-pointer ${isLuxuryMode && isHotelCategory
+                            <div className={`group relative flex flex-col h-full bg-[color:var(--color-surface)] rounded-2xl overflow-hidden border transition-all duration-300 cursor-pointer ${isCardSecret
                                 ? 'border-amber-400/50 hover:border-amber-400 hover:shadow-xl hover:shadow-amber-500/15'
                                 : 'border-[color:var(--color-outline-variant)]/30 hover:border-[#ff6325]/50 hover:shadow-xl hover:shadow-[#ff6325]/10'
                               } ${viewMode === 'list' ? 'sm:flex-row' : ''}`}>
@@ -3179,7 +3242,7 @@ export default function ProviderDiscoveryPage() {
                                 {/* Verified Pill / Rating Badge */}
                                 <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 flex-wrap max-w-[80%]">
                                   <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white text-[10px] font-bold shadow-sm">
-                                    <Star size={11} className={isLuxuryMode && isHotelCategory ? 'text-amber-400 fill-amber-400' : 'text-[#ff6325] fill-[#ff6325]'} />
+                                    <Star size={11} className={isCardSecret ? 'text-amber-400 fill-amber-400' : 'text-[#ff6325] fill-[#ff6325]'} />
                                     <span>{group.rating || '4.8'}</span>
                                     <span className="text-white/60 text-[9px]">({group.reviewCount || '20+'})</span>
                                   </div>
@@ -3201,7 +3264,7 @@ export default function ProviderDiscoveryPage() {
                                   )}
                                 </div>
 
-                                {isLuxuryMode && isHotelCategory && (
+                                {isCardSecret && (
                                   <div className="absolute top-2.5 left-24 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 font-black text-[9px] uppercase tracking-wider shadow-sm flex items-center gap-1">
                                     <Sparkles size={9} /> BokSpot Luxe
                                   </div>
@@ -3213,7 +3276,7 @@ export default function ProviderDiscoveryPage() {
 
                                 {/* Bottom of Image: Price tag preview if available */}
                                 {group.minPrice && (
-                                  <div className={`absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md text-white font-extrabold text-[11px] shadow-md ${isLuxuryMode && isHotelCategory
+                                  <div className={`absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md text-white font-extrabold text-[11px] shadow-md ${isCardSecret
                                       ? 'bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950'
                                       : 'bg-gradient-to-r from-[#ff6325] to-[#e04e13]'
                                     }`}>
@@ -3226,20 +3289,12 @@ export default function ProviderDiscoveryPage() {
                               <div className="p-3.5 sm:p-4 flex flex-col flex-1 justify-between">
                                 <div>
                                   <div className="flex items-start justify-between gap-1.5 mb-1">
-                                    <h3 className={`font-bold text-sm sm:text-base line-clamp-1 tracking-tight transition-colors ${isLuxuryMode && isHotelCategory
+                                    <h3 className={`font-bold text-sm sm:text-base line-clamp-1 tracking-tight transition-colors ${isCardSecret
                                         ? 'text-amber-500 dark:text-amber-300 font-extrabold'
                                         : 'text-[color:var(--color-on-surface)] group-hover:text-[#ff6325]'
                                       }`}>
-                                      {isLuxuryMode && isHotelCategory
+                                      {isCardSecret
                                         ? (() => {
-                                            const mMeta = m?.metadata || s?.metadata || {};
-                                            const isOptedIn = m?.isMysteryModeOptIn !== false && mMeta?.isMysteryModeOptIn !== false;
-                                            
-                                            if (!isOptedIn) {
-                                              const bName = group.branchName || s?.branchName || s?.metadata?.branchName || s?.name || m.name || 'BokSpot Stay';
-                                              return typeof bName === 'string' ? bName : (bName?.name || 'BokSpot Stay');
-                                            }
-
                                             const rawPrimary = group.listings?.[0]?.name || Array.from(group.categories)[0] || '';
                                             const primaryUnit = typeof rawPrimary === 'string' ? rawPrimary : (rawPrimary?.name || '');
                                             const raw = `${typeof group.branchName === 'string' ? group.branchName : ''} ${typeof s?.name === 'string' ? s.name : ''} ${primaryUnit} ${category}`.toLowerCase();
@@ -3265,11 +3320,11 @@ export default function ProviderDiscoveryPage() {
                                   </div>
 
                                   <div className="flex items-center text-[11px] font-medium text-[color:var(--color-on-surface-variant)] mb-2">
-                                    <MapPin size={12} className={isLuxuryMode && isHotelCategory ? 'text-amber-500 mr-1 shrink-0' : 'text-[#ff6325]/80 mr-1 shrink-0'} />
+                                    <MapPin size={12} className={isCardSecret ? 'text-amber-500 mr-1 shrink-0' : 'text-[#ff6325]/80 mr-1 shrink-0'} />
                                     <span className="truncate max-w-[200px]">
-                                      {isLuxuryMode && isHotelCategory && (m?.isMysteryModeOptIn !== false && (m?.metadata?.isMysteryModeOptIn !== false))
+                                      {isCardSecret
                                         ? `${city || 'Prime District'} • Full address revealed on booking`
-                                        : (group.address || group.groupCity || m.address || city || 'Chennai')}
+                                        : (group.address || group.groupCity || m?.address || city || 'Chennai')}
                                     </span>
                                     {group.dist && (
                                       <>

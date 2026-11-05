@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Shield, CreditCard, Clock, MapPin, ArrowLeft, ChevronRight, AlertCircle, Check, User, Phone, Home, Bed, Users } from 'lucide-react';
+import { Shield, CreditCard, Clock, MapPin, ArrowLeft, ChevronRight, AlertCircle, Check, User, Phone, Home, Bed, Users, Sparkles } from 'lucide-react';
 import { useBookingFlowStore, useUserStore } from '../../../lib/store';
 import { useRouter } from 'next/navigation';
 
@@ -72,32 +72,45 @@ export default function CheckoutPage() {
 
   const listing = selectedService.selectedListing;
   const meta = listing?.metadata || {};
-  const isHotel = Boolean(selectedService.metadata?.hotelBooking || selectedService.metadata?.pgBooking);
+  const isPgStay = Boolean(selectedService.metadata?.pgBooking);
+  const isHotel = Boolean(selectedService.metadata?.hotelBooking);
   const merchantDisplayName = typeof selectedService.merchant === 'string'
     ? selectedService.merchant
     : (selectedService.merchant?.name || selectedService.merchantObj?.name || 'BokSpot Verified Partner');
   const serviceDisplayName = typeof selectedService.name === 'string'
     ? selectedService.name
     : (selectedService.name?.name || 'Service Booking');
+  const isLuxeBlind = Boolean(selectedService.metadata?.hotelBooking?.isLuxeBlindBooking);
+  const realHotelName = selectedService.metadata?.hotelBooking?.realHotelName || selectedService.metadata?.hotelBooking?.venueName || merchantDisplayName;
+  const pgSelectedAddons = selectedService.metadata?.pgBooking?.selectedAddons || [];
+  const pgAddonsTotal = pgSelectedAddons.reduce((sum: number, a: any) => sum + (Number(a.price) || 0), 0);
   const availableAddons = (listing?.addons && listing.addons.length > 0)
     ? listing.addons
     : (meta.addons && meta.addons.length > 0)
       ? meta.addons
       : (selectedService.selectedListing?.addons || selectedService.metadata?.addons || []);
-  const addonsTotal = selectedAddons.reduce((sum: number, idx: number) => sum + (availableAddons[idx]?.price || 0), 0);
+  const checkoutAddonsTotal = selectedAddons.reduce((sum: number, idx: number) => sum + (availableAddons[idx]?.price || 0), 0);
+  const addonsTotal = isPgStay ? pgAddonsTotal : checkoutAddonsTotal;
 
-  const basePrice = isHotel
-    ? Math.round(selectedService.price / 1.12) // extract pre-tax price from inclusive total
-    : (listing?.price || selectedService.price || 0);
+  // For PG: separate base rent from add-ons so price breakdown shows both distinctly
+  const basePrice = isPgStay
+    ? (selectedService.price - pgAddonsTotal)
+    : isHotel
+      ? Math.round(selectedService.price / 1.12) // extract pre-tax price from inclusive total
+      : (listing?.price || selectedService.price || 0);
 
   const platformFee = 29;
-  const gst = isHotel
-    ? (selectedService.price - basePrice) // exact 12% GST calculated in template
-    : Math.round((basePrice + addonsTotal) * 0.18);
+  const gst = isPgStay
+    ? 0 // No GST for monthly residential stays / hostel beds
+    : isHotel
+      ? (selectedService.price - basePrice) // exact 12% GST calculated in template
+      : Math.round((basePrice + addonsTotal) * 0.18);
 
-  const total = isHotel
-    ? (selectedService.price + addonsTotal + platformFee)
-    : (basePrice + addonsTotal + platformFee + gst);
+  const total = isPgStay
+    ? (basePrice + addonsTotal + platformFee)
+    : isHotel
+      ? (selectedService.price + addonsTotal + platformFee)
+      : (basePrice + addonsTotal + platformFee + gst);
 
   // Partial Advance calculation (e.g. 30% online advance for venues/turfs, 70% at venue)
   const advanceAmount = payMode === 'PARTIAL_ADVANCE' ? Math.round(total * 0.3) : total;
@@ -174,7 +187,10 @@ export default function CheckoutPage() {
         ref,
         serviceId: selectedService.id,
         serviceName: listing?.name || selectedService.name,
-        merchantName: resolvedMerchantName,
+        merchantName: isLuxeBlind ? realHotelName : resolvedMerchantName,
+        isLuxeBlindBooking: isLuxeBlind,
+        realHotelName: realHotelName,
+        maskedSecretName: resolvedMerchantName,
         merchantId: resolvedMerchantId,
         category: resolvedCategory,
         date: selectedSlot.date,
@@ -227,38 +243,56 @@ export default function CheckoutPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 pt-20 sm:pt-24 pb-24">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 shadow-xs mb-2">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
-          <button onClick={() => router.back()} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
-            <ArrowLeft size={20} />
-          </button>
-          <div>
-            <h1 className="font-extrabold text-lg">Complete Your Booking</h1>
-            <p className="text-xs text-gray-500 font-medium">{merchantDisplayName}</p>
+    <main className="min-h-screen bg-slate-50/70 pt-20 sm:pt-24 pb-24">
+      {/* Checkout Title Bar (Clean in-page header) */}
+      <div className="bg-transparent mb-2">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-1 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+              title="Go back"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#033266]/10 text-[#033266]">
+                  Secure Checkout
+                </span>
+                <span className="text-slate-300">•</span>
+                <span className="text-xs font-bold text-slate-500 truncate max-w-[200px] sm:max-w-none">
+                  {merchantDisplayName}
+                </span>
+              </div>
+              <h1 className="font-black text-base sm:text-lg text-slate-900 tracking-tight leading-tight mt-0.5">
+                Review & Confirm Booking
+              </h1>
+            </div>
           </div>
+
           {timeLeft > 0 && (
-            <div className="ml-auto flex items-center gap-1.5 text-xs font-bold bg-amber-50 border border-amber-200 text-amber-700 px-3 py-1.5 rounded-full">
-              <Clock size={12} /><span>Expires in {formatTime(timeLeft)}</span>
+            <div className="flex items-center gap-2 text-xs font-black bg-amber-500/10 border border-amber-500/20 text-amber-700 px-3.5 py-1.5 rounded-full shrink-0">
+              <Clock size={13} className="animate-pulse text-amber-600" />
+              <span>Holding slot: {formatTime(timeLeft)}</span>
             </div>
           )}
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-4">
-        <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-5 items-start">
-          {/* LEFT COLUMN */}
-          <div className="lg:col-span-3 space-y-4">
+      {/* Modern Two-Column Flow (Airbnb & Booking.com Standard) */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* LEFT 7 COLS: Clean Flowing Sections (No heavy outer box borders) */}
+          <div className="lg:col-span-7 space-y-6">
 
-            {/* ── Booking Summary Card ── */}
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-              <div className="p-5 border-b border-gray-100">
-                <h2 className="font-extrabold text-base text-gray-900">📋 Booking Summary</h2>
-              </div>
-              <div className="flex gap-4 p-5">
+            {/* 1. Stay Details Card */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-5 sm:p-6 space-y-4">
+              <div className="flex items-start gap-4">
                 {(listing?.imageUrl || listing?.image || selectedService.images?.[0]) && (
-                  <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 shrink-0">
+                  <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-slate-100 shadow-2xs">
                     <img
                       src={listing?.imageUrl || listing?.image || selectedService.images?.[0]}
                       alt={listing?.name}
@@ -266,453 +300,181 @@ export default function CheckoutPage() {
                     />
                   </div>
                 )}
-                <div className="flex-1 space-y-2">
-                  <h3 className="font-extrabold text-lg text-gray-900">{listing?.name || serviceDisplayName}</h3>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm text-gray-500 font-medium">{serviceDisplayName} · {merchantDisplayName}</p>
-                    {((listing as any)?.priceUnit || meta.priceUnit) && (
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-100">
-                        {(listing as any)?.priceUnit || meta.priceUnit}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    {isLuxeBlind ? (
+                      <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 shadow-sm flex items-center gap-1">
+                        <Sparkles size={10} /> BokSpot Luxe • Mystery Deal
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-orange-50 text-orange-700 border border-orange-200/60">
+                        {isPgStay ? 'PG / Hostel Stay' : 'Room Booking'}
                       </span>
                     )}
-                    {((listing as any)?.securityDeposit || meta.securityDeposit) && (
-                      <span className="text-xs font-bold px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200">
-                        Refundable Deposit: ₹{Number((listing as any)?.securityDeposit || meta.securityDeposit).toLocaleString('en-IN')}
-                      </span>
-                    )}
+                    <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
+                      <span>✓</span> Verified Partner
+                    </span>
                   </div>
-
-                  {/* Dynamic Hotel / PG / Listing Details */}
-                  {selectedService.metadata?.pgBooking ? (
-                    <div className="space-y-2 mt-3 pt-3 border-t border-gray-100">
-                      <div className="flex flex-wrap gap-2">
-                        <span className="text-xs font-bold px-2.5 py-1 bg-orange-50 text-orange-700 rounded-full border border-orange-200 flex items-center gap-1">
-                          <Bed size={12} /> {selectedService.metadata.pgBooking.roomType}
-                        </span>
-                        <span className="text-xs font-bold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100 flex items-center gap-1">
-                          {selectedService.metadata.pgBooking.foodExcluded ? '🍳 Self Cooking / Mess Excluded' : '🍛 3 Meals Included (Homely Food)'}
-                        </span>
-                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full border flex items-center gap-1 ${
-                          selectedService.metadata.pgBooking.paymentType === 'FULL_MONTH_RENT'
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            : 'bg-blue-50 text-blue-700 border-blue-100'
-                        }`}>
-                          {selectedService.metadata.pgBooking.paymentType === 'FULL_MONTH_RENT' ? '💳 1st Month Full Rent' : `🔒 Token Advance Paid: ₹${selectedService.metadata.pgBooking.tokenPaid || 999}`}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 pt-2 bg-gray-50 p-2.5 rounded-xl border border-gray-100 text-xs">
-                        <div>
-                          <span className="text-gray-400 font-bold block text-[10px] uppercase">Monthly Rent</span>
-                          <span className="font-extrabold text-gray-800">₹{selectedService.metadata.pgBooking.monthlyRent?.toLocaleString() || '6,500'}/month</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-400 font-bold block text-[10px] uppercase">Refundable Deposit</span>
-                          <span className="font-extrabold text-gray-800">₹{selectedService.metadata.pgBooking.refundableDeposit?.toLocaleString() || '3,000'}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ) : selectedService.metadata?.hotelBooking ? (
-                    <div className="space-y-2 mt-3 pt-3 border-t border-gray-100">
-                      <div className="flex flex-wrap gap-2">
-                        <span className="text-xs font-bold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100 flex items-center gap-1">
-                          <Bed size={12} /> {selectedService.metadata.hotelBooking.roomType}
-                        </span>
-                        <span className="text-xs font-bold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100 flex items-center gap-1">
-                          🍴 {selectedService.metadata.hotelBooking.mealPlan}
-                        </span>
-                        <span className="text-xs font-bold px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full border border-purple-100 flex items-center gap-1">
-                          <Users size={12} /> {selectedService.metadata.hotelBooking.rooms} Room, {selectedService.metadata.hotelBooking.adults} Adults{selectedService.metadata.hotelBooking.children > 0 ? `, ${selectedService.metadata.hotelBooking.children} Kids` : ''}
-                        </span>
-                        {selectedService.metadata.hotelBooking.nights > 0 && (
-                          <span className="text-xs font-bold px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full border border-amber-100 flex items-center gap-1">
-                            <Clock size={12} /> {selectedService.metadata.hotelBooking.nights} Night{selectedService.metadata.hotelBooking.nights > 1 ? 's' : ''} Stay
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Check-in & Check-out details */}
-                      <div className="grid grid-cols-2 gap-2 pt-2 bg-gray-50 p-2.5 rounded-xl border border-gray-100 text-xs">
-                        <div>
-                          <span className="text-gray-400 font-bold block text-[10px] uppercase">Check-In</span>
-                          <span className="font-extrabold text-gray-800">{selectedService.metadata.hotelBooking.checkIn}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-400 font-bold block text-[10px] uppercase">Check-Out</span>
-                          <span className="font-extrabold text-gray-800">{selectedService.metadata.hotelBooking.checkOut}</span>
-                        </div>
-                      </div>
-
-                      {selectedService.metadata.hotelBooking.specialRequests?.length > 0 && (
-                        <div className="text-[11px] text-gray-500 font-medium">
-                          <strong>Special Requests:</strong> {selectedService.metadata.hotelBooking.specialRequests.join(', ')}
-                        </div>
-                      )}
-                    </div>
-                  ) : selectedService.metadata?.miniSpace ? (
-                    <div className="space-y-2 mt-3 pt-3 border-t border-gray-100">
-                      <div className="flex flex-wrap gap-2">
-                        <span className="text-xs font-bold px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full border border-amber-200 flex items-center gap-1">
-                          🧳 {selectedService.metadata.miniSpace.bagCount} Luggage / Bags
-                        </span>
-                        <span className="text-xs font-bold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-200 flex items-center gap-1">
-                          <Clock size={12} /> {selectedService.metadata.miniSpace.durationHours} Hours Storage {selectedService.metadata.miniSpace.hourlyRate ? `(@ ₹${selectedService.metadata.miniSpace.hourlyRate}/hr)` : ''}
-                        </span>
-                        <span className="text-xs font-bold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200 flex items-center gap-1">
-                          🛡️ Tamper-proof Insured
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-2 pt-2 bg-amber-50/50 p-2.5 rounded-xl border border-amber-100 text-xs">
-                        <div>
-                          <span className="text-slate-400 font-bold block text-[10px] uppercase">Drop Date</span>
-                          <span className="font-extrabold text-slate-800">{selectedService.metadata.miniSpace.dropDate || selectedSlot.date}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 font-bold block text-[10px] uppercase">Drop Time</span>
-                          <span className="font-extrabold text-slate-800">{selectedService.metadata.miniSpace.dropTime || '11:00 AM'}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 font-bold block text-[10px] uppercase">Drop Location</span>
-                          <span className="font-extrabold text-slate-800 truncate block">Frontdesk Bell Desk</span>
-                        </div>
-                      </div>
-
-                      {selectedService.metadata.miniSpace.bagDesc && (
-                        <div className="text-[11px] text-slate-500 font-medium">
-                          <strong>Luggage Notes:</strong> {selectedService.metadata.miniSpace.bagDesc}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {meta.roomType && (
-                        <span className="text-xs font-bold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100 flex items-center gap-1">
-                          <Bed size={11} />{meta.roomType}
-                        </span>
-                      )}
-                      {meta.maxGuests && (
-                        <span className="text-xs font-bold px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full border border-purple-100 flex items-center gap-1">
-                          <Users size={11} />Max {meta.maxGuests} guests
-                        </span>
-                      )}
-                      {meta.checkInTime && (
-                        <span className="text-xs font-bold px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full border border-amber-100 flex items-center gap-1">
-                          <Clock size={11} />Check-in: {meta.checkInTime}
-                        </span>
-                      )}
-                      {meta.checkOutTime && (
-                        <span className="text-xs font-bold px-2.5 py-1 bg-orange-50 text-orange-700 rounded-full border border-orange-100 flex items-center gap-1">
-                          <Clock size={11} />Check-out: {meta.checkOutTime}
-                        </span>
-                      )}
-                    </div>
-                  )}
+                  <h2 className="font-black text-lg sm:text-xl text-slate-900 tracking-tight leading-snug">
+                    {listing?.name || selectedService.metadata?.pgBooking?.roomType || serviceDisplayName}
+                  </h2>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    {isLuxeBlind ? '🔒 Exact luxury hotel name & address revealed instantly upon booking' : merchantDisplayName}
+                  </p>
                 </div>
               </div>
 
-              {/* Add-ons Section */}
-              {availableAddons.length > 0 && (
-                <div className="p-5 border-t border-gray-100 bg-gray-50/50">
-                  <h3 className="text-xs font-black text-gray-500 uppercase tracking-wider mb-3">Add-ons & Extras</h3>
-                  <div className="space-y-2">
-                    {availableAddons.map((addon: any, idx: number) => {
-                      const isSelected = selectedAddons.includes(idx);
-                      return (
-                        <label key={idx} className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-colors ${isSelected ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]/5' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
-                          <div className="flex items-center gap-3">
-                            <div className={`w-5 h-5 rounded-md flex items-center justify-center border transition-colors ${isSelected ? 'bg-[color:var(--color-primary)] border-[color:var(--color-primary)]' : 'border-gray-300 bg-white'}`}>
-                              {isSelected && <Check size={14} className="text-white" />}
-                            </div>
-                            <span className={`text-sm font-bold ${isSelected ? 'text-[color:var(--color-primary)]' : 'text-gray-700'}`}>{addon.name}</span>
-                          </div>
-                          <span className="text-sm font-extrabold text-gray-900">+₹{addon.price}</span>
-                          <input type="checkbox" className="hidden" checked={isSelected} onChange={() => {
-                            if (isSelected) setSelectedAddons(selectedAddons.filter(i => i !== idx));
-                            else setSelectedAddons([...selectedAddons, idx]);
-                          }} />
-                        </label>
-                      );
-                    })}
+              {/* PG Inclusions & Payment Mode */}
+              {selectedService.metadata?.pgBooking && (
+                <div className="pt-3 border-t border-slate-100 space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-bold px-3 py-1 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200/80 flex items-center gap-1.5">
+                      {selectedService.metadata.pgBooking.foodExcluded ? '🍳 Mess Excluded' : '🍛 3 Meals Included (Homely Food)'}
+                    </span>
+                    <span className={`text-xs font-bold px-3 py-1 rounded-lg border flex items-center gap-1.5 ${
+                      selectedService.metadata.pgBooking.paymentType === 'FULL_MONTH_RENT'
+                        ? 'bg-blue-50 text-blue-700 border-blue-200'
+                        : 'bg-amber-50 text-amber-800 border-amber-200'
+                    }`}>
+                      {selectedService.metadata.pgBooking.paymentType === 'FULL_MONTH_RENT' ? '💳 1st Month Full Rent' : `🔒 Token Advance: ₹${selectedService.metadata.pgBooking.tokenPaid || 999}`}
+                    </span>
+                  </div>
+
+                  {/* Add-ons List */}
+                  {selectedService.metadata.pgBooking.selectedAddons && selectedService.metadata.pgBooking.selectedAddons.length > 0 && (
+                    <div className="p-3 bg-orange-50/60 rounded-xl border border-orange-200/60 space-y-2">
+                      <span className="text-[10px] font-black uppercase text-orange-900 tracking-wider block">
+                        Included Add-ons / Upgrades:
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedService.metadata.pgBooking.selectedAddons.map((add: any, i: number) => (
+                          <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-orange-200 rounded-lg text-xs font-bold text-gray-800 shadow-2xs">
+                            <span>{add.icon || '✨'}</span>
+                            <span>{add.name}</span>
+                            <span className="text-orange-600 font-extrabold ml-0.5">(+₹{Number(add.price).toLocaleString()})</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Rent & Deposit Two-Column Row */}
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/70">
+                      <span className="text-slate-400 font-bold block text-[10px] uppercase tracking-wider">Monthly Rent</span>
+                      <span className="font-black text-sm text-slate-900 mt-0.5 block">
+                        ₹{selectedService.metadata.pgBooking.monthlyRent?.toLocaleString() || '6,000'}<span className="text-xs font-normal text-slate-500">/mo</span>
+                      </span>
+                    </div>
+                    <div className="bg-amber-50/60 p-3 rounded-xl border border-amber-200/60">
+                      <span className="text-amber-800/70 font-bold block text-[10px] uppercase tracking-wider">Refundable Deposit</span>
+                      <span className="font-black text-sm text-amber-900 mt-0.5 block">
+                        ₹{selectedService.metadata.pgBooking.refundableDeposit?.toLocaleString() || '5,000'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Date & Time */}
-              <div className="px-5 pb-5 grid grid-cols-2 gap-3">
-                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Date</p>
-                  <p className="text-sm font-extrabold text-gray-900 leading-tight">{formatDate(selectedSlot.date)}</p>
+              {/* Date & Time Slot Row */}
+              <div className="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="bg-slate-50 rounded-xl p-3 border border-slate-200/60">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Stay Start Date</p>
+                  <p className="text-xs font-extrabold text-slate-900">{formatDate(selectedSlot.date)}</p>
                 </div>
-                <div className="bg-[color:var(--color-primary)]/5 rounded-xl p-3 border border-[color:var(--color-primary)]/20">
-                  <p className="text-[10px] font-black text-[color:var(--color-primary)] uppercase tracking-wider mb-1">Time Slot / Check-in</p>
-                  <p className="text-sm font-extrabold text-gray-900">
-                    {selectedSlot.time || selectedSlot.timeStr || (selectedService?.metadata?.hotelBooking?.stayMode === 'TRANSIT' ? selectedService.metadata.hotelBooking.transitSlot : 'Check-in: 12:00 PM')}
+                <div className="bg-blue-50/60 rounded-xl p-3 border border-blue-200/50">
+                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-wider mb-1">Check-in Plan</p>
+                  <p className="text-xs font-extrabold text-slate-900">
+                    {selectedSlot.time || selectedSlot.timeStr || '1st Month Lease (Starts on check-in)'}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* ── User Details ── */}
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-              <h2 className="font-extrabold text-base text-gray-900 mb-4 flex items-center gap-2">
-                <User size={18} className="text-[color:var(--color-primary)]" /> Your Details
-              </h2>
+            {/* 2. Guest Information */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-5 sm:p-6 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 className="font-black text-base text-slate-900 flex items-center gap-2">
+                  <User size={18} className="text-[#033266]" /> Guest Information
+                </h3>
+                <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                  ✓ Instant Verification
+                </span>
+              </div>
 
               {error && (
-                <div className="mb-4 rounded-xl bg-red-50 border border-red-200 p-3 text-xs font-semibold text-red-600 flex items-center gap-2">
+                <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-xs font-semibold text-red-600 flex items-center gap-2">
                   <AlertCircle size={14} /> {error}
                 </div>
               )}
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-black text-gray-500 mb-1.5 uppercase tracking-wider">Full Name *</label>
+                  <label className="block text-xs font-black text-slate-500 mb-1.5 uppercase tracking-wider">Full Name *</label>
                   <div className="relative">
-                    <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                       required
                       type="text"
                       value={name}
                       onChange={e => setName(e.target.value)}
                       placeholder="e.g. Vishnu Kumar KR"
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm font-medium text-gray-900 focus:outline-none focus:border-[color:var(--color-primary)] focus:bg-white focus:ring-2 focus:ring-[color:var(--color-primary)]/20 transition-all"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 text-sm font-medium text-slate-900 focus:outline-none focus:border-[#033266] focus:bg-white focus:ring-2 focus:ring-[#033266]/15 transition-all"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-black text-gray-500 mb-1.5 uppercase tracking-wider">Phone Number *</label>
+                    <label className="block text-xs font-black text-slate-500 mb-1.5 uppercase tracking-wider">Phone Number *</label>
                     <div className="relative">
-                      <Phone size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <Phone size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                       <input
                         required
                         type="tel"
                         value={phone}
                         onChange={e => setPhone(e.target.value)}
                         placeholder="+91 98765 43210"
-                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm font-medium text-gray-900 focus:outline-none focus:border-[color:var(--color-primary)] focus:bg-white focus:ring-2 focus:ring-[color:var(--color-primary)]/20 transition-all"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 text-sm font-medium text-slate-900 focus:outline-none focus:border-[#033266] focus:bg-white focus:ring-2 focus:ring-[#033266]/15 transition-all"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-black text-gray-500 mb-1.5 uppercase tracking-wider">Email (optional)</label>
+                    <label className="block text-xs font-black text-slate-500 mb-1.5 uppercase tracking-wider">Email (optional)</label>
                     <input
                       type="email"
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       placeholder="you@email.com"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm font-medium text-gray-900 focus:outline-none focus:border-[color:var(--color-primary)] focus:bg-white focus:ring-2 focus:ring-[color:var(--color-primary)]/20 transition-all"
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 text-sm font-medium text-slate-900 focus:outline-none focus:border-[#033266] focus:bg-white focus:ring-2 focus:ring-[#033266]/15 transition-all"
                     />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* ── District-Style Split with Friends ── */}
-            <div className="bg-gradient-to-br from-indigo-50/60 via-white to-purple-50/60 rounded-2xl border border-indigo-200 shadow-sm p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-xl">👥</span>
-                  <div>
-                    <h2 className="font-extrabold text-sm text-gray-900">Bokspot Group Split: Split Bill with Friends</h2>
-                    <p className="text-xs text-gray-500">Divide total sum equally and invite group members</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const next = !isSplitEnabled;
-                    setIsSplitEnabled(next);
-                    if (next) {
-                      // Group split bills must be 100% online escrow payments
-                      setPayMode('FULL_ONLINE');
-                    }
-                  }}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${isSplitEnabled ? 'bg-indigo-600' : 'bg-gray-200'
-                    }`}
-                >
-                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${isSplitEnabled ? 'translate-x-5' : 'translate-x-0'
-                    }`} />
-                </button>
+            {/* 3. Payment Method */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-5 sm:p-6 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 className="font-black text-base text-slate-900 flex items-center gap-2">
+                  <CreditCard size={18} className="text-[#033266]" /> Payment Method
+                </h3>
+                <span className="text-[11px] font-bold text-slate-400">
+                  100% Secure & Encrypted
+                </span>
               </div>
 
-              {isSplitEnabled && (
-                <div className="pt-3 border-t border-indigo-100 space-y-3.5 animate-fade-in">
-                  {/* Mode Selection: Pay 1 Share vs Generate All Links */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setSplitInitiatorPaysNow(false)}
-                      className={`p-3 rounded-xl border-2 text-left transition-all ${!splitInitiatorPaysNow
-                          ? 'border-indigo-600 bg-white shadow-sm ring-2 ring-indigo-600/10'
-                          : 'border-gray-200 bg-gray-50/50 hover:bg-white'
-                        }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-black text-indigo-950 flex items-center gap-1.5">
-                          🔗 Generate {splitCount} Links
-                        </span>
-                        {!splitInitiatorPaysNow && <span className="w-2 h-2 rounded-full bg-indigo-600" />}
-                      </div>
-                      <p className="text-[11px] text-gray-500 leading-tight">
-                        You pay ₹0 now. 1 unique link per friend generated to share & collect.
-                      </p>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setSplitInitiatorPaysNow(true)}
-                      className={`p-3 rounded-xl border-2 text-left transition-all ${splitInitiatorPaysNow
-                          ? 'border-indigo-600 bg-white shadow-sm ring-2 ring-indigo-600/10'
-                          : 'border-gray-200 bg-gray-50/50 hover:bg-white'
-                        }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-black text-indigo-950 flex items-center gap-1.5">
-                          💳 Pay My Share Now
-                        </span>
-                        {splitInitiatorPaysNow && <span className="w-2 h-2 rounded-full bg-indigo-600" />}
-                      </div>
-                      <p className="text-[11px] text-gray-500 leading-tight">
-                        Pay ₹{splitPerPersonAmt.toLocaleString()} now. Remaining {splitCount - 1} links shared with friends.
-                      </p>
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between bg-white p-3.5 rounded-xl border border-indigo-100">
-                    <div>
-                      <span className="text-xs font-bold text-gray-800 block">
-                        {splitInitiatorPaysNow ? 'Total Group Members (You + Friends)' : 'Total People in Group'}
-                      </span>
-                      <span className="text-[11px] text-gray-400">
-                        {splitInitiatorPaysNow
-                          ? `Total bill divided by ${splitCount} (You + ${splitCount - 1} friend${splitCount - 1 > 1 ? 's' : ''})`
-                          : `Total bill will be divided into ${splitCount} equal shares`}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (splitCount > 2) {
-                            setSplitCount(s => s - 1);
-                            setSplitPayerNames(p => p.slice(0, -1));
-                          }
-                        }}
-                        className={`w-8 h-8 rounded-lg font-black text-sm flex items-center justify-center transition-colors ${splitCount <= 2 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 cursor-pointer'
-                          }`}
-                        title="Split requires at least 2 people"
-                      >
-                        -
-                      </button>
-                      <div className="text-center min-w-[70px]">
-                        <span className="font-black text-indigo-700 text-sm font-mono block">{splitCount} People</span>
-                        {splitInitiatorPaysNow && (
-                          <span className="text-[9px] text-indigo-500 font-bold block uppercase tracking-wider">
-                            You + {splitCount - 1} friend{splitCount - 1 > 1 ? 's' : ''}
-                          </span>
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (splitCount < 10) {
-                            setSplitCount(s => s + 1);
-                            setSplitPayerNames(p => [...p, `Friend ${p.length + 1}`]);
-                          }
-                        }}
-                        className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-black text-sm flex items-center justify-center cursor-pointer transition-colors"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="p-3.5 rounded-xl bg-indigo-50/80 border border-indigo-200/60 flex items-center justify-between text-xs">
-                    <div>
-                      <span className="font-bold text-indigo-900 block">
-                        {!splitInitiatorPaysNow ? 'Amount to Pay Now (Organizer):' : 'Your Share Due Now (1 Person):'}
-                      </span>
-                      <span className="text-[11px] text-indigo-600">
-                        {!splitInitiatorPaysNow
-                          ? `₹${splitPerPersonAmt.toLocaleString()} per person across ${splitCount} unique links`
-                          : `₹${splitPerPersonAmt.toLocaleString()} per person • Remaining ${splitCount - 1} link${splitCount - 1 > 1 ? 's' : ''} for friends`}
-                      </span>
-                    </div>
-                    <span className="font-black text-xl text-indigo-700 font-mono">
-                      ₹{amountToPayNow.toLocaleString()}
-                    </span>
-                  </div>
-
-                  <div className="bg-indigo-500/5 p-3 rounded-xl border border-indigo-500/10 text-[11px] text-indigo-900 leading-relaxed flex items-start gap-2">
-                    <span className="text-sm">⚡</span>
-                    <span>
-                      Each person will get their own <strong>Individual Link (Link 1, Link 2...)</strong> with 20 minutes escrow hold to finish payment.
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* ── Payment Timing: 100% Online vs Pay at Venue (Hidden when Split is enabled, as Split is always 100% online) ── */}
-            {!isSplitEnabled && (
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-3">
-                <h2 className="font-extrabold text-sm text-gray-900 flex items-center gap-2">
-                  <span>⏱️</span> Payment Timing & Venue Pay Mode
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setPayMode('FULL_ONLINE')}
-                    className={`p-3.5 rounded-xl border-2 text-left transition-all cursor-pointer ${payMode === 'FULL_ONLINE'
-                        ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]/5 shadow-sm'
-                        : 'border-gray-100 hover:border-gray-200'
-                      }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-xs text-gray-900">100% Online Payment</span>
-                      {payMode === 'FULL_ONLINE' && <Check size={14} className="text-[color:var(--color-primary)]" />}
-                    </div>
-                    <p className="text-[11px] text-gray-500 leading-tight">Instant barcode / turnstile pass issued immediately.</p>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setPayMode('PARTIAL_ADVANCE')}
-                    className={`p-3.5 rounded-xl border-2 text-left transition-all cursor-pointer ${payMode === 'PARTIAL_ADVANCE'
-                        ? 'border-amber-500 bg-amber-50/60 shadow-sm'
-                        : 'border-gray-100 hover:border-gray-200'
-                      }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-xs text-gray-900">30% Advance + Venue Pay</span>
-                      {payMode === 'PARTIAL_ADVANCE' && <Check size={14} className="text-amber-600" />}
-                    </div>
-                    <p className="text-[11px] text-gray-500 leading-tight">Pay ₹{Math.round(total * 0.3).toLocaleString()} now, remaining ₹{Math.round(total * 0.7).toLocaleString()} at venue.</p>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* ── Payment Method ── */}
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-              <h2 className="font-extrabold text-base text-gray-900 mb-4 flex items-center gap-2">
-                <CreditCard size={18} className="text-[color:var(--color-primary)]" /> Payment Method
-              </h2>
-
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {[
-                  { id: 'upi', label: 'UPI / QR Code', sub: 'Google Pay, PhonePe, Paytm', icon: '📱' },
-                  { id: 'card', label: 'Credit / Debit Card', sub: 'Visa, Mastercard, RuPay', icon: '💳' },
-                  { id: 'netbanking', label: 'Net Banking', sub: 'All major banks supported', icon: '🏦' },
+                  { id: 'upi', label: 'UPI Instant / QR Code', sub: 'Google Pay, PhonePe, Paytm, BHIM', icon: '📱' },
+                  { id: 'card', label: 'Credit / Debit Card', sub: 'Visa, Mastercard, RuPay & Corporate Cards', icon: '💳' },
+                  { id: 'netbanking', label: 'Net Banking', sub: 'All Indian Public & Private Banks', icon: '🏦' },
                 ].map(method => (
                   <label
                     key={method.id}
-                    className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === method.id
-                        ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]/5'
-                        : 'border-gray-100 hover:border-gray-200'
+                    className={`flex items-center gap-4 p-3.5 sm:p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === method.id
+                        ? 'border-[#033266] bg-[#033266]/5 shadow-2xs'
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
                       }`}
                   >
                     <input
@@ -723,12 +485,12 @@ export default function CheckoutPage() {
                       onChange={() => setPaymentMethod(method.id as any)}
                       className="hidden"
                     />
-                    <span className="text-2xl">{method.icon}</span>
+                    <span className="text-xl p-2 rounded-xl bg-slate-100 border border-slate-200/60">{method.icon}</span>
                     <div className="flex-1">
-                      <p className="font-bold text-sm text-gray-900">{method.label}</p>
-                      <p className="text-xs text-gray-500">{method.sub}</p>
+                      <p className="font-black text-sm text-slate-900">{method.label}</p>
+                      <p className="text-xs text-slate-500">{method.sub}</p>
                     </div>
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${paymentMethod === method.id ? 'border-[color:var(--color-primary)] bg-[color:var(--color-primary)]' : 'border-gray-300'
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${paymentMethod === method.id ? 'border-[#033266] bg-[#033266]' : 'border-slate-300'
                       }`}>
                       {paymentMethod === method.id && <div className="w-2 h-2 rounded-full bg-white" />}
                     </div>
@@ -736,22 +498,29 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
-              <div className="mt-3 flex items-center gap-1.5 text-xs text-gray-400">
-                <Shield size={13} className="text-green-500" /> 256-bit SSL encrypted · Powered by Razorpay
+              <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 pt-1">
+                <Shield size={14} className="text-emerald-500" />
+                <span>256-bit Bank-grade SSL encryption · Powered by Razorpay</span>
               </div>
             </div>
+
           </div>
 
-          {/* RIGHT COLUMN: Price Summary */}
-          <div className="lg:col-span-2">
-            <div className="sticky top-20 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-              <div className="p-5 border-b border-gray-100">
-                <h2 className="font-extrabold text-base text-gray-900">💰 Price Details</h2>
+          {/* RIGHT 5 COLS: Sticky Price Breakdown & Action Bar */}
+          <div className="lg:col-span-5">
+            <div className="sticky top-24 bg-white rounded-3xl border border-slate-200/90 shadow-md overflow-hidden">
+              <div className="p-5 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
+                <h2 className="font-black text-base text-slate-900 flex items-center gap-2">
+                  <span>💰</span> Payment Breakdown
+                </h2>
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  {isPgStay ? 'Monthly Lease' : 'Instant Confirmation'}
+                </span>
               </div>
 
               <div className="p-5 space-y-3.5">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-600 font-medium">Base Price</span>
+                  <span className="text-gray-600 font-medium">{isPgStay ? 'Monthly Stay Rent / Advance' : 'Base Price'}</span>
                   <span className="font-bold text-gray-900">₹{basePrice.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
@@ -764,13 +533,15 @@ export default function CheckoutPage() {
                     <span className="font-bold text-[color:var(--color-primary)]">+₹{addonsTotal.toLocaleString()}</span>
                   </div>
                 )}
-                <div className="flex justify-between items-center text-sm">
-                  <div>
-                    <span className="text-gray-600 font-medium">GST</span>
-                    <span className="text-xs text-gray-400 ml-1">(18%)</span>
+                {gst > 0 && (
+                  <div className="flex justify-between items-center text-sm">
+                    <div>
+                      <span className="text-gray-600 font-medium">GST</span>
+                      <span className="text-xs text-gray-400 ml-1">({isHotel ? '12%' : '18%'})</span>
+                    </div>
+                    <span className="font-bold text-gray-900">₹{gst.toLocaleString()}</span>
                   </div>
-                  <span className="font-bold text-gray-900">₹{gst.toLocaleString()}</span>
-                </div>
+                )}
 
                 {/* Refundable Security Deposit Note */}
                 {((listing as any)?.securityDeposit || meta.securityDeposit) && (

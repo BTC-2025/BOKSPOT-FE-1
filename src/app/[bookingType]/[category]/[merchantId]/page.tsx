@@ -388,10 +388,33 @@ export default function VenueProfilePage() {
     merchantData?.merchantName ||
     (liveServices.length > 0 ? (liveServices[0].merchant || 'Venue') : 'Loading...');
 
-  const isMysteryOptedIn = merchantData?.isMysteryModeOptIn !== false && merchantData?.metadata?.isMysteryModeOptIn !== false;
+  const checkMysteryOptIn = () => {
+    // 1. Hostels / PG are never blind mystery mode
+    if (isPgStay || category === 'hostels' || category === 'pg-hostels' || (merchantData?.name || '').toLowerCase().includes('hostel')) {
+      return false;
+    }
+    if (typeof window !== 'undefined') {
+      const directStore = localStorage.getItem(`hotel_mystery_optin_${merchantId}`);
+      if (directStore !== null) return directStore === 'true';
+      const uName = merchantData?.username;
+      if (uName) {
+        const uStore = localStorage.getItem(`hotel_mystery_optin_${uName}`);
+        if (uStore !== null) return uStore === 'true';
+      }
+      const defaultStore = localStorage.getItem('hotel_mystery_optin_default');
+      if (defaultStore !== null) return defaultStore === 'true';
+    }
+    if (merchantData?.isMysteryModeOptIn !== undefined) return Boolean(merchantData.isMysteryModeOptIn);
+    if (merchantData?.metadata?.isMysteryModeOptIn !== undefined) return Boolean(merchantData.metadata.isMysteryModeOptIn);
+    return false;
+  };
+
+  const isMysteryOptedIn = checkMysteryOptIn();
+
+  const isLuxeBlindBooking = Boolean(isLuxury && isHotel && isMysteryOptedIn);
 
   const venueName = (() => {
-    if (isLuxury && isHotel && isMysteryOptedIn) {
+    if (isLuxeBlindBooking) {
       const raw = `${rawVenueName} ${JSON.stringify(merchantData || {})} ${JSON.stringify(liveServices[0]?.metadata || {})}`.toLowerCase();
       let archetype = 'Luxury Suite';
       if (raw.includes('villa') || category.includes('villa')) archetype = 'Architectural Villa';
@@ -1244,7 +1267,7 @@ export default function VenueProfilePage() {
             <div>
               <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100 dark:border-white/10 mb-3">
                 <div className="min-w-0 flex-1">
-                  {isLuxury && isHotel && (
+                  {isLuxeBlindBooking && (
                     <div className="mb-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-400/40 text-amber-700 dark:text-amber-300 text-[10px] font-black uppercase tracking-wider">
                       <Sparkles size={11} className="text-amber-500" />
                       <span>BokSpot Luxe • Confidential Blind Booking</span>
@@ -2509,6 +2532,8 @@ export default function VenueProfilePage() {
                                         merchantName: effectiveMerchantName,
                                         hotelBooking: {
                                           venueName: effectiveMerchantName,
+                                          realHotelName: rawVenueName,
+                                          isLuxeBlindBooking,
                                           address,
                                           roomType: roomItem.name,
                                           checkIn,
@@ -5598,6 +5623,8 @@ export default function VenueProfilePage() {
                             merchantName: effectiveMerchantName,
                             hotelBooking: {
                               venueName: effectiveMerchantName,
+                              realHotelName: rawVenueName,
+                              isLuxeBlindBooking,
                               address,
                               roomType: activeRoomService.name,
                               checkIn,
@@ -5755,6 +5782,8 @@ export default function VenueProfilePage() {
                             merchantName: effectiveMerchantName,
                             hotelBooking: {
                               venueName: effectiveMerchantName,
+                              realHotelName: rawVenueName,
+                              isLuxeBlindBooking,
                               address,
                               roomType: activeRoomService.name,
                               checkIn,
