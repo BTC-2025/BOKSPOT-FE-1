@@ -41,7 +41,7 @@ export default function VenueProfilePage() {
   const { setSelectedService, setSelectedSlot } = useBookingFlowStore();
   const searchParams = useSearchParams();
   const isHotel = category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'pg-hostels' || category === 'camping' || bookingType === 'stay-accommodation' || bookingType === 'home';
-  const isPgStay = category === 'pg-hostels' || (bookingType === 'stay-accommodation' && (rawCategory?.includes('pg') || rawCategory?.includes('hostel')));
+  const isPgStay = category === 'pg-hostels' || category === 'hostels' || category === 'hotels' || (bookingType === 'stay-accommodation' && (rawCategory?.includes('pg') || rawCategory?.includes('hostel') || rawCategory?.includes('hotel')));
   const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
   const [visitDate, setVisitDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [visitTimeSlot, setVisitTimeSlot] = useState('11:00 AM - 12:00 PM');
@@ -125,6 +125,7 @@ export default function VenueProfilePage() {
   const [roomModalStep, setRoomModalStep] = useState<'DETAILS' | 'ADDONS' | 'VISIT' | null>(null);
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
   const [roomModalImageIdx, setRoomModalImageIdx] = useState(0);
+  const [pgPaymentType, setPgPaymentType] = useState<'FULL_MONTH_RENT' | 'TOKEN_ADVANCE'>('FULL_MONTH_RENT');
 
   // Lock background body scroll whenever modal is open
   useEffect(() => {
@@ -259,24 +260,27 @@ export default function VenueProfilePage() {
     window.addEventListener('pg_config_updated', handleSync);
     window.addEventListener('venue_gallery_updated', handleSync);
 
-    // Live reactive polling of backend merchant status every 2 seconds
+    // Steady status check - only update state when value strictly changes to prevent UI blinking
     const interval = setInterval(async () => {
       try {
         const m = await api.merchants.get(merchantId, true).catch(() => null);
         const parsed = (m as any)?.data || m;
         if (parsed) {
-          setMerchantData((prev: any) => ({ ...(prev || {}), ...parsed }));
+          setMerchantData((prev: any) => {
+            if (JSON.stringify(prev) === JSON.stringify(parsed)) return prev;
+            return { ...(prev || {}), ...parsed };
+          });
         }
-        if (parsed?.metadata?.isLuggageStorageEnabled !== undefined) {
-          setIsHotelLuggageEnabled(Boolean(parsed.metadata.isLuggageStorageEnabled));
-        } else {
-          setIsHotelLuggageEnabled(checkLuggageEnabled(parsed));
-        }
+        const newLuggageStatus = parsed?.metadata?.isLuggageStorageEnabled !== undefined
+          ? Boolean(parsed.metadata.isLuggageStorageEnabled)
+          : checkLuggageEnabled(parsed);
+        setIsHotelLuggageEnabled((prev: boolean) => (prev !== newLuggageStatus ? newLuggageStatus : prev));
         if (parsed?.metadata?.luggageHourlyRate || parsed?.luggageHourlyRate) {
-          setHotelLuggageHourlyRate(Number(parsed.metadata?.luggageHourlyRate || parsed.luggageHourlyRate));
+          const newRate = Number(parsed.metadata?.luggageHourlyRate || parsed.luggageHourlyRate);
+          setHotelLuggageHourlyRate((prev: number) => (prev !== newRate ? newRate : prev));
         }
       } catch {}
-    }, 2000);
+    }, 5000);
 
     return () => {
       clearInterval(interval);
@@ -2075,6 +2079,7 @@ export default function VenueProfilePage() {
                     ...roomItem.parentService,
                     id: roomItem.parentService.id,
                     selectedListingId: roomItem.id,
+                    selectedListing: roomItem.listing,
                     name: roomItem.name,
                     description: roomItem.description,
                     price: roomItem.price,
@@ -2105,9 +2110,11 @@ export default function VenueProfilePage() {
                   // Dynamic original price & discount calculation:
                   // 1) If merchant gave explicit discount % (e.g. 10%), use that directly!
                   // 2) If merchant gave original price > selling price, calculate %
-                  // 3) Fallback to 20% standard only if neither is provided
-                  let discountPct = 20;
-                  let originalPrice = Math.round(startingPrice * 1.25);
+                  // 3) Default 20% standard offer display
+                  let discountPct = merchantDiscountPct > 0 ? merchantDiscountPct : 20;
+                  let originalPrice = merchantOriginalPrice > startingPrice
+                    ? merchantOriginalPrice
+                    : Math.round(startingPrice / (1 - (discountPct / 100)));
 
                   if (merchantDiscountPct > 0) {
                     discountPct = merchantDiscountPct;
@@ -2402,17 +2409,23 @@ export default function VenueProfilePage() {
                             {/* Main Nightly / Monthly Price */}
                             <div className="mt-1">
                               <span className="text-3xl font-black text-[#033266] dark:text-[#ff6325] tracking-tight">
-                                ₹{isPgStay ? (isFoodExcluded ? Math.max(2000, startingPrice - 1500) : startingPrice).toLocaleString() : startingPrice.toLocaleString()}
+                                ₹{startingPrice.toLocaleString()}
                               </span>
                               <span className="text-[11px] text-slate-400 dark:text-slate-500 font-semibold block">
-                                {isPgStay ? 'monthly rent (all inclusive)' : 'per night before taxes'}
+                                {(() => {
+                                  const customUnit = (roomItem.listing as any)?.priceUnit || listingMeta.priceUnit || (roomItem.parentService as any)?.priceUnit || roomItem.parentService?.metadata?.priceUnit;
+                                  if (customUnit && customUnit.trim() !== '' && !customUnit.includes('/ night')) {
+                                    return customUnit.trim();
+                                  }
+                                  return 'monthly rent (all inclusive)';
+                                })()}
                               </span>
                             </div>
 
                             {/* Total Stay Price or Deposit Calculation */}
                             <div className="mt-2 text-xs font-bold text-slate-800 dark:text-slate-200">
                               {isPgStay 
-                                ? `Refundable Deposit: ₹${(roomItem.metadata?.refundableDeposit || 3000).toLocaleString()}`
+                                ? `Refundable Deposit: ₹${Number((roomItem.listing as any)?.securityDeposit ?? listingMeta.securityDeposit ?? roomItem.metadata?.refundableDeposit ?? 3000).toLocaleString()}`
                                 : `Total: ₹${stayTotal.toLocaleString()} (${nights} Night${nights > 1 ? 's' : ''})`
                               }
                             </div>
@@ -2435,12 +2448,14 @@ export default function VenueProfilePage() {
                                   <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
                                 </button>
 
-                                {/* Micro trust token note */}
-                                <div className="text-center">
-                                  <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                                    🔒 Lock this bed today for just ₹999
-                                  </span>
-                                </div>
+                                {/* Micro trust token note (Dynamic Lock Bed Amount from Business Listing) */}
+                                {((roomItem.listing as any)?.isTokenAdvanceEnabled ?? (listingMeta.isTokenAdvanceEnabled ?? true)) && (
+                                  <div className="text-center">
+                                    <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                                      🔒 Lock this bed today for just ₹{((roomItem.listing as any)?.tokenAdvanceAmount || listingMeta.tokenAdvanceAmount || 999).toLocaleString()}
+                                    </span>
+                                  </div>
+                                )}
 
                                 {/* Free Property Visit */}
                                 <button
@@ -2553,8 +2568,8 @@ export default function VenueProfilePage() {
                               )}
                             </div>
 
-                            {/* Urgent Scarcity Callout Box with Dynamic Merchant Offer Badge (Only for Hotel/Resort, not for PG) */}
-                            {!isPgStay && (
+                            {/* Urgent Scarcity Callout Box with Dynamic Merchant Offer Badge */}
+                            {(offerBadgeText || !isPgStay) && (
                               <div className="mt-3 p-3 rounded-2xl bg-sky-50 dark:bg-sky-950/30 border border-sky-100 dark:border-sky-900/30 flex items-start gap-2.5">
                                 <span className="text-[#033266] dark:text-[#ff6325] font-black text-base shrink-0 leading-none">⚡</span>
                                 <div>
@@ -2569,22 +2584,20 @@ export default function VenueProfilePage() {
                             )}
                           </div>
 
-                          {/* Dynamic Promotional Getaway Banner (Hotels/Resorts only) */}
-                          {!isPgStay && (
-                            <div className="h-32 rounded-2xl overflow-hidden relative shadow-inner border border-slate-200 dark:border-white/10 group">
-                              <img
-                                src={thumb}
-                                alt="Getaway"
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                onError={(e) => { e.currentTarget.src = defaultHotelPhotos[0]; }}
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex items-end p-3.5">
-                                <span className="font-serif italic text-white text-base font-bold drop-shadow-md">
-                                  {merchantBannerTagline ? merchantBannerTagline : 'Your Perfect Getaway Awaits'}
-                                </span>
-                              </div>
+                          {/* Dynamic Promotional Getaway Banner */}
+                          <div className="h-32 rounded-2xl overflow-hidden relative shadow-inner border border-slate-200 dark:border-white/10 group">
+                            <img
+                              src={thumb}
+                              alt="Getaway"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              onError={(e) => { e.currentTarget.src = defaultHotelPhotos[0]; }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex items-end p-3.5">
+                              <span className="font-serif italic text-white text-base font-bold drop-shadow-md">
+                                {merchantBannerTagline ? merchantBannerTagline : 'Your Perfect Getaway Awaits'}
+                              </span>
                             </div>
-                          )}
+                          </div>
                         </div>
 
                       </div>
@@ -4546,8 +4559,9 @@ export default function VenueProfilePage() {
               <div className={`flex-1 px-6 py-5 space-y-6 ${roomModalStep === 'VISIT' ? 'overflow-visible' : 'overflow-y-auto overscroll-contain'}`}>
                 {(() => {
                   const roomListings = activeRoomService.rawConfig?.metadata?.listings || activeRoomService.metadata?.listings || [];
-                  const roomMeta = roomListings[0]?.metadata || activeRoomService.metadata || {};
-                  const roomPrice = Number(activeRoomService.price || activeRoomService.basePrice || roomListings[0]?.price) || 2500;
+                  const selectedListing = activeRoomService.selectedListing || (activeRoomService.selectedListingId ? roomListings.find((l: any) => l.id === activeRoomService.selectedListingId) : roomListings[0]);
+                  const roomMeta = selectedListing?.metadata || activeRoomService.metadata || {};
+                  const roomPrice = Number(selectedListing?.price || selectedListing?.basePrice || activeRoomService.price || activeRoomService.basePrice) || 2500;
                   const roomTotal = roomPrice * nights * rooms;
 
                   // Room gallery from listing / merchant uploads
@@ -4569,22 +4583,43 @@ export default function VenueProfilePage() {
                   const rawAddons = roomMeta.addons || activeRoomService.metadata?.addons || activeRoomService.addOns || [];
                   const partnerListingAddons = Array.isArray(rawAddons) ? rawAddons : [];
 
-                  // ONLY show add-ons created directly by the business merchant (No dummy/template duplicates)
-                  const availableAddonsList = partnerListingAddons.map((pa: any, pIdx: number) => ({
-                    id: `custom-addon-${pIdx}`,
-                    name: typeof pa === 'string' ? pa : (pa.name || 'Custom Add-on'),
-                    desc: pa.desc || 'Optional enhancement offered directly by host',
-                    price: Number(pa.price || pa.cost || 0),
-                    tag: 'Included Choice',
-                    icon: '✨'
-                  }));
+                  const pgBasePrice = Number(activeRoomService.price || activeRoomService.basePrice || selectedListing?.price) || 2200;
+                  const pgFoodDiscount = Number(
+                    (selectedListing as any)?.foodDiscountAmount ??
+                    activeRoomService.metadata?.foodDiscountAmount ??
+                    2000
+                  );
+
+                  // ONLY show add-ons created directly by the business merchant (or standard PG add-ons if in PG stay mode)
+                  const defaultPgAddons = isPgStay ? [
+                    { id: 'custom-addon-pg-laundry', name: 'Laundry & Washing Machine Access', desc: 'Unlimited monthly washing machine and drying yard access', price: 350, tag: 'Popular', icon: '🧺' },
+                    { id: 'custom-addon-pg-parking', name: 'Reserved Two-Wheeler Parking', desc: 'Covered dedicated CCTV-monitored 2-wheeler parking slot', price: 200, tag: 'Convenience', icon: '🛵' },
+                    { id: 'custom-addon-pg-locker', name: 'Personal High-Security Locker', desc: 'Keyed personal wardrobe locker with master backup code', price: 250, tag: 'Security', icon: '🔐' },
+                  ] : [];
+
+                  const availableAddonsList = partnerListingAddons.length > 0
+                    ? partnerListingAddons.map((pa: any, pIdx: number) => ({
+                      id: `custom-addon-${pIdx}`,
+                      name: typeof pa === 'string' ? pa : (pa.name || 'Custom Add-on'),
+                      desc: pa.desc || (isPgStay ? 'Monthly amenity enhancement' : 'Optional enhancement offered directly by host'),
+                      price: Number(pa.price || pa.cost || 0),
+                      tag: 'Included Choice',
+                      icon: '✨'
+                    }))
+                    : defaultPgAddons;
 
                   const addonsTotalSum = selectedAddonIds.reduce((sum, id) => {
-                    const found = availableAddonsList.find(a => a.id === id);
+                    const found = availableAddonsList.find((a: any) => a.id === id);
                     return sum + (found?.price || 0);
                   }, 0);
 
-                  const finalCalculatedPayable = roomTotal + addonsTotalSum;
+                  const basePgPayable = pgPaymentType === 'TOKEN_ADVANCE'
+                    ? Number((selectedListing as any)?.tokenAdvanceAmount || activeRoomService.metadata?.tokenAdvanceAmount || 999)
+                    : (isFoodExcluded ? Math.max(500, pgBasePrice - pgFoodDiscount) : pgBasePrice);
+
+                  const finalCalculatedPayable = isPgStay
+                    ? (basePgPayable + addonsTotalSum)
+                    : (roomTotal + addonsTotalSum);
 
                   if (roomModalStep === 'DETAILS') {
                     return (
@@ -4599,18 +4634,52 @@ export default function VenueProfilePage() {
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
 
-                          {/* Image Switcher Pills */}
+                          {/* Left & Right Interactive Navigation Arrows */}
                           {roomPhotos.length > 1 && (
-                            <div className="absolute bottom-3 left-3 flex gap-2">
-                              {roomPhotos.map((_, pIdx) => (
-                                <button
-                                  key={pIdx}
-                                  type="button"
-                                  onClick={() => setRoomModalImageIdx(pIdx)}
-                                  className={`h-2 rounded-full transition-all cursor-pointer ${roomModalImageIdx === pIdx ? 'w-6 bg-[#033266] dark:bg-[#ff6325]' : 'w-2 bg-white/70'
+                            <>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setRoomModalImageIdx((prev) => (prev > 0 ? prev - 1 : roomPhotos.length - 1));
+                                }}
+                                className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 hover:bg-black/75 text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-md shadow-md hover:scale-105 active:scale-95 border border-white/20 z-10"
+                                aria-label="Previous image"
+                              >
+                                <ChevronLeft size={18} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setRoomModalImageIdx((prev) => (prev < roomPhotos.length - 1 ? prev + 1 : 0));
+                                }}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 hover:bg-black/75 text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-md shadow-md hover:scale-105 active:scale-95 border border-white/20 z-10"
+                                aria-label="Next image"
+                              >
+                                <ChevronRight size={18} />
+                              </button>
+                            </>
+                          )}
+
+                          {/* Image Switcher Pills + Photo Counter Badge */}
+                          {roomPhotos.length > 1 && (
+                            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between z-10">
+                              <div className="flex gap-1.5 items-center bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/15">
+                                {roomPhotos.map((_, pIdx) => (
+                                  <button
+                                    key={pIdx}
+                                    type="button"
+                                    onClick={() => setRoomModalImageIdx(pIdx)}
+                                    className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                                      roomModalImageIdx === pIdx ? 'w-5 bg-[#ff6325]' : 'w-1.5 bg-white/60 hover:bg-white'
                                     }`}
-                                />
-                              ))}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-[10px] font-black text-white px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 shadow-xs">
+                                📷 {roomModalImageIdx + 1} / {roomPhotos.length}
+                              </span>
                             </div>
                           )}
 
@@ -4623,112 +4692,179 @@ export default function VenueProfilePage() {
                         </div>
 
                         {/* Top Booking Compact Meal Plans Selector: With Mess vs Without Mess */}
-                        {isPgStay && (
+                        {isPgStay && ((activeRoomService.selectedListing as any)?.foodFacilityProvided ?? (roomMeta.foodFacilityProvided ?? true)) && (
                           <div className="space-y-1.5">
                             <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block px-0.5">
                               Meal & Stay Plan
                             </span>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                              {/* Plan A: Stay + 3 Homely Meals Included */}
-                              <div
-                                onClick={() => setIsFoodExcluded(false)}
-                                className={`p-3 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between gap-2 ${!isFoodExcluded
-                                  ? 'border-[#ff6325] bg-orange-50/50 dark:bg-[#ff6325]/10 shadow-2xs'
-                                  : 'border-slate-200 dark:border-white/10 bg-white dark:bg-[#0f1219] hover:border-slate-300 dark:hover:border-white/20 opacity-75'
-                                  }`}
-                              >
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${!isFoodExcluded ? 'border-[#ff6325] bg-[#ff6325]' : 'border-slate-300 dark:border-white/20'}`}>
-                                    {!isFoodExcluded && <span className="w-1.5 h-1.5 rounded-full bg-white block" />}
-                                  </div>
-                                  <div className="min-w-0">
-                                    <h4 className="font-extrabold text-xs text-slate-900 dark:text-white truncate">
-                                      🍱 3 Meals + Stay
-                                    </h4>
-                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 block truncate">
-                                      Daily Breakfast, Lunch, Dinner
-                                    </span>
-                                  </div>
-                                </div>
-                                <div className="text-right shrink-0">
-                                  <span className="text-sm font-black text-[#033266] dark:text-[#ff6325] block">
-                                    ₹{roomPrice.toLocaleString()}
-                                  </span>
-                                  <span className="text-[9px] text-slate-400 font-semibold block">/month</span>
-                                </div>
-                              </div>
+                            {(() => {
+                              const foodDiscount = Number(
+                                (activeRoomService.selectedListing as any)?.foodDeductionAmount ||
+                                roomMeta.foodDeductionAmount ||
+                                1500
+                              );
+                              const mealPlanDesc = roomMeta.mealPlanOptions || (activeRoomService.selectedListing as any)?.mealPlanOptions || 'Daily Breakfast, Lunch, Dinner';
+                              const finalNoMessPrice = Math.max(500, roomPrice - foodDiscount);
 
-                              {/* Plan B: Only Stay (Mess Excluded - ₹1,500 Off) */}
-                              <div
-                                onClick={() => setIsFoodExcluded(true)}
-                                className={`p-3 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between gap-2 ${isFoodExcluded
-                                  ? 'border-[#ff6325] bg-orange-50/50 dark:bg-[#ff6325]/10 shadow-2xs'
-                                  : 'border-slate-200 dark:border-white/10 bg-white dark:bg-[#0f1219] hover:border-slate-300 dark:hover:border-white/20 opacity-75'
-                                  }`}
-                              >
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${isFoodExcluded ? 'border-[#ff6325] bg-[#ff6325]' : 'border-slate-300 dark:border-white/20'}`}>
-                                    {isFoodExcluded && <span className="w-1.5 h-1.5 rounded-full bg-white block" />}
+                              return (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                  {/* Plan A: Stay + 3 Homely Meals Included */}
+                                  <div
+                                    onClick={() => setIsFoodExcluded(false)}
+                                    className={`p-3 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between gap-2 ${!isFoodExcluded
+                                      ? 'border-[#ff6325] bg-orange-50/50 dark:bg-[#ff6325]/10 shadow-2xs'
+                                      : 'border-slate-200 dark:border-white/10 bg-white dark:bg-[#0f1219] hover:border-slate-300 dark:hover:border-white/20 opacity-75'
+                                      }`}
+                                  >
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${!isFoodExcluded ? 'border-[#ff6325] bg-[#ff6325]' : 'border-slate-300 dark:border-white/20'}`}>
+                                        {!isFoodExcluded && <span className="w-1.5 h-1.5 rounded-full bg-white block" />}
+                                      </div>
+                                      <div className="min-w-0">
+                                        <h4 className="font-extrabold text-xs text-slate-900 dark:text-white truncate">
+                                          🍱 3 Meals + Stay
+                                        </h4>
+                                        <span className="text-[10px] text-slate-400 dark:text-slate-500 block truncate">
+                                          {mealPlanDesc}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                      <span className="text-sm font-black text-[#033266] dark:text-[#ff6325] block">
+                                        ₹{roomPrice.toLocaleString()}
+                                      </span>
+                                      <span className="text-[9px] text-slate-400 font-semibold block">/month</span>
+                                    </div>
                                   </div>
-                                  <div className="min-w-0">
-                                    <h4 className="font-extrabold text-xs text-slate-900 dark:text-white truncate">
-                                      🍳 Only Stay (No Mess)
-                                    </h4>
-                                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold block truncate">
-                                      Save ₹1,500/month
-                                    </span>
+
+                                  {/* Plan B: Only Stay (Mess Excluded - Dynamic Off) */}
+                                  <div
+                                    onClick={() => setIsFoodExcluded(true)}
+                                    className={`p-3 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between gap-2 ${isFoodExcluded
+                                      ? 'border-[#ff6325] bg-orange-50/50 dark:bg-[#ff6325]/10 shadow-2xs'
+                                      : 'border-slate-200 dark:border-white/10 bg-white dark:bg-[#0f1219] hover:border-slate-300 dark:hover:border-white/20 opacity-75'
+                                      }`}
+                                  >
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${isFoodExcluded ? 'border-[#ff6325] bg-[#ff6325]' : 'border-slate-300 dark:border-white/20'}`}>
+                                        {isFoodExcluded && <span className="w-1.5 h-1.5 rounded-full bg-white block" />}
+                                      </div>
+                                      <div className="min-w-0">
+                                        <h4 className="font-extrabold text-xs text-slate-900 dark:text-white truncate">
+                                          🍳 Only Stay (No Mess)
+                                        </h4>
+                                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold block truncate">
+                                          Save ₹{foodDiscount.toLocaleString()}/month
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                      <div className="flex items-baseline gap-1 justify-end">
+                                        <span className="text-[10px] text-slate-400 line-through">₹{roomPrice.toLocaleString()}</span>
+                                        <span className="text-sm font-black text-[#033266] dark:text-[#ff6325]">
+                                          ₹{finalNoMessPrice.toLocaleString()}
+                                        </span>
+                                      </div>
+                                      <span className="text-[9px] text-slate-400 font-semibold block">/month</span>
+                                    </div>
                                   </div>
                                 </div>
-                                <div className="text-right shrink-0">
-                                  <div className="flex items-baseline gap-1 justify-end">
-                                    <span className="text-[10px] text-slate-400 line-through">₹{roomPrice.toLocaleString()}</span>
-                                    <span className="text-sm font-black text-[#033266] dark:text-[#ff6325]">
-                                      ₹{Math.max(2000, roomPrice - 1500).toLocaleString()}
-                                    </span>
-                                  </div>
-                                  <span className="text-[9px] text-slate-400 font-semibold block">/month</span>
-                                </div>
-                              </div>
-                            </div>
+                              );
+                            })()}
                           </div>
                         )}
 
-                        {/* Room Specs Badges (Render only available fields) */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10">
-                            <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Capacity</span>
-                            <span className="text-xs font-extrabold text-slate-900 dark:text-white flex items-center gap-1 mt-0.5">
-                              <Users size={13} className="text-[#033266] dark:text-[#ff6325]" />
-                              <span>{typeof roomMeta.maxGuests === 'string' && roomMeta.maxGuests.toLowerCase().includes('guest') ? roomMeta.maxGuests : `Max ${roomMeta.maxGuests || 2} Guests`}</span>
-                            </span>
-                          </div>
-
-                          {roomMeta.bedType && (
-                            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10">
-                              <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Bed Setup</span>
-                              <span className="text-xs font-extrabold text-slate-900 dark:text-white flex items-center gap-1 mt-0.5">
-                                <Bed size={13} className="text-[#033266] dark:text-[#ff6325]" />
-                                <span>{roomMeta.bedType}</span>
-                              </span>
+                        {/* Top-Tier Booking App Style: Premium Key Room Features Bar */}
+                        <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-50 via-sky-50/40 to-slate-50 dark:from-slate-800/90 dark:via-sky-950/20 dark:to-slate-800/90 border border-slate-200/90 dark:border-white/10 shadow-2xs">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-3 px-0.5">
+                            Key Room Specifications
+                          </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-3.5 gap-x-5 text-xs font-bold text-slate-800 dark:text-slate-200">
+                            {/* 1. Capacity */}
+                            <div className="flex items-start gap-2.5">
+                              <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
+                                <Users size={16} />
+                              </div>
+                              <div className="min-w-0">
+                                <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Capacity</span>
+                                <span className="text-xs font-black text-slate-900 dark:text-white leading-snug break-words">
+                                  {typeof roomMeta.maxGuests === 'string' && roomMeta.maxGuests.toLowerCase().includes('guest') ? roomMeta.maxGuests : `Max ${roomMeta.maxGuests || 2} Residents`}
+                                </span>
+                              </div>
                             </div>
-                          )}
 
-                          {(roomMeta.sizeSqFt || roomMeta.roomSize) && (
-                            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10">
-                              <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Room Size</span>
-                              <span className="text-xs font-extrabold text-slate-900 dark:text-white flex items-center gap-1 mt-0.5">
-                                <span>📐</span>
-                                <span>{roomMeta.sizeSqFt || roomMeta.roomSize} sq.ft</span>
-                              </span>
+                            {/* 2. Bed Setup */}
+                            {roomMeta.bedType && (
+                              <div className="flex items-start gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-orange-500/10 text-[#ff6325] flex items-center justify-center shrink-0 mt-0.5">
+                                  <Bed size={16} />
+                                </div>
+                                <div className="min-w-0">
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Bed Setup</span>
+                                  <span className="text-xs font-black text-slate-900 dark:text-white leading-snug break-words">
+                                    {roomMeta.bedType}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 3. Room Size */}
+                            {(roomMeta.sizeSqFt || roomMeta.roomSize) && (
+                              <div className="flex items-start gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 text-sm mt-0.5">
+                                  📐
+                                </div>
+                                <div className="min-w-0">
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Room Size</span>
+                                  <span className="text-xs font-black text-slate-900 dark:text-white leading-snug break-words">
+                                    {roomMeta.sizeSqFt || roomMeta.roomSize} sq.ft
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 4. Attached Bathroom */}
+                            {roomMeta.bathroomType && (
+                              <div className="flex items-start gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 text-sm mt-0.5">
+                                  🚿
+                                </div>
+                                <div className="min-w-0">
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Washroom</span>
+                                  <span className="text-xs font-black text-slate-900 dark:text-white leading-snug break-words">
+                                    {roomMeta.bathroomType}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 5. Balcony / Ventilation */}
+                            {roomMeta.viewType && (
+                              <div className="flex items-start gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 text-sm mt-0.5">
+                                  🌿
+                                </div>
+                                <div className="min-w-0">
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Balcony / Air</span>
+                                  <span className="text-xs font-black text-slate-900 dark:text-white leading-snug break-words">
+                                    {roomMeta.viewType}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 6. Cooling */}
+                            <div className="flex items-start gap-2.5">
+                              <div className="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0 text-sm mt-0.5">
+                                ❄️
+                              </div>
+                              <div className="min-w-0">
+                                <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Climate</span>
+                                <span className="text-xs font-black text-slate-900 dark:text-white leading-snug break-words">
+                                  {activeRoomService.name?.toLowerCase().includes('non ac') ? 'Natural Airflow / Fan' : 'Air Conditioned'}
+                                </span>
+                              </div>
                             </div>
-                          )}
-
-                          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10">
-                            <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Cooling</span>
-                            <span className="text-xs font-extrabold text-slate-900 dark:text-white flex items-center gap-1 mt-0.5">
-                              <span>❄️</span>
-                              <span>{activeRoomService.name?.toLowerCase().includes('non ac') ? 'Natural Airflow / Fan' : 'Air Conditioned'}</span>
-                            </span>
                           </div>
                         </div>
 
@@ -4839,32 +4975,73 @@ export default function VenueProfilePage() {
                           })()}
                         </div>
 
-                        {/* Highlighted Schedule Free Property Visit Card (PG / Hostel) */}
+                        {/* Highlighted Schedule Free Property Visit Card & Hostel Policies (PG / Hostel) */}
                         {isPgStay ? (
-                          <div className="p-4 rounded-2xl bg-gradient-to-r from-sky-50 via-blue-50/50 to-indigo-50/40 dark:from-sky-950/30 dark:via-blue-950/20 dark:to-indigo-950/20 border border-sky-200 dark:border-sky-800/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
-                            <div className="flex items-center gap-3">
-                              <span className="text-2xl p-2 rounded-xl bg-white dark:bg-slate-800 shadow-2xs border border-sky-100 dark:border-white/10 shrink-0">
-                                🗓️
-                              </span>
-                              <div>
-                                <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                                  <span>Want to inspect the property in person?</span>
-                                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 font-extrabold text-[10px]">
-                                    100% Free
-                                  </span>
-                                </h4>
-                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                                  Meet the hostel warden, inspect room amenities & check out mess food before paying.
-                                </p>
+                          <div className="space-y-3">
+                            {/* Gate Curfew, Notice & Deposit Policies Note */}
+                            {((activeRoomService.selectedListing as any)?.metadata?.petPolicy || (activeRoomService.selectedListing as any)?.metadata?.checkOutTime || (activeRoomService.selectedListing as any)?.metadata?.cancellationPolicy || roomMeta.petPolicy || roomMeta.checkOutTime || roomMeta.cancellationPolicy) && (
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 text-xs">
+                                {((activeRoomService.selectedListing as any)?.metadata?.checkOutTime || roomMeta.checkOutTime) && (
+                                  <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                                    <span className="text-base shrink-0">🚪</span>
+                                    <div>
+                                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Gate Timing</span>
+                                      <span className="font-extrabold text-slate-900 dark:text-white">
+                                        Closes at {(activeRoomService.selectedListing as any)?.metadata?.checkOutTime || roomMeta.checkOutTime}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                                {((activeRoomService.selectedListing as any)?.metadata?.petPolicy || roomMeta.petPolicy) && (
+                                  <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                                    <span className="text-base shrink-0">📜</span>
+                                    <div>
+                                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Notice Period</span>
+                                      <span className="font-extrabold text-slate-900 dark:text-white">
+                                        {(activeRoomService.selectedListing as any)?.metadata?.petPolicy || roomMeta.petPolicy}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                                {((activeRoomService.selectedListing as any)?.metadata?.cancellationPolicy || roomMeta.cancellationPolicy) && (
+                                  <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                                    <span className="text-base shrink-0">🛡️</span>
+                                    <div>
+                                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Deposit Refund</span>
+                                      <span className="font-extrabold text-slate-900 dark:text-white">
+                                        {(activeRoomService.selectedListing as any)?.metadata?.cancellationPolicy || roomMeta.cancellationPolicy}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
+                            )}
+
+                            <div className="p-4 rounded-2xl bg-gradient-to-r from-sky-50 via-blue-50/50 to-indigo-50/40 dark:from-sky-950/30 dark:via-blue-950/20 dark:to-indigo-950/20 border border-sky-200 dark:border-sky-800/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                              <div className="flex items-center gap-3">
+                                <span className="text-2xl p-2 rounded-xl bg-white dark:bg-slate-800 shadow-2xs border border-sky-100 dark:border-white/10 shrink-0">
+                                  🗓️
+                                </span>
+                                <div>
+                                  <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                                    <span>Want to inspect the property in person?</span>
+                                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 font-extrabold text-[10px]">
+                                      100% Free
+                                    </span>
+                                  </h4>
+                                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                                    Meet the hostel warden, inspect room amenities & check out mess food before paying.
+                                  </p>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setRoomModalStep('VISIT')}
+                                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#033266] hover:bg-[#022349] dark:bg-sky-600 dark:hover:bg-sky-500 text-white font-extrabold text-xs shadow-sm active:scale-95 transition-all cursor-pointer shrink-0 text-center"
+                              >
+                                Schedule Free Visit &rarr;
+                              </button>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => setRoomModalStep('VISIT')}
-                              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#033266] hover:bg-[#022349] dark:bg-sky-600 dark:hover:bg-sky-500 text-white font-extrabold text-xs shadow-sm active:scale-95 transition-all cursor-pointer shrink-0 text-center"
-                            >
-                              Schedule Free Visit &rarr;
-                            </button>
                           </div>
                         ) : (
                           /* Selected Dates Review Banner (Hotel / Resorts Only) */
@@ -5188,10 +5365,13 @@ export default function VenueProfilePage() {
                         <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 flex items-center justify-between text-xs mt-4">
                           <div>
                             <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">
-                              Base Room ({nights}N) + {selectedAddonIds.length} Add-on{selectedAddonIds.length === 1 ? '' : 's'}
+                              {isPgStay
+                                ? `${pgPaymentType === 'TOKEN_ADVANCE' ? 'Token Advance' : '1st Month Rent'} + ${selectedAddonIds.length} Add-on${selectedAddonIds.length === 1 ? '' : 's'}`
+                                : `Base Room (${nights}N) + ${selectedAddonIds.length} Add-on${selectedAddonIds.length === 1 ? '' : 's'}`
+                              }
                             </span>
                             <span className="text-slate-700 dark:text-slate-300 text-xs">
-                              ₹{roomTotal.toLocaleString()} + ₹{addonsTotalSum.toLocaleString()}
+                              ₹{(isPgStay ? basePgPayable : roomTotal).toLocaleString()} + ₹{addonsTotalSum.toLocaleString()}
                             </span>
                           </div>
                           <div className="text-right">
@@ -5228,7 +5408,12 @@ export default function VenueProfilePage() {
                   isPgStay ? (
                     (() => {
                       const basePrice = Number(activeRoomService.price || activeRoomService.basePrice) || 2200;
-                      const effectiveRent = isFoodExcluded ? Math.max(2000, basePrice - 1500) : basePrice;
+                      const foodDiscount = Number(
+                        (activeRoomService.selectedListing as any)?.foodDeductionAmount ||
+                        activeRoomService.metadata?.foodDeductionAmount ||
+                        1500
+                      );
+                      const effectiveRent = isFoodExcluded ? Math.max(500, basePrice - foodDiscount) : basePrice;
 
                       return (
                         /* Balanced Modern Booking Action Bar: Primary Full Rent + Flexible Token Option */
@@ -5262,125 +5447,26 @@ export default function VenueProfilePage() {
                               Back
                             </button>
 
-                            {/* Secondary Action: Pay ₹999 Token Advance */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const actualRent = effectiveRent;
-                                const tokenAmount = 999;
-                                const slotStr = `1 Month Stay (Starts ${checkIn}) • Token Advance ₹${tokenAmount}`;
-
-                                const isBackpackersHostel = category === 'hostels' || venueName.toLowerCase().includes('backpackers');
-                                const effectiveMerchantId = isBackpackersHostel ? '51c6a3b8-2abc-9421-7644-2a2dea05dbc0' : (activeRoomService.merchantId || merchantId);
-                                const effectiveMerchantName = isBackpackersHostel ? 'Backpackers Hostel' : venueName;
-
-                                setSelectedService({
-                                  ...activeRoomService,
-                                  price: tokenAmount,
-                                  name: `${effectiveMerchantName} — ${activeRoomService.name}`,
-                                  merchantId: effectiveMerchantId,
-                                  merchantName: effectiveMerchantName,
-                                  merchant: {
-                                    id: effectiveMerchantId,
-                                    name: effectiveMerchantName,
-                                  },
-                                  merchantObj: {
-                                    ...(activeRoomService.merchantObj || {}),
-                                    id: effectiveMerchantId,
-                                    name: effectiveMerchantName,
-                                  },
-                                  category: category === 'hostels' ? 'Hostel Booking' : 'PG & Co-Living Stays',
-                                  metadata: {
-                                    ...(activeRoomService.metadata || {}),
-                                    merchantId: effectiveMerchantId,
-                                    merchantName: effectiveMerchantName,
-                                    pgBooking: {
-                                      venueName: effectiveMerchantName,
-                                      address,
-                                      roomType: activeRoomService.name,
-                                      monthlyRent: actualRent,
-                                      tokenPaid: tokenAmount,
-                                      refundableDeposit: activeRoomService.metadata?.refundableDeposit || 3000,
-                                      foodExcluded: isFoodExcluded,
-                                      startDate: checkIn,
-                                      paymentType: 'TOKEN_ADVANCE'
-                                    }
-                                  }
-                                });
-
-                                setSelectedSlot({
-                                  id: `pg-bed-${Date.now()}`,
-                                  timeStr: slotStr,
-                                  date: checkIn,
-                                  available: true
-                                });
-
-                                setActiveRoomService(null);
-                                setRoomModalStep(null);
-                                router.push('/booking/checkout');
-                              }}
-                              className="px-4 py-2.5 rounded-xl border border-orange-200 dark:border-orange-900/40 hover:border-[#ff6325] text-[#ff6325] hover:bg-orange-50 dark:hover:bg-orange-950/20 text-xs font-black transition-all cursor-pointer bg-white dark:bg-slate-800 flex items-center gap-1.5 whitespace-nowrap shadow-2xs"
-                            >
-                              <span>🔒 Pay ₹999 Token</span>
-                            </button>
+                            {/* Secondary Action: Pay Dynamic Token Advance */}
+                            {((activeRoomService.selectedListing as any)?.isTokenAdvanceEnabled ?? (activeRoomService.metadata?.isTokenAdvanceEnabled ?? true)) && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPgPaymentType('TOKEN_ADVANCE');
+                                  setRoomModalStep('ADDONS');
+                                }}
+                                className="px-4 py-2.5 rounded-xl border border-orange-200 dark:border-orange-900/40 hover:border-[#ff6325] text-[#ff6325] hover:bg-orange-50 dark:hover:bg-orange-950/20 text-xs font-black transition-all cursor-pointer bg-white dark:bg-slate-800 flex items-center gap-1.5 whitespace-nowrap shadow-2xs"
+                              >
+                                <span>🔒 Pay ₹{Number((activeRoomService.selectedListing as any)?.tokenAdvanceAmount || activeRoomService.metadata?.tokenAdvanceAmount || 999).toLocaleString()} Token</span>
+                              </button>
+                            )}
 
                             {/* Primary Main CTA: Pay Full 1st Month Rent */}
                             <button
                               type="button"
                               onClick={() => {
-                                const actualRent = effectiveRent;
-                                const deposit = activeRoomService.metadata?.refundableDeposit || 3000;
-                                const fullRentAmount = actualRent;
-                                const slotStr = `1st Month Full Rent (Starts ${checkIn}) • ₹${fullRentAmount.toLocaleString()}`;
-
-                                const isBackpackersHostel = category === 'hostels' || venueName.toLowerCase().includes('backpackers');
-                                const effectiveMerchantId = isBackpackersHostel ? '51c6a3b8-2abc-9421-7644-2a2dea05dbc0' : (activeRoomService.merchantId || merchantId);
-                                const effectiveMerchantName = isBackpackersHostel ? 'Backpackers Hostel' : venueName;
-
-                                setSelectedService({
-                                  ...activeRoomService,
-                                  price: fullRentAmount,
-                                  name: `${effectiveMerchantName} — ${activeRoomService.name} (1st Month Full Rent)`,
-                                  merchantId: effectiveMerchantId,
-                                  merchantName: effectiveMerchantName,
-                                  merchant: {
-                                    id: effectiveMerchantId,
-                                    name: effectiveMerchantName,
-                                  },
-                                  merchantObj: {
-                                    ...(activeRoomService.merchantObj || {}),
-                                    id: effectiveMerchantId,
-                                    name: effectiveMerchantName,
-                                  },
-                                  category: category === 'hostels' ? 'Hostel Booking' : 'PG & Co-Living Stays',
-                                  metadata: {
-                                    ...(activeRoomService.metadata || {}),
-                                    merchantId: effectiveMerchantId,
-                                    merchantName: effectiveMerchantName,
-                                    pgBooking: {
-                                      venueName: effectiveMerchantName,
-                                      address,
-                                      roomType: activeRoomService.name,
-                                      monthlyRent: actualRent,
-                                      tokenPaid: fullRentAmount,
-                                      refundableDeposit: deposit,
-                                      foodExcluded: isFoodExcluded,
-                                      startDate: checkIn,
-                                      paymentType: 'FULL_MONTH_RENT'
-                                    }
-                                  }
-                                });
-
-                                setSelectedSlot({
-                                  id: `pg-bed-full-${Date.now()}`,
-                                  timeStr: slotStr,
-                                  date: checkIn,
-                                  available: true
-                                });
-
-                                setActiveRoomService(null);
-                                setRoomModalStep(null);
-                                router.push('/booking/checkout');
+                                setPgPaymentType('FULL_MONTH_RENT');
+                                setRoomModalStep('ADDONS');
                               }}
                               className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#ff6325] to-[#f4511e] hover:from-[#e04e13] hover:to-[#d84315] active:scale-95 text-white text-xs font-black shadow-md transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                             >
@@ -5419,13 +5505,76 @@ export default function VenueProfilePage() {
                       type="button"
                       onClick={() => {
                         // Skip Addons: directly execute checkout payload with empty addons
-                        const roomPrice = Number(activeRoomService.price || activeRoomService.basePrice) || 2500;
-                        const roomTotal = roomPrice * nights * rooms;
-                        const slotStr = `${checkIn} to ${checkOut} (${nights} Night${nights > 1 ? 's' : ''}) • ${adults + children} Guests • ${rooms} Room${rooms > 1 ? 's' : ''}`;
-
                         const isBackpackersHostel = category === 'hostels' || venueName.toLowerCase().includes('backpackers');
                         const effectiveMerchantId = isBackpackersHostel ? '51c6a3b8-2abc-9421-7644-2a2dea05dbc0' : (activeRoomService.merchantId || merchantId);
                         const effectiveMerchantName = isBackpackersHostel ? 'Backpackers Hostel' : venueName;
+
+                        if (isPgStay) {
+                          const basePrice = Number(activeRoomService.price || activeRoomService.basePrice) || 2200;
+                          const foodDiscount = Number(
+                            (activeRoomService.selectedListing as any)?.foodDiscountAmount ??
+                            activeRoomService.metadata?.foodDiscountAmount ??
+                            2000
+                          );
+                          const actualRent = isFoodExcluded ? Math.max(500, basePrice - foodDiscount) : basePrice;
+                          const deposit = Number((activeRoomService.selectedListing as any)?.securityDeposit ?? activeRoomService.metadata?.securityDeposit ?? activeRoomService.metadata?.refundableDeposit ?? 3000);
+                          const tokenAmount = Number((activeRoomService.selectedListing as any)?.tokenAdvanceAmount || activeRoomService.metadata?.tokenAdvanceAmount || 999);
+                          const payable = pgPaymentType === 'TOKEN_ADVANCE' ? tokenAmount : actualRent;
+                          const slotStr = pgPaymentType === 'TOKEN_ADVANCE'
+                            ? `1 Month Stay (Starts ${checkIn}) • Token Advance ₹${tokenAmount}`
+                            : `1st Month Full Rent (Starts ${checkIn}) • ₹${actualRent.toLocaleString()}`;
+
+                          setSelectedService({
+                            ...activeRoomService,
+                            price: payable,
+                            name: `${effectiveMerchantName} — ${activeRoomService.name} (${pgPaymentType === 'TOKEN_ADVANCE' ? 'Token Advance' : '1st Month Rent'})`,
+                            merchantId: effectiveMerchantId,
+                            merchantName: effectiveMerchantName,
+                            merchant: {
+                              id: effectiveMerchantId,
+                              name: effectiveMerchantName,
+                            },
+                            merchantObj: {
+                              ...(activeRoomService.merchantObj || {}),
+                              id: effectiveMerchantId,
+                              name: effectiveMerchantName,
+                            },
+                            category: category === 'hostels' ? 'Hostel Booking' : 'PG & Co-Living Stays',
+                            metadata: {
+                              ...(activeRoomService.metadata || {}),
+                              merchantId: effectiveMerchantId,
+                              merchantName: effectiveMerchantName,
+                              pgBooking: {
+                                venueName: effectiveMerchantName,
+                                address,
+                                roomType: activeRoomService.name,
+                                monthlyRent: actualRent,
+                                tokenPaid: payable,
+                                refundableDeposit: deposit,
+                                foodExcluded: isFoodExcluded,
+                                startDate: checkIn,
+                                paymentType: pgPaymentType,
+                                selectedAddons: []
+                              }
+                            }
+                          });
+
+                          setSelectedSlot({
+                            id: `pg-bed-${Date.now()}`,
+                            timeStr: slotStr,
+                            date: checkIn,
+                            available: true
+                          });
+
+                          setActiveRoomService(null);
+                          setRoomModalStep(null);
+                          router.push('/booking/checkout');
+                          return;
+                        }
+
+                        const roomPrice = Number(activeRoomService.price || activeRoomService.basePrice) || 2500;
+                        const roomTotal = roomPrice * nights * rooms;
+                        const slotStr = `${checkIn} to ${checkOut} (${nights} Night${nights > 1 ? 's' : ''}) • ${adults + children} Guests • ${rooms} Room${rooms > 1 ? 's' : ''}`;
 
                         setSelectedService({
                           ...activeRoomService,
@@ -5485,27 +5634,104 @@ export default function VenueProfilePage() {
                       type="button"
                       onClick={() => {
                         // Proceed to Checkout with Selected Addons included
-                        const roomListings = activeRoomService.rawConfig?.metadata?.listings || activeRoomService.metadata?.listings || [];
-                        const roomMeta = roomListings[0]?.metadata || activeRoomService.metadata || {};
-                        const roomPrice = Number(activeRoomService.price || activeRoomService.basePrice || roomListings[0]?.price) || 2500;
-                        const roomTotal = roomPrice * nights * rooms;
-
-                        const rawAddons = roomMeta.addons || activeRoomService.metadata?.addons || activeRoomService.addOns || [];
-                        const partnerListingAddons = Array.isArray(rawAddons) ? rawAddons : [];
-                        const availableAddonsList = partnerListingAddons.map((pa: any, pIdx: number) => ({
-                          id: `custom-addon-${pIdx}`,
-                          name: typeof pa === 'string' ? pa : (pa.name || 'Custom Add-on'),
-                          price: Number(pa.price || pa.cost || 0),
-                        }));
-
-                        const chosenAddons = availableAddonsList.filter(a => selectedAddonIds.includes(a.id));
-                        const addonsTotalSum = chosenAddons.reduce((sum, a) => sum + a.price, 0);
-                        const finalTotal = roomTotal + addonsTotalSum;
-                        const slotStr = `${checkIn} to ${checkOut} (${nights} Night${nights > 1 ? 's' : ''}) • ${adults + children} Guests • ${rooms} Room${rooms > 1 ? 's' : ''}`;
-
                         const isBackpackersHostel = category === 'hostels' || venueName.toLowerCase().includes('backpackers');
                         const effectiveMerchantId = isBackpackersHostel ? '51c6a3b8-2abc-9421-7644-2a2dea05dbc0' : (activeRoomService.merchantId || merchantId);
                         const effectiveMerchantName = isBackpackersHostel ? 'Backpackers Hostel' : venueName;
+
+                        const roomListings = activeRoomService.rawConfig?.metadata?.listings || activeRoomService.metadata?.listings || [];
+                        const selectedListing = activeRoomService.selectedListing || (activeRoomService.selectedListingId ? roomListings.find((l: any) => l.id === activeRoomService.selectedListingId) : roomListings[0]);
+                        const roomMeta = selectedListing?.metadata || activeRoomService.metadata || {};
+
+                        const rawAddons = roomMeta.addons || activeRoomService.metadata?.addons || activeRoomService.addOns || [];
+                        const partnerListingAddons = Array.isArray(rawAddons) ? rawAddons : [];
+
+                        const defaultPgAddons = isPgStay ? [
+                          { id: 'custom-addon-pg-laundry', name: 'Laundry & Washing Machine Access', desc: 'Unlimited monthly washing machine and drying yard access', price: 350, tag: 'Popular', icon: '🧺' },
+                          { id: 'custom-addon-pg-parking', name: 'Reserved Two-Wheeler Parking', desc: 'Covered dedicated CCTV-monitored 2-wheeler parking slot', price: 200, tag: 'Convenience', icon: '🛵' },
+                          { id: 'custom-addon-pg-locker', name: 'Personal High-Security Locker', desc: 'Keyed personal wardrobe locker with master backup code', price: 250, tag: 'Security', icon: '🔐' },
+                        ] : [];
+
+                        const activeAddonsList = partnerListingAddons.length > 0
+                          ? partnerListingAddons.map((pa: any, pIdx: number) => ({
+                            id: `custom-addon-${pIdx}`,
+                            name: typeof pa === 'string' ? pa : (pa.name || 'Custom Add-on'),
+                            desc: pa.desc || (isPgStay ? 'Monthly amenity enhancement' : 'Optional enhancement offered directly by host'),
+                            price: Number(pa.price || pa.cost || 0),
+                            tag: 'Included Choice',
+                            icon: '✨'
+                          }))
+                          : defaultPgAddons;
+
+                        const chosenAddons = activeAddonsList.filter((a: any) => selectedAddonIds.includes(a.id));
+                        const currentAddonsSum = chosenAddons.reduce((sum: number, a: any) => sum + (a.price || 0), 0);
+
+                        if (isPgStay) {
+                          const basePrice = Number(activeRoomService.price || activeRoomService.basePrice || selectedListing?.price) || 2200;
+                          const foodDiscount = Number(
+                            (selectedListing as any)?.foodDiscountAmount ??
+                            activeRoomService.metadata?.foodDiscountAmount ??
+                            2000
+                          );
+                          const actualRent = isFoodExcluded ? Math.max(500, basePrice - foodDiscount) : basePrice;
+                          const deposit = Number((selectedListing as any)?.securityDeposit ?? activeRoomService.metadata?.securityDeposit ?? activeRoomService.metadata?.refundableDeposit ?? 3000);
+                          const tokenAmount = Number((selectedListing as any)?.tokenAdvanceAmount || activeRoomService.metadata?.tokenAdvanceAmount || 999);
+                          const payable = (pgPaymentType === 'TOKEN_ADVANCE' ? tokenAmount : actualRent) + currentAddonsSum;
+                          const slotStr = pgPaymentType === 'TOKEN_ADVANCE'
+                            ? `1 Month Stay (Starts ${checkIn}) • Token Advance ₹${tokenAmount} + Add-ons ₹${currentAddonsSum}`
+                            : `1st Month Full Rent (Starts ${checkIn}) • ₹${actualRent.toLocaleString()} + Add-ons ₹${currentAddonsSum}`;
+
+                          setSelectedService({
+                            ...activeRoomService,
+                            price: payable,
+                            name: `${effectiveMerchantName} — ${activeRoomService.name} (${pgPaymentType === 'TOKEN_ADVANCE' ? 'Token Advance' : '1st Month Rent'})`,
+                            merchantId: effectiveMerchantId,
+                            merchantName: effectiveMerchantName,
+                            merchant: {
+                              id: effectiveMerchantId,
+                              name: effectiveMerchantName,
+                            },
+                            merchantObj: {
+                              ...(activeRoomService.merchantObj || {}),
+                              id: effectiveMerchantId,
+                              name: effectiveMerchantName,
+                            },
+                            category: category === 'hostels' ? 'Hostel Booking' : 'PG & Co-Living Stays',
+                            metadata: {
+                              ...(activeRoomService.metadata || {}),
+                              merchantId: effectiveMerchantId,
+                              merchantName: effectiveMerchantName,
+                              pgBooking: {
+                                venueName: effectiveMerchantName,
+                                address,
+                                roomType: activeRoomService.name,
+                                monthlyRent: actualRent,
+                                tokenPaid: payable,
+                                refundableDeposit: deposit,
+                                foodExcluded: isFoodExcluded,
+                                startDate: checkIn,
+                                paymentType: pgPaymentType,
+                                selectedAddons: chosenAddons
+                              }
+                            }
+                          });
+
+                          setSelectedSlot({
+                            id: `pg-bed-${Date.now()}`,
+                            timeStr: slotStr,
+                            date: checkIn,
+                            available: true
+                          });
+
+                          setActiveRoomService(null);
+                          setRoomModalStep(null);
+                          router.push('/booking/checkout');
+                          return;
+                        }
+
+                        const roomPrice = Number(activeRoomService.price || activeRoomService.basePrice || selectedListing?.price) || 2500;
+                        const roomTotal = roomPrice * nights * rooms;
+                        const finalTotal = roomTotal + currentAddonsSum;
+                        const slotStr = `${checkIn} to ${checkOut} (${nights} Night${nights > 1 ? 's' : ''}) • ${adults + children} Guests • ${rooms} Room${rooms > 1 ? 's' : ''}`;
 
                         setSelectedService({
                           ...activeRoomService,

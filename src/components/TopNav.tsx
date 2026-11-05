@@ -104,7 +104,7 @@ export function TopNav({
   // Scroll behavior:
   // - Downward scroll: hide all headers
   // - Upward scroll: main header appears first
-  // - Top of page (scroll <= 60px): both main and secondary header appear
+  // - Top of page (scroll <= 25px): both main and secondary header appear
   const [isMainHeaderVisible, setIsMainHeaderVisible] = useState(true);
   const [isSecondaryHeaderVisible, setIsSecondaryHeaderVisible] = useState(true);
   const lastScrollYRef = useRef(0);
@@ -113,22 +113,26 @@ export function TopNav({
     let ticking = false;
 
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+      const currentScrollY = window.scrollY || document.documentElement.scrollTop || 0;
 
       if (!ticking) {
         window.requestAnimationFrame(() => {
-          if (currentScrollY <= 40) {
-            // At the top of page: headers are visible
+          // 1. When at or near the very top of page (scrollY <= 25), BOTH headers show
+          if (currentScrollY <= 25) {
             setIsMainHeaderVisible(true);
             setIsSecondaryHeaderVisible(true);
           } else {
             const scrollDelta = currentScrollY - lastScrollYRef.current;
-            if (scrollDelta > 10) {
-              // Scrolling DOWN: hide header
+
+            // Use an intentional threshold to prevent microscopic mouse/touch jitter
+            if (scrollDelta > 15) {
+              // Scrolling DOWN: hide both headers
               setIsMainHeaderVisible(false);
-            } else if (scrollDelta < -8) {
-              // Scrolling UP: reveal header
+              setIsSecondaryHeaderVisible(false);
+            } else if (scrollDelta < -15) {
+              // Scrolling UP in middle: ONLY main blue header, secondary white nav stays strictly hidden
               setIsMainHeaderVisible(true);
+              setIsSecondaryHeaderVisible(false);
             }
           }
 
@@ -780,10 +784,11 @@ export function TopNav({
 
         {/* Secondary Subnav Bar (Appears when at the very top of page; hidden during middle scrolling) */}
         <div
-          className={`w-full overflow-hidden transition-all duration-300 ease-in-out ${isSecondaryHeaderVisible
+          className={`w-full overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out ${
+            isSecondaryHeaderVisible
               ? 'max-h-14 opacity-100'
               : 'max-h-0 opacity-0 pointer-events-none'
-            }`}
+          }`}
         >
           <div 
             style={{
