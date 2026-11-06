@@ -198,11 +198,56 @@ export function TopNav({
       }))
     ];
 
-    const query = searchQuery.toLowerCase();
-    const filtered = UNIVERSAL_ITEMS.filter((item) =>
-      item.name.toLowerCase().includes(query) ||
-      item.groupTitle.toLowerCase().includes(query)
-    );
+    const SYNONYM_MAP: Record<string, string[]> = {
+      pg: ['hostel', 'pg-hostels', 'coliving', 'room', 'stay', 'paying guest'],
+      hostel: ['pg', 'pg-hostels', 'coliving', 'hostel booking', 'stay', 'dorm'],
+      coliving: ['pg', 'hostel', 'pg-hostels', 'co-living', 'coworking stay'],
+      hotel: ['resort', 'stay', 'room', 'lodge', 'villa'],
+      cab: ['taxi', 'car', 'ride', 'auto'],
+      taxi: ['cab', 'car', 'ride'],
+      turf: ['football', 'cricket', 'ground', 'sports'],
+      football: ['turf', 'sports'],
+      cricket: ['ground', 'turf', 'sports'],
+      salon: ['spa', 'haircut', 'beauty', 'parlour'],
+      spa: ['salon', 'massage', 'wellness'],
+      gym: ['yoga', 'fitness', 'workout'],
+      darshan: ['temple', 'pooja', 'pilgrimage'],
+      temple: ['darshan', 'pooja'],
+      doctor: ['clinic', 'hospital', 'health'],
+    };
+
+    const query = searchQuery.toLowerCase().trim();
+    const queryTokens = query.split(/\s+/).filter(Boolean);
+
+    // Build extended matching keywords based on synonyms
+    const extendedTokens = new Set<string>(queryTokens);
+    queryTokens.forEach((token) => {
+      Object.entries(SYNONYM_MAP).forEach(([key, synonyms]) => {
+        if (key.includes(token) || token.includes(key)) {
+          synonyms.forEach((syn) => extendedTokens.add(syn));
+        }
+      });
+    });
+
+    const filtered = UNIVERSAL_ITEMS.filter((item) => {
+      const itemName = item.name.toLowerCase();
+      const itemGroup = item.groupTitle.toLowerCase();
+      const itemHref = (item.href || '').toLowerCase();
+
+      // Direct substring match
+      if (itemName.includes(query) || itemGroup.includes(query) || itemHref.includes(query)) {
+        return true;
+      }
+
+      // Check against extended synonym tokens
+      for (const token of extendedTokens) {
+        if (itemName.includes(token) || itemGroup.includes(token) || itemHref.includes(token)) {
+          return true;
+        }
+      }
+
+      return false;
+    });
 
     // Remove exact duplicates by name
     const uniqueFiltered = filtered.filter((item, index, self) =>
@@ -366,7 +411,7 @@ export function TopNav({
               href="/"
               className="flex items-center hover:scale-102 active:scale-98 transition-all duration-300 shrink-0"
             >
-              <img src="/logo.png?v=original_restored" alt="BokSpot" className="h-10 md:h-12 object-contain" />
+              <img src="/logo.png?v=ticket_logo_2026" alt="BokSpot" className="h-10 md:h-12 object-contain" />
             </Link>
 
             <div className="relative hidden lg:inline-block">
@@ -395,11 +440,27 @@ export function TopNav({
           <div className="hidden lg:flex flex-none justify-center">
             <nav className="custom-nav-capsule shadow-lg relative flex items-center p-1">
               {(() => {
-                const isHomeActive = pathname === '/' || pathname === '/home' || pathname.startsWith('/home/');
-                const isCategoriesActive = pathname === '/categories' || pathname.startsWith('/service') || pathname.startsWith('/venue');
+                const isHomePath = pathname === '/' || pathname === '/home' || pathname.startsWith('/home/');
+                const isExplicitCategoriesPath = pathname === '/categories' || pathname.startsWith('/service') || pathname.startsWith('/venue');
                 const isBookingsActive = pathname === '/bookings' || pathname === '/booking' || pathname.startsWith('/bookings/') || pathname.startsWith('/split') || pathname === '/tracks';
 
-                const currentActiveId = isHomeActive ? 'home' : isCategoriesActive ? 'categories' : isBookingsActive ? 'bookings' : 'home';
+                // Check stored navigation origin for deep discovery routes (e.g. /stay-accommodation/hotels)
+                let originNav: string | null = null;
+                if (typeof window !== 'undefined') {
+                  originNav = sessionStorage.getItem('bokspot_nav_origin');
+                }
+
+                let currentActiveId = 'home';
+                if (isBookingsActive) {
+                  currentActiveId = 'bookings';
+                } else if (isExplicitCategoriesPath) {
+                  currentActiveId = 'categories';
+                } else if (isHomePath) {
+                  currentActiveId = 'home';
+                } else {
+                  // Intermediate dynamic paths like /[bookingType]/[category] or /[bookingType]/[category]/[merchantId]
+                  currentActiveId = originNav === 'categories' ? 'categories' : 'home';
+                }
 
                 const navItems = [
                   { label: 'Home', href: '/', id: 'home' },

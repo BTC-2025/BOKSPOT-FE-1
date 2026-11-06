@@ -7,7 +7,7 @@ export interface SearchableService {
 
 export const GROUP_EMOJIS: Record<string, string> = {
   'Travel': '✈️',
-  'Stay & Accomodation': '🏨',
+  'Stay & Accommodation': '🏨',
   'Entertainment': '🎬',
   'Sports': '⚽',
   'Lifestyle Services': '💇',
@@ -45,7 +45,7 @@ export const SERVICE_GROUPS = [
     ]
   },
   {
-    title: 'Stay & Accomodation',
+    title: 'Stay & Accommodation',
     description: 'Hotels, resorts, villas, hostels, homestays, and camping options',
     icon: 'hotel',
     subcategories: [
@@ -55,6 +55,7 @@ export const SERVICE_GROUPS = [
           { name: 'Hotel Booking', emoji: '🏨' },
           { name: 'Resort Booking', emoji: '🏖️' },
           { name: 'Homestay / Villa', emoji: '🏡' },
+          { name: 'PG & Co-Living Stays', emoji: '🏢' },
           { name: 'Hostel Booking', emoji: '🛌' },
           { name: 'Camping Booking', emoji: '🏕️' }
         ]
@@ -266,10 +267,11 @@ export function getHrefForCategoryItem(groupTitle: string, item: string): string
   else if (itemLower.includes('self-drive') || itemLower.includes('car rental')) slug = 'car-rental';
   
   // Stay & Accommodation
+  else if (itemLower.includes('pg') || itemLower.includes('coliving') || itemLower.includes('co-living')) slug = 'pg-hostels';
   else if (itemLower.includes('hotel') && !itemLower.includes('hostel')) slug = 'hotels';
   else if (itemLower.includes('resort')) slug = 'resorts';
   else if (itemLower.includes('villa') || itemLower.includes('homestay')) slug = 'villas';
-  else if (itemLower.includes('hostel')) slug = 'hostels';
+  else if (itemLower.includes('hostel')) slug = 'pg-hostels';
   else if (itemLower.includes('camping')) slug = 'camping';
   
   // Entertainment & Events

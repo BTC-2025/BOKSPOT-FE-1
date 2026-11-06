@@ -41,7 +41,7 @@ export default function VenueProfilePage() {
   const { setSelectedService, setSelectedSlot } = useBookingFlowStore();
   const searchParams = useSearchParams();
   const isHotel = category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'pg-hostels' || category === 'camping' || bookingType === 'stay-accommodation' || bookingType === 'home';
-  const isPgStay = category === 'pg-hostels' || category === 'hostels' || category === 'hotels' || (bookingType === 'stay-accommodation' && (rawCategory?.includes('pg') || rawCategory?.includes('hostel') || rawCategory?.includes('hotel')));
+  const isPgStay = category === 'pg-hostels' || category === 'hostels' || (bookingType === 'stay-accommodation' && (rawCategory?.includes('pg') || rawCategory?.includes('hostel')));
   const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
   const [visitDate, setVisitDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [visitTimeSlot, setVisitTimeSlot] = useState('11:00 AM - 12:00 PM');
@@ -401,12 +401,14 @@ export default function VenueProfilePage() {
         const uStore = localStorage.getItem(`hotel_mystery_optin_${uName}`);
         if (uStore !== null) return uStore === 'true';
       }
+      const h101Store = localStorage.getItem('hotel_mystery_optin_H101');
+      if (h101Store !== null) return h101Store === 'true';
       const defaultStore = localStorage.getItem('hotel_mystery_optin_default');
       if (defaultStore !== null) return defaultStore === 'true';
     }
     if (merchantData?.isMysteryModeOptIn !== undefined) return Boolean(merchantData.isMysteryModeOptIn);
     if (merchantData?.metadata?.isMysteryModeOptIn !== undefined) return Boolean(merchantData.metadata.isMysteryModeOptIn);
-    return false;
+    return true;
   };
 
   const isMysteryOptedIn = checkMysteryOptIn();
@@ -494,6 +496,29 @@ export default function VenueProfilePage() {
   const pgGenderType = livePgConfig?.pgGenderType || finalMerchantObj?.metadata?.pgGenderType || 'coliving';
   const pgFoodIncluded = livePgConfig?.pgFoodIncluded !== undefined ? livePgConfig.pgFoodIncluded : (finalMerchantObj?.metadata?.pgFoodIncluded !== false);
   const pgGateCurfew = livePgConfig?.pgGateCurfew || finalMerchantObj?.metadata?.pgGateCurfew || '24/7 Biometric Entry (No Curfew)';
+
+  // Dedicated Women's PG safety and living comfort values
+  const hasLadyWarden = livePgConfig?.hasLadyWarden !== undefined ? livePgConfig.hasLadyWarden : (finalMerchantObj?.metadata?.hasLadyWarden !== false);
+  const zeroMaleFloorAccess = livePgConfig?.zeroMaleFloorAccess !== undefined ? livePgConfig.zeroMaleFloorAccess : (finalMerchantObj?.metadata?.zeroMaleFloorAccess !== false);
+  const hasReceptionVisitorLobby = livePgConfig?.hasReceptionVisitorLobby !== undefined ? livePgConfig.hasReceptionVisitorLobby : (finalMerchantObj?.metadata?.hasReceptionVisitorLobby !== false);
+  const hasParentsDaytimeLounge = livePgConfig?.hasParentsDaytimeLounge !== undefined ? livePgConfig.hasParentsDaytimeLounge : (finalMerchantObj?.metadata?.hasParentsDaytimeLounge !== false);
+  const hasPeriodEmergencyKit = livePgConfig?.hasPeriodEmergencyKit !== undefined ? livePgConfig.hasPeriodEmergencyKit : (finalMerchantObj?.metadata?.hasPeriodEmergencyKit !== false);
+  const hasPrivateDryingZone = livePgConfig?.hasPrivateDryingZone !== undefined ? livePgConfig.hasPrivateDryingZone : (finalMerchantObj?.metadata?.hasPrivateDryingZone !== false);
+  const hasVanityMirrorSocket = livePgConfig?.hasVanityMirrorSocket !== undefined ? livePgConfig.hasVanityMirrorSocket : (finalMerchantObj?.metadata?.hasVanityMirrorSocket !== false);
+  const hasPackedLunchBox = livePgConfig?.hasPackedLunchBox !== undefined ? livePgConfig.hasPackedLunchBox : Boolean(finalMerchantObj?.metadata?.hasPackedLunchBox);
+  const hasContactlessParcelHub = livePgConfig?.hasContactlessParcelHub !== undefined ? livePgConfig.hasContactlessParcelHub : (finalMerchantObj?.metadata?.hasContactlessParcelHub !== false);
+  const parentMotherStayAllowed = livePgConfig?.parentMotherStayAllowed !== undefined ? livePgConfig.parentMotherStayAllowed : (finalMerchantObj?.metadata?.parentMotherStayAllowed !== false);
+
+  // Dedicated Co-Living lifestyle & remote work amenities values
+  const hasCoworkingLounge = livePgConfig?.hasCoworkingLounge !== undefined ? livePgConfig.hasCoworkingLounge : (finalMerchantObj?.metadata?.hasCoworkingLounge !== false);
+  const hasHighSpeedDualWifi = livePgConfig?.hasHighSpeedDualWifi !== undefined ? livePgConfig.hasHighSpeedDualWifi : (finalMerchantObj?.metadata?.hasHighSpeedDualWifi !== false);
+  const hasFullPowerBackup = livePgConfig?.hasFullPowerBackup !== undefined ? livePgConfig.hasFullPowerBackup : (finalMerchantObj?.metadata?.hasFullPowerBackup !== false);
+  const hasGamingLounge = livePgConfig?.hasGamingLounge !== undefined ? livePgConfig.hasGamingLounge : (finalMerchantObj?.metadata?.hasGamingLounge !== false);
+  const hasRooftopCafe = livePgConfig?.hasRooftopCafe !== undefined ? livePgConfig.hasRooftopCafe : (finalMerchantObj?.metadata?.hasRooftopCafe !== false);
+  const hasModularKitchen = livePgConfig?.hasModularKitchen !== undefined ? livePgConfig.hasModularKitchen : (finalMerchantObj?.metadata?.hasModularKitchen !== false);
+  const hasFitnessGym = livePgConfig?.hasFitnessGym !== undefined ? livePgConfig.hasFitnessGym : (finalMerchantObj?.metadata?.hasFitnessGym !== false);
+  const hasCommercialDryerLaundry = livePgConfig?.hasCommercialDryerLaundry !== undefined ? livePgConfig.hasCommercialDryerLaundry : (finalMerchantObj?.metadata?.hasCommercialDryerLaundry !== false);
+  const hasEvChargingPoint = livePgConfig?.hasEvChargingPoint !== undefined ? livePgConfig.hasEvChargingPoint : (finalMerchantObj?.metadata?.hasEvChargingPoint !== false);
 
   // Extract and clean real images from Venue Gallery (1st priority) + room listings photos
   const extractedImages: string[] = [];
@@ -1298,6 +1323,26 @@ export default function VenueProfilePage() {
                           <span>🍳</span> Self-Cooking
                         </span>
                       )}
+                      {pgGenderType === 'ladies' && hasLadyWarden && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-pink-500/10 border border-pink-500/25 text-pink-700 dark:text-pink-300 text-[11px] font-bold">
+                          <span>👩‍💼</span> 24/7 Lady Warden
+                        </span>
+                      )}
+                      {pgGenderType === 'ladies' && hasPackedLunchBox && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold">
+                          <span>🍱</span> Lunch Box Allowed
+                        </span>
+                      )}
+                      {(pgGenderType === 'coliving' || pgGenderType === 'unisex') && hasCoworkingLounge && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/25 text-indigo-700 dark:text-indigo-300 text-[11px] font-bold">
+                          <span>💻</span> Coworking Lounge
+                        </span>
+                      )}
+                      {(pgGenderType === 'coliving' || pgGenderType === 'unisex') && hasFullPowerBackup && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400 text-[11px] font-bold">
+                          <span>⚡</span> 100% Power Backup
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1331,6 +1376,110 @@ export default function VenueProfilePage() {
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-3">
                 {aboutText || `${venueName} features luxury air-conditioned accommodations, outdoor swimming pools, multi-cuisine dining, and 24/7 dedicated guest assistance along the scenic East Coast corridor.`}
               </p>
+
+              {/* Dedicated High-Trust Card for Women's / Ladies PG Stays */}
+              {isPgStay && pgGenderType === 'ladies' && (
+                <div className="mt-3.5 p-3.5 rounded-2xl bg-gradient-to-br from-[#ff6325]/10 via-[#033266]/5 to-transparent border border-[#ff6325]/25 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-[#ff6325] dark:text-[#ff6325] flex items-center gap-1.5">
+                      <span>🌸</span> Verified Women's Safety & Living Comfort
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#033266] text-white">
+                      100% Safe Stays
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Lady Warden:</strong> {hasLadyWarden ? '24/7 Resident' : 'Available'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Floor Access:</strong> {zeroMaleFloorAccess ? 'Strictly Zero Male Floor Entry' : 'Restricted'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Visitor Area:</strong> {hasReceptionVisitorLobby ? 'Reception Lobby Waiting Desk' : 'Front Gate'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Parents Lounge:</strong> {hasParentsDaytimeLounge ? 'Daytime Family Lounge (10 AM - 7 PM)' : 'Allowed'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Hygiene:</strong> {hasPeriodEmergencyKit ? 'Pad Dispenser & Period Kit' : 'Daily Housekeeping'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Privacy:</strong> {hasPrivateDryingZone ? 'Covered Cloth Drying Zone' : 'Secure Rooms'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Grooming:</strong> {hasVanityMirrorSocket ? 'Full Mirror & Styling Plug' : 'Wardrobes'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Deliveries:</strong> {hasContactlessParcelHub ? 'Gate Drop Desk (No Strangers Inside)' : 'Safe Access'}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Dedicated High-Trust Card for Co-Living & Remote Work Stays */}
+              {isPgStay && (pgGenderType === 'coliving' || pgGenderType === 'unisex') && (
+                <div className="mt-3.5 p-3.5 rounded-2xl bg-gradient-to-br from-indigo-500/10 via-[#033266]/5 to-[#ff6325]/10 border border-indigo-500/25 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-[#033266] dark:text-[#ff6325] flex items-center gap-1.5">
+                      <span>🏢</span> Verified Co-Living Lifestyle & Remote Work Perks
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#ff6325] text-white">
+                      WFH Ready
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Coworking:</strong> {hasCoworkingLounge ? 'Dedicated Lounge & Desks' : 'Work Desks Available'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>High-Speed Wi-Fi:</strong> {hasHighSpeedDualWifi ? 'Dual Line (300+ Mbps)' : 'High Speed Included'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Power Backup:</strong> {hasFullPowerBackup ? '100% Non-Stop Generator (AC/Wi-Fi)' : 'Inverter Backup'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Gaming Lounge:</strong> {hasGamingLounge ? 'PS5 / TT & Recreation' : 'Available'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Rooftop:</strong> {hasRooftopCafe ? 'Cafe Lounge & Open Deck' : 'Hangout Area'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Kitchen:</strong> {hasModularKitchen ? 'Self-Cooking Modular Pantry' : 'Dining Area'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Fitness:</strong> {hasFitnessGym ? 'In-house Gym & Yoga Deck' : 'Wellness Zone'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Commercial Laundry:</strong> {hasCommercialDryerLaundry ? 'Auto Machines & Heat Dryer' : 'Washing Area'}</span>
+                    </div>
+                    {hasEvChargingPoint && (
+                      <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200 col-span-2">
+                        <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                        <span><strong>EV Charging:</strong> Dedicated 16A points for electric 2-wheelers</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
 

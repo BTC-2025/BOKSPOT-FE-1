@@ -24,49 +24,71 @@ export function BottomNav() {
       }}
     >
       <div className="flex justify-around items-center h-[66px] max-w-md mx-auto px-2">
-        {NAV_ITEMS.map((item) => {
-          const isActive = item.href === '/'
-            ? (pathname === '/' || pathname === '/home' || pathname.startsWith('/home/'))
-            : item.href === '/booking'
-              ? (pathname === '/booking' || pathname === '/bookings' || pathname === '/tracks' || pathname.startsWith('/booking/') || pathname.startsWith('/split'))
-              : pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`relative flex flex-col items-center justify-center gap-0.5
-                         py-2 px-5 rounded-2xl transition-all duration-300
-                         ${isActive
-                           ? 'text-[color:var(--color-primary)]'
-                           : 'text-[color:var(--color-outline)] hover:text-[color:var(--color-on-surface-variant)]'
-                         }`}
-            >
-              {/* Active: neon gold glow pill at top */}
-              {isActive && (
-                <span
-                  className="absolute -top-[1px] left-1/2 -translate-x-1/2 w-10 h-[3px] rounded-full"
-                  style={{
-                    background: 'linear-gradient(90deg, #FFE066, #FFD700, #FFA500)',
-                    boxShadow: '0 0 10px rgba(255,215,0,0.7), 0 0 24px rgba(255,215,0,0.3)',
-                  }}
-                />
-              )}
+        {(() => {
+          let originNav: string | null = null;
+          if (typeof window !== 'undefined') {
+            originNav = sessionStorage.getItem('bokspot_nav_origin');
+          }
+          const isHomePath = pathname === '/' || pathname === '/home' || pathname.startsWith('/home/');
+          const isExplicitCategories = pathname === '/categories' || pathname.startsWith('/service') || pathname.startsWith('/venue');
+          const isBookings = pathname === '/booking' || pathname === '/bookings' || pathname === '/tracks' || pathname.startsWith('/booking/') || pathname.startsWith('/split');
 
-              {/* Icon */}
-              <span
-                className={`material-symbols-outlined text-[24px] transition-all duration-300 ${isActive ? 'scale-110' : ''}`}
-                style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
+          let activeKey = 'home';
+          if (pathname.startsWith('/profile')) {
+            activeKey = 'profile';
+          } else if (isBookings) {
+            activeKey = 'bookings';
+          } else if (isExplicitCategories) {
+            activeKey = 'categories';
+          } else if (isHomePath) {
+            activeKey = 'home';
+          } else {
+            activeKey = originNav === 'categories' ? 'categories' : 'home';
+          }
+
+          return NAV_ITEMS.map((item) => {
+            const isActive = (item.href === '/' && activeKey === 'home')
+              || (item.href === '/categories' && activeKey === 'categories')
+              || (item.href === '/bookings' && activeKey === 'bookings')
+              || (item.href === '/profile' && activeKey === 'profile');
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`relative flex flex-col items-center justify-center gap-0.5
+                           py-2 px-5 rounded-2xl transition-all duration-300
+                           ${isActive
+                             ? 'text-[color:var(--color-primary)]'
+                             : 'text-[color:var(--color-outline)] hover:text-[color:var(--color-on-surface-variant)]'
+                           }`}
               >
-                {item.icon}
-              </span>
+                {/* Active: neon gold glow pill at top */}
+                {isActive && (
+                  <span
+                    className="absolute -top-[1px] left-1/2 -translate-x-1/2 w-10 h-[3px] rounded-full"
+                    style={{
+                      background: 'linear-gradient(90deg, #FFE066, #FFD700, #FFA500)',
+                      boxShadow: '0 0 10px rgba(255,215,0,0.7), 0 0 24px rgba(255,215,0,0.3)',
+                    }}
+                  />
+                )}
 
-              {/* Label */}
-              <span className="text-[10px] font-semibold tracking-wide">
-                {item.label}
-              </span>
-            </Link>
-          );
-        })}
+                {/* Icon */}
+                <span
+                  className={`material-symbols-outlined text-[24px] transition-all duration-300 ${isActive ? 'scale-110' : ''}`}
+                  style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                >
+                  {item.icon}
+                </span>
+
+                {/* Label */}
+                <span className="text-[10px] font-semibold tracking-wide">
+                  {item.label}
+                </span>
+              </Link>
+            );
+          });
+        })()}
       </div>
     </nav>
   );

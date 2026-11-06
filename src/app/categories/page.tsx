@@ -401,7 +401,7 @@ export default function CategoriesPage() {
   const BENTO_CATEGORIES = [
     { title: 'All Services', tag: 'ALL', icon: 'apps', emoji: '✨', desc: 'Browse entire directory', border: 'hover:border-[#ff6325]/50', badge: '54 TOTAL' },
     { title: 'Travel & Cabs', tag: 'Travel', icon: 'directions_car', emoji: '🚕', desc: 'Rides, flights & buses', border: 'hover:border-sky-500/50', badge: '9 SERVICES' },
-    { title: 'Stay & Hotels', tag: 'Stay & Accomodation', icon: 'hotel', emoji: '🏨', desc: 'Resorts, villas & homestays', border: 'hover:border-amber-500/50', badge: '5 TYPES' },
+    { title: 'Stay & Accommodation', tag: 'Stay & Accommodation', icon: 'hotel', emoji: '🏨', desc: 'Resorts, villas & homestays', border: 'hover:border-amber-500/50', badge: '5 TYPES' },
     { title: 'Sports & Turfs', tag: 'Sports', icon: 'sports_soccer', emoji: '⚽', desc: 'Football, cricket & courts', border: 'hover:border-emerald-500/50', badge: '7 ARENAS' },
     { title: 'Entertainment', tag: 'Entertainment', icon: 'movie', emoji: '🎬', desc: 'Cinema, concerts & events', border: 'hover:border-fuchsia-500/50', badge: '7 SHOWS' },
     { title: 'Lifestyle & Spa', tag: 'Lifestyle Services', icon: 'spa', emoji: '💇', desc: 'Dining, wellness & beauty', border: 'hover:border-rose-500/50', badge: '9 BOOKINGS' },

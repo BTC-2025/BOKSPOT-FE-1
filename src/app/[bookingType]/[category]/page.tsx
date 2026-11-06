@@ -1541,6 +1541,10 @@ export default function ProviderDiscoveryPage() {
   const [pgGenderFilter, setPgGenderFilter] = useState<'all' | 'gents' | 'ladies' | 'coliving'>('all');
   const [pgFoodFilter, setPgFoodFilter] = useState<'all' | 'with-food' | 'self-cooking'>('all');
   const [pgSharingFilter, setPgSharingFilter] = useState<'all' | 'single' | '2-sharing' | '3-sharing' | '4-sharing'>('all');
+  const [ladiesWardenOnly, setLadiesWardenOnly] = useState(false);
+  const [ladiesLunchBoxOnly, setLadiesLunchBoxOnly] = useState(false);
+  const [colivingCoworkingOnly, setColivingCoworkingOnly] = useState(false);
+  const [colivingPowerBackupOnly, setColivingPowerBackupOnly] = useState(false);
   const [hotelDestination, setHotelDestination] = useState('');
   const [checkInDate, setCheckInDate] = useState(() => {
     const d = new Date();
@@ -2025,6 +2029,20 @@ export default function ProviderDiscoveryPage() {
       if (pgSharingFilter !== 'all') {
         const sSharing = (s.metadata?.sharing || s.name || '').toLowerCase();
         if (!sSharing.includes(pgSharingFilter.toLowerCase())) return false;
+      }
+
+      if (pgGenderFilter === 'ladies' || sGender.includes('ladies')) {
+        const mObj = s.merchantObj || s.merchant || {};
+        const meta = mObj.metadata || s.metadata || {};
+        if (ladiesWardenOnly && meta.hasLadyWarden === false) return false;
+        if (ladiesLunchBoxOnly && meta.hasPackedLunchBox === false) return false;
+      }
+
+      if (pgGenderFilter === 'coliving' || sGender.includes('coliving') || sGender.includes('unisex')) {
+        const mObj = s.merchantObj || s.merchant || {};
+        const meta = mObj.metadata || s.metadata || {};
+        if (colivingCoworkingOnly && meta.hasCoworkingLounge === false) return false;
+        if (colivingPowerBackupOnly && meta.hasFullPowerBackup === false) return false;
       }
     }
 
@@ -2840,6 +2858,64 @@ export default function ProviderDiscoveryPage() {
                       </select>
                       <ChevronDown size={12} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${pgSharingFilter !== 'all' ? 'text-white' : 'text-slate-400'}`} />
                     </div>
+
+                    {/* Dedicated Ladies PG Contextual Quick Filters */}
+                    {pgGenderFilter === 'ladies' && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setLadiesWardenOnly(!ladiesWardenOnly)}
+                          className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
+                            ladiesWardenOnly
+                              ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                          }`}
+                        >
+                          <span>👩‍💼 Lady Warden</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setLadiesLunchBoxOnly(!ladiesLunchBoxOnly)}
+                          className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
+                            ladiesLunchBoxOnly
+                              ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                          }`}
+                        >
+                          <span>🍱 Packed Lunch Box</span>
+                        </button>
+                      </>
+                    )}
+
+                    {/* Dedicated Co-Living Contextual Quick Filters */}
+                    {pgGenderFilter === 'coliving' && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setColivingCoworkingOnly(!colivingCoworkingOnly)}
+                          className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
+                            colivingCoworkingOnly
+                              ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                          }`}
+                        >
+                          <span>💻 Coworking Lounge</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setColivingPowerBackupOnly(!colivingPowerBackupOnly)}
+                          className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
+                            colivingPowerBackupOnly
+                              ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                          }`}
+                        >
+                          <span>⚡ 100% Power Backup</span>
+                        </button>
+                      </>
+                    )}
                   </>
                 )}
 
@@ -3350,6 +3426,26 @@ export default function ProviderDiscoveryPage() {
                                       <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 hidden sm:inline-flex items-center gap-1">
                                         <span>🔒</span> {pgCurfewVal}
                                       </span>
+                                      {pgGenderVal === 'ladies' && (livePgConfig?.hasLadyWarden !== false && m?.metadata?.hasLadyWarden !== false) && (
+                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#ff6325]/10 text-[#ff6325] border border-[#ff6325]/30 flex items-center gap-1">
+                                          <span>👩‍💼</span> Lady Warden
+                                        </span>
+                                      )}
+                                      {pgGenderVal === 'ladies' && (livePgConfig?.hasPackedLunchBox || m?.metadata?.hasPackedLunchBox) && (
+                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#ff6325]/10 text-[#ff6325] border border-[#ff6325]/30 hidden sm:inline-flex items-center gap-1">
+                                          <span>🍱</span> Lunch Box
+                                        </span>
+                                      )}
+                                      {(pgGenderVal === 'coliving' || pgGenderVal === 'unisex') && (livePgConfig?.hasCoworkingLounge !== false && m?.metadata?.hasCoworkingLounge !== false) && (
+                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-400/30 flex items-center gap-1">
+                                          <span>💻</span> Coworking
+                                        </span>
+                                      )}
+                                      {(pgGenderVal === 'coliving' || pgGenderVal === 'unisex') && (livePgConfig?.hasFullPowerBackup !== false && m?.metadata?.hasFullPowerBackup !== false) && (
+                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-400/30 hidden sm:inline-flex items-center gap-1">
+                                          <span>⚡</span> 100% Backup
+                                        </span>
+                                      )}
                                     </div>
                                   )}
                                 </div>

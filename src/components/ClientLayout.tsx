@@ -53,6 +53,14 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   // Clean native browser history without synthetic popstate interventions
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const prev = lastPathRef.current;
+      if (prev === '/categories' && pathname !== '/categories') {
+        sessionStorage.setItem('bokspot_nav_origin', 'categories');
+      } else if ((prev === '/' || prev === '/home' || prev.startsWith('/home/')) && pathname !== '/' && pathname !== '/home') {
+        sessionStorage.setItem('bokspot_nav_origin', 'home');
+      }
+    }
     lastPathRef.current = pathname;
   }, [pathname]);
 
