@@ -1,3 +1,187 @@
+export const SERVICE_SYNONYMS: Record<string, string[]> = {
+  // Stay & Accommodation
+  'Hostel Booking': [
+    'hostel', 'hostels', 'pg', 'paying guest', 'coliving', 'co-living', 'bachelor stay',
+    'ladies pg', 'gents pg', 'unisex pg', 'shared room', 'dorm', 'dormitory', 'student living',
+    'working women hostel', 'mens hostel', 'pg hostel', 'sharing stay'
+  ],
+  'Hotel Booking': [
+    'hotel', 'hotels', 'room', 'rooms', 'lodge', 'lodging', 'suite', 'motel', 'inn', 'stay', 'ac room'
+  ],
+  'Resort Booking': [
+    'resort', 'resorts', 'retreat', 'wellness resort', 'beach resort', 'hill resort', 'nature stay'
+  ],
+  'Homestay / Villa': [
+    'villa', 'villas', 'homestay', 'homestays', 'cottage', 'bungalow', 'farmhouse', 'guest house', 'private villa'
+  ],
+  'Camping Booking': [
+    'camp', 'camping', 'glamping', 'tent', 'tents', 'bonfire', 'night camp'
+  ],
+
+  // Travel & Transport
+  'Cab / Taxi Booking': [
+    'cab', 'cabs', 'taxi', 'taxis', 'uber', 'ola', 'auto', 'car ride', 'driver', 'airport cab', 'outstation cab'
+  ],
+  'Bus Booking': [
+    'bus', 'buses', 'volvo', 'sleeper bus', 'travels', 'ksrtc', 'setc', 'bus ticket'
+  ],
+  'Train Booking': [
+    'train', 'trains', 'railway', 'irctc', 'rail', 'express', 'metro'
+  ],
+  'Flight Booking': [
+    'flight', 'flights', 'plane', 'airplane', 'airline', 'air ticket', 'indigo', 'air india', 'airport'
+  ],
+  'Bike Rental': [
+    'bike', 'scooter', 'activa', 'royal enfield', 'two wheeler', 'motorcycle rental', 'bike rent'
+  ],
+  'Self-Drive Car Rental': [
+    'car rental', 'self drive', 'zoomcar', 'rent a car', 'rental car', 'suv rental', 'sedan rental'
+  ],
+  'Ferry / Boat Booking': [
+    'ferry', 'boat', 'boating', 'cruise', 'yacht', 'water transport', 'houseboat'
+  ],
+  'Shuttle / Van Booking': [
+    'shuttle', 'van', 'tempo traveller', 'minibus', 'tourist van'
+  ],
+  'Helicopter Booking (Premium)': [
+    'helicopter', 'chopper', 'heli', 'joyride', 'air charter'
+  ],
+
+  // Sports & Turf
+  'Football Turf': [
+    'football', 'turf', 'futsal', 'soccer', 'ground', '5 a side', '7 a side', 'turf slot'
+  ],
+  'Cricket Ground': [
+    'cricket', 'box cricket', 'nets', 'pitch', 'ground', 'cricket turf'
+  ],
+  'Badminton Court': [
+    'badminton', 'shuttle', 'wooden court', 'synthetic court', 'racquet'
+  ],
+  'Tennis Court': [
+    'tennis', 'lawn tennis', 'clay court'
+  ],
+  'Basketball Court': [
+    'basketball', 'hoop', 'court'
+  ],
+  'Swimming Pool Slots': [
+    'swimming', 'pool', 'swim', 'dive', 'lap pool'
+  ],
+  'Indoor Play Arena': [
+    'arena', 'indoor games', 'snooker', 'billiards', 'table tennis', 'board games'
+  ],
+
+  // Entertainment
+  'Cinema / Movie Tickets': [
+    'movie', 'movies', 'cinema', 'theatre', 'film', 'pvr', 'inox', 'ticket', 'multiplex'
+  ],
+  'Theatre Shows': [
+    'theatre', 'drama', 'play', 'standup', 'comedy'
+  ],
+  'Concert Tickets': [
+    'concert', 'music', 'live show', 'dj', 'gig', 'live band'
+  ],
+  'Events & Festivals': [
+    'event', 'events', 'festival', 'fest', 'expo', 'party', 'carnival'
+  ],
+  'Exhibition Entry': [
+    'exhibition', 'art gallery', 'trade fair', 'museum'
+  ],
+  'Workshops / Classes': [
+    'workshop', 'class', 'masterclass', 'cooking class', 'pottery', 'dance class'
+  ],
+  'Gaming Arena Booking': [
+    'gaming', 'ps5', 'pc gaming', 'vr', 'arcade', 'laser tag', 'esports'
+  ],
+
+  // Lifestyle & Services
+  'Restaurant Table Reservation': [
+    'dining', 'restaurant', 'food', 'table', 'dinner', 'lunch', 'buffet', 'cafe', 'bistro'
+  ],
+  'Salon / Spa Appointment': [
+    'salon', 'spa', 'haircut', 'massage', 'facial', 'beauty parlour', 'grooming', 'barber'
+  ],
+  'Gym / Yoga Slot Booking': [
+    'gym', 'yoga', 'workout', 'fitness', 'crossfit', 'zumba', 'pilates', 'trainer'
+  ],
+  'Doctor Appointment': [
+    'doctor', 'clinic', 'hospital', 'dentist', 'physician', 'checkup', 'consultation'
+  ],
+  'Electrician Booking': [
+    'electrician', 'wiring', 'fuse', 'fan repair', 'ac repair', 'light fixing'
+  ],
+  'Plumber Booking': [
+    'plumber', 'pipe', 'leak', 'tap repair', 'drainage', 'sanitary'
+  ],
+  'Cleaning Service': [
+    'cleaning', 'deep clean', 'housekeeping', 'maid', 'sofa cleaning', 'bathroom cleaning'
+  ],
+  'Technician Service': [
+    'technician', 'appliance', 'tv repair', 'fridge repair', 'washing machine repair'
+  ],
+  'Studio Booking': [
+    'studio', 'photography', 'photo shoot', 'music recording', 'green screen'
+  ],
+
+  // Business & Professional
+  'Co-working Space': [
+    'coworking', 'co-working', 'hot desk', 'work desk', 'shared office', 'office space', 'wework'
+  ],
+  'Meeting Room': [
+    'meeting', 'boardroom', 'conference room', 'discussion room'
+  ],
+  'Podcast Studio': [
+    'podcast', 'audio recording', 'mic', 'broadcasting'
+  ],
+  'Conference Hall': [
+    'conference', 'auditorium', 'seminar hall', 'convention center'
+  ],
+  'Training Sessions': [
+    'training', 'classroom', 'workshop hall', 'coaching'
+  ],
+
+  // Religious Services
+  'Temple Darshan Booking': [
+    'darshan', 'temple', 'mandir', 'kovil', 'special entry', 'vip darshan'
+  ],
+  'Pooja Slot Booking': [
+    'pooja', 'archana', 'homam', 'havan', 'priest', 'pandit'
+  ],
+  'Pilgrimage Packages': [
+    'pilgrimage', 'yatra', 'tirupati', 'varanasi', 'shirdi', 'temple tour'
+  ],
+
+  // Equipment Rentals
+  'Cycle Rental': [
+    'cycle', 'bicycle', 'pedal bike', 'mtb', 'gear cycle'
+  ],
+  'Sports Bike Rental': [
+    'superbike', 'sports bike', 'ktm', 'ninja', 'bullet', 'himalayan'
+  ],
+  'Camera Rental': [
+    'camera', 'dslr', 'lens', 'sony', 'canon', 'gopro', 'drone'
+  ],
+  'Sound System Rental': [
+    'sound system', 'speaker', 'mic', 'dj sound', 'amplifier', 'pa system'
+  ],
+  'Event Equipment Rental': [
+    'chairs', 'tables', 'tent rental', 'stage', 'lighting rental', 'projector'
+  ],
+
+  // Personal Services
+  'Pet Grooming Appointment': [
+    'pet', 'dog', 'cat', 'pet salon', 'pet spa', 'dog bath'
+  ],
+  'Babysitting Service': [
+    'babysitter', 'nanny', 'child care', 'daycare'
+  ],
+  'Elder Care Service': [
+    'elder care', 'senior care', 'patient care', 'home nurse'
+  ],
+  'Event Organizer Booking': [
+    'event organizer', 'wedding planner', 'birthday organizer', 'party planner'
+  ]
+};
+
 export interface SearchableService {
   name: string;
   emoji: string;
@@ -55,7 +239,6 @@ export const SERVICE_GROUPS = [
           { name: 'Hotel Booking', emoji: '🏨' },
           { name: 'Resort Booking', emoji: '🏖️' },
           { name: 'Homestay / Villa', emoji: '🏡' },
-          { name: 'PG & Co-Living Stays', emoji: '🏢' },
           { name: 'Hostel Booking', emoji: '🛌' },
           { name: 'Camping Booking', emoji: '🏕️' }
         ]
@@ -267,11 +450,10 @@ export function getHrefForCategoryItem(groupTitle: string, item: string): string
   else if (itemLower.includes('self-drive') || itemLower.includes('car rental')) slug = 'car-rental';
   
   // Stay & Accommodation
-  else if (itemLower.includes('pg') || itemLower.includes('coliving') || itemLower.includes('co-living')) slug = 'pg-hostels';
   else if (itemLower.includes('hotel') && !itemLower.includes('hostel')) slug = 'hotels';
   else if (itemLower.includes('resort')) slug = 'resorts';
   else if (itemLower.includes('villa') || itemLower.includes('homestay')) slug = 'villas';
-  else if (itemLower.includes('hostel')) slug = 'pg-hostels';
+  else if (itemLower.includes('hostel') || itemLower.includes('pg') || itemLower.includes('coliving')) slug = 'pg-hostels';
   else if (itemLower.includes('camping')) slug = 'camping';
   
   // Entertainment & Events

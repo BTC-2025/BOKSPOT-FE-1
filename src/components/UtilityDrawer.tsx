@@ -396,16 +396,17 @@ export function UtilityDrawer({
           }`}
         >
           {/* Slide-out Left Content Panel (320px) */}
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {activeTab && (
               <motion.div
-                key={activeTab}
+                key="utility-content-panel"
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: activeTab === 'beta' ? 340 : 320 }}
                 exit={{ opacity: 0, width: 0 }}
                 transition={{ duration: 0.18, ease: 'easeOut' }}
                 className="h-full bg-white dark:bg-[#0b0e14] border-l border-slate-200 dark:border-slate-850 flex flex-col overflow-hidden select-none shrink-0 overscroll-contain"
               >
+                <div key={activeTab} className="h-full w-full flex flex-col overflow-hidden animate-fade-in">
                 {/* 1. CALENDAR TAB POPUP */}
                 {activeTab === 'calendar' && (
                   <div className="h-full flex flex-col overflow-y-auto custom-scrollbar text-slate-800 dark:text-slate-200 font-sans bg-[#fbfcfd] dark:bg-[#0b0e14]">
@@ -1757,6 +1758,7 @@ export function UtilityDrawer({
                     </div>
                   </div>
                 )}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

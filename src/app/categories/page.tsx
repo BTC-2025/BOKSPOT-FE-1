@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { SERVICE_GROUPS, GROUP_EMOJIS, getHrefForCategoryItem } from '../../lib/searchData';
+import { SERVICE_GROUPS, GROUP_EMOJIS, getHrefForCategoryItem, SERVICE_SYNONYMS } from '../../lib/searchData';
 
 function getGroupHref(title: string): string {
   const cleanTitle = title.toLowerCase();
@@ -369,14 +369,27 @@ export default function CategoriesPage() {
     : SERVICE_GROUPS.filter(g => g.title === activeGroup)
   ).map(group => {
     if (!searchFilter.trim()) return group;
-    const query = searchFilter.toLowerCase();
+    const query = searchFilter.toLowerCase().trim();
     const filteredSubs = group.subcategories.map(sub => ({
       ...sub,
-      items: sub.items.filter(item =>
-        item.name.toLowerCase().includes(query) ||
-        group.title.toLowerCase().includes(query) ||
-        sub.name.toLowerCase().includes(query)
-      )
+      items: sub.items.filter(item => {
+        const itemName = item.name.toLowerCase();
+        const groupTitle = group.title.toLowerCase();
+        const subName = sub.name.toLowerCase();
+
+        // 1. Direct match on item name, category or group
+        if (itemName.includes(query) || groupTitle.includes(query) || subName.includes(query)) {
+          return true;
+        }
+
+        // 2. Intelligent Synonym & Alternative Keywords Match
+        const synonyms = SERVICE_SYNONYMS[item.name] || [];
+        if (synonyms.some(syn => syn.includes(query) || query.includes(syn))) {
+          return true;
+        }
+
+        return false;
+      })
     })).filter(sub => sub.items.length > 0);
 
     return {

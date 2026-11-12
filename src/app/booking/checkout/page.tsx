@@ -338,6 +338,12 @@ export default function CheckoutPage() {
                     }`}>
                       {selectedService.metadata.pgBooking.paymentType === 'FULL_MONTH_RENT' ? '💳 1st Month Full Rent' : `🔒 Token Advance: ₹${selectedService.metadata.pgBooking.tokenPaid || 999}`}
                     </span>
+                    {selectedService.metadata.pgBooking.durationMonths && (
+                      <span className="text-xs font-bold px-3 py-1 bg-orange-50 text-[#ff6325] rounded-lg border border-orange-200/80 flex items-center gap-1.5">
+                        ⏳ {selectedService.metadata.pgBooking.durationMonths} Months Stay
+                        {selectedService.metadata.pgBooking.tenureDiscountPct > 0 && ` (${selectedService.metadata.pgBooking.tenureDiscountPct}% OFF applied)`}
+                      </span>
+                    )}
                   </div>
 
                   {/* Add-ons List */}

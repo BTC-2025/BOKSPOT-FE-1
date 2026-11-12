@@ -43,6 +43,8 @@ export default function VenueProfilePage() {
   const isHotel = category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'pg-hostels' || category === 'camping' || bookingType === 'stay-accommodation' || bookingType === 'home';
   const isPgStay = category === 'pg-hostels' || category === 'hostels' || (bookingType === 'stay-accommodation' && (rawCategory?.includes('pg') || rawCategory?.includes('hostel')));
   const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
+  const [visitMode, setVisitMode] = useState<'IN_PERSON' | 'LIVE_VIDEO'>('IN_PERSON');
+  const [videoPlatform, setVideoPlatform] = useState<'WHATSAPP' | 'GOOGLE_MEET'>('WHATSAPP');
   const [visitDate, setVisitDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [visitTimeSlot, setVisitTimeSlot] = useState('11:00 AM - 12:00 PM');
   const [visitName, setVisitName] = useState('');
@@ -81,6 +83,15 @@ export default function VenueProfilePage() {
   // Custom Calendar Popover states for Check-in / Check-out
   const [activeDatePicker, setActiveDatePicker] = useState<'checkIn' | 'checkOut' | null>(null);
   const [pickerMonthDate, setPickerMonthDate] = useState(() => new Date());
+
+  // Dedicated Hostel & PG Move-in & Stay States
+  const [hostelMoveInDate, setHostelMoveInDate] = useState(() => searchParams?.get('moveIn') || todayStr);
+  const [hostelDurationMonths, setHostelDurationMonths] = useState<number>(Number(searchParams?.get('durationMonths')) || 3);
+  const [hostelGender, setHostelGender] = useState<'all' | 'gents' | 'ladies' | 'coliving'>((searchParams?.get('gender') as any) || 'all');
+  const [hostelSharing, setHostelSharing] = useState<'all' | 'single' | '2-sharing' | '3-sharing' | '4-sharing'>((searchParams?.get('sharing') as any) || 'all');
+  const [hostelFoodIncluded, setHostelFoodIncluded] = useState<boolean>(searchParams?.get('foodIncluded') !== 'false');
+  const [isMoveInCalOpen, setIsMoveInCalOpen] = useState(false);
+  const [moveInCalMonthDate, setMoveInCalMonthDate] = useState(() => new Date());
 
   // Compute stay duration in nights
   const nights = React.useMemo(() => {
@@ -141,7 +152,10 @@ export default function VenueProfilePage() {
   }, [activeRoomService, roomModalStep, isVisitModalOpen, isGalleryOpen, isModalOpen]);
 
   // ── Facility / Turf Interactive Slot Flow States ──
-  const [selectedDate, setSelectedDate] = useState(todayStr);
+  const queryParamDate = searchParams?.get('date');
+  const queryParamSlot = searchParams?.get('slot');
+
+  const [selectedDate, setSelectedDate] = useState(() => queryParamDate || todayStr);
   const [selectedHourSlot, setSelectedHourSlot] = useState<string | null>(null);
   const [selectedTurfService, setSelectedTurfService] = useState<any | null>(null);
   const [selectedTurfAddons, setSelectedTurfAddons] = useState<string[]>([]);
@@ -152,12 +166,20 @@ export default function VenueProfilePage() {
 
   // ── Archetype 3: TimeSlot (Doctor & Salon/Spa) Flow States ──
   const [selectedPractitioner, setSelectedPractitioner] = useState<string>('Dr. Rajesh Kumar (Senior Consultant)');
-  const [selectedApptSlot, setSelectedApptSlot] = useState<string | null>(null);
+  const [selectedApptSlot, setSelectedApptSlot] = useState<string | null>(() => {
+    if (queryParamSlot && queryParamSlot !== 'Any Time (All Slots)') {
+      if (queryParamSlot.includes('Morning')) return '10:00 AM';
+      if (queryParamSlot.includes('Afternoon')) return '11:30 AM';
+      if (queryParamSlot.includes('Evening')) return '05:00 PM';
+      if (queryParamSlot.includes('Night')) return '06:00 PM';
+    }
+    return null;
+  });
   const [patientNotes, setPatientNotes] = useState<string>('');
   const [tokenQueueNum, setTokenQueueNum] = useState<number>(14);
 
   // ── Archetype 4: AssetRental (Bikes, Cars, Equipment) Flow States ──
-  const [rentalStartDate, setRentalStartDate] = useState(todayStr);
+  const [rentalStartDate, setRentalStartDate] = useState(() => queryParamDate || todayStr);
   const [rentalEndDate, setRentalEndDate] = useState(tomorrowStr);
   const [rentalDays, setRentalDays] = useState<number>(2);
   const [uploadedDlName, setUploadedDlName] = useState<string>('');
@@ -170,8 +192,15 @@ export default function VenueProfilePage() {
 
   // ── Archetype 6: HomeCall (Electrician, Plumber, Cleaning, AC Repair) Flow States ──
   const [homeIssueCategory, setHomeIssueCategory] = useState<string>('Inspection & Diagnosis');
-  const [homeAddressLine, setHomeAddressLine] = useState<string>('');
-  const [preferredHomeWindow, setPreferredHomeWindow] = useState<string>('Morning (10:00 AM - 01:00 PM)');
+  const [homeAddressLine, setHomeAddressLine] = useState<string>(() => searchParams?.get('venue') || searchParams?.get('city') || '');
+  const [preferredHomeWindow, setPreferredHomeWindow] = useState<string>(() => {
+    if (queryParamSlot && queryParamSlot !== 'Any Time (All Slots)') {
+      if (queryParamSlot.includes('Morning')) return 'Morning (09:00 AM - 12:00 PM)';
+      if (queryParamSlot.includes('Afternoon')) return 'Afternoon (01:00 PM - 04:00 PM)';
+      if (queryParamSlot.includes('Evening') || queryParamSlot.includes('Night')) return 'Evening (04:30 PM - 07:30 PM)';
+    }
+    return 'Morning (10:00 AM - 01:00 PM)';
+  });
 
   const [isSaved, setIsSaved] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
@@ -674,49 +703,114 @@ export default function VenueProfilePage() {
          * SECTION C: STAY DETAILS SUMMARY BAR & EDIT SEARCH (TOP POSITION)
          * ============================================================ */}
         {isHotel && (
-          <div className="mb-6">
-            <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-sm flex flex-wrap items-center justify-between gap-4">
-              <div className="flex flex-wrap items-center gap-6 text-xs">
-                {/* Stay Dates */}
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
-                    <Calendar size={18} />
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
-                      Dates & Nights
-                    </span>
-                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
-                      {new Date(checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {new Date(checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </span>
-                    <span className="text-[10px] text-[#033266] dark:text-[#ff6325] font-bold ml-1.5 px-2 py-0.5 rounded-md bg-[#033266]/10 dark:bg-[#ff6325]/15">
-                      {nights} Night{nights > 1 ? 's' : ''}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="h-8 w-px bg-slate-200 dark:bg-white/10 hidden lg:block" />
-
-                {/* Occupancy */}
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
-                    <Users size={18} />
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
-                      Guests & Units
-                    </span>
-                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
-                      {adults + children} Guest{adults + children > 1 ? 's' : ''} ({adults} Adults{children > 0 ? `, ${children} Children` : ''}) • {rooms} Room{rooms > 1 ? 's' : ''}
-                    </span>
-                    {(pets || petCount > 0) && (
-                      <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold ml-1.5 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50">
-                        🐾 {petCount || 1} Pet
+          <div className="mb-6 sticky top-[98px] z-30 pt-3 pb-2 -mt-3 bg-[#f8fafc] dark:bg-[#090b10] transition-all">
+            <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-md flex flex-wrap items-center justify-between gap-4">
+              {isPgStay ? (
+                <div className="flex flex-wrap items-center gap-6 text-xs">
+                  {/* Move-in Date */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                      <Calendar size={18} />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
+                        Move-in Date
                       </span>
-                    )}
+                      <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
+                        {(() => {
+                          try {
+                            const [y, m, d] = hostelMoveInDate.split('-');
+                            return `${d}-${m}-${y}`;
+                          } catch {
+                            return hostelMoveInDate;
+                          }
+                        })()}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="h-8 w-px bg-slate-200 dark:bg-white/10 hidden lg:block" />
+
+                  {/* Stay Duration */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                      <Clock size={18} />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
+                        Duration
+                      </span>
+                      <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
+                        {hostelDurationMonths} Month{hostelDurationMonths > 1 ? 's' : ''} Stay
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="h-8 w-px bg-slate-200 dark:bg-white/10 hidden lg:block" />
+
+                  {/* Gender & Sharing Preference */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                      <Users size={18} />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
+                        Type & Sharing
+                      </span>
+                      <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm capitalize">
+                        {hostelGender === 'all' ? 'Any Gender' : hostelGender} • {hostelSharing === 'all' ? 'Any Sharing' : hostelSharing}
+                      </span>
+                      {hostelFoodIncluded && (
+                        <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold ml-1.5 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50">
+                          🍱 3 Meals
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex flex-wrap items-center gap-6 text-xs">
+                  {/* Stay Dates */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                      <Calendar size={18} />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
+                        Dates & Nights
+                      </span>
+                      <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
+                        {new Date(checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {new Date(checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
+                      <span className="text-[10px] text-[#033266] dark:text-[#ff6325] font-bold ml-1.5 px-2 py-0.5 rounded-md bg-[#033266]/10 dark:bg-[#ff6325]/15">
+                        {nights} Night{nights > 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="h-8 w-px bg-slate-200 dark:bg-white/10 hidden lg:block" />
+
+                  {/* Occupancy */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                      <Users size={18} />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
+                        Guests & Units
+                      </span>
+                      <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
+                        {adults + children} Guest{adults + children > 1 ? 's' : ''} ({adults} Adults{children > 0 ? `, ${children} Children` : ''}) • {rooms} Room{rooms > 1 ? 's' : ''}
+                      </span>
+                      {(pets || petCount > 0) && (
+                        <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold ml-1.5 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50">
+                          🐾 {petCount || 1} Pet
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="flex items-center gap-2.5 ml-auto">
@@ -748,445 +842,627 @@ export default function VenueProfilePage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="mt-3 p-5 bg-white dark:bg-[#0f1219] rounded-3xl border border-slate-200 dark:border-white/10 shadow-lg text-xs space-y-4"
               >
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
-                  {/* Check-in */}
-                  <div className="relative">
-                    <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
-                      Check-in Date
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const targetD = checkIn ? new Date(checkIn) : new Date();
-                        setPickerMonthDate(isNaN(targetD.getTime()) ? new Date() : targetD);
-                        setActiveDatePicker(activeDatePicker === 'checkIn' ? null : 'checkIn');
-                      }}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white flex items-center justify-between hover:border-[#033266] dark:hover:border-[#ff6325] transition-all cursor-pointer text-left"
-                    >
-                      <span className="text-xs">
-                        {(() => {
-                          try {
-                            const [y, m, d] = checkIn.split('-');
-                            return `${d}-${m}-${y}`;
-                          } catch {
-                            return checkIn;
-                          }
-                        })()}
-                      </span>
-                      <Calendar size={15} className="text-[#ff6325] shrink-0" />
-                    </button>
-
-                    {/* Popover Calendar for Check-In */}
-                    <AnimatePresence>
-                      {activeDatePicker === 'checkIn' && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                          className="absolute left-0 top-full mt-2 w-72 bg-white dark:bg-[#0c1424] border border-slate-200 dark:border-white/15 rounded-3xl p-4 shadow-2xl z-50 space-y-3"
+                {isPgStay ? (
+                  /* ================= Dedicated Hostel & PG Editor ================= */
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                      {/* Move-in Date */}
+                      <div className="relative">
+                        <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                          Move-in Date
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const targetD = hostelMoveInDate ? new Date(hostelMoveInDate) : new Date();
+                            setMoveInCalMonthDate(isNaN(targetD.getTime()) ? new Date() : targetD);
+                            setIsMoveInCalOpen(!isMoveInCalOpen);
+                          }}
+                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white flex items-center justify-between hover:border-[#033266] dark:hover:border-[#ff6325] transition-all cursor-pointer text-left"
                         >
-                          {/* Calendar Month Header */}
-                          <div className="bg-slate-50 dark:bg-[#121722] rounded-2xl border border-slate-200/80 dark:border-white/10 p-2 flex items-center justify-between">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setPickerMonthDate(new Date(pickerMonthDate.getFullYear(), pickerMonthDate.getMonth() - 1, 1));
-                              }}
-                              className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
-                            >
-                              <ChevronLeft size={15} />
-                            </button>
-                            <span className="text-xs font-black text-slate-900 dark:text-white">
-                              {pickerMonthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setPickerMonthDate(new Date(pickerMonthDate.getFullYear(), pickerMonthDate.getMonth() + 1, 1));
-                              }}
-                              className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
-                            >
-                              <ChevronRight size={15} />
-                            </button>
-                          </div>
-
-                          {/* Days of Week */}
-                          <div className="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400">
-                            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
-                              <div key={d} className="py-1">{d}</div>
-                            ))}
-                          </div>
-
-                          {/* Days Grid */}
-                          <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                          <span className="text-xs">
                             {(() => {
-                              const year = pickerMonthDate.getFullYear();
-                              const month = pickerMonthDate.getMonth();
-                              const firstDay = new Date(year, month, 1).getDay();
-                              const totalDays = new Date(year, month + 1, 0).getDate();
-                              const cells = [];
-
-                              for (let i = 0; i < firstDay; i++) {
-                                cells.push(<div key={`empty-${i}`} className="h-8" />);
+                              try {
+                                const [y, m, d] = hostelMoveInDate.split('-');
+                                return `${d}-${m}-${y}`;
+                              } catch {
+                                return hostelMoveInDate;
                               }
-
-                              for (let d = 1; d <= totalDays; d++) {
-                                const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                                const isSelected = checkIn === dStr;
-                                const isToday = todayStr === dStr;
-
-                                cells.push(
-                                  <div key={d} className="flex items-center justify-center">
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setCheckIn(dStr);
-                                        // Ensure checkOut is at least next day
-                                        if (new Date(dStr) >= new Date(checkOut)) {
-                                          const nextD = new Date(year, month, d + 1);
-                                          const nextStr = `${nextD.getFullYear()}-${String(nextD.getMonth() + 1).padStart(2, '0')}-${String(nextD.getDate()).padStart(2, '0')}`;
-                                          setCheckOut(nextStr);
-                                        }
-                                        setActiveDatePicker(null);
-                                      }}
-                                      className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs transition-all cursor-pointer ${isSelected
-                                        ? 'bg-[#1a56db] text-white shadow-md shadow-blue-500/40 ring-2 ring-blue-400/30 font-extrabold'
-                                        : isToday
-                                          ? 'border border-[#1a56db] text-[#1a56db] dark:text-blue-400 font-extrabold'
-                                          : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                        }`}
-                                    >
-                                      {d}
-                                    </button>
-                                  </div>
-                                );
-                              }
-                              return cells;
                             })()}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
+                          </span>
+                          <Calendar size={15} className="text-[#ff6325] shrink-0" />
+                        </button>
 
-                  {/* Check-out */}
-                  <div className="relative">
-                    <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
-                      Check-out Date
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const targetD = checkOut ? new Date(checkOut) : new Date();
-                        setPickerMonthDate(isNaN(targetD.getTime()) ? new Date() : targetD);
-                        setActiveDatePicker(activeDatePicker === 'checkOut' ? null : 'checkOut');
-                      }}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white flex items-center justify-between hover:border-[#033266] dark:hover:border-[#ff6325] transition-all cursor-pointer text-left"
-                    >
-                      <span className="text-xs">
-                        {(() => {
-                          try {
-                            const [y, m, d] = checkOut.split('-');
-                            return `${d}-${m}-${y}`;
-                          } catch {
-                            return checkOut;
-                          }
-                        })()}
-                      </span>
-                      <Calendar size={15} className="text-[#ff6325] shrink-0" />
-                    </button>
+                        {/* Popover Calendar for Move-In Date */}
+                        <AnimatePresence>
+                          {isMoveInCalOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                              className="absolute left-0 top-full mt-2 w-72 bg-white dark:bg-[#0c1424] border border-slate-200 dark:border-white/15 rounded-3xl p-4 shadow-2xl z-50 space-y-3"
+                            >
+                              <div className="bg-slate-50 dark:bg-[#121722] rounded-2xl border border-slate-200/80 dark:border-white/10 p-2 flex items-center justify-between">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setMoveInCalMonthDate(new Date(moveInCalMonthDate.getFullYear(), moveInCalMonthDate.getMonth() - 1, 1));
+                                  }}
+                                  className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+                                >
+                                  <ChevronLeft size={15} />
+                                </button>
+                                <span className="text-xs font-black text-slate-900 dark:text-white">
+                                  {moveInCalMonthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setMoveInCalMonthDate(new Date(moveInCalMonthDate.getFullYear(), moveInCalMonthDate.getMonth() + 1, 1));
+                                  }}
+                                  className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+                                >
+                                  <ChevronRight size={15} />
+                                </button>
+                              </div>
 
-                    {/* Popover Calendar for Check-Out */}
-                    <AnimatePresence>
-                      {activeDatePicker === 'checkOut' && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                          className="absolute left-0 top-full mt-2 w-72 bg-white dark:bg-[#0c1424] border border-slate-200 dark:border-white/15 rounded-3xl p-4 shadow-2xl z-50 space-y-3"
+                              <div className="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400">
+                                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                                  <div key={d} className="py-1">{d}</div>
+                                ))}
+                              </div>
+
+                              <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                                {(() => {
+                                  const year = moveInCalMonthDate.getFullYear();
+                                  const month = moveInCalMonthDate.getMonth();
+                                  const firstDay = new Date(year, month, 1).getDay();
+                                  const totalDays = new Date(year, month + 1, 0).getDate();
+                                  const cells = [];
+
+                                  for (let i = 0; i < firstDay; i++) {
+                                    cells.push(<div key={`hostel-empty-${i}`} className="h-8" />);
+                                  }
+
+                                  for (let d = 1; d <= totalDays; d++) {
+                                    const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                                    const isSelected = hostelMoveInDate === dStr;
+                                    const isToday = todayStr === dStr;
+
+                                    cells.push(
+                                      <div key={d} className="flex items-center justify-center">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setHostelMoveInDate(dStr);
+                                            setIsMoveInCalOpen(false);
+                                          }}
+                                          className={`w-8 h-8 rounded-full text-xs font-black transition-all flex items-center justify-center cursor-pointer ${
+                                            isSelected
+                                              ? 'bg-[#033266] dark:bg-[#ff6325] text-white shadow-md scale-105'
+                                              : isToday
+                                              ? 'border border-[#ff6325] text-[#ff6325] font-black'
+                                              : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                                          }`}
+                                        >
+                                          {d}
+                                        </button>
+                                      </div>
+                                    );
+                                  }
+                                  return cells;
+                                })()}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* Stay Duration (Months) */}
+                      <div>
+                        <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                          Stay Duration (Tenure)
+                        </label>
+                        <select
+                          value={hostelDurationMonths}
+                          onChange={(e) => setHostelDurationMonths(Number(e.target.value))}
+                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white outline-none cursor-pointer focus:border-[#033266] dark:focus:border-[#ff6325]"
                         >
-                          {/* Calendar Month Header */}
-                          <div className="bg-slate-50 dark:bg-[#121722] rounded-2xl border border-slate-200/80 dark:border-white/10 p-2 flex items-center justify-between">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setPickerMonthDate(new Date(pickerMonthDate.getFullYear(), pickerMonthDate.getMonth() - 1, 1));
-                              }}
-                              className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
-                            >
-                              <ChevronLeft size={15} />
-                            </button>
-                            <span className="text-xs font-black text-slate-900 dark:text-white">
-                              {pickerMonthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setPickerMonthDate(new Date(pickerMonthDate.getFullYear(), pickerMonthDate.getMonth() + 1, 1));
-                              }}
-                              className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
-                            >
-                              <ChevronRight size={15} />
-                            </button>
-                          </div>
+                          <option value={1}>1 Month (Short Stay)</option>
+                          <option value={2}>2 Months</option>
+                          <option value={3}>3 Months (Standard)</option>
+                          <option value={6}>6 Months (Semester / Job)</option>
+                          <option value={11}>11 Months (Annual Agreement)</option>
+                        </select>
+                      </div>
 
-                          {/* Days of Week */}
-                          <div className="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400">
-                            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
-                              <div key={d} className="py-1">{d}</div>
-                            ))}
-                          </div>
+                      {/* Gender Policy */}
+                      <div>
+                        <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                          Gender Type
+                        </label>
+                        <select
+                          value={hostelGender}
+                          onChange={(e) => setHostelGender(e.target.value as any)}
+                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white outline-none cursor-pointer focus:border-[#033266] dark:focus:border-[#ff6325]"
+                        >
+                          <option value="all">Any Gender / Coliving</option>
+                          <option value="gents">Gents Only</option>
+                          <option value="ladies">Ladies Only</option>
+                          <option value="coliving">Unisex / Co-living</option>
+                        </select>
+                      </div>
 
-                          {/* Days Grid */}
-                          <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                      {/* Sharing Preference */}
+                      <div>
+                        <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                          Sharing Type
+                        </label>
+                        <select
+                          value={hostelSharing}
+                          onChange={(e) => setHostelSharing(e.target.value as any)}
+                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white outline-none cursor-pointer focus:border-[#033266] dark:focus:border-[#ff6325]"
+                        >
+                          <option value="all">Any Sharing</option>
+                          <option value="single">Single Room (Private)</option>
+                          <option value="2-sharing">2 Sharing</option>
+                          <option value="3-sharing">3 Sharing</option>
+                          <option value="4-sharing">4 Sharing</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Bottom Bar: Daily Food Checkbox + Action Buttons */}
+                    <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-slate-100 dark:border-white/5">
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={hostelFoodIncluded}
+                          onChange={(e) => setHostelFoodIncluded(e.target.checked)}
+                          className="w-4 h-4 rounded text-[#033266] dark:text-[#ff6325] focus:ring-0 cursor-pointer"
+                        />
+                        <span className="font-bold text-slate-700 dark:text-slate-300 text-xs">
+                          Include 3 Times Daily Food (Breakfast, Lunch & Dinner)
+                        </span>
+                      </label>
+
+                      <div className="flex items-center gap-2 ml-auto">
+                        <button
+                          type="button"
+                          onClick={() => setIsEditSearchOpen(false)}
+                          className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsEditSearchOpen(false);
+                            const newQuery = new URLSearchParams(window.location.search);
+                            newQuery.set('moveIn', hostelMoveInDate);
+                            newQuery.set('durationMonths', String(hostelDurationMonths));
+                            newQuery.set('gender', hostelGender);
+                            newQuery.set('sharing', hostelSharing);
+                            newQuery.set('foodIncluded', String(hostelFoodIncluded));
+                            window.history.replaceState(null, '', `?${newQuery.toString()}`);
+                          }}
+                          className="px-6 py-2 bg-[#033266] dark:bg-[#ff6325] text-white rounded-xl font-black text-xs hover:bg-[#022349] dark:hover:bg-[#e04e13] active:scale-95 transition-all cursor-pointer shadow-md"
+                        >
+                          Apply Search
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* ================= Standard Hotel Editor ================= */
+                  <div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+                      {/* Check-in */}
+                      <div className="relative">
+                        <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                          Check-in Date
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const targetD = checkIn ? new Date(checkIn) : new Date();
+                            setPickerMonthDate(isNaN(targetD.getTime()) ? new Date() : targetD);
+                            setActiveDatePicker(activeDatePicker === 'checkIn' ? null : 'checkIn');
+                          }}
+                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white flex items-center justify-between hover:border-[#033266] dark:hover:border-[#ff6325] transition-all cursor-pointer text-left"
+                        >
+                          <span className="text-xs">
                             {(() => {
-                              const year = pickerMonthDate.getFullYear();
-                              const month = pickerMonthDate.getMonth();
-                              const firstDay = new Date(year, month, 1).getDay();
-                              const totalDays = new Date(year, month + 1, 0).getDate();
-                              const cells = [];
-
-                              for (let i = 0; i < firstDay; i++) {
-                                cells.push(<div key={`empty-out-${i}`} className="h-8" />);
+                              try {
+                                const [y, m, d] = checkIn.split('-');
+                                return `${d}-${m}-${y}`;
+                              } catch {
+                                return checkIn;
                               }
-
-                              for (let d = 1; d <= totalDays; d++) {
-                                const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                                const isSelected = checkOut === dStr;
-                                const isToday = todayStr === dStr;
-
-                                cells.push(
-                                  <div key={d} className="flex items-center justify-center">
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setCheckOut(dStr);
-                                        // If user selects checkOut before or equal to checkIn, adjust checkIn
-                                        if (new Date(dStr) <= new Date(checkIn)) {
-                                          const prevD = new Date(year, month, d - 1);
-                                          const prevStr = `${prevD.getFullYear()}-${String(prevD.getMonth() + 1).padStart(2, '0')}-${String(prevD.getDate()).padStart(2, '0')}`;
-                                          setCheckIn(prevStr);
-                                        }
-                                        setActiveDatePicker(null);
-                                      }}
-                                      className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs transition-all cursor-pointer ${isSelected
-                                        ? 'bg-[#1a56db] text-white shadow-md shadow-blue-500/40 ring-2 ring-blue-400/30 font-extrabold'
-                                        : isToday
-                                          ? 'border border-[#1a56db] text-[#1a56db] dark:text-blue-400 font-extrabold'
-                                          : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                        }`}
-                                    >
-                                      {d}
-                                    </button>
-                                  </div>
-                                );
-                              }
-                              return cells;
                             })()}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
+                          </span>
+                          <Calendar size={15} className="text-[#ff6325] shrink-0" />
+                        </button>
 
-                  {/* Adults Stepper */}
-                  <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-2xl p-2.5 flex items-center justify-between">
-                    <div>
-                      <h5 className="text-xs font-black text-slate-900 dark:text-white leading-tight">Adults</h5>
-                      <p className="text-[10px] text-slate-400 font-medium">Ages 18 or above</p>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <button
-                        type="button"
-                        disabled={adults <= 1}
-                        onClick={() => setAdults(Math.max(1, adults - 1))}
-                        className="w-7 h-7 rounded-lg border border-slate-250 dark:border-white/15 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 dark:text-white flex items-center justify-center transition-all cursor-pointer shadow-2xs"
-                      >
-                        <Minus size={13} />
-                      </button>
-                      <span className="w-4 text-center font-black text-sm text-slate-900 dark:text-white">
-                        {adults}
-                      </span>
-                      <button
-                        type="button"
-                        disabled={adults >= 10}
-                        onClick={() => setAdults(Math.min(10, adults + 1))}
-                        className="w-7 h-7 rounded-lg border border-slate-250 dark:border-white/15 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 dark:text-white flex items-center justify-center transition-all cursor-pointer shadow-2xs"
-                      >
-                        <Plus size={13} />
-                      </button>
-                    </div>
-                  </div>
+                        {/* Popover Calendar for Check-In */}
+                        <AnimatePresence>
+                          {activeDatePicker === 'checkIn' && (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                              className="absolute left-0 top-full mt-2 w-72 bg-white dark:bg-[#0c1424] border border-slate-200 dark:border-white/15 rounded-3xl p-4 shadow-2xl z-50 space-y-3"
+                            >
+                              <div className="bg-slate-50 dark:bg-[#121722] rounded-2xl border border-slate-200/80 dark:border-white/10 p-2 flex items-center justify-between">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setPickerMonthDate(new Date(pickerMonthDate.getFullYear(), pickerMonthDate.getMonth() - 1, 1));
+                                  }}
+                                  className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+                                >
+                                  <ChevronLeft size={15} />
+                                </button>
+                                <span className="text-xs font-black text-slate-900 dark:text-white">
+                                  {pickerMonthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setPickerMonthDate(new Date(pickerMonthDate.getFullYear(), pickerMonthDate.getMonth() + 1, 1));
+                                  }}
+                                  className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+                                >
+                                  <ChevronRight size={15} />
+                                </button>
+                              </div>
 
-                  {/* Children Stepper */}
-                  <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-2xl p-2.5 flex items-center justify-between">
-                    <div>
-                      <h5 className="text-xs font-black text-slate-900 dark:text-white leading-tight">Children</h5>
-                      <p className="text-[10px] text-slate-400 font-medium">Ages 0 to 17</p>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <button
-                        type="button"
-                        disabled={children <= 0}
-                        onClick={() => {
-                          const newC = Math.max(0, children - 1);
-                          setChildren(newC);
-                          setChildAges(prev => prev.slice(0, newC));
-                        }}
-                        className="w-7 h-7 rounded-lg border border-slate-250 dark:border-white/15 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 dark:text-white flex items-center justify-center transition-all cursor-pointer shadow-2xs"
-                      >
-                        <Minus size={13} />
-                      </button>
-                      <span className="w-4 text-center font-black text-sm text-slate-900 dark:text-white">
-                        {children}
-                      </span>
-                      <button
-                        type="button"
-                        disabled={children >= 6}
-                        onClick={() => {
-                          const newC = Math.min(6, children + 1);
-                          setChildren(newC);
-                          setChildAges(prev => [...prev, 5]);
-                        }}
-                        className="w-7 h-7 rounded-lg border border-slate-250 dark:border-white/15 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 dark:text-white flex items-center justify-center transition-all cursor-pointer shadow-2xs"
-                      >
-                        <Plus size={13} />
-                      </button>
-                    </div>
-                  </div>
+                              <div className="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400">
+                                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                                  <div key={d} className="py-1">{d}</div>
+                                ))}
+                              </div>
 
-                  {/* Rooms Stepper */}
-                  <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-2xl p-2.5 flex items-center justify-between">
-                    <div>
-                      <h5 className="text-xs font-black text-slate-900 dark:text-white leading-tight">Rooms</h5>
-                      <p className="text-[10px] text-slate-400 font-medium">Units required</p>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <button
-                        type="button"
-                        disabled={rooms <= 1}
-                        onClick={() => setRooms(Math.max(1, rooms - 1))}
-                        className="w-7 h-7 rounded-lg border border-slate-250 dark:border-white/15 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 dark:text-white flex items-center justify-center transition-all cursor-pointer shadow-2xs"
-                      >
-                        <Minus size={13} />
-                      </button>
-                      <span className="w-4 text-center font-black text-sm text-slate-900 dark:text-white">
-                        {rooms}
-                      </span>
-                      <button
-                        type="button"
-                        disabled={rooms >= 8}
-                        onClick={() => setRooms(Math.min(8, rooms + 1))}
-                        className="w-7 h-7 rounded-lg border border-slate-250 dark:border-white/15 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 dark:text-white flex items-center justify-center transition-all cursor-pointer shadow-2xs"
-                      >
-                        <Plus size={13} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                              <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                                {(() => {
+                                  const year = pickerMonthDate.getFullYear();
+                                  const month = pickerMonthDate.getMonth();
+                                  const firstDay = new Date(year, month, 1).getDay();
+                                  const totalDays = new Date(year, month + 1, 0).getDate();
+                                  const cells = [];
 
-                {/* Child Ages row if children > 0 */}
-                {children > 0 && (
-                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10">
-                    <span className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 block mb-2">
-                      Ages of Children (at checkout)
-                    </span>
-                    <div className="flex flex-wrap items-center gap-3">
-                      {Array.from({ length: children }).map((_, cIdx) => (
-                        <div key={cIdx} className="flex items-center gap-1.5">
-                          <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">Child {cIdx + 1}:</span>
-                          <select
-                            value={childAges[cIdx] ?? 5}
-                            onChange={(e) => {
-                              const ageVal = Number(e.target.value);
-                              setChildAges(prev => {
-                                const copy = [...prev];
-                                copy[cIdx] = ageVal;
-                                return copy;
-                              });
-                            }}
-                            className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1 font-bold text-xs text-slate-900 dark:text-white outline-none"
+                                  for (let i = 0; i < firstDay; i++) {
+                                    cells.push(<div key={`empty-${i}`} className="h-8" />);
+                                  }
+
+                                  for (let d = 1; d <= totalDays; d++) {
+                                    const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                                    const isSelected = checkIn === dStr;
+                                    const isToday = todayStr === dStr;
+
+                                    cells.push(
+                                      <div key={d} className="flex items-center justify-center">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setCheckIn(dStr);
+                                            setActiveDatePicker(null);
+                                            if (new Date(dStr) >= new Date(checkOut)) {
+                                              const nextDay = new Date(dStr);
+                                              nextDay.setDate(nextDay.getDate() + 1);
+                                              setCheckOut(nextDay.toISOString().split('T')[0]);
+                                            }
+                                          }}
+                                          className={`w-8 h-8 rounded-full text-xs font-black transition-all flex items-center justify-center cursor-pointer ${
+                                            isSelected
+                                              ? 'bg-[#033266] dark:bg-[#ff6325] text-white shadow-md scale-105'
+                                              : isToday
+                                              ? 'border border-[#ff6325] text-[#ff6325] font-black'
+                                              : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                                          }`}
+                                        >
+                                          {d}
+                                        </button>
+                                      </div>
+                                    );
+                                  }
+                                  return cells;
+                                })()}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* Check-out */}
+                      <div className="relative">
+                        <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                          Check-out Date
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const targetD = checkOut ? new Date(checkOut) : new Date();
+                            setPickerMonthDate(isNaN(targetD.getTime()) ? new Date() : targetD);
+                            setActiveDatePicker(activeDatePicker === 'checkOut' ? null : 'checkOut');
+                          }}
+                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white flex items-center justify-between hover:border-[#033266] dark:hover:border-[#ff6325] transition-all cursor-pointer text-left"
+                        >
+                          <span className="text-xs">
+                            {(() => {
+                              try {
+                                const [y, m, d] = checkOut.split('-');
+                                return `${d}-${m}-${y}`;
+                              } catch {
+                                return checkOut;
+                              }
+                            })()}
+                          </span>
+                          <Calendar size={15} className="text-[#ff6325] shrink-0" />
+                        </button>
+
+                        {/* Popover Calendar for Check-Out */}
+                        <AnimatePresence>
+                          {activeDatePicker === 'checkOut' && (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                              className="absolute left-0 top-full mt-2 w-72 bg-white dark:bg-[#0c1424] border border-slate-200 dark:border-white/15 rounded-3xl p-4 shadow-2xl z-50 space-y-3"
+                            >
+                              <div className="bg-slate-50 dark:bg-[#121722] rounded-2xl border border-slate-200/80 dark:border-white/10 p-2 flex items-center justify-between">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setPickerMonthDate(new Date(pickerMonthDate.getFullYear(), pickerMonthDate.getMonth() - 1, 1));
+                                  }}
+                                  className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+                                >
+                                  <ChevronLeft size={15} />
+                                </button>
+                                <span className="text-xs font-black text-slate-900 dark:text-white">
+                                  {pickerMonthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setPickerMonthDate(new Date(pickerMonthDate.getFullYear(), pickerMonthDate.getMonth() + 1, 1));
+                                  }}
+                                  className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+                                >
+                                  <ChevronRight size={15} />
+                                </button>
+                              </div>
+
+                              <div className="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400">
+                                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                                  <div key={d} className="py-1">{d}</div>
+                                ))}
+                              </div>
+
+                              <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                                {(() => {
+                                  const year = pickerMonthDate.getFullYear();
+                                  const month = pickerMonthDate.getMonth();
+                                  const firstDay = new Date(year, month, 1).getDay();
+                                  const totalDays = new Date(year, month + 1, 0).getDate();
+                                  const cells = [];
+
+                                  for (let i = 0; i < firstDay; i++) {
+                                    cells.push(<div key={`empty-${i}`} className="h-8" />);
+                                  }
+
+                                  for (let d = 1; d <= totalDays; d++) {
+                                    const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                                    const isSelected = checkOut === dStr;
+                                    const isPastCheckIn = new Date(dStr) <= new Date(checkIn);
+
+                                    cells.push(
+                                      <div key={d} className="flex items-center justify-center">
+                                        <button
+                                          type="button"
+                                          disabled={isPastCheckIn}
+                                          onClick={() => {
+                                            setCheckOut(dStr);
+                                            setActiveDatePicker(null);
+                                          }}
+                                          className={`w-8 h-8 rounded-full text-xs font-black transition-all flex items-center justify-center cursor-pointer ${
+                                            isSelected
+                                              ? 'bg-[#033266] dark:bg-[#ff6325] text-white shadow-md scale-105'
+                                              : isPastCheckIn
+                                              ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed opacity-40'
+                                              : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                                          }`}
+                                        >
+                                          {d}
+                                        </button>
+                                      </div>
+                                    );
+                                  }
+                                  return cells;
+                                })()}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* Adults */}
+                      <div>
+                        <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                          Adults <span className="text-[9px] font-medium lowercase text-slate-400">Ages 18 or above</span>
+                        </label>
+                        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-2.5 py-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setAdults(Math.max(1, adults - 1))}
+                            className="w-7 h-7 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white font-black hover:bg-slate-100 flex items-center justify-center cursor-pointer"
                           >
-                            {Array.from({ length: 18 }).map((_, age) => (
-                              <option key={age} value={age}>
-                                {age === 0 ? '< 1 yr' : `${age} yr${age > 1 ? 's' : ''}`}
-                              </option>
-                            ))}
-                          </select>
+                            <Minus size={13} />
+                          </button>
+                          <span className="font-black text-sm text-slate-900 dark:text-white">{adults}</span>
+                          <button
+                            type="button"
+                            onClick={() => setAdults(adults + 1)}
+                            className="w-7 h-7 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white font-black hover:bg-slate-100 flex items-center justify-center cursor-pointer"
+                          >
+                            <Plus size={13} />
+                          </button>
                         </div>
-                      ))}
+                      </div>
+
+                      {/* Children */}
+                      <div>
+                        <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                          Children <span className="text-[9px] font-medium lowercase text-slate-400">Ages 0 to 17</span>
+                        </label>
+                        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-2.5 py-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newC = Math.max(0, children - 1);
+                              setChildren(newC);
+                              setChildAges(childAges.slice(0, newC));
+                            }}
+                            className="w-7 h-7 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white font-black hover:bg-slate-100 flex items-center justify-center cursor-pointer"
+                          >
+                            <Minus size={13} />
+                          </button>
+                          <span className="font-black text-sm text-slate-900 dark:text-white">{children}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newC = children + 1;
+                              setChildren(newC);
+                              setChildAges([...childAges, 5]);
+                            }}
+                            className="w-7 h-7 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white font-black hover:bg-slate-100 flex items-center justify-center cursor-pointer"
+                          >
+                            <Plus size={13} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Rooms */}
+                      <div>
+                        <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                          Rooms <span className="text-[9px] font-medium lowercase text-slate-400">Units required</span>
+                        </label>
+                        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-2.5 py-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setRooms(Math.max(1, rooms - 1))}
+                            className="w-7 h-7 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white font-black hover:bg-slate-100 flex items-center justify-center cursor-pointer"
+                          >
+                            <Minus size={13} />
+                          </button>
+                          <span className="font-black text-sm text-slate-900 dark:text-white">{rooms}</span>
+                          <button
+                            type="button"
+                            onClick={() => setRooms(rooms + 1)}
+                            className="w-7 h-7 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white font-black hover:bg-slate-100 flex items-center justify-center cursor-pointer"
+                          >
+                            <Plus size={13} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Child Age Selection Details */}
+                    {children > 0 && (
+                      <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-white/10 flex flex-wrap items-center gap-3">
+                        <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Age of Children:</span>
+                        {childAges.map((age, idx) => (
+                          <div key={idx} className="flex items-center gap-1.5">
+                            <span className="text-[11px] text-slate-500 font-semibold">Child {idx + 1}:</span>
+                            <select
+                              value={age}
+                              onChange={(e) => {
+                                const newAges = [...childAges];
+                                newAges[idx] = Number(e.target.value);
+                                setChildAges(newAges);
+                              }}
+                              className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1 text-xs font-bold text-slate-900 dark:text-white outline-none"
+                            >
+                              {Array.from({ length: 18 }, (_, i) => (
+                                <option key={i} value={i}>
+                                  {i === 0 ? 'Under 1 yr' : `${i} yrs`}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Pets Checkbox & Actions */}
+                    <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-slate-100 dark:border-white/5 mt-3">
+                      <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={pets}
+                            onChange={(e) => {
+                              setPets(e.target.checked);
+                              if (e.target.checked && petCount === 0) setPetCount(1);
+                              if (!e.target.checked) setPetCount(0);
+                            }}
+                            className="w-4 h-4 rounded text-[#033266] dark:text-[#ff6325] focus:ring-0 cursor-pointer"
+                          />
+                          <span className="font-bold text-slate-700 dark:text-slate-300 text-xs">
+                            🐾 Traveling with Pets?
+                          </span>
+                        </label>
+
+                        {pets && (
+                          <div className="flex items-center gap-1.5 ml-2">
+                            <select
+                              value={petCount || 1}
+                              onChange={(e) => setPetCount(Number(e.target.value))}
+                              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-900 dark:text-white outline-none"
+                            >
+                              {[1, 2, 3, 4].map(n => (
+                                <option key={n} value={n}>
+                                  {n} Pet{n > 1 ? 's' : ''}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 ml-auto">
+                        <button
+                          type="button"
+                          onClick={() => setIsEditSearchOpen(false)}
+                          className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsEditSearchOpen(false);
+                            const newQuery = new URLSearchParams(window.location.search);
+                            newQuery.set('checkIn', checkIn);
+                            newQuery.set('checkOut', checkOut);
+                            newQuery.set('adults', String(adults));
+                            newQuery.set('children', String(children));
+                            newQuery.set('childAges', encodeURIComponent(JSON.stringify(childAges)));
+                            newQuery.set('rooms', String(rooms));
+                            newQuery.set('pets', String(pets));
+                            newQuery.set('petCount', String(petCount));
+                            window.history.replaceState(null, '', `?${newQuery.toString()}`);
+                          }}
+                          className="px-6 py-2 bg-[#033266] dark:bg-[#ff6325] text-white rounded-xl font-black text-xs hover:bg-[#022349] dark:hover:bg-[#e04e13] active:scale-95 transition-all cursor-pointer shadow-md"
+                        >
+                          Apply Search
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
-
-                {/* Bottom Row: Pets Checkbox + Apply Button */}
-                <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-100 dark:border-white/10">
-                  {/* Pet traveling */}
-                  <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={pets}
-                        onChange={(e) => {
-                          const isChecked = e.target.checked;
-                          setPets(isChecked);
-                          if (isChecked && petCount === 0) setPetCount(1);
-                          if (!isChecked) setPetCount(0);
-                        }}
-                        className="w-4 h-4 rounded text-[#033266] dark:text-[#ff6325] focus:ring-0 cursor-pointer accent-[#033266] dark:accent-[#ff6325]"
-                      />
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1">
-                        <span>🐾</span> Traveling with Pets?
-                      </span>
-                    </label>
-
-                    {pets && (
-                      <div className="flex items-center gap-1.5 ml-2">
-                        <select
-                          value={petCount || 1}
-                          onChange={(e) => setPetCount(Number(e.target.value))}
-                          className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-900 dark:text-white outline-none"
-                        >
-                          {[1, 2, 3, 4].map(n => (
-                            <option key={n} value={n}>
-                              {n} Pet{n > 1 ? 's' : ''}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 ml-auto">
-                    <button
-                      type="button"
-                      onClick={() => setIsEditSearchOpen(false)}
-                      className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition-colors cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsEditSearchOpen(false);
-                        const newQuery = new URLSearchParams(window.location.search);
-                        newQuery.set('checkIn', checkIn);
-                        newQuery.set('checkOut', checkOut);
-                        newQuery.set('adults', String(adults));
-                        newQuery.set('children', String(children));
-                        newQuery.set('childAges', encodeURIComponent(JSON.stringify(childAges)));
-                        newQuery.set('rooms', String(rooms));
-                        newQuery.set('pets', String(pets));
-                        newQuery.set('petCount', String(petCount));
-                        window.history.replaceState(null, '', `?${newQuery.toString()}`);
-                      }}
-                      className="px-6 py-2 bg-[#033266] dark:bg-[#ff6325] text-white rounded-xl font-black text-xs hover:bg-[#022349] dark:hover:bg-[#e04e13] active:scale-95 transition-all cursor-pointer shadow-md"
-                    >
-                      Apply Search
-                    </button>
-                  </div>
-                </div>
               </motion.div>
             )}
           </div>
@@ -2055,24 +2331,29 @@ export default function VenueProfilePage() {
                 hostels: {
                   title: 'Select Your Dorm',
                   subtitle: 'Choose your dorm or bed type and proceed to booking.',
-                  unitName: 'Bed'
+                  unitName: 'Dorm Type'
+                },
+                'pg-hostels': {
+                  title: 'Select Your Dorm',
+                  subtitle: 'Choose your dorm or bed type and proceed to booking.',
+                  unitName: 'Dorm Type'
                 },
                 camping: {
                   title: 'Select Your Tent',
                   subtitle: 'Choose your camping setup and proceed to booking.',
-                  unitName: 'Tent'
+                  unitName: 'Tent Type'
                 },
                 hotels: {
                   title: 'Select Your Room',
                   subtitle: 'Choose your room type and proceed to booking.',
-                  unitName: 'Room'
+                  unitName: 'Room Type'
                 }
               };
 
               const dynamicHeading = catTitleMap[category] || {
-                title: 'Select Your Room',
-                subtitle: 'Choose your stay option and proceed directly to booking.',
-                unitName: 'Option'
+                title: isPgStay ? 'Select Your Dorm' : 'Select Your Room',
+                subtitle: isPgStay ? 'Choose your dorm or bed type and proceed to booking.' : 'Choose your stay option and proceed directly to booking.',
+                unitName: isPgStay ? 'Dorm Type' : 'Room Type'
               };
 
               return (
@@ -2236,6 +2517,9 @@ export default function VenueProfilePage() {
                 }
 
                 return uniqueRoomItems.map((roomItem, rIdx) => {
+                  const totalUnitsConfig = Number(roomItem.listing?.metadata?.totalUnits ?? (roomItem.listing as any)?.totalUnits ?? (roomItem.parentService?.metadata?.totalUnits ?? (rIdx === 2 ? 0 : rIdx === 1 ? 1 : 4)));
+                  const isSoldOut = totalUnitsConfig <= 0 || (isPgStay && (roomItem.listing?.metadata?.isSoldOut === true || (roomItem.name && roomItem.name.toLowerCase().includes('sold out'))));
+                  const isLowAvailability = !isSoldOut && totalUnitsConfig <= 2;
                   const startingPrice = roomItem.price;
                   const stayTotal = startingPrice * nights * rooms;
                   const maxGuests = roomItem.maxGuests;
@@ -2330,11 +2614,23 @@ export default function VenueProfilePage() {
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                 onError={(e) => { e.currentTarget.src = defaultHotelPhotos[0]; }}
                               />
-                              {/* Remaining Units Badge */}
-                              <div className="absolute top-3 left-3 bg-[#033266]/90 dark:bg-[#ff6325]/90 backdrop-blur-md px-3 py-1 rounded-xl text-[11px] font-black text-white flex items-center gap-1.5 shadow-md">
-                                <Users size={12} />
-                                <span>{roomItem.listing?.metadata?.totalUnits ? `${roomItem.listing.metadata.totalUnits} UNITS LEFT` : '3 UNITS LEFT'}</span>
-                              </div>
+                              {/* Remaining Units / Sold Out Badge */}
+                              {isSoldOut ? (
+                                <div className="absolute top-3 left-3 bg-rose-600/95 backdrop-blur-md px-3 py-1 rounded-xl text-[11px] font-black text-white flex items-center gap-1.5 shadow-md">
+                                  <span>🚫</span>
+                                  <span>SOLD OUT</span>
+                                </div>
+                              ) : isLowAvailability ? (
+                                <div className="absolute top-3 left-3 bg-amber-500/95 backdrop-blur-md px-3 py-1 rounded-xl text-[11px] font-black text-slate-950 flex items-center gap-1.5 shadow-md animate-pulse">
+                                  <span>🔥</span>
+                                  <span>ONLY {totalUnitsConfig} {isPgStay ? 'BED' : 'UNIT'}{totalUnitsConfig > 1 ? 'S' : ''} LEFT</span>
+                                </div>
+                              ) : (
+                                <div className="absolute top-3 left-3 bg-[#033266]/90 dark:bg-[#ff6325]/90 backdrop-blur-md px-3 py-1 rounded-xl text-[11px] font-black text-white flex items-center gap-1.5 shadow-md">
+                                  <Users size={12} />
+                                  <span>{totalUnitsConfig} {isPgStay ? 'BEDS' : 'UNITS'} AVAILABLE</span>
+                                </div>
+                              )}
 
                               {/* See Photos Pill Button */}
                               <button
@@ -2605,38 +2901,77 @@ export default function VenueProfilePage() {
                             {/* Top Booking Pattern: Clean CTA Flow */}
                             {isPgStay ? (
                               <div className="space-y-2 mt-4">
-                                {/* Primary Top-Booking Style CTA: Select Bed & Customize */}
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setActiveRoomService(servicePayloadForModal);
-                                    setRoomModalStep('DETAILS');
-                                    setSelectedAddonIds([]);
-                                    setRoomModalImageIdx(0);
-                                  }}
-                                  className="w-full py-3.5 bg-gradient-to-r from-[#ff6325] to-[#f4511e] hover:from-[#e04e13] hover:to-[#d84315] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 group"
-                                >
-                                  <span>SELECT BED & BOOK</span>
-                                  <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
-                                </button>
+                                {isSoldOut ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      disabled
+                                      className="w-full py-3.5 bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 font-black text-xs uppercase tracking-wider rounded-2xl cursor-not-allowed flex items-center justify-center gap-2 border border-slate-300 dark:border-white/10"
+                                    >
+                                      <span>🚫 ALL BEDS OCCUPIED</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setVisitMode('LIVE_VIDEO');
+                                        setIsVisitModalOpen(true);
+                                      }}
+                                      className="w-full py-2 bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/30 dark:hover:bg-orange-900/40 text-[#ff6325] font-bold text-xs rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-1.5 border border-orange-200 dark:border-orange-900/40"
+                                    >
+                                      <span>🔔 Join Waitlist & Video Tour</span>
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    {/* Primary Top-Booking Style CTA: Select Bed & Customize */}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setActiveRoomService(servicePayloadForModal);
+                                        setRoomModalStep('DETAILS');
+                                        setSelectedAddonIds([]);
+                                        setRoomModalImageIdx(0);
+                                      }}
+                                      className="w-full py-3.5 bg-gradient-to-r from-[#ff6325] to-[#f4511e] hover:from-[#e04e13] hover:to-[#d84315] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 group"
+                                    >
+                                      <span>SELECT BED & BOOK</span>
+                                      <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                                    </button>
 
-                                {/* Micro trust token note (Dynamic Lock Bed Amount from Business Listing) */}
-                                {((roomItem.listing as any)?.isTokenAdvanceEnabled ?? (listingMeta.isTokenAdvanceEnabled ?? true)) && (
-                                  <div className="text-center">
-                                    <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                                      🔒 Lock this bed today for just ₹{((roomItem.listing as any)?.tokenAdvanceAmount || listingMeta.tokenAdvanceAmount || 999).toLocaleString()}
-                                    </span>
-                                  </div>
+                                    {/* Micro trust token note (Dynamic Lock Bed Amount from Business Listing) */}
+                                    {((roomItem.listing as any)?.isTokenAdvanceEnabled ?? (listingMeta.isTokenAdvanceEnabled ?? true)) && (
+                                      <div className="text-center">
+                                        <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                                          🔒 Lock this bed today for just ₹{((roomItem.listing as any)?.tokenAdvanceAmount || listingMeta.tokenAdvanceAmount || 999).toLocaleString()}
+                                        </span>
+                                      </div>
+                                    )}
+
+                                    {/* Free Property Visit (with Warden Callback) & Live Video Tour Button Group */}
+                                    <div className="grid grid-cols-2 gap-1.5 pt-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setVisitMode('IN_PERSON');
+                                          setIsVisitModalOpen(true);
+                                        }}
+                                        className="py-2 px-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-[11px] rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 border border-slate-200 dark:border-white/10"
+                                      >
+                                        <span>🗓️ Free Visit & Call</span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setVisitMode('LIVE_VIDEO');
+                                          setIsVisitModalOpen(true);
+                                        }}
+                                        className="py-2 px-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/40 text-[#1a56db] dark:text-[#60a5fa] font-bold text-[11px] rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 border border-blue-200 dark:border-blue-900/40"
+                                      >
+                                        <span>📹 Video Tour</span>
+                                      </button>
+                                    </div>
+                                  </>
                                 )}
-
-                                {/* Free Property Visit */}
-                                <button
-                                  type="button"
-                                  onClick={() => setIsVisitModalOpen(true)}
-                                  className="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-1.5 border border-slate-200 dark:border-white/10"
-                                >
-                                  <span>🗓️ Schedule Free Property Visit</span>
-                                </button>
                               </div>
                             ) : (
                               <button
@@ -4711,7 +5046,11 @@ export default function VenueProfilePage() {
                       </span>
                     </div>
                     <h3 className="font-extrabold text-lg sm:text-xl text-slate-900 dark:text-white mt-1.5 tracking-tight">
-                      {roomModalStep === 'VISIT' ? 'Schedule Free Property Visit' : (activeRoomService.name || 'Room Details')}
+                      {roomModalStep === 'VISIT'
+                        ? (visitMode === 'LIVE_VIDEO'
+                            ? 'Schedule Live Video Tour'
+                            : 'Schedule Free Property Visit & Callback')
+                        : (activeRoomService.name || 'Room Details')}
                     </h3>
                   </div>
                 </div>
@@ -4864,6 +5203,56 @@ export default function VenueProfilePage() {
                             </div>
                           )}
                         </div>
+
+                        {/* Long-Stay Tenure Saver / Duration Selection (1 Mo, 3+ Mo, 6+ Mo, 11 Mo Offers) */}
+                        {isPgStay && (
+                          <div className="space-y-2 p-3.5 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-900/40">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 dark:text-amber-300 block">
+                                Stay Duration & Tenure Discounts
+                              </span>
+                              <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/60 px-2 py-0.5 rounded-full">
+                                {hostelDurationMonths >= 6 ? '⭐ Best Value' : hostelDurationMonths >= 3 ? '🔥 Most Popular' : 'Flexi Plan'}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-4 gap-2">
+                              {[
+                                { months: 1, label: '1 Mo', tag: 'Flexi Stay', disc: 0 },
+                                { months: 3, label: '3 Mo', tag: '5% OFF', disc: 5 },
+                                { months: 6, label: '6 Mo', tag: '10% OFF', disc: 10 },
+                                { months: 11, label: '11 Mo', tag: '15% OFF', disc: 15 },
+                              ].map((slab) => {
+                                const isSelected = hostelDurationMonths === slab.months;
+                                return (
+                                  <button
+                                    key={slab.months}
+                                    type="button"
+                                    onClick={() => setHostelDurationMonths(slab.months)}
+                                    className={`p-2 rounded-xl text-center border-2 transition-all cursor-pointer flex flex-col items-center justify-between ${
+                                      isSelected
+                                        ? 'border-[#ff6325] bg-white dark:bg-slate-800 shadow-sm scale-102'
+                                        : 'border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-900/40 hover:border-slate-300'
+                                    }`}
+                                  >
+                                    <span className={`text-xs font-black ${isSelected ? 'text-[#ff6325]' : 'text-slate-900 dark:text-white'}`}>
+                                      {slab.label}
+                                    </span>
+                                    <span className={`text-[9px] font-bold mt-0.5 px-1.5 py-0.2 rounded-md ${
+                                      slab.disc > 0
+                                        ? isSelected
+                                          ? 'bg-rose-500 text-white'
+                                          : 'bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400'
+                                        : 'text-slate-400'
+                                    }`}>
+                                      {slab.tag}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
 
                         {/* Top Booking Compact Meal Plans Selector: With Mess vs Without Mess */}
                         {isPgStay && ((activeRoomService.selectedListing as any)?.foodFacilityProvided ?? (roomMeta.foodFacilityProvided ?? true)) && (
@@ -5244,18 +5633,62 @@ export default function VenueProfilePage() {
                     );
                   }
 
-                  // ── STEP 1.5: SCHEDULE VISIT VIEW (In-Modal Step, No Nested Popups) ──
+                  // ── STEP 1.5: SCHEDULE VISIT / VIDEO TOUR VIEW ──
                   if (roomModalStep === 'VISIT') {
                     return (
                       <div className="space-y-4 max-w-lg mx-auto py-2">
+                        {/* 2-Way Segmented Switcher: Consistent Brand Toggle Styling */}
+                        <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-white/10">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setVisitMode('IN_PERSON');
+                              setVisitConfirmed(false);
+                            }}
+                            className={`py-2 px-3 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                              visitMode === 'IN_PERSON'
+                                ? 'bg-[#033266] dark:bg-[#ff6325] text-white shadow-md'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                          >
+                            <span>🏢 Free Visit Pass & Callback</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setVisitMode('LIVE_VIDEO');
+                              setVisitConfirmed(false);
+                            }}
+                            className={`py-2 px-3 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                              visitMode === 'LIVE_VIDEO'
+                                ? 'bg-[#033266] dark:bg-[#ff6325] text-white shadow-md'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                          >
+                            <span>📹 Live Video Tour</span>
+                          </button>
+                        </div>
+
                         {visitConfirmed ? (
                           <div className="py-8 text-center space-y-3 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 p-6 rounded-3xl">
                             <div className="w-14 h-14 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto text-2xl font-black">
                               ✓
                             </div>
-                            <h4 className="text-lg font-black text-slate-900 dark:text-white">Visit Confirmed!</h4>
+                            <h4 className="text-lg font-black text-slate-900 dark:text-white">
+                              {visitMode === 'LIVE_VIDEO'
+                                ? 'Live Video Tour Booked!'
+                                : 'Visit Pass Confirmed!'}
+                            </h4>
                             <p className="text-xs text-slate-600 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
-                              The PG Warden has been notified for <span className="font-bold text-[#ff6325]">{visitDate}</span> at <span className="font-bold text-[#ff6325]">{visitTimeSlot}</span>. SMS confirmation sent to {visitPhone || 'your mobile'}.
+                              {visitMode === 'LIVE_VIDEO' ? (
+                                <>
+                                  Property Warden will connect via <span className="font-bold text-[#ff6325]">{videoPlatform === 'WHATSAPP' ? 'WhatsApp Video' : 'Google Meet'}</span> on <span className="font-bold text-[#ff6325]">{visitDate}</span> at <span className="font-bold text-[#ff6325]">{visitTimeSlot}</span>. Confirmation SMS sent to {visitPhone || 'your mobile'}.
+                                </>
+                              ) : (
+                                <>
+                                  The PG Warden has been notified for <span className="font-bold text-[#ff6325]">{visitDate}</span> at <span className="font-bold text-[#ff6325]">{visitTimeSlot}</span>. Warden will also call your number <span className="font-bold text-emerald-600 dark:text-emerald-400">{visitPhone || 'provided'}</span> to confirm directions and answer your queries.
+                                </>
+                              )}
                             </p>
                             <button
                               type="button"
@@ -5270,19 +5703,61 @@ export default function VenueProfilePage() {
                           </div>
                         ) : (
                           <div className="space-y-4">
-                            <div className="p-4 rounded-2xl bg-sky-50 dark:bg-sky-950/30 border border-sky-100 dark:border-sky-900/40 flex items-start gap-3">
-                              <span className="text-2xl shrink-0">🗓️</span>
+                            {/* Top Informational Banner */}
+                            <div className={`p-4 rounded-2xl border flex items-start gap-3 ${
+                              visitMode === 'LIVE_VIDEO'
+                                ? 'bg-blue-50/70 dark:bg-blue-950/30 border-blue-100 dark:border-blue-900/40'
+                                : 'bg-sky-50 dark:bg-sky-950/30 border-sky-100 dark:border-sky-900/40'
+                            }`}>
+                              <span className="text-2xl shrink-0">
+                                {visitMode === 'LIVE_VIDEO' ? '📹' : '🗓️'}
+                              </span>
                               <div>
                                 <h4 className="text-xs font-black text-slate-900 dark:text-white">
-                                  Free Property Inspection Pass
+                                  {visitMode === 'LIVE_VIDEO'
+                                    ? 'Schedule Live 1-on-1 Video Tour'
+                                    : 'Free Property Inspection Pass & Warden Callback'}
                                 </h4>
                                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                  Visit the property, inspect bed setup, taste mess food & meet room-mates before paying any token.
+                                  {visitMode === 'LIVE_VIDEO'
+                                    ? 'Outstation student or working professional? Warden will walk you through rooms, mess, and washrooms over video call.'
+                                    : 'Visit property in person, inspect bed setup & taste mess food. PG Warden will also call you back to assist with directions and details.'}
                                 </p>
                               </div>
                             </div>
 
                             <div className="space-y-3 text-xs">
+                              {/* Video Platform Preference selector (Only for LIVE_VIDEO mode) */}
+                              {visitMode === 'LIVE_VIDEO' && (
+                                <div>
+                                  <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Preferred Video Call App</label>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => setVideoPlatform('WHATSAPP')}
+                                      className={`p-2.5 rounded-xl border text-center font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer ${
+                                        videoPlatform === 'WHATSAPP'
+                                          ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300'
+                                          : 'border-slate-200 dark:border-white/10 text-slate-600'
+                                      }`}
+                                    >
+                                      <span>💬 WhatsApp Video</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setVideoPlatform('GOOGLE_MEET')}
+                                      className={`p-2.5 rounded-xl border text-center font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer ${
+                                        videoPlatform === 'GOOGLE_MEET'
+                                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300'
+                                          : 'border-slate-200 dark:border-white/10 text-slate-600'
+                                      }`}
+                                    >
+                                      <span>🎥 Google Meet</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+
                               <div>
                                 <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Your Full Name</label>
                                 <input
@@ -5295,7 +5770,7 @@ export default function VenueProfilePage() {
                               </div>
 
                               <div>
-                                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Phone Number (For Warden SMS)</label>
+                                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Phone Number (For Warden Callback & SMS)</label>
                                 <input
                                   type="tel"
                                   placeholder="+91 98765 43210"
@@ -5307,7 +5782,9 @@ export default function VenueProfilePage() {
 
                               <div className="grid grid-cols-2 gap-3">
                                 <div className="relative">
-                                  <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Visit Date</label>
+                                  <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                                    {visitMode === 'LIVE_VIDEO' ? 'Tour Date' : 'Visit Date'}
+                                  </label>
                                   <button
                                     type="button"
                                     onClick={() => {
@@ -5419,7 +5896,9 @@ export default function VenueProfilePage() {
                                   </AnimatePresence>
                                 </div>
                                 <div>
-                                  <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Preferred Time</label>
+                                  <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                                    {visitMode === 'LIVE_VIDEO' ? 'Video Slot' : 'Preferred Time'}
+                                  </label>
                                   <select
                                     value={visitTimeSlot}
                                     onChange={(e) => setVisitTimeSlot(e.target.value)}
@@ -5439,14 +5918,20 @@ export default function VenueProfilePage() {
                               type="button"
                               onClick={() => {
                                 if (!visitPhone) {
-                                  alert('Please enter your phone number to notify the Warden');
+                                  alert('Please enter your phone number so the Warden can connect with you.');
                                   return;
                                 }
                                 setVisitConfirmed(true);
                               }}
-                              className="w-full py-3 bg-[#ff6325] hover:bg-[#e04e13] text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer mt-2"
+                              className={`w-full py-3.5 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer mt-2 ${
+                                visitMode === 'LIVE_VIDEO'
+                                  ? 'bg-blue-600 hover:bg-blue-700'
+                                  : 'bg-[#ff6325] hover:bg-[#e04e13]'
+                              }`}
                             >
-                              Confirm Free Visit Pass &rarr;
+                              {visitMode === 'LIVE_VIDEO'
+                                ? 'Confirm Live Video Tour →'
+                                : 'Confirm Free Visit Pass & Callback →'}
                             </button>
                           </div>
                         )}
@@ -5684,7 +6169,11 @@ export default function VenueProfilePage() {
                         const effectiveMerchantName = isBackpackersHostel ? 'Backpackers Hostel' : venueName;
 
                         if (isPgStay) {
-                          const basePrice = Number(activeRoomService.price || activeRoomService.basePrice) || 2200;
+                          const rawBasePrice = Number(activeRoomService.price || activeRoomService.basePrice) || 2200;
+                          // Tenure discount calculation
+                          const tenureDiscountPct = hostelDurationMonths >= 11 ? 15 : hostelDurationMonths >= 6 ? 10 : hostelDurationMonths >= 3 ? 5 : 0;
+                          const basePrice = Math.round(rawBasePrice * (1 - tenureDiscountPct / 100));
+
                           const foodDiscount = Number(
                             (activeRoomService.selectedListing as any)?.foodDiscountAmount ??
                             activeRoomService.metadata?.foodDiscountAmount ??
@@ -5695,8 +6184,8 @@ export default function VenueProfilePage() {
                           const tokenAmount = Number((activeRoomService.selectedListing as any)?.tokenAdvanceAmount || activeRoomService.metadata?.tokenAdvanceAmount || 999);
                           const payable = pgPaymentType === 'TOKEN_ADVANCE' ? tokenAmount : actualRent;
                           const slotStr = pgPaymentType === 'TOKEN_ADVANCE'
-                            ? `1 Month Stay (Starts ${checkIn}) • Token Advance ₹${tokenAmount}`
-                            : `1st Month Full Rent (Starts ${checkIn}) • ₹${actualRent.toLocaleString()}`;
+                            ? `${hostelDurationMonths} Month${hostelDurationMonths > 1 ? 's' : ''} Stay (Starts ${checkIn}) • Token Advance ₹${tokenAmount}`
+                            : `1st Month Rent for ${hostelDurationMonths} Month${hostelDurationMonths > 1 ? 's' : ''} Stay (Starts ${checkIn}) • ₹${actualRent.toLocaleString()}`;
 
                           setSelectedService({
                             ...activeRoomService,
@@ -5727,6 +6216,8 @@ export default function VenueProfilePage() {
                                 refundableDeposit: deposit,
                                 foodExcluded: isFoodExcluded,
                                 startDate: checkIn,
+                                durationMonths: hostelDurationMonths,
+                                tenureDiscountPct,
                                 paymentType: pgPaymentType,
                                 selectedAddons: []
                               }
@@ -5842,7 +6333,10 @@ export default function VenueProfilePage() {
                         const currentAddonsSum = chosenAddons.reduce((sum: number, a: any) => sum + (a.price || 0), 0);
 
                         if (isPgStay) {
-                          const basePrice = Number(activeRoomService.price || activeRoomService.basePrice || selectedListing?.price) || 2200;
+                          const rawBasePrice = Number(activeRoomService.price || activeRoomService.basePrice || selectedListing?.price) || 2200;
+                          const tenureDiscountPct = hostelDurationMonths >= 11 ? 15 : hostelDurationMonths >= 6 ? 10 : hostelDurationMonths >= 3 ? 5 : 0;
+                          const basePrice = Math.round(rawBasePrice * (1 - tenureDiscountPct / 100));
+
                           const foodDiscount = Number(
                             (selectedListing as any)?.foodDiscountAmount ??
                             activeRoomService.metadata?.foodDiscountAmount ??
@@ -5853,8 +6347,8 @@ export default function VenueProfilePage() {
                           const tokenAmount = Number((selectedListing as any)?.tokenAdvanceAmount || activeRoomService.metadata?.tokenAdvanceAmount || 999);
                           const payable = (pgPaymentType === 'TOKEN_ADVANCE' ? tokenAmount : actualRent) + currentAddonsSum;
                           const slotStr = pgPaymentType === 'TOKEN_ADVANCE'
-                            ? `1 Month Stay (Starts ${checkIn}) • Token Advance ₹${tokenAmount} + Add-ons ₹${currentAddonsSum}`
-                            : `1st Month Full Rent (Starts ${checkIn}) • ₹${actualRent.toLocaleString()} + Add-ons ₹${currentAddonsSum}`;
+                            ? `${hostelDurationMonths} Month${hostelDurationMonths > 1 ? 's' : ''} Stay (Starts ${checkIn}) • Token Advance ₹${tokenAmount} + Add-ons ₹${currentAddonsSum}`
+                            : `1st Month Rent for ${hostelDurationMonths} Month${hostelDurationMonths > 1 ? 's' : ''} Stay (Starts ${checkIn}) • ₹${actualRent.toLocaleString()} + Add-ons ₹${currentAddonsSum}`;
 
                           setSelectedService({
                             ...activeRoomService,
@@ -5885,6 +6379,8 @@ export default function VenueProfilePage() {
                                 refundableDeposit: deposit,
                                 foodExcluded: isFoodExcluded,
                                 startDate: checkIn,
+                                durationMonths: hostelDurationMonths,
+                                tenureDiscountPct,
                                 paymentType: pgPaymentType,
                                 selectedAddons: chosenAddons
                               }
@@ -6052,10 +6548,14 @@ export default function VenueProfilePage() {
             <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-white/10 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">🗓️</span>
+                  <span className="text-xl">{visitMode === 'LIVE_VIDEO' ? '📹' : '🗓️'}</span>
                   <div>
-                    <h3 className="text-sm font-black text-slate-900 dark:text-white">Schedule Free Property Visit</h3>
-                    <p className="text-[10px] text-slate-400">Inspect room, food & facilities before paying</p>
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                      {visitMode === 'LIVE_VIDEO' ? 'Schedule Live Video Tour' : 'Schedule Free Property Visit'}
+                    </h3>
+                    <p className="text-[10px] text-slate-400">
+                      {visitMode === 'LIVE_VIDEO' ? 'Live 1-on-1 video walkthrough with property warden' : 'Inspect room, food & facilities before paying'}
+                    </p>
                   </div>
                 </div>
                 <button
@@ -6070,14 +6570,50 @@ export default function VenueProfilePage() {
                 </button>
               </div>
 
+              {/* Visit Type Toggle Switch (Consistent Brand Styling) */}
+              <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setVisitMode('IN_PERSON')}
+                  className={`py-2 px-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    visitMode === 'IN_PERSON'
+                      ? 'bg-[#033266] dark:bg-[#ff6325] text-white shadow-md'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <span>🏢 Free Visit & Callback</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVisitMode('LIVE_VIDEO')}
+                  className={`py-2 px-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    visitMode === 'LIVE_VIDEO'
+                      ? 'bg-[#033266] dark:bg-[#ff6325] text-white shadow-md'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <span>📹 Live Video Tour</span>
+                </button>
+              </div>
+
               {visitConfirmed ? (
                 <div className="py-6 text-center space-y-3">
                   <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-xl">
                     ✓
                   </div>
-                  <h4 className="text-base font-bold text-slate-900 dark:text-white">Visit Confirmed!</h4>
+                  <h4 className="text-base font-bold text-slate-900 dark:text-white">
+                    {visitMode === 'LIVE_VIDEO' ? 'Live Video Tour Booked!' : 'Visit Confirmed!'}
+                  </h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
-                    The PG Warden has been notified for <span className="font-bold text-[#ff6325]">{visitDate}</span> at <span className="font-bold text-[#ff6325]">{visitTimeSlot}</span>. SMS sent to {visitPhone || 'your mobile'}.
+                    {visitMode === 'LIVE_VIDEO' ? (
+                      <>
+                        Property Warden will call you on <span className="font-bold text-[#ff6325]">{videoPlatform === 'WHATSAPP' ? 'WhatsApp Video' : 'Google Meet'}</span> for <span className="font-bold text-[#ff6325]">{visitDate}</span> at <span className="font-bold text-[#ff6325]">{visitTimeSlot}</span>. Confirmation SMS sent to {visitPhone || 'your mobile'}.
+                      </>
+                    ) : (
+                      <>
+                        The PG Warden has been notified for <span className="font-bold text-[#ff6325]">{visitDate}</span> at <span className="font-bold text-[#ff6325]">{visitTimeSlot}</span>. SMS sent to {visitPhone || 'your mobile'}.
+                      </>
+                    )}
                   </p>
                   <button
                     type="button"
@@ -6092,6 +6628,35 @@ export default function VenueProfilePage() {
                 </div>
               ) : (
                 <div className="space-y-3.5 text-xs">
+                  {visitMode === 'LIVE_VIDEO' && (
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Video Call Platform</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setVideoPlatform('WHATSAPP')}
+                          className={`p-2.5 rounded-xl border text-center font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer ${
+                            videoPlatform === 'WHATSAPP'
+                              ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300'
+                              : 'border-slate-200 dark:border-white/10 text-slate-600'
+                          }`}
+                        >
+                          <span>💬 WhatsApp Video</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setVideoPlatform('GOOGLE_MEET')}
+                          className={`p-2.5 rounded-xl border text-center font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer ${
+                            videoPlatform === 'GOOGLE_MEET'
+                              ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300'
+                              : 'border-slate-200 dark:border-white/10 text-slate-600'
+                          }`}
+                        >
+                          <span>🎥 Google Meet</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Your Full Name</label>
                     <input
@@ -6116,7 +6681,9 @@ export default function VenueProfilePage() {
 
                   <div className="grid grid-cols-2 gap-2">
                     <div className="relative">
-                      <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Visit Date</label>
+                      <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                        {visitMode === 'LIVE_VIDEO' ? 'Tour Date' : 'Visit Date'}
+                      </label>
                       <button
                         type="button"
                         onClick={() => {
@@ -6244,7 +6811,9 @@ export default function VenueProfilePage() {
                   </div>
 
                   <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
-                    ✓ Free visit pass • PG Warden direct assistance • Sample mess lunch/dinner inspection included.
+                    {visitMode === 'LIVE_VIDEO'
+                      ? '✓ 1-on-1 live walkthrough • Warden video inspection • Mess & room live preview.'
+                      : '✓ Free visit pass • PG Warden direct assistance & callback • Sample mess food inspection.'}
                   </div>
 
                   <button
@@ -6255,7 +6824,7 @@ export default function VenueProfilePage() {
                     }}
                     className="w-full py-3 bg-[#ff6325] hover:bg-[#e04e13] text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md mt-2"
                   >
-                    Confirm Free Visit &rarr;
+                    {visitMode === 'LIVE_VIDEO' ? 'Confirm Live Video Tour →' : 'Confirm Free Visit →'}
                   </button>
                 </div>
               )}

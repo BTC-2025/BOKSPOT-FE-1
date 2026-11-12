@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { BokspotLoader } from '../../../components/ui/BokspotLoader';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -159,9 +159,9 @@ function MockQRCode({ value }: { value: string }) {
 /* ============================================================================
  * 1. CAB SERVICE VIEW (cabs)
  * ============================================================================ */
-function CabBookingView({ categoryName, city }: any) {
+function CabBookingView({ categoryName, city, initialQuery }: any) {
   const router = useRouter();
-  const [pickup, setPickup] = useState('Anna Nagar Metro Station');
+  const [pickup, setPickup] = useState(initialQuery?.venue || initialQuery?.city || 'Anna Nagar Metro Station');
   const [drop, setDrop] = useState('Chennai International Airport');
   const [cabType, setCabType] = useState<'mini' | 'sedan' | 'suv' | 'auto'>('mini');
   const [rideState, setRideState] = useState<'idle' | 'searching' | 'driver_found' | 'riding' | 'completed'>('idle');
@@ -408,10 +408,22 @@ function CabBookingView({ categoryName, city }: any) {
 /* ============================================================================
  * 2. FLIGHT BOOKING VIEW (flights)
  * ============================================================================ */
-function FlightBookingView({ categoryName, city }: any) {
+function FlightBookingView({ categoryName, city, initialQuery }: any) {
   const [tripType, setTripType] = useState<'one-way' | 'round'>('one-way');
-  const [fromAirport, setFromAirport] = useState('MAA - Chennai');
-  const [toAirport, setToAirport] = useState('BLR - Bangalore');
+  const [fromAirport, setFromAirport] = useState(() => {
+    const c = (initialQuery?.city || city || '').toLowerCase();
+    if (c.includes('bangalore') || c.includes('bengaluru')) return 'BLR - Bangalore';
+    if (c.includes('mumbai')) return 'BOM - Mumbai';
+    if (c.includes('delhi')) return 'DEL - Delhi';
+    return 'MAA - Chennai';
+  });
+  const [toAirport, setToAirport] = useState(() => {
+    const v = (initialQuery?.venue || '').toLowerCase();
+    if (v.includes('chennai')) return 'MAA - Chennai';
+    if (v.includes('mumbai')) return 'BOM - Mumbai';
+    if (v.includes('delhi')) return 'DEL - Delhi';
+    return 'BLR - Bangalore';
+  });
   const [flightState, setFlightState] = useState<'idle' | 'searching' | 'results' | 'booked'>('idle');
   const [selectedFlight, setSelectedFlight] = useState<any>(null);
   const [activeBooking, setActiveBooking] = useState<{ ref: string; otp: string; pnr: string } | null>(null);
@@ -657,9 +669,17 @@ function FlightBookingView({ categoryName, city }: any) {
 /* ============================================================================
  * 3. TRAIN BOOKING VIEW (trains)
  * ============================================================================ */
-function TrainBookingView({ categoryName, city }: any) {
-  const [fromStation, setFromStation] = useState('Chennai Central (MAS)');
-  const [toStation, setToStation] = useState('KSR Bengaluru (SBC)');
+function TrainBookingView({ categoryName, city, initialQuery }: any) {
+  const [fromStation, setFromStation] = useState(() => {
+    const c = (initialQuery?.city || city || '').toLowerCase();
+    if (c.includes('bangalore') || c.includes('bengaluru')) return 'KSR Bengaluru (SBC)';
+    return 'Chennai Central (MAS)';
+  });
+  const [toStation, setToStation] = useState(() => {
+    const v = (initialQuery?.venue || '').toLowerCase();
+    if (v.includes('chennai')) return 'Chennai Central (MAS)';
+    return 'KSR Bengaluru (SBC)';
+  });
   const [classType, setClassType] = useState<'3AC' | '2AC' | 'SL'>('3AC');
   const [trainState, setTrainState] = useState<'idle' | 'searching' | 'results' | 'booked'>('idle');
   const [selectedTrain, setSelectedTrain] = useState<any>(null);
@@ -908,9 +928,9 @@ function TrainBookingView({ categoryName, city }: any) {
 /* ============================================================================
  * 4. BUS BOOKING VIEW (buses)
  * ============================================================================ */
-function BusBookingView({ categoryName, city }: any) {
-  const [fromCity, setFromCity] = useState('Chennai');
-  const [toCity, setToCity] = useState('Madurai');
+function BusBookingView({ categoryName, city, initialQuery }: any) {
+  const [fromCity, setFromCity] = useState(initialQuery?.city || city || 'Chennai');
+  const [toCity, setToCity] = useState(initialQuery?.venue || 'Madurai');
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   const [busState, setBusState] = useState<'seat_selection' | 'booked'>('seat_selection');
   const [activeBooking, setActiveBooking] = useState<{ ref: string; otp: string } | null>(null);
@@ -1527,17 +1547,42 @@ function TurfsBookingView({ categoryName, city }: any) {
  * ============================================================================ */
 export default function ProviderDiscoveryPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const bookingType = (params?.bookingType as string) || 'stay-accommodation';
   const rawCategory = params?.category as string;
   const effectiveCategory = rawCategory === 'stayhotel' || rawCategory === 'stay-hotel' || rawCategory === 'hotel' ? 'hotels' : (rawCategory === 'resort' ? 'resorts' : (rawCategory === 'villa' ? 'villas' : rawCategory));
   const category = effectiveCategory;
+  let categoryName = CATEGORY_NAMES[category] || category;
+  if (bookingType === 'accomodation' && category === 'camping') {
+    categoryName = 'Camps & Glamping';
+  }
+  if (bookingType === 'entertainment' && category === 'sports-events') {
+    categoryName = 'Sports';
+  }
+
   const { city, latitude, longitude, setCity, setLocation } = useLocationStore();
   const [sortBy, setSortBy] = useState('distance');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [searchQuery, setSearchQuery] = useState(() => city || 'Chennai');
+  // Read custom search inputs passed from Home Page SmartSlotFinder / URL query
+  const queryDate = searchParams?.get('date');
+  const querySlot = searchParams?.get('slot');
+  const queryCity = searchParams?.get('city');
+  const queryVenue = searchParams?.get('venue');
+
+  const [searchQuery, setSearchQuery] = useState(() => queryVenue || queryCity || city || 'Chennai');
 
   const isHotelCategory = category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'pg-hostels' || category === 'camping' || bookingType === 'stay-accommodation' || bookingType === 'home';
-  const isPgCategory = category === 'pg-hostels';
+  const isHostelOrPg = category === 'hostels' || category === 'pg-hostels' || (categoryName || '').toLowerCase().includes('hostel') || (categoryName || '').toLowerCase().includes('pg');
+  const isPgCategory = category === 'pg-hostels' || category === 'hostels';
+
+  // Hostel & PG Dedicated Search States
+  const [hostelMoveInDate, setHostelMoveInDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [hostelDurationMonths, setHostelDurationMonths] = useState<number>(3); // 1, 2, 3, 6, 11 months
+  const [isDurationDropdownOpen, setIsDurationDropdownOpen] = useState(false);
+  const [isHostelOccupancyOpen, setIsHostelOccupancyOpen] = useState(false);
+  const [isMoveInDatePickerOpen, setIsMoveInDatePickerOpen] = useState(false);
+  const [hostelMoveInCalDate, setHostelMoveInCalDate] = useState<Date>(() => new Date());
+
   const [pgGenderFilter, setPgGenderFilter] = useState<'all' | 'gents' | 'ladies' | 'coliving'>('all');
   const [pgFoodFilter, setPgFoodFilter] = useState<'all' | 'with-food' | 'self-cooking'>('all');
   const [pgSharingFilter, setPgSharingFilter] = useState<'all' | 'single' | '2-sharing' | '3-sharing' | '4-sharing'>('all');
@@ -1576,6 +1621,9 @@ export default function ProviderDiscoveryPage() {
         setShowAutocomplete(false);
         setActiveDatePicker(null);
         setGuestDropdownOpen(false);
+        setIsDurationDropdownOpen(false);
+        setIsHostelOccupancyOpen(false);
+        setIsMoveInDatePickerOpen(false);
       }
     };
 
@@ -1631,18 +1679,16 @@ export default function ProviderDiscoveryPage() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
-    if (city) {
+    if (queryCity && queryCity.trim() !== '' && queryCity !== 'Near Me / Current Location') {
+      setCity(queryCity);
+      if (!queryVenue) {
+        setSearchQuery(queryCity);
+      }
+    } else if (city && !queryVenue) {
       setSearchQuery(city);
     }
-  }, [city]);
+  }, [city, queryCity, queryVenue, setCity]);
 
-  let categoryName = CATEGORY_NAMES[category] || category;
-  if (bookingType === 'accomodation' && category === 'camping') {
-    categoryName = 'Camps & Glamping';
-  }
-  if (bookingType === 'entertainment' && category === 'sports-events') {
-    categoryName = 'Sports';
-  }
 
   useEffect(() => {
     if (!mounted) return;
@@ -2165,9 +2211,442 @@ export default function ProviderDiscoveryPage() {
 
       {/* ── MODERN UNIFIED PILL SEARCH DOCK (Matching Reference Design) ── */}
       {isHotelCategory && (
-        <div ref={searchDockRef} className="w-full flex justify-center -translate-y-1/2 relative z-30 -mb-6 sm:-mb-8 px-4">
+        <div ref={searchDockRef} className="w-full flex justify-center sticky top-[98px] z-30 px-4 pt-3 pb-2 -mt-3 mb-4 bg-[var(--bg-base)] transition-all">
           <div className="w-full max-w-5xl bg-white dark:bg-slate-900 rounded-full p-2 sm:p-2.5 shadow-2xl shadow-slate-900/25 border border-slate-200/90 dark:border-white/10 hover:shadow-orange-500/10 transition-all">
-            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+            {isHostelOrPg ? (
+              /* =========================================================================
+               * DEDICATED HOSTEL / PG & CO-LIVING SEARCH DOCK (Stanza Living / Zolo Style)
+               * WHERE (Area/Tech Park) | MOVE-IN DATE | STAY DURATION | GENDER & SHARING
+               * ========================================================================= */
+              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+
+                {/* 1. Destination / Area / Landmark */}
+                <div className="flex-[1.2] relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors cursor-pointer group">
+                  <div className="flex items-center gap-3">
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <MapPin size={18} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">WHERE / AREA</span>
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onFocus={(e) => {
+                          setShowAutocomplete(true);
+                          e.target.select();
+                        }}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          setShowAutocomplete(true);
+                        }}
+                        placeholder="Search area, tech park, college or hostel..."
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const q = searchQuery.trim().toLowerCase();
+                            if (q) {
+                              const matchedCity = ALL_CITIES.find(c => c.toLowerCase() === q);
+                              if (matchedCity) {
+                                const popMatch = POPULAR_CITIES.find(p => p.name.toLowerCase() === matchedCity.toLowerCase());
+                                if (popMatch) {
+                                  setLocation(popMatch.lat, popMatch.lng, popMatch.name);
+                                } else {
+                                  setCity(matchedCity);
+                                }
+                              }
+                            }
+                            setShowAutocomplete(false);
+                            const el = document.getElementById('hotel-results-anchor');
+                            el?.scrollIntoView({ behavior: 'smooth' });
+                          }
+                        }}
+                        className="w-full bg-transparent text-xs sm:text-sm font-bold text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-normal outline-none truncate"
+                      />
+                    </div>
+                    {searchQuery ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSearchQuery('');
+                        }}
+                        className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1"
+                        title="Clear"
+                      >
+                        <X size={14} />
+                      </button>
+                    ) : (
+                      <ChevronDown size={14} className="text-slate-400 shrink-0" />
+                    )}
+                  </div>
+
+                  {/* Autocomplete Dropdown */}
+                  {showAutocomplete && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowAutocomplete(false)} />
+                      <div className="absolute top-full left-0 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl p-2 z-50 max-h-72 overflow-y-auto">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1.5 flex items-center justify-between">
+                          <span>{searchQuery ? `Matching "${searchQuery}"` : `Top PG Localities & Hubs`}</span>
+                          <span className="text-[9px] text-[#ff6325]">{city || 'All India'}</span>
+                        </div>
+                        {(() => {
+                          const q = searchQuery.toLowerCase().trim();
+                          const matchingCities = q
+                            ? ALL_CITIES.filter(c => c.toLowerCase().includes(q)).slice(0, 4).map(c => ({
+                              label: c,
+                              type: 'City Destination',
+                              icon: '📍',
+                              city: c,
+                              isCity: true
+                            }))
+                            : [
+                              { label: 'OMR, Chennai', type: 'IT Corridor Hub', icon: '🏢', city: 'Chennai', isCity: false },
+                              { label: 'Velachery, Chennai', type: 'Residential & Metro', icon: '🚇', city: 'Chennai', isCity: false },
+                              { label: 'Sholinganallur, Chennai', type: 'Tech Parks & SEZ', icon: '💻', city: 'Chennai', isCity: false },
+                              { label: 'HSR Layout, Bangalore', type: 'Startup & Tech Hub', icon: '🚀', city: 'Bangalore', isCity: false },
+                              { label: 'Koramangala, Bangalore', type: 'Coliving & Cafes', icon: '☕', city: 'Bangalore', isCity: false },
+                              { label: 'Electronic City, Bangalore', type: 'Phase 1 & 2 SEZ', icon: '🏙️', city: 'Bangalore', isCity: false },
+                            ];
+
+                          return matchingCities.map((item, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSearchQuery(item.label);
+                                setShowAutocomplete(false);
+                              }}
+                              className="w-full text-left flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 cursor-pointer transition-colors"
+                            >
+                              <span className="flex items-center gap-2 font-semibold truncate">
+                                <span>{item.icon}</span>
+                                <span className="truncate">{item.label}</span>
+                              </span>
+                              <span className="text-[10px] text-slate-400 shrink-0 font-medium ml-2">{item.type}</span>
+                            </button>
+                          ));
+                        })()}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 2. Move-in Date (Single Calendar Picker) */}
+                <div className="flex-1 relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHostelMoveInCalDate(new Date(hostelMoveInDate));
+                      setIsMoveInDatePickerOpen(!isMoveInDatePickerOpen);
+                    }}
+                    className="flex items-center gap-3 w-full text-left cursor-pointer"
+                  >
+                    <div className={`transition-colors shrink-0 ${isMoveInDatePickerOpen ? 'text-[#ff6325]' : 'text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325]'}`}>
+                      <Calendar size={18} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">MOVE-IN DATE</span>
+                      <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white truncate">
+                        {(() => {
+                          try {
+                            const [y, m, d] = hostelMoveInDate.split('-');
+                            return `${d}-${m}-${y}`;
+                          } catch {
+                            return hostelMoveInDate;
+                          }
+                        })()}
+                      </span>
+                    </div>
+                    <ChevronDown size={14} className={`text-slate-400 shrink-0 transition-transform ${isMoveInDatePickerOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Move-in Calendar Popover */}
+                  {isMoveInDatePickerOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsMoveInDatePickerOpen(false)} />
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-150 dark:border-white/15 shadow-2xl p-4 z-50 text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
+                        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-2 mb-4 border border-slate-150/60 dark:border-white/5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newD = new Date(hostelMoveInCalDate);
+                              newD.setMonth(newD.getMonth() - 1);
+                              setHostelMoveInCalDate(newD);
+                            }}
+                            className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all cursor-pointer"
+                          >
+                            <ChevronLeft size={16} />
+                          </button>
+                          <span className="font-extrabold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white">
+                            {hostelMoveInCalDate.toLocaleString('default', { month: 'long' })} {hostelMoveInCalDate.getFullYear()}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newD = new Date(hostelMoveInCalDate);
+                              newD.setMonth(newD.getMonth() + 1);
+                              setHostelMoveInCalDate(newD);
+                            }}
+                            className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all cursor-pointer"
+                          >
+                            <ChevronRight size={16} />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">
+                          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
+                            <div key={day} className="py-1">{day}</div>
+                          ))}
+                        </div>
+
+                        <div className="grid grid-cols-7 gap-1 text-center">
+                          {(() => {
+                            const year = hostelMoveInCalDate.getFullYear();
+                            const month = hostelMoveInCalDate.getMonth();
+                            const firstDayIndex = new Date(year, month, 1).getDay();
+                            const totalDays = new Date(year, month + 1, 0).getDate();
+                            const todayStr = new Date().toISOString().split('T')[0];
+
+                            const cells = [];
+                            for (let i = 0; i < firstDayIndex; i++) {
+                              cells.push(<div key={`empty-${i}`} className="h-9 w-9" />);
+                            }
+
+                            for (let day = 1; day <= totalDays; day++) {
+                              const monthStr = String(month + 1).padStart(2, '0');
+                              const dayStr = String(day).padStart(2, '0');
+                              const dateStr = `${year}-${monthStr}-${dayStr}`;
+                              const isSelected = dateStr === hostelMoveInDate;
+                              const isPast = dateStr < todayStr;
+
+                              cells.push(
+                                <button
+                                  key={`day-${day}`}
+                                  type="button"
+                                  disabled={isPast}
+                                  onClick={() => {
+                                    setHostelMoveInDate(dateStr);
+                                    setIsMoveInDatePickerOpen(false);
+                                  }}
+                                  className={`h-9 w-9 mx-auto rounded-full text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
+                                    isSelected
+                                      ? 'bg-[#ff6325] text-white shadow-md shadow-orange-500/30 font-black scale-105'
+                                      : isPast
+                                        ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                                        : 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                  }`}
+                                >
+                                  {day}
+                                </button>
+                              );
+                            }
+                            return cells;
+                          })()}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 3. Stay Duration (Months) */}
+                <div className="flex-1 relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
+                  <button
+                    type="button"
+                    onClick={() => setIsDurationDropdownOpen(!isDurationDropdownOpen)}
+                    className="flex items-center gap-3 w-full text-left cursor-pointer"
+                  >
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <Clock size={18} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">DURATION</span>
+                      <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white truncate">
+                        {hostelDurationMonths === 1 ? '1 Month' : hostelDurationMonths === 12 ? '1 Year+' : `${hostelDurationMonths} Months`}
+                      </span>
+                    </div>
+                    <ChevronDown size={14} className={`text-slate-400 shrink-0 transition-transform ${isDurationDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Duration Popover */}
+                  {isDurationDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsDurationDropdownOpen(false)} />
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/15 shadow-2xl p-3 z-50 space-y-1.5 text-slate-900 dark:text-white">
+                        <span className="text-[10px] font-black uppercase text-slate-400 block px-2 py-1">Select Stay Duration</span>
+                        {[
+                          { months: 1, label: '1 Month', tag: 'Short Term', badge: 'Flexible' },
+                          { months: 2, label: '2 Months', tag: 'Probation / Training', badge: 'Standard' },
+                          { months: 3, label: '3 Months', tag: 'Quarterly Stay', badge: 'Popular' },
+                          { months: 6, label: '6 Months', tag: 'Half Yearly', badge: 'Best Value' },
+                          { months: 11, label: '11 Months', tag: 'Annual Agreement', badge: 'Lowest Rent' },
+                        ].map((d) => (
+                          <button
+                            key={d.months}
+                            type="button"
+                            onClick={() => {
+                              setHostelDurationMonths(d.months);
+                              setIsDurationDropdownOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                              hostelDurationMonths === d.months
+                                ? 'bg-[#ff6325] text-white shadow-sm'
+                                : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                            }`}
+                          >
+                            <div className="flex flex-col text-left">
+                              <span>{d.label}</span>
+                              <span className={`text-[10px] font-normal ${hostelDurationMonths === d.months ? 'text-white/80' : 'text-slate-400'}`}>{d.tag}</span>
+                            </div>
+                            <span className={`text-[9px] uppercase px-2 py-0.5 rounded-md font-black ${
+                              hostelDurationMonths === d.months ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                            }`}>
+                              {d.badge}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 4. Gender & Sharing Room Config */}
+                <div className="flex-[1.1] relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
+                  <button
+                    type="button"
+                    onClick={() => setIsHostelOccupancyOpen(!isHostelOccupancyOpen)}
+                    className="flex items-center gap-3 w-full text-left cursor-pointer"
+                  >
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <Users size={18} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">GENDER & SHARING</span>
+                      <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white truncate">
+                        {pgGenderFilter === 'gents' ? 'Gents' : pgGenderFilter === 'ladies' ? 'Ladies' : pgGenderFilter === 'coliving' ? 'Coliving' : 'All'} • {pgSharingFilter === 'all' ? 'Any Sharing' : pgSharingFilter.replace('-', ' ')}
+                      </span>
+                    </div>
+                    <ChevronDown size={14} className={`text-slate-400 transition-transform shrink-0 ${isHostelOccupancyOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Gender & Sharing Popover */}
+                  {isHostelOccupancyOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsHostelOccupancyOpen(false)} />
+                      <div className="absolute top-full right-0 mt-3 w-80 rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/15 shadow-2xl p-4 z-50 space-y-4 text-slate-900 dark:text-white">
+                        
+                        {/* Gender Tabs */}
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">
+                            Occupancy Gender
+                          </label>
+                          <div className="grid grid-cols-4 gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
+                            {[
+                              { id: 'all', label: 'All' },
+                              { id: 'gents', label: '🚹 Gents' },
+                              { id: 'ladies', label: '🚺 Ladies' },
+                              { id: 'coliving', label: '👥 Co-ed' },
+                            ].map((g) => (
+                              <button
+                                key={g.id}
+                                type="button"
+                                onClick={() => setPgGenderFilter(g.id as any)}
+                                className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer text-center ${
+                                  pgGenderFilter === g.id
+                                    ? 'bg-[#ff6325] text-white shadow-xs'
+                                    : 'text-slate-700 dark:text-slate-300 hover:text-slate-900'
+                                }`}
+                              >
+                                {g.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Room Sharing Config */}
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">
+                            Room Sharing Type
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {[
+                              { id: 'all', label: 'Any Sharing', desc: 'Single to 4-sharing' },
+                              { id: 'single', label: 'Single Room', desc: '1 Person / Private' },
+                              { id: '2-sharing', label: '2-Sharing', desc: '2 Beds per room' },
+                              { id: '3-sharing', label: '3-Sharing', desc: 'Budget friendly' },
+                              { id: '4-sharing', label: '4-Sharing', desc: 'Most economical' },
+                            ].map((s) => (
+                              <button
+                                key={s.id}
+                                type="button"
+                                onClick={() => setPgSharingFilter(s.id as any)}
+                                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                                  pgSharingFilter === s.id
+                                    ? 'bg-[#ff6325]/10 border-[#ff6325] text-[#ff6325]'
+                                    : 'border-slate-200 dark:border-white/10 hover:border-slate-300 text-slate-700 dark:text-slate-300'
+                                }`}
+                              >
+                                <span className="text-xs font-bold block">{s.label}</span>
+                                <span className="text-[10px] text-slate-400 block">{s.desc}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Food Preference Switch */}
+                        <div className="pt-2 border-t border-slate-100 dark:border-white/10 flex items-center justify-between">
+                          <div>
+                            <span className="text-xs font-bold block">🍲 3 Meals Food Included</span>
+                            <span className="text-[10px] text-slate-400 block">Breakfast, Lunch & Dinner</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setPgFoodFilter(pgFoodFilter === 'with-food' ? 'all' : 'with-food')}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                              pgFoodFilter === 'with-food'
+                                ? 'bg-emerald-500 text-white border-emerald-500'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-transparent'
+                            }`}
+                          >
+                            {pgFoodFilter === 'with-food' ? 'Included ✓' : 'Optional'}
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setIsHostelOccupancyOpen(false)}
+                          className="w-full py-2.5 bg-[#ff6325] hover:bg-[#e0531b] text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-md text-center"
+                        >
+                          Apply Preferences
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 5. Search Action Button */}
+                <div className="p-1 shrink-0 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAutocomplete(false);
+                      setIsDurationDropdownOpen(false);
+                      setIsHostelOccupancyOpen(false);
+                      setIsMoveInDatePickerOpen(false);
+                      const el = document.getElementById('hotel-results-anchor');
+                      el?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="w-full md:w-auto px-7 py-3.5 rounded-full bg-[#ff6325] hover:bg-[#e0531b] active:scale-95 text-white flex items-center justify-center gap-2.5 font-bold text-sm shadow-lg shadow-[#ff6325]/35 hover:shadow-[#ff6325]/50 transition-all cursor-pointer group"
+                  >
+                    <Search size={17} className="group-hover:scale-110 transition-transform" />
+                    <span>Search Hostels</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* =========================================================================
+               * STANDARD HOTEL / RESORT / VILLA SEARCH DOCK (Daily Check-in / Check-out)
+               * ========================================================================= */
+              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
 
               {/* 1. Destination / Where */}
               <div className="flex-[1.2] relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors cursor-pointer group">
@@ -2751,6 +3230,7 @@ export default function ProviderDiscoveryPage() {
                 </button>
               </div>
             </div>
+            )}
           </div>
         </div>
       )}
@@ -3031,10 +3511,10 @@ export default function ProviderDiscoveryPage() {
         )}
 
         <div className="mt-4">
-          {category === 'cabs' && <CabBookingView categoryName={categoryName} city={city} />}
-          {category === 'flights' && <FlightBookingView categoryName={categoryName} city={city} />}
-          {category === 'trains' && <TrainBookingView categoryName={categoryName} city={city} />}
-          {category === 'buses' && <BusBookingView categoryName={categoryName} city={city} />}
+          {category === 'cabs' && <CabBookingView categoryName={categoryName} city={city} initialQuery={{ date: queryDate, slot: querySlot, city: queryCity, venue: queryVenue }} />}
+          {category === 'flights' && <FlightBookingView categoryName={categoryName} city={city} initialQuery={{ date: queryDate, slot: querySlot, city: queryCity, venue: queryVenue }} />}
+          {category === 'trains' && <TrainBookingView categoryName={categoryName} city={city} initialQuery={{ date: queryDate, slot: querySlot, city: queryCity, venue: queryVenue }} />}
+          {category === 'buses' && <BusBookingView categoryName={categoryName} city={city} initialQuery={{ date: queryDate, slot: querySlot, city: queryCity, venue: queryVenue }} />}
           {category === 'metro' && <MetroBookingView categoryName={categoryName} city={city} />}
           {/* {['turfs', 'football-turf', 'cricket-ground'].includes(category) && <TurfsBookingView categoryName={categoryName} city={city} />} */}
 
@@ -3278,7 +3758,7 @@ export default function ProviderDiscoveryPage() {
                           <Link
                             href={isHotelCategory
                               ? `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?checkIn=${checkInDate}&checkOut=${checkOutDate}&adults=${adults}&children=${children}&childAges=${encodeURIComponent(JSON.stringify(childAges))}&rooms=${rooms}&pets=${pets}&petCount=${petCount}${isCardSecret ? '&isLuxury=true' : ''}`
-                              : `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}`
+                              : `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?date=${encodeURIComponent(queryDate || '')}&slot=${encodeURIComponent(querySlot || '')}&city=${encodeURIComponent(queryCity || city || '')}&venue=${encodeURIComponent(queryVenue || '')}`
                             }
                             className="block h-full"
                           >

@@ -7,7 +7,7 @@ import { Search, Heart, ShoppingBag, Sparkles, MapPin, Map, X, User, Sun, Moon, 
 import { motion } from 'framer-motion';
 import { useLocationStore, useUIStore, useUserStore, useCartStore, useWishlistStore, useBookingFlowStore } from '../lib/store';
 import { LiveClock } from './LiveClock';
-import { ALL_SEARCHABLE_SERVICES, SearchableService } from '../lib/searchData';
+import { ALL_SEARCHABLE_SERVICES, SearchableService, SERVICE_SYNONYMS } from '../lib/searchData';
 import { compressImage } from '../lib/imageUtils';
 import { LocationSelectorModal } from './LocationSelectorModal';
 import { UtilityDrawer } from './UtilityDrawer';
@@ -61,6 +61,7 @@ export function TopNav({
   const [markerPos, setMarkerPos] = useState<{ x: string; y: string } | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [navOrigin, setNavOrigin] = useState<string | null>(null);
   const { user, setUser, logout } = useUserStore();
   const userName = user?.fullName || user?.username || 'vinothkumar';
   const userEmoji = user?.emoji || '🧑';
@@ -102,14 +103,19 @@ export function TopNav({
   const [activeIndex, setActiveIndex] = useState(-1);
 
   // Scroll behavior:
-  // - Downward scroll: hide all headers
-  // - Upward scroll: main header appears first
-  // - Top of page (scroll <= 25px): both main and secondary header appear
-  const [isMainHeaderVisible, setIsMainHeaderVisible] = useState(true);
-  const [isSecondaryHeaderVisible, setIsSecondaryHeaderVisible] = useState(true);
+  // - On Home page ('/' or '/home'): dynamic scroll hide/reveal behavior
+  //   - Downward scroll: hide all headers
+  //   - Upward scroll: main header appears first
+  //   - Top of page (scroll <= 25px): both main and secondary header appear
+  // - On Booking / Categories / Discovery pages: statically pinned at top (never hide on scroll)
+  const isHomePage = pathname === '/' || pathname === '/home';
+  const [homeMainHeaderVisible, setHomeMainHeaderVisible] = useState(true);
+  const [homeSecondaryHeaderVisible, setHomeSecondaryHeaderVisible] = useState(true);
   const lastScrollYRef = useRef(0);
 
   useEffect(() => {
+    if (!isHomePage) return;
+
     let ticking = false;
 
     const handleScroll = () => {
@@ -119,20 +125,20 @@ export function TopNav({
         window.requestAnimationFrame(() => {
           // 1. When at or near the very top of page (scrollY <= 25), BOTH headers show
           if (currentScrollY <= 25) {
-            setIsMainHeaderVisible(true);
-            setIsSecondaryHeaderVisible(true);
+            setHomeMainHeaderVisible(true);
+            setHomeSecondaryHeaderVisible(true);
           } else {
             const scrollDelta = currentScrollY - lastScrollYRef.current;
 
             // Use an intentional threshold to prevent microscopic mouse/touch jitter
             if (scrollDelta > 15) {
               // Scrolling DOWN: hide both headers
-              setIsMainHeaderVisible(false);
-              setIsSecondaryHeaderVisible(false);
+              setHomeMainHeaderVisible(false);
+              setHomeSecondaryHeaderVisible(false);
             } else if (scrollDelta < -15) {
               // Scrolling UP in middle: ONLY main blue header, secondary white nav stays strictly hidden
-              setIsMainHeaderVisible(true);
-              setIsSecondaryHeaderVisible(false);
+              setHomeMainHeaderVisible(true);
+              setHomeSecondaryHeaderVisible(false);
             }
           }
 
@@ -147,11 +153,21 @@ export function TopNav({
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, []);
+  }, [isHomePage]);
+
+  const isMainHeaderVisible = isHomePage ? homeMainHeaderVisible : true;
+  const isSecondaryHeaderVisible = isHomePage ? homeSecondaryHeaderVisible : true;
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    if (typeof window !== 'undefined') {
+      try {
+        setNavOrigin(sessionStorage.getItem('bokspot_nav_origin'));
+      } catch {
+        // ignore
+      }
+    }
+  }, [pathname]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -198,52 +214,22 @@ export function TopNav({
       }))
     ];
 
-    const SYNONYM_MAP: Record<string, string[]> = {
-      pg: ['hostel', 'pg-hostels', 'coliving', 'room', 'stay', 'paying guest'],
-      hostel: ['pg', 'pg-hostels', 'coliving', 'hostel booking', 'stay', 'dorm'],
-      coliving: ['pg', 'hostel', 'pg-hostels', 'co-living', 'coworking stay'],
-      hotel: ['resort', 'stay', 'room', 'lodge', 'villa'],
-      cab: ['taxi', 'car', 'ride', 'auto'],
-      taxi: ['cab', 'car', 'ride'],
-      turf: ['football', 'cricket', 'ground', 'sports'],
-      football: ['turf', 'sports'],
-      cricket: ['ground', 'turf', 'sports'],
-      salon: ['spa', 'haircut', 'beauty', 'parlour'],
-      spa: ['salon', 'massage', 'wellness'],
-      gym: ['yoga', 'fitness', 'workout'],
-      darshan: ['temple', 'pooja', 'pilgrimage'],
-      temple: ['darshan', 'pooja'],
-      doctor: ['clinic', 'hospital', 'health'],
-    };
-
     const query = searchQuery.toLowerCase().trim();
-    const queryTokens = query.split(/\s+/).filter(Boolean);
-
-    // Build extended matching keywords based on synonyms
-    const extendedTokens = new Set<string>(queryTokens);
-    queryTokens.forEach((token) => {
-      Object.entries(SYNONYM_MAP).forEach(([key, synonyms]) => {
-        if (key.includes(token) || token.includes(key)) {
-          synonyms.forEach((syn) => extendedTokens.add(syn));
-        }
-      });
-    });
 
     const filtered = UNIVERSAL_ITEMS.filter((item) => {
       const itemName = item.name.toLowerCase();
       const itemGroup = item.groupTitle.toLowerCase();
       const itemHref = (item.href || '').toLowerCase();
 
-      // Direct substring match
+      // 1. Direct match on item name, group, or URL
       if (itemName.includes(query) || itemGroup.includes(query) || itemHref.includes(query)) {
         return true;
       }
 
-      // Check against extended synonym tokens
-      for (const token of extendedTokens) {
-        if (itemName.includes(token) || itemGroup.includes(token) || itemHref.includes(token)) {
-          return true;
-        }
+      // 2. Comprehensive Synonyms & Alternative Keywords match
+      const synonyms = SERVICE_SYNONYMS[item.name] || [];
+      if (synonyms.some((syn: string) => syn.includes(query) || query.includes(syn))) {
+        return true;
       }
 
       return false;
@@ -445,10 +431,7 @@ export function TopNav({
                 const isBookingsActive = pathname === '/bookings' || pathname === '/booking' || pathname.startsWith('/bookings/') || pathname.startsWith('/split') || pathname === '/tracks';
 
                 // Check stored navigation origin for deep discovery routes (e.g. /stay-accommodation/hotels)
-                let originNav: string | null = null;
-                if (typeof window !== 'undefined') {
-                  originNav = sessionStorage.getItem('bokspot_nav_origin');
-                }
+                const originNav = mounted ? navOrigin : null;
 
                 let currentActiveId = 'home';
                 if (isBookingsActive) {
