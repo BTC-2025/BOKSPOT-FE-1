@@ -31,15 +31,17 @@ const POPULAR_CITIES = [
 export function SmartSlotFinder() {
   const router = useRouter();
   
-  // Selected Category ID (defaults to 'sports-turf')
-  const [selectedCatId, setSelectedCatId] = useState<string>('sports-turf');
+  // Selected Category ID (defaults to empty so user actively chooses)
+  const [selectedCatId, setSelectedCatId] = useState<string>('');
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState<boolean>(false);
   
   // Sub-services belonging to selected category
-  const subServices = AVAILABLE_SHORTCUTS.filter(s => s.actionTarget.startsWith(`/${selectedCatId}`) || (selectedCatId === 'stay-accommodation' && s.actionTarget.startsWith('/home/hotels')));
-  const fallbackServices = subServices.length > 0 ? subServices : AVAILABLE_SHORTCUTS.slice(0, 5);
+  const subServices = selectedCatId
+    ? AVAILABLE_SHORTCUTS.filter(s => s.actionTarget.startsWith(`/${selectedCatId}`) || (selectedCatId === 'stay-accommodation' && s.actionTarget.startsWith('/home/hotels')))
+    : [];
+  const fallbackServices = subServices;
 
-  const [selectedServiceId, setSelectedServiceId] = useState<string>(fallbackServices[0]?.id || 'football-turf');
+  const [selectedServiceId, setSelectedServiceId] = useState<string>('');
   const [isServiceDropdownOpen, setIsServiceDropdownOpen] = useState<boolean>(false);
   
   // Real Date Input (Defaults to today in YYYY-MM-DD format)
@@ -50,7 +52,40 @@ export function SmartSlotFinder() {
   
   // Time Slot (Defaults to Any Time)
   const [selectedSlot, setSelectedSlot] = useState<string>(TIME_SLOTS[0]);
+  const [isTimePickerOpen, setIsTimePickerOpen] = useState<boolean>(false);
+  const timePickerRef = useRef<HTMLDivElement>(null);
   const [isSearching, setIsSearching] = useState<boolean>(false);
+
+  // Dynamic Contextual Inputs for Step 3 & Step 4 across Archetypes
+  // 1. Hostel / PG (Tenure & Sharing & Gender)
+  const [hostelDurationMonths, setHostelDurationMonths] = useState<number>(3);
+  const [hostelSharing, setHostelSharing] = useState<string>('all'); // all, single, 2-sharing, 3-sharing, 4-sharing
+  const [hostelDormType, setHostelDormType] = useState<string>('mixed'); // mixed, gents, ladies
+
+  // 2. Hotel / Resorts / Villas / Camping (Nights, Adults, Children, Child Ages, Rooms, Pets)
+  const [hotelNights, setHotelNights] = useState<number>(2);
+  const [hotelAdults, setHotelAdults] = useState<number>(2);
+  const [hotelChildren, setHotelChildren] = useState<number>(0);
+  const [hotelChildAges, setHotelChildAges] = useState<number[]>([]);
+  const [hotelRooms, setHotelRooms] = useState<number>(1);
+  const [hotelPets, setHotelPets] = useState<boolean>(false);
+  const [isHotelOccupancyOpen, setIsHotelOccupancyOpen] = useState<boolean>(false);
+  const hotelOccupancyRef = useRef<HTMLDivElement>(null);
+
+  // 3. Sports & Turf (Pitch Format & Players)
+  const [pitchFormat, setPitchFormat] = useState<string>('5v5'); // 5v5, 7v7, full
+
+  // 3b. Travel & Transit (Passenger count & trip mode)
+  const [passengers, setPassengers] = useState<number>(1);
+
+  // 4. Rentals & Equipment (Rental Duration & Gear Type)
+  const [rentalDuration, setRentalDuration] = useState<string>('24 Hours (Full Day)');
+
+  // 5. Appointments & Healthcare (Consultation Type / For)
+  const [appointmentFor, setAppointmentFor] = useState<string>('Self');
+
+  // 6. Tickets & Events / Darshan (Tickets/Devotees Count)
+  const [ticketCount, setTicketCount] = useState<number>(2);
 
   // Location / City (Typeable with custom themed dropdown)
   const [selectedCity, setSelectedCity] = useState<string>('');
@@ -72,6 +107,12 @@ export function SmartSlotFinder() {
       if (calendarContainerRef.current && !calendarContainerRef.current.contains(target)) {
         setIsCalendarOpen(false);
       }
+      if (hotelOccupancyRef.current && !hotelOccupancyRef.current.contains(target)) {
+        setIsHotelOccupancyOpen(false);
+      }
+      if (timePickerRef.current && !timePickerRef.current.contains(target)) {
+        setIsTimePickerOpen(false);
+      }
     };
 
     document.addEventListener('mousedown', handleOutsideClick);
@@ -83,8 +124,21 @@ export function SmartSlotFinder() {
   // Spot / Venue Name (Optional Search filter)
   const [selectedVenue, setSelectedVenue] = useState<string>('');
 
-  const activeCategory = SUBNAV_CATEGORIES.find(c => c.id === selectedCatId) || SUBNAV_CATEGORIES[3];
-  const activeService = AVAILABLE_SHORTCUTS.find(s => s.id === selectedServiceId) || fallbackServices[0];
+  const activeCategory = selectedCatId ? SUBNAV_CATEGORIES.find(c => c.id === selectedCatId) : null;
+  const activeService = selectedServiceId ? AVAILABLE_SHORTCUTS.find(s => s.id === selectedServiceId) : null;
+
+  // Detect Archetypes based on active service / category
+  const serviceId = activeService?.id || '';
+  const isTravelTransitArchetype = selectedCatId === 'travel-transport' || serviceId === 'buses' || serviceId === 'trains' || serviceId === 'flights' || serviceId === 'cabs' || serviceId === 'ferry' || serviceId === 'shuttle' || serviceId === 'helicopter';
+  const isHostelArchetype = serviceId === 'hostels' || serviceId === 'pg-hostels';
+  const isHotelStayArchetype = serviceId === 'hotels' || serviceId === 'resorts' || serviceId === 'villas' || serviceId === 'camping';
+  const isSportsArchetype = selectedCatId === 'sports-turf' || serviceId.includes('turf') || serviceId.includes('ground') || serviceId.includes('court') || serviceId.includes('swimming') || serviceId.includes('arena');
+  const isRentalArchetype = selectedCatId === 'rental-equipment' || serviceId.includes('rental') || serviceId.includes('bike') || serviceId.includes('camera') || serviceId.includes('sound');
+  const isAppointmentArchetype = serviceId === 'doctor' || serviceId === 'salons' || serviceId === 'gym-yoga' || serviceId === 'cleaning' || serviceId === 'electrician' || serviceId === 'plumber' || serviceId === 'technician' || serviceId === 'pet-grooming';
+  const isTicketsEventsArchetype = selectedCatId === 'entertainment-events' || serviceId === 'movies' || serviceId === 'theatre' || serviceId === 'concerts' || serviceId === 'events' || serviceId === 'darshan' || serviceId === 'pooja' || serviceId === 'pilgrimage';
+
+  // State to track if current archetype even has additional Step 4 requirements
+  const hasStep4Requirements = Boolean(activeCategory && (isHostelArchetype || isHotelStayArchetype || isSportsArchetype || isRentalArchetype || isAppointmentArchetype || isTicketsEventsArchetype));
 
   const filteredCities = selectedCity.trim() === ''
     ? POPULAR_CITIES
@@ -95,16 +149,62 @@ export function SmartSlotFinder() {
     const newSubList = AVAILABLE_SHORTCUTS.filter(s => s.actionTarget.startsWith(`/${catId}`) || (catId === 'stay-accommodation' && s.actionTarget.startsWith('/home/hotels')));
     if (newSubList.length > 0) {
       setSelectedServiceId(newSubList[0].id);
+    } else {
+      setSelectedServiceId('');
     }
     setIsCategoryModalOpen(false);
   };
 
   const handleSearch = () => {
+    if (!selectedCatId && !selectedServiceId) {
+      setIsCategoryModalOpen(true);
+      return;
+    }
+
     setIsSearching(true);
     setTimeout(() => {
       setIsSearching(false);
-      const targetUrl = activeService?.actionTarget || activeCategory.href;
-      router.push(`${targetUrl}?date=${selectedDate}&slot=${encodeURIComponent(selectedSlot)}&city=${selectedCity}&venue=${encodeURIComponent(selectedVenue)}`);
+      const targetUrl = activeService?.actionTarget || activeCategory?.href || '/';
+      
+      const queryParams = new URLSearchParams();
+      queryParams.set('date', selectedDate);
+      if (selectedCity) queryParams.set('city', selectedCity);
+      if (selectedVenue) queryParams.set('venue', selectedVenue);
+
+      if (isHostelArchetype) {
+        queryParams.set('moveIn', selectedDate);
+        queryParams.set('durationMonths', String(hostelDurationMonths));
+        queryParams.set('sharing', hostelSharing);
+        queryParams.set('gender', hostelDormType);
+        queryParams.set('dorm', hostelDormType);
+      } else if (isTravelTransitArchetype) {
+        queryParams.set('passengers', String(passengers));
+        queryParams.set('date', selectedDate);
+        if (selectedVenue) queryParams.set('destination', selectedVenue);
+      } else if (isHotelStayArchetype) {
+        queryParams.set('nights', String(hotelNights));
+        queryParams.set('adults', String(hotelAdults));
+        queryParams.set('children', String(hotelChildren));
+        queryParams.set('guests', String(hotelAdults + hotelChildren));
+        queryParams.set('rooms', String(hotelRooms));
+        if (hotelPets) queryParams.set('pets', 'true');
+        if (hotelChildAges.length > 0) queryParams.set('childAges', hotelChildAges.join(','));
+      } else if (isSportsArchetype) {
+        queryParams.set('slot', selectedSlot);
+        queryParams.set('pitchFormat', pitchFormat);
+      } else if (isRentalArchetype) {
+        queryParams.set('rentalDuration', rentalDuration);
+      } else if (isAppointmentArchetype) {
+        queryParams.set('slot', selectedSlot);
+        queryParams.set('appointmentFor', appointmentFor);
+      } else if (isTicketsEventsArchetype) {
+        queryParams.set('slot', selectedSlot);
+        queryParams.set('tickets', String(ticketCount));
+      } else {
+        queryParams.set('slot', selectedSlot);
+      }
+
+      router.push(`${targetUrl}?${queryParams.toString()}`);
     }, 400);
   };
 
@@ -159,13 +259,17 @@ export function SmartSlotFinder() {
               <button
                 type="button"
                 onClick={() => setIsCategoryModalOpen(true)}
-                className="h-9 px-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.04] hover:border-[#ff6325]/50 flex items-center justify-between transition-all cursor-pointer group min-w-0"
-                title={`${activeCategory.label} - Click to switch category`}
+                className={`h-9 px-2.5 rounded-xl border flex items-center justify-between transition-all cursor-pointer group min-w-0 ${
+                  activeCategory
+                    ? 'border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.04] hover:border-[#ff6325]/50'
+                    : 'border-dashed border-[#ff6325]/40 bg-[#ff6325]/5 hover:bg-[#ff6325]/10 text-[#ff6325]'
+                }`}
+                title={activeCategory ? `${activeCategory.label} - Click to switch category` : 'Choose booking category'}
               >
                 <div className="flex items-center gap-1.5 min-w-0 truncate">
-                  <span className="text-sm shrink-0">{activeCategory.emoji}</span>
-                  <span className="text-xs font-bold text-slate-800 dark:text-white truncate">
-                    {activeCategory.label}
+                  <span className="text-sm shrink-0">{activeCategory ? activeCategory.emoji : '🎯'}</span>
+                  <span className={`text-xs font-bold truncate ${activeCategory ? 'text-slate-800 dark:text-white' : 'text-[#ff6325]'}`}>
+                    {activeCategory ? activeCategory.label : 'Select Category'}
                   </span>
                 </div>
                 <span className="material-symbols-outlined text-[15px] text-[#ff6325] shrink-0 ml-1 group-hover:rotate-180 transition-transform">
@@ -177,10 +281,22 @@ export function SmartSlotFinder() {
               <div className="relative" ref={serviceContainerRef}>
                 <button
                   type="button"
-                  onClick={() => setIsServiceDropdownOpen(!isServiceDropdownOpen)}
-                  className="w-full h-9 px-3 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] text-slate-800 dark:text-white text-xs font-semibold hover:border-[#ff6325]/50 flex items-center justify-between transition-all cursor-pointer shadow-xs min-w-0"
+                  onClick={() => {
+                    if (!selectedCatId) {
+                      setIsCategoryModalOpen(true);
+                      return;
+                    }
+                    setIsServiceDropdownOpen(!isServiceDropdownOpen);
+                  }}
+                  className={`w-full h-9 px-3 rounded-xl border flex items-center justify-between transition-all cursor-pointer shadow-xs min-w-0 ${
+                    activeService
+                      ? 'border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] text-slate-800 dark:text-white hover:border-[#ff6325]/50'
+                      : 'border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-slate-400 hover:border-slate-400'
+                  }`}
                 >
-                  <span className="truncate">{activeService?.label || 'Select Service'}</span>
+                  <span className={`truncate text-xs ${activeService ? 'font-semibold text-slate-800 dark:text-white' : 'font-medium text-slate-400'}`}>
+                    {activeService ? activeService.label : (selectedCatId ? 'Select Service' : 'Choose Category First')}
+                  </span>
                   <span className={`material-symbols-outlined text-[16px] text-slate-400 shrink-0 ml-1 transition-transform duration-200 ${isServiceDropdownOpen ? 'rotate-180 text-[#ff6325]' : ''}`}>
                     arrow_drop_down
                   </span>
@@ -195,7 +311,7 @@ export function SmartSlotFinder() {
                     />
                     <div className="absolute right-0 top-full mt-1.5 w-56 max-h-56 overflow-y-auto z-50 bg-white dark:bg-[#1a202c] border border-black/10 dark:border-white/10 rounded-2xl shadow-xl p-1.5 animate-in fade-in zoom-in-95 duration-150 custom-scrollbar">
                       <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                        {activeCategory.label} Services
+                        {activeCategory ? activeCategory.label : 'Select'} Services
                       </div>
                       {fallbackServices.map((service) => {
                         const isSelected = service.id === selectedServiceId;
@@ -229,11 +345,11 @@ export function SmartSlotFinder() {
             </div>
           </div>
 
-          {/* Step 2: City & Spot/Venue (100% Conflict-free universal input) */}
+          {/* Step 2: City & Spot/Venue (Contextual for Transit & Other Verticals) */}
           <div>
             <div className="mb-1 px-0.5">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--color-outline)]">
-                Step 2: City &amp; Venue
+                {isTravelTransitArchetype ? 'Step 2: Source & Destination Route' : 'Step 2: City & Venue'}
               </span>
             </div>
 
@@ -242,7 +358,7 @@ export function SmartSlotFinder() {
               <div className="relative" ref={cityContainerRef}>
                 <input
                   type="text"
-                  placeholder="City or Area..."
+                  placeholder={isTravelTransitArchetype ? 'From (Source City)...' : 'City or Area...'}
                   value={selectedCity}
                   onFocus={() => setIsCitySuggestionsOpen(true)}
                   onChange={(e) => {
@@ -252,7 +368,7 @@ export function SmartSlotFinder() {
                   className="w-full h-9 pl-8.5 pr-3 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] text-slate-800 dark:text-white text-xs font-semibold focus:outline-hidden focus:border-[#ff6325] focus:ring-1 focus:ring-[#ff6325]/30 cursor-text shadow-xs placeholder:text-slate-400"
                 />
                 <span className="material-symbols-outlined pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[14px] text-[#ff6325]">
-                  location_on
+                  {isTravelTransitArchetype ? 'trip_origin' : 'location_on'}
                 </span>
 
                 {/* Custom Themed Suggestion Menu */}
@@ -302,27 +418,27 @@ export function SmartSlotFinder() {
                 )}
               </div>
 
-              {/* Spot / Specific Venue Name (Optional) */}
+              {/* Spot / Specific Venue Name or Destination */}
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Spot / Venue (Optional)"
+                  placeholder={isTravelTransitArchetype ? 'To (Destination City)...' : 'Spot / Venue (Optional)'}
                   value={selectedVenue}
                   onChange={(e) => setSelectedVenue(e.target.value)}
                   className="w-full h-9 pl-8.5 pr-3 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] text-slate-800 dark:text-white text-xs font-semibold focus:outline-hidden focus:border-[#ff6325] focus:ring-1 focus:ring-[#ff6325]/30 cursor-text shadow-xs placeholder:text-slate-400"
                 />
                 <span className="material-symbols-outlined pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[14px] text-blue-500">
-                  storefront
+                  {isTravelTransitArchetype ? 'location_on' : 'storefront'}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Step 3: Date & Preferred Time Slot (Without Today/Tom buttons) */}
+          {/* Step 3: Date & Archetype-Specific Duration/Slot */}
           <div>
             <div className="flex items-center justify-between mb-1 px-0.5">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--color-outline)]">
-                Step 3: Date &amp; Time
+                {isHostelArchetype ? 'Step 3: Move-in Date & Duration' : isHotelStayArchetype ? 'Step 3: Check-in Date & Nights' : isRentalArchetype ? 'Step 3: Pickup Date & Duration' : 'Step 3: Date & Slot'}
               </span>
             </div>
 
@@ -501,42 +617,490 @@ export function SmartSlotFinder() {
                 )}
               </div>
 
-              {/* Time Slot */}
-              <div className="relative">
-                <select
-                  aria-label="Select Preferred Slot"
-                  value={selectedSlot}
-                  onChange={(e) => setSelectedSlot(e.target.value)}
-                  className="w-full h-9 appearance-none pl-3 pr-7 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] text-slate-800 dark:text-white text-xs font-semibold focus:outline-hidden focus:border-[#ff6325] focus:ring-1 focus:ring-[#ff6325]/30 cursor-pointer shadow-xs truncate"
-                >
-                  {TIME_SLOTS.map((slot, idx) => (
-                    <option key={idx} value={slot} className="bg-white dark:bg-[#121722] text-slate-800 dark:text-white py-1">
-                      {slot}
-                    </option>
-                  ))}
-                </select>
-                <span className="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-slate-400">
-                  schedule
-                </span>
-              </div>
+              {/* Dynamic Field 2 based on Archetype */}
+              {isHostelArchetype ? (
+                /* Hostel/PG: Stay Duration (Tenure Months) */
+                <div className="relative">
+                  <select
+                    aria-label="Select Stay Tenure"
+                    value={hostelDurationMonths}
+                    onChange={(e) => setHostelDurationMonths(Number(e.target.value))}
+                    className="w-full h-9 appearance-none pl-3 pr-7 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] text-slate-800 dark:text-white text-xs font-semibold focus:outline-hidden focus:border-[#ff6325] focus:ring-1 focus:ring-[#ff6325]/30 cursor-pointer shadow-xs truncate"
+                  >
+                    <option value={1}>1 Month (Flexible)</option>
+                    <option value={2}>2 Months (Short-term)</option>
+                    <option value={3}>3 Months (Quarterly)</option>
+                    <option value={6}>6 Months (Best Value)</option>
+                    <option value={11}>11 Months (Annual Agreement)</option>
+                  </select>
+                  <span className="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-slate-400">
+                    date_range
+                  </span>
+                </div>
+              ) : isHotelStayArchetype ? (
+                /* Hotels/Resorts: Nights Selector */
+                <div className="relative">
+                  <select
+                    aria-label="Select Stay Duration"
+                    value={hotelNights}
+                    onChange={(e) => setHotelNights(Number(e.target.value))}
+                    className="w-full h-9 appearance-none pl-3 pr-7 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] text-slate-800 dark:text-white text-xs font-semibold focus:outline-hidden focus:border-[#ff6325] focus:ring-1 focus:ring-[#ff6325]/30 cursor-pointer shadow-xs truncate"
+                  >
+                    <option value={1}>1 Night Stay</option>
+                    <option value={2}>2 Nights Stay</option>
+                    <option value={3}>3 Nights Stay</option>
+                    <option value={4}>4 Nights Stay</option>
+                    <option value={5}>5+ Nights Stay</option>
+                  </select>
+                  <span className="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-slate-400">
+                    bedtime
+                  </span>
+                </div>
+              ) : isRentalArchetype ? (
+                /* Rentals: Duration */
+                <div className="relative">
+                  <select
+                    aria-label="Select Rental Duration"
+                    value={rentalDuration}
+                    onChange={(e) => setRentalDuration(e.target.value)}
+                    className="w-full h-9 appearance-none pl-3 pr-7 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] text-slate-800 dark:text-white text-xs font-semibold focus:outline-hidden focus:border-[#ff6325] focus:ring-1 focus:ring-[#ff6325]/30 cursor-pointer shadow-xs truncate"
+                  >
+                    <option value="12 Hours (Half Day)">12 Hours (Half Day)</option>
+                    <option value="24 Hours (Full Day)">24 Hours (Full Day)</option>
+                    <option value="2 Days (Weekend)">2 Days (Weekend)</option>
+                    <option value="3+ Days (Weekly Pass)">3+ Days (Weekly Pass)</option>
+                  </select>
+                  <span className="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-slate-400">
+                    timer
+                  </span>
+                </div>
+              ) : (
+                /* Themed Interactive Time Popover with Quick Bands + Clock Hour Slots */
+                <div className="relative" ref={timePickerRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsTimePickerOpen(!isTimePickerOpen)}
+                    className="w-full h-9 pl-3 pr-7 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] text-slate-800 dark:text-white text-xs font-semibold focus:outline-hidden hover:border-[#ff6325]/50 flex items-center justify-between transition-all cursor-pointer shadow-xs min-w-0"
+                  >
+                    <span className="truncate">{selectedSlot}</span>
+                    <span className={`material-symbols-outlined text-[16px] text-slate-400 shrink-0 transition-transform ${isTimePickerOpen ? 'rotate-180 text-[#ff6325]' : ''}`}>
+                      schedule
+                    </span>
+                  </button>
+
+                  {/* Custom Themed Floating Time Popover */}
+                  {isTimePickerOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsTimePickerOpen(false)} />
+                      <div className="absolute right-0 top-full mt-1.5 w-72 z-[100] bg-white dark:bg-[#121722] border border-black/10 dark:border-white/10 rounded-2xl shadow-2xl p-3 animate-in fade-in zoom-in-95 duration-150 space-y-3">
+                        <div className="flex items-center justify-between border-b border-black/5 dark:border-white/5 pb-1.5">
+                          <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[13px] text-[#ff6325]">schedule</span>
+                            <span>Choose Timing Window</span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setIsTimePickerOpen(false)}
+                            className="text-[10px] font-bold text-[#ff6325] hover:underline cursor-pointer"
+                          >
+                            Done
+                          </button>
+                        </div>
+
+                        {/* Quick Time Bands (Buses, Trains, Cinema, Darshan) */}
+                        <div className="space-y-1">
+                          <span className="text-[9px] font-bold uppercase text-slate-400 block px-0.5">Quick Windows</span>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            {[
+                              { label: 'Any Time (All Slots)', tag: 'All Day' },
+                              { label: 'Morning (06:00 - 12:00)', tag: '06:00 - 12:00' },
+                              { label: 'Afternoon (12:00 - 17:00)', tag: '12:00 - 17:00' },
+                              { label: 'Evening (17:00 - 21:00)', tag: '17:00 - 21:00' },
+                              { label: 'Night (21:00 - 00:00)', tag: '21:00 - 00:00' },
+                            ].map((slot, idx) => {
+                              const isSelected = selectedSlot === slot.label;
+                              return (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedSlot(slot.label);
+                                    setIsTimePickerOpen(false);
+                                  }}
+                                  className={`p-1.5 rounded-xl text-left border transition-all cursor-pointer ${
+                                    isSelected
+                                      ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
+                                      : 'border-black/5 dark:border-white/5 bg-slate-50 dark:bg-slate-800/50 hover:border-[#ff6325]/40 text-slate-700 dark:text-slate-200'
+                                  } ${idx === 0 ? 'col-span-2' : ''}`}
+                                >
+                                  <span className="text-[11px] font-bold block truncate">{slot.label.split(' (')[0]}</span>
+                                  <span className={`text-[9px] block ${isSelected ? 'text-white/80' : 'text-slate-400'}`}>{slot.tag}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Specific Hour / Clock Slots (Turf, Appointments, Dining, Studio) */}
+                        <div className="pt-2 border-t border-black/5 dark:border-white/5 space-y-1">
+                          <span className="text-[9px] font-bold uppercase text-slate-400 block px-0.5">Exact Hour Slots (Sports / Clinic / Dining)</span>
+                          <div className="grid grid-cols-4 gap-1">
+                            {[
+                              '06:00 AM', '07:00 AM', '08:00 AM', '09:00 AM',
+                              '10:00 AM', '11:00 AM', '12:00 PM', '01:00 PM',
+                              '04:00 PM', '05:00 PM', '06:00 PM', '07:00 PM',
+                              '08:00 PM', '09:00 PM', '10:00 PM', '11:00 PM'
+                            ].map((hr) => {
+                              const isSelected = selectedSlot === hr;
+                              return (
+                                <button
+                                  key={hr}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedSlot(hr);
+                                    setIsTimePickerOpen(false);
+                                  }}
+                                  className={`py-1 rounded-lg text-[10px] font-bold transition-all text-center cursor-pointer border ${
+                                    isSelected
+                                      ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
+                                      : 'border-transparent hover:border-[#ff6325]/40 bg-black/[0.03] dark:bg-white/[0.04] text-slate-700 dark:text-slate-200'
+                                  }`}
+                                >
+                                  {hr}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Micro Trust Indicators (Zero empty space, maximum professional look) */}
-          <div className="flex items-center justify-between px-1.5 py-1 rounded-lg bg-black/[0.02] dark:bg-white/[0.02] border border-black/5 dark:border-white/5 text-[9px] text-slate-500 dark:text-slate-400 font-medium">
-            <span className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-[12px] text-emerald-500">verified</span>
-              Instant Confirm
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-[12px] text-blue-500">lock_reset</span>
-              Easy Reschedule
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-[12px] text-[#ff6325]">loyalty</span>
-              Best Price Guarantee
-            </span>
-          </div>
+          {/* Step 4: Contextual Booking Requirements (Consistent Step Header) */}
+          {hasStep4Requirements && (
+            <div>
+              <div className="mb-1 px-0.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--color-outline)]">
+                  {isHostelArchetype ? 'Step 4: Sharing & Gender' : isHotelStayArchetype ? 'Step 4: Guests & Rooms' : isSportsArchetype ? 'Step 4: Match Format' : isTravelTransitArchetype ? 'Step 4: Passengers' : isRentalArchetype ? 'Step 4: Rental Terms' : 'Step 4: Booking Details'}
+                </span>
+              </div>
+              {isHostelArchetype ? (
+                /* Hostel/PG Specs: Room Sharing Type & Gender */
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="relative">
+                    <select
+                      value={hostelSharing}
+                      onChange={(e) => setHostelSharing(e.target.value)}
+                      className="w-full h-8 appearance-none pl-2.5 pr-6 rounded-lg border border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] text-slate-800 dark:text-white text-xs font-semibold focus:outline-hidden focus:border-[#ff6325]"
+                    >
+                      <option value="all">🛏️ Any Sharing</option>
+                      <option value="single">🚪 Single Room (Private)</option>
+                      <option value="2-sharing">👥 2-Sharing Room</option>
+                      <option value="3-sharing">🧑‍🤝‍🧑 3-Sharing Room</option>
+                      <option value="4-sharing">🏢 4-Sharing Room</option>
+                    </select>
+                    <span className="material-symbols-outlined pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[14px] text-slate-400">
+                      arrow_drop_down
+                    </span>
+                  </div>
+
+                  <div className="relative">
+                    <select
+                      value={hostelDormType}
+                      onChange={(e) => setHostelDormType(e.target.value)}
+                      className="w-full h-8 appearance-none pl-2.5 pr-6 rounded-lg border border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] text-slate-800 dark:text-white text-xs font-semibold focus:outline-hidden focus:border-[#ff6325]"
+                    >
+                      <option value="mixed">👥 Mixed / Co-living</option>
+                      <option value="gents">🚹 Gents Only</option>
+                      <option value="ladies">🚺 Ladies Only</option>
+                    </select>
+                    <span className="material-symbols-outlined pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[14px] text-slate-400">
+                      arrow_drop_down
+                    </span>
+                  </div>
+                </div>
+              ) : isTravelTransitArchetype ? (
+                /* Travel & Transit: Passengers Counter */
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="h-8 px-2.5 rounded-lg border border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] flex items-center justify-between col-span-2">
+                    <span className="text-xs text-slate-500 font-semibold flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[15px] text-[#ff6325]">person</span>
+                      <span>Passengers:</span>
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setPassengers(Math.max(1, passengers - 1))}
+                        className="w-6 h-6 rounded flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200 cursor-pointer"
+                      >
+                        -
+                      </button>
+                      <span className="text-xs font-black text-slate-900 dark:text-white min-w-6 text-center">{passengers} {passengers > 1 ? 'Passengers' : 'Passenger'}</span>
+                      <button
+                        type="button"
+                        onClick={() => setPassengers(Math.min(6, passengers + 1))}
+                        className="w-6 h-6 rounded flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200 cursor-pointer"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : isHotelStayArchetype ? (
+                /* Hotel/Resort Specs: Ultra-compact 2-Column Bar with Popover */
+                <div className="grid grid-cols-2 gap-2" ref={hotelOccupancyRef}>
+                  {/* Left: Occupancy Trigger Button (Adults, Children, Rooms) */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsHotelOccupancyOpen(!isHotelOccupancyOpen)}
+                      className="w-full h-8 px-2.5 rounded-lg border border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] flex items-center justify-between text-left hover:border-[#ff6325]/50 transition-colors cursor-pointer"
+                    >
+                      <span className="text-xs font-bold text-slate-800 dark:text-white truncate">
+                        {hotelAdults} Adults{hotelChildren > 0 ? `, ${hotelChildren} Ch` : ''} • {hotelRooms} Rm
+                      </span>
+                      <span className={`material-symbols-outlined text-[15px] text-slate-400 shrink-0 transition-transform ${isHotelOccupancyOpen ? 'rotate-180 text-[#ff6325]' : ''}`}>
+                        expand_more
+                      </span>
+                    </button>
+
+                    {/* Compact Popover for Detailed Occupancy (Adults, Children, Ages, Rooms) */}
+                    {isHotelOccupancyOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setIsHotelOccupancyOpen(false)} />
+                        <div className="absolute left-0 bottom-full mb-1.5 w-64 rounded-2xl bg-white dark:bg-[#121722] border border-black/10 dark:border-white/10 shadow-2xl p-3 z-50 space-y-2.5 text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
+                          <div className="flex items-center justify-between border-b border-black/5 dark:border-white/5 pb-1.5">
+                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Rooms &amp; Guests</span>
+                            <button
+                              type="button"
+                              onClick={() => setIsHotelOccupancyOpen(false)}
+                              className="text-[10px] font-bold text-[#ff6325] hover:underline cursor-pointer"
+                            >
+                              Done
+                            </button>
+                          </div>
+
+                          {/* Adults */}
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="text-xs font-bold block">Adults</span>
+                              <span className="text-[9px] text-slate-400 block">Age 13+ yrs</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setHotelAdults(Math.max(1, hotelAdults - 1))}
+                                className="w-6 h-6 rounded flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200 cursor-pointer"
+                              >
+                                -
+                              </button>
+                              <span className="text-xs font-black min-w-4 text-center">{hotelAdults}</span>
+                              <button
+                                type="button"
+                                onClick={() => setHotelAdults(Math.min(10, hotelAdults + 1))}
+                                className="w-6 h-6 rounded flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200 cursor-pointer"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Children */}
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="text-xs font-bold block">Children</span>
+                              <span className="text-[9px] text-slate-400 block">Age 0–12 yrs</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newCount = Math.max(0, hotelChildren - 1);
+                                  setHotelChildren(newCount);
+                                  setHotelChildAges(hotelChildAges.slice(0, newCount));
+                                }}
+                                className="w-6 h-6 rounded flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200 cursor-pointer"
+                              >
+                                -
+                              </button>
+                              <span className="text-xs font-black min-w-4 text-center">{hotelChildren}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newCount = Math.min(6, hotelChildren + 1);
+                                  setHotelChildren(newCount);
+                                  setHotelChildAges([...hotelChildAges, 5]);
+                                }}
+                                className="w-6 h-6 rounded flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200 cursor-pointer"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Child Ages if Children > 0 */}
+                          {hotelChildren > 0 && (
+                            <div className="p-2 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] space-y-1.5">
+                              <span className="text-[9px] font-bold uppercase text-slate-400 block">Age of Children</span>
+                              <div className="grid grid-cols-3 gap-1">
+                                {Array.from({ length: hotelChildren }).map((_, i) => (
+                                  <select
+                                    key={i}
+                                    value={hotelChildAges[i] ?? 5}
+                                    onChange={(e) => {
+                                      const next = [...hotelChildAges];
+                                      next[i] = Number(e.target.value);
+                                      setHotelChildAges(next);
+                                    }}
+                                    className="h-6 px-1 text-[10px] rounded bg-white dark:bg-[#1a202c] border border-black/10 dark:border-white/10 font-bold text-center"
+                                  >
+                                    {Array.from({ length: 13 }).map((_, age) => (
+                                      <option key={age} value={age}>
+                                        {age === 0 ? '<1 yr' : `${age} yr`}
+                                      </option>
+                                    ))}
+                                  </select>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Rooms */}
+                          <div className="flex items-center justify-between border-t border-black/5 dark:border-white/5 pt-2">
+                            <div>
+                              <span className="text-xs font-bold block">Rooms</span>
+                              <span className="text-[9px] text-slate-400 block">Number of rooms</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setHotelRooms(Math.max(1, hotelRooms - 1))}
+                                className="w-6 h-6 rounded flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200 cursor-pointer"
+                              >
+                                -
+                              </button>
+                              <span className="text-xs font-black min-w-4 text-center">{hotelRooms}</span>
+                              <button
+                                type="button"
+                                onClick={() => setHotelRooms(Math.min(5, hotelRooms + 1))}
+                                className="w-6 h-6 rounded flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200 cursor-pointer"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Right: Traveling with Pets Toggle (Fits in exactly 1 neat row) */}
+                  <button
+                    type="button"
+                    onClick={() => setHotelPets(!hotelPets)}
+                    className={`h-8 px-2.5 rounded-lg border text-xs font-bold transition-all cursor-pointer flex items-center justify-between ${
+                      hotelPets
+                        ? 'bg-amber-500/10 border-amber-500/50 text-amber-700 dark:text-amber-400 shadow-xs'
+                        : 'border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] text-slate-600 dark:text-slate-300 hover:border-amber-400/40'
+                    }`}
+                  >
+                    <span className="flex items-center gap-1 truncate">
+                      <span>🐶</span>
+                      <span>Pets {hotelPets ? 'Included' : 'Allowed?'}</span>
+                    </span>
+                    <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center text-[9px] ${
+                      hotelPets ? 'bg-amber-500 text-white border-amber-500' : 'border-slate-300 dark:border-slate-600'
+                    }`}>
+                      {hotelPets && '✓'}
+                    </span>
+                  </button>
+                </div>
+              ) : isSportsArchetype ? (
+                /* Sports & Turf Specs: Pitch Format (5v5, 7v7, Full Ground) */
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[
+                    { id: '5v5', label: '5 vs 5' },
+                    { id: '7v7', label: '7 vs 7' },
+                    { id: 'full', label: 'Full Pitch' },
+                  ].map((fmt) => (
+                    <button
+                      key={fmt.id}
+                      type="button"
+                      onClick={() => setPitchFormat(fmt.id)}
+                      className={`h-8 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                        pitchFormat === fmt.id
+                          ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
+                          : 'bg-white dark:bg-[#1a202c] text-slate-700 dark:text-slate-300 border-black/10 dark:border-white/10 hover:border-[#ff6325]/40'
+                      }`}
+                    >
+                      {fmt.label}
+                    </button>
+                  ))}
+                </div>
+              ) : isRentalArchetype ? (
+                /* Rental Specs: Quick Deposit / Insurance note */
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="h-8 px-2.5 rounded-lg border border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] flex items-center justify-between text-xs text-slate-700 dark:text-slate-300">
+                    <span className="font-semibold text-slate-400">Security Deposit:</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">₹0 / ID Proof</span>
+                  </div>
+                  <div className="h-8 px-2.5 rounded-lg border border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] flex items-center justify-between text-xs text-slate-700 dark:text-slate-300">
+                    <span className="font-semibold text-slate-400">Delivery:</span>
+                    <span className="font-bold text-[#ff6325]">Self Pickup / Hub</span>
+                  </div>
+                </div>
+              ) : isTicketsEventsArchetype ? (
+                /* Tickets / Events Specs: Pass/Seat Count */
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="h-8 px-2.5 rounded-lg border border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] flex items-center justify-between col-span-2">
+                    <span className="text-xs text-slate-500 font-semibold">Passes / Devotees:</span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setTicketCount(Math.max(1, ticketCount - 1))}
+                        className="w-6 h-6 rounded flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200"
+                      >
+                        -
+                      </button>
+                      <span className="text-xs font-black text-slate-900 dark:text-white min-w-6 text-center">{ticketCount} Person{ticketCount > 1 ? 's' : ''}</span>
+                      <button
+                        type="button"
+                        onClick={() => setTicketCount(Math.min(10, ticketCount + 1))}
+                        className="w-6 h-6 rounded flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Appointments / Healthcare Specs ONLY: Consultation for Self or Family */
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: 'Self', label: '👤 For Myself' },
+                    { id: 'Family', label: '👨‍👩‍👧 For Family / Friend' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setAppointmentFor(opt.id)}
+                      className={`h-8 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                        appointmentFor === opt.id
+                          ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
+                          : 'bg-white dark:bg-[#1a202c] text-slate-700 dark:text-slate-300 border-black/10 dark:border-white/10 hover:border-[#ff6325]/40'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* CTA Button (Compact & Balanced) */}

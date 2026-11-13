@@ -842,7 +842,7 @@ export function TopNav({
                   ? (activeUtilityTab === 'beta' ? '412px' : '392px')
                   : '72px'
             }}
-            className="w-full secondary-subnav-bar px-4 lg:px-8 py-1 flex items-center justify-between text-xs select-none transition-[padding-right] duration-200 ease-out"
+            className="w-full secondary-subnav-bar px-4 lg:px-8 h-10 flex items-center justify-between text-xs select-none transition-[padding-right] duration-200 ease-out"
           >
             {/* Left Side: High-intent booking shortcuts */}
             <div className="flex items-center gap-1.5 md:gap-2.5 overflow-x-auto custom-scrollbar scrollbar-none py-0.5">

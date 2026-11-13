@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { selectedService, selectedSlot, addBooking, notes } = useBookingFlowStore();
+  const { selectedService, selectedSlot, addBooking, notes, bookings } = useBookingFlowStore();
   const { user } = useUserStore();
 
   const [name, setName] = useState('');
@@ -74,6 +74,7 @@ export default function CheckoutPage() {
   const meta = listing?.metadata || {};
   const isPgStay = Boolean(selectedService.metadata?.pgBooking);
   const isHotel = Boolean(selectedService.metadata?.hotelBooking);
+  const isMiniSpace = Boolean(selectedService.metadata?.miniSpace);
   const merchantDisplayName = typeof selectedService.merchant === 'string'
     ? selectedService.merchant
     : (selectedService.merchant?.name || selectedService.merchantObj?.name || 'BokSpot Verified Partner');
@@ -196,6 +197,9 @@ export default function CheckoutPage() {
         date: selectedSlot.date,
         time: bookingTime,
         amount: total,
+        selectedAddons: isPgStay 
+          ? pgSelectedAddons 
+          : selectedAddons.map(i => availableAddons[i]).filter(Boolean),
         status: (isSplitEnabled && (!splitInitiatorPaysNow || splitCount > 1) ? 'SPLIT_PENDING' : 'CONFIRMED') as any,
         city: selectedService.city,
         durationMinutes: selectedService.duration,
@@ -396,6 +400,121 @@ export default function CheckoutPage() {
                 </div>
               </div>
             </div>
+
+            {/* 1.5 Optional Add-ons & Equipment Upgrades (Universal for all 54 Categories with Live Stock Lock) */}
+            {availableAddons && availableAddons.length > 0 && !isPgStay && (
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-5 sm:p-6 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div>
+                    <h3 className="font-black text-base text-slate-900 flex items-center gap-2">
+                      <Sparkles size={18} className="text-[#ff6325]" /> Optional Add-ons & Upgrades
+                    </h3>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                      Customise your booking with exclusive inclusions & equipment
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider bg-slate-100 px-2.5 py-1 rounded-md">
+                    Verified Availability
+                  </span>
+                </div>
+
+                <div className="space-y-2.5">
+                  {availableAddons.map((addon: any, idx: number) => {
+                    const isSelected = selectedAddons.includes(idx);
+                    const stockType = addon.stockType || 'REUSABLE';
+                    const maxStock = addon.maxStock ?? 5;
+                    const baseRemaining = addon.currentStock ?? maxStock;
+
+                    // Calculate active bookings using this addon on the chosen date & slot
+                    const bookedCount = (bookings || []).filter((b: any) => {
+                      if (b.status === 'CANCELLED') return false;
+                      const sameDate = b.date === selectedSlot.date;
+                      if (!sameDate) return false;
+                      // For slot-bound/reusable check time slot; for daily check date
+                      if (stockType === 'REUSABLE' && selectedSlot.time && b.time) {
+                        return b.time === selectedSlot.time && (b.selectedAddons || []).some((a: any) => a.name === addon.name);
+                      }
+                      return (b.selectedAddons || []).some((a: any) => a.name === addon.name);
+                    }).length;
+
+                    const availableStock = stockType === 'UNLIMITED' 
+                      ? 999 
+                      : Math.max(0, (stockType === 'CONSUMABLE' ? baseRemaining : maxStock) - bookedCount);
+
+                    const isSoldOut = stockType !== 'UNLIMITED' && availableStock <= 0;
+                    const isFastFilling = stockType !== 'UNLIMITED' && availableStock > 0 && availableStock <= 2;
+
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() => {
+                          if (isSoldOut) return;
+                          if (isSelected) {
+                            setSelectedAddons(selectedAddons.filter(i => i !== idx));
+                          } else {
+                            setSelectedAddons([...selectedAddons, idx]);
+                          }
+                        }}
+                        className={`p-3.5 rounded-xl border-2 transition-all flex items-center justify-between gap-3 ${
+                          isSoldOut
+                            ? 'border-slate-200/60 bg-slate-100/70 opacity-60 cursor-not-allowed'
+                            : isSelected
+                              ? 'border-[#ff6325] bg-orange-50/40 cursor-pointer shadow-xs'
+                              : 'border-slate-200/80 hover:border-slate-300 bg-white cursor-pointer'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center shrink-0 transition-colors ${
+                            isSoldOut
+                              ? 'border-slate-300 bg-slate-200 text-slate-400'
+                              : isSelected
+                                ? 'border-[#ff6325] bg-[#ff6325] text-white'
+                                : 'border-slate-300 bg-white'
+                          }`}>
+                            {isSelected && <Check size={12} strokeWidth={3} />}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className={`text-xs font-bold ${isSoldOut ? 'text-slate-400 line-through' : 'text-slate-900'}`}>
+                                {addon.name}
+                              </span>
+                              {stockType === 'REUSABLE' && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60">
+                                  Reusable
+                                </span>
+                              )}
+                              {isSoldOut ? (
+                                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-red-100 text-red-700 border border-red-200">
+                                  🔒 SOLD OUT (No units left)
+                                </span>
+                              ) : isFastFilling ? (
+                                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200 animate-pulse">
+                                  ⚡ Only {availableStock} left
+                                </span>
+                              ) : null}
+                            </div>
+                            <span className="text-[11px] text-slate-500 font-medium block">
+                              {stockType === 'REUSABLE' 
+                                ? 'Guaranteed sanitised kit reserved exclusively for your slot' 
+                                : stockType === 'CONSUMABLE' 
+                                  ? 'Physical amenity kit / consumable pack' 
+                                  : 'Optional concierge upgrade'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <span className="text-xs font-black text-slate-900 block">
+                            +₹{Number(addon.price || 0).toLocaleString()}
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-400">per booking</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* 2. Guest Information */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-5 sm:p-6 space-y-4">
@@ -605,6 +724,59 @@ export default function CheckoutPage() {
                       ? 'No advance payment needed. Generate links & collect.'
                       : 'Inclusive of all taxes'}
                   </p>
+                </div>
+
+                {/* ============================================================
+                 * Transparent Cancellation, Refund & Overdue Policy Card
+                 * ============================================================ */}
+                <div className="mt-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                      <span>🛡️</span> Cancellation & Refund Policy
+                    </span>
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      Zero Conflict Guarantee
+                    </span>
+                  </div>
+
+                  {isMiniSpace ? (
+                    <div className="space-y-1.5 text-[11px] text-slate-600">
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-emerald-600 font-bold">✓</span>
+                        <span><strong>Free Cancellation:</strong> 100% refund up to 2 hours before scheduled drop time.</span>
+                      </div>
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-amber-600 font-bold">⚠</span>
+                        <span><strong>Late Cancellation (within 2h):</strong> 50% refund credited back to your original source.</span>
+                      </div>
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-blue-600 font-bold">⏱</span>
+                        <span><strong>Overdue Collection:</strong> 15 mins free grace period. Delayed pickup beyond grace period is billed hourly upon collection.</span>
+                      </div>
+                    </div>
+                  ) : isPgStay ? (
+                    <div className="space-y-1.5 text-[11px] text-slate-600">
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-emerald-600 font-bold">✓</span>
+                        <span><strong>Inspection Guarantee:</strong> Free visit before move-in. Full advance refundable if room does not match listing.</span>
+                      </div>
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-blue-600 font-bold">📜</span>
+                        <span><strong>Notice Period:</strong> 30 days standard notice required for security deposit return.</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5 text-[11px] text-slate-600">
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-emerald-600 font-bold">✓</span>
+                        <span><strong>Free Cancellation:</strong> 100% refund up to 24 hours prior to check-in / start time.</span>
+                      </div>
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-amber-600 font-bold">⚠</span>
+                        <span><strong>Late Cancel / No-Show:</strong> Standard cancellation terms apply as per vendor partner policy.</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

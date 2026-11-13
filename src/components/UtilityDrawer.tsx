@@ -411,7 +411,7 @@ export function UtilityDrawer({
                 {activeTab === 'calendar' && (
                   <div className="h-full flex flex-col overflow-y-auto custom-scrollbar text-slate-800 dark:text-slate-200 font-sans bg-[#fbfcfd] dark:bg-[#0b0e14]">
                     {/* Header */}
-                    <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-white dark:bg-[#0e121a]">
+                    <div className="h-10 px-4 border-b border-[#dbe3eb] dark:border-white/10 flex items-center justify-between shrink-0 bg-white dark:bg-[#0e121a]">
                       <h3 className="text-xs font-semibold tracking-widest text-[#0a192f] dark:text-white uppercase">
                         CALENDAR
                       </h3>
@@ -560,7 +560,7 @@ export function UtilityDrawer({
                 {activeTab === 'calc' && (
                   <div className="h-full flex flex-col overflow-hidden bg-white dark:bg-[#0c121e] text-slate-800 dark:text-slate-100 font-sans select-none">
                     {/* Header: # BETA CALC with circular action pills */}
-                    <div className="px-4 py-3 bg-white dark:bg-[#0c121e] flex items-center justify-between shrink-0">
+                    <div className="h-10 px-4 bg-white dark:bg-[#0c121e] border-b border-[#dbe3eb] dark:border-white/10 flex items-center justify-between shrink-0">
                       <div className="flex items-center gap-2">
                         <span className="text-[#00875a] dark:text-[#00a86b] font-semibold text-lg leading-none">#</span>
                         <span className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider font-sans">
@@ -862,7 +862,7 @@ export function UtilityDrawer({
                 {activeTab === 'tasks' && (
                   <div className="h-full flex flex-col overflow-hidden bg-white dark:bg-[#0c121e] text-slate-800 dark:text-slate-100 font-sans select-none relative">
                     {/* Top App Header: NOTES & Close X */}
-                    <div className="px-5 py-3.5 bg-white dark:bg-[#0c121e] border-b border-emerald-500/20 flex items-center justify-between shrink-0">
+                    <div className="h-10 px-4 bg-white dark:bg-[#0c121e] border-b border-[#dbe3eb] dark:border-white/10 flex items-center justify-between shrink-0">
                       <span className="text-xs font-semibold tracking-wider text-[#0a1120] dark:text-white uppercase font-sans">
                         NOTES
                       </span>
@@ -990,7 +990,7 @@ export function UtilityDrawer({
                 {activeTab === 'contacts' && (
                   <div className="h-full flex flex-col overflow-hidden bg-white dark:bg-[#0c121e] text-slate-800 dark:text-slate-100 font-sans select-none relative">
                     {/* Top App Header: GLOBAL CONTACTS & Close X */}
-                    <div className="px-5 py-3.5 bg-white dark:bg-[#0c121e] border-b border-emerald-500/20 flex items-center justify-between shrink-0">
+                    <div className="h-10 px-4 bg-white dark:bg-[#0c121e] border-b border-[#dbe3eb] dark:border-white/10 flex items-center justify-between shrink-0">
                       <span className="text-xs font-semibold tracking-wider text-[#0a1120] dark:text-white uppercase font-sans">
                         GLOBAL CONTACTS
                       </span>
@@ -1150,7 +1150,7 @@ export function UtilityDrawer({
                 {/* 5. Weather Panel (from bit-tool.com) */}
                 {activeTab === 'weather' && (
                   <div className="flex-1 flex flex-col h-full bg-white dark:bg-[#0c121e]">
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800">
+                    <div className="flex items-center justify-between h-10 px-4 border-b border-[#dbe3eb] dark:border-white/10 shrink-0">
                       <div className="flex items-center gap-2">
                         <div className="h-6 w-6 rounded-lg bg-teal-50 dark:bg-teal-950/40 text-teal-600 flex items-center justify-center">
                           <CloudSun size={14} />
@@ -1219,7 +1219,7 @@ export function UtilityDrawer({
                 {activeTab === 'keyboard' && (
                   <div className="flex-1 flex flex-col h-full bg-white dark:bg-[#0c121e] text-slate-800 dark:text-slate-100 font-sans select-none">
                     {/* Header: KEYBOARD with top subtle border and close X */}
-                    <div className="px-5 py-3.5 bg-white dark:bg-[#0c121e] border-b border-emerald-500/20 flex items-center justify-between shrink-0">
+                    <div className="h-10 px-4 bg-white dark:bg-[#0c121e] border-b border-[#dbe3eb] dark:border-white/10 flex items-center justify-between shrink-0">
                       <span className="text-xs font-semibold tracking-wider text-[#0a1120] dark:text-white uppercase font-sans">
                         KEYBOARD
                       </span>
@@ -1264,7 +1264,7 @@ export function UtilityDrawer({
                 {activeTab === 'beta' && (
                   <div className="flex-1 flex flex-col h-full bg-white dark:bg-[#0c121e] text-left font-sans select-none overflow-hidden">
                     {/* Header: BETA Logo + Edit Button + Close */}
-                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                    <div className="flex items-center justify-between h-10 px-4 border-b border-[#dbe3eb] dark:border-white/10 shrink-0">
                       <div className="flex items-center gap-1.5">
                         <h2 id="launcher-title" className="launcher-brand-title text-[28px] leading-none text-[#004aad] dark:text-[#38bdf8] tracking-wider select-none" style={{ fontFamily: '"Saira Stencil One", Anton, sans-serif' }}>
                           BETA
@@ -1764,49 +1764,48 @@ export function UtilityDrawer({
           </AnimatePresence>
 
           {/* Right Sidebar (56px wide) - Beta signature modern utility rail, perfectly aligns with header tool divider */}
-          <div className="w-[56px] h-full flex flex-col items-center pt-2 pb-3 overflow-y-auto custom-scrollbar bg-white dark:bg-[#0a0f1d] shrink-0 select-none border-l border-slate-200/60 dark:border-white/10 overscroll-contain">
-            {/* 1. Top Beta "B" Monogram Button - Part of the unified utility team */}
-            <button
-              type="button"
-              onClick={() => {
-                if (isEditingPins) setIsEditingPins(false);
-                setActiveTab(activeTab === 'beta' ? null : 'beta');
-              }}
-              className="relative group focus:outline-hidden cursor-pointer"
-              title="Beta Ecosystem Apps"
-            >
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all ${
-                  activeTab === 'beta'
-                    ? 'bg-[#004aad]/10 dark:bg-[#004aad]/25 border-2 border-[#004aad] dark:border-[#38bdf8] shadow-xs scale-105'
-                    : 'bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800/60 border border-slate-200/90 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:scale-105 shadow-2xs'
-                }`}
+          <div className="w-[56px] h-full flex flex-col items-center pt-0 pb-3 overflow-y-auto custom-scrollbar bg-white dark:bg-[#0a0f1d] shrink-0 select-none border-l border-slate-200/60 dark:border-white/10 overscroll-contain">
+            {/* 1. Top Beta "B" Monogram Header Block - Perfectly aligned with subheader h-10 border */}
+            <div className="w-full h-10 flex items-center justify-center shrink-0 border-b border-[#dbe3eb] dark:border-white/10">
+              <button
+                type="button"
+                onClick={() => {
+                  if (isEditingPins) setIsEditingPins(false);
+                  setActiveTab(activeTab === 'beta' ? null : 'beta');
+                }}
+                className="relative group focus:outline-hidden cursor-pointer"
+                title="Beta Ecosystem Apps"
               >
-                <img
-                  src="/beta-logo.png"
-                  alt="Beta"
-                  className="w-5 h-5 object-contain select-none pointer-events-none drop-shadow-none contrast-105 brightness-100 mix-blend-multiply dark:mix-blend-normal"
-                />
-              </div>
-              {!activeTab && (
-                <div className="absolute right-14 top-1/2 -translate-y-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-medium px-2.5 py-1 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                  Beta Apps Hub
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all ${
+                    activeTab === 'beta'
+                      ? 'bg-[#004aad]/10 dark:bg-[#004aad]/25 border-2 border-[#004aad] dark:border-[#38bdf8] shadow-xs scale-105'
+                      : 'bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800/60 border border-slate-200/90 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:scale-105 shadow-2xs'
+                  }`}
+                >
+                  <img
+                    src="/beta-logo.png"
+                    alt="Beta"
+                    className="w-4.5 h-4.5 object-contain select-none pointer-events-none drop-shadow-none contrast-105 brightness-100 mix-blend-multiply dark:mix-blend-normal"
+                  />
                 </div>
-              )}
-            </button>
-
-            {/* Subtle Horizontal Divider below B Logo */}
-            <div className="w-9 h-[1.5px] bg-[#dbe3eb] dark:bg-white/10 my-2 shrink-0" />
+                {!activeTab && (
+                  <div className="absolute right-14 top-1/2 -translate-y-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-medium px-2.5 py-1 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                    Beta Apps Hub
+                  </div>
+                )}
+              </button>
+            </div>
 
             {/* EDIT PINS Header Label - Only visible when editing pins */}
             {isEditingPins && (
-              <div className="text-[8.5px] font-semibold tracking-tight text-[#8392a5] dark:text-slate-400 uppercase text-center mb-1.5 whitespace-nowrap select-none font-sans leading-none animate-in fade-in duration-200">
+              <div className="text-[8.5px] font-semibold tracking-tight text-[#8392a5] dark:text-slate-400 uppercase text-center mt-2 mb-1 whitespace-nowrap select-none font-sans leading-none animate-in fade-in duration-200">
                 EDIT PINS
               </div>
             )}
 
             {/* List of active application icons stacked vertically */}
-            <div className="flex flex-col gap-2 items-center w-full">
+            <div className="flex flex-col gap-2 items-center w-full pt-2">
               {/* All available tools that can be pinned/unpinned */}
               {[
                 {

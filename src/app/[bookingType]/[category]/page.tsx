@@ -1573,7 +1573,7 @@ export default function ProviderDiscoveryPage() {
 
   const isHotelCategory = category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'pg-hostels' || category === 'camping' || bookingType === 'stay-accommodation' || bookingType === 'home';
   const isHostelOrPg = category === 'hostels' || category === 'pg-hostels' || (categoryName || '').toLowerCase().includes('hostel') || (categoryName || '').toLowerCase().includes('pg');
-  const isPgCategory = category === 'pg-hostels' || category === 'hostels';
+  const isPgCategory = category === 'pg-hostels';
 
   // Hostel & PG Dedicated Search States
   const [hostelMoveInDate, setHostelMoveInDate] = useState(() => new Date().toISOString().split('T')[0]);
@@ -1708,7 +1708,7 @@ export default function ProviderDiscoveryPage() {
         let list = Array.isArray(response?.data) ? response.data : (Array.isArray(response) ? response : []);
 
         // Format real merchant services if returned from backend
-        if (category === 'hotels' || category === 'hotel-booking' || category === 'pg-hostels' || category.includes('hotel') || category.includes('room')) {
+        if (category === 'hotels' || category === 'hotel-booking' || category === 'hostels' || category === 'pg-hostels' || category.includes('hotel') || category.includes('room')) {
           list = list.filter((item: any) => {
             const mName = (item.merchant?.name || item.merchantName || '').toLowerCase();
             const sName = (item.name || '').toLowerCase();
@@ -1719,8 +1719,48 @@ export default function ProviderDiscoveryPage() {
           }).map((item: any) => ({
             ...item,
             merchant: typeof item.merchant === 'object' ? item.merchant : { name: item.merchantName || 'Grand Hotel', id: item.merchantId || item.id },
-            basePrice: item.basePrice || item.price || (category === 'pg-hostels' ? '6500' : '2500')
+            basePrice: item.basePrice || item.price || (category === 'pg-hostels' ? '6500' : category === 'hostels' ? '499' : '2500')
           }));
+        }
+
+        // Add Backpackers Hostel (H104) if hostels category is loaded and list is empty
+        if (category === 'hostels' && list.length === 0) {
+          const hostelTargetCity = city || 'Chennai';
+          list = [
+            {
+              id: 'service-backpackers-hostel',
+              name: 'Backpackers Hostel — Mixed Dorm Bed & Social Lounge',
+              category: { name: 'Hostel Booking', slug: 'hostels' },
+              rating: 4.8,
+              reviewCount: 228,
+              basePrice: '499',
+              image: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=800&q=80',
+              merchant: {
+                id: '51c6a3b8-2abc-9421-7644-2a2dea05dbc0',
+                name: 'Backpackers Hostel',
+                city: hostelTargetCity,
+                address: `BokSpot Backpacker Zone, Near Transit Terminal, ${hostelTargetCity}`,
+                rating: 4.8,
+                metadata: {
+                  isHostel: true,
+                  thingsToKnow: [
+                    'High-Speed Wi-Fi',
+                    'Washing Machine & Laundry',
+                    'RO Purified Drinking Water',
+                    '3 Times Homely Meals',
+                    '24/7 CCTV & Biometric Security',
+                    'Daily Housekeeping',
+                    'Two-Wheeler Parking'
+                  ]
+                }
+              },
+              metadata: {
+                hostelType: 'backpackers',
+                startingPrice: 499,
+                amenities: ['High-Speed Wi-Fi', 'Locker Padlock', 'Hot Water', 'Social Lounge', 'RO Water']
+              }
+            }
+          ];
         }
 
         // Add Realistic Verified PG / Co-Living sample stays if pg-hostels is empty from backend

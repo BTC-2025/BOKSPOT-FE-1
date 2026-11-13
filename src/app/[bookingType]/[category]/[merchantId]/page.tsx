@@ -38,7 +38,7 @@ export default function VenueProfilePage() {
   const category = rawCategory === 'stayhotel' || rawCategory === 'stay-hotel' || rawCategory === 'hotel' ? 'hotels' : (rawCategory === 'resort' ? 'resorts' : (rawCategory === 'villa' ? 'villas' : rawCategory));
   const merchantId = params?.merchantId as string;
   const { city } = useLocationStore();
-  const { setSelectedService, setSelectedSlot } = useBookingFlowStore();
+  const { setSelectedService, setSelectedSlot, bookings } = useBookingFlowStore();
   const searchParams = useSearchParams();
   const isHotel = category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'pg-hostels' || category === 'camping' || bookingType === 'stay-accommodation' || bookingType === 'home';
   const isPgStay = category === 'pg-hostels' || category === 'hostels' || (bookingType === 'stay-accommodation' && (rawCategory?.includes('pg') || rawCategory?.includes('hostel')));
@@ -208,40 +208,123 @@ export default function VenueProfilePage() {
   const [isAboutExpanded, setIsAboutExpanded] = useState(false);
   const [activeSubNavTab, setActiveSubNavTab] = useState<'overview' | 'facilities' | 'location' | 'policies' | 'mini-space'>('overview');
   // Mini Space (Luggage & Cloakroom Drop) booking state
-  const [miniSpaceBagCount, setMiniSpaceBagCount] = useState<number>(1);
+  const [miniSpaceStorageMode, setMiniSpaceStorageMode] = useState<'bags' | 'dimensions'>('bags');
+  // Multi-item counter quantities for mixed luggage (personal/handbag, backpack, trolley/standard, carton box, bulky gear)
+  const [miniSpaceItemCounts, setMiniSpaceItemCounts] = useState<{
+    handbag: number;
+    backpack: number;
+    standard: number;
+    box: number;
+    bulky: number;
+  }>({
+    handbag: 0,
+    backpack: 0,
+    standard: 1, // default 1 trolley
+    box: 0,
+    bulky: 0,
+  });
   const [miniSpaceHours, setMiniSpaceHours] = useState<number>(3);
+  const [miniSpaceEstimatedWeight, setMiniSpaceEstimatedWeight] = useState<string>('10-15 kg');
+  const [miniSpaceApproxSqft, setMiniSpaceApproxSqft] = useState<number>(4);
   const [miniSpaceDropDate, setMiniSpaceDropDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [isMiniSpaceCalOpen, setIsMiniSpaceCalOpen] = useState<boolean>(false);
   const [miniSpaceCalMonth, setMiniSpaceCalMonth] = useState<Date>(() => new Date());
   const [miniSpaceDropHour, setMiniSpaceDropHour] = useState<string>('11');
   const [miniSpaceDropMinute, setMiniSpaceDropMinute] = useState<string>('00');
   const [miniSpaceDropPeriod, setMiniSpaceDropPeriod] = useState<'AM' | 'PM'>('AM');
-  const [miniSpaceBagDesc, setMiniSpaceBagDesc] = useState<string>('Trolley Bag / Backpack');
+  const [miniSpaceBagDesc, setMiniSpaceBagDesc] = useState<string>('Trolley Bag / Suitcase');
+  const [hotelLuggageMaxCapacity, setHotelLuggageMaxCapacity] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(`hotel_luggage_capacity_${merchantId}`) ||
+          localStorage.getItem('hotel_luggage_capacity_default');
+        if (stored) return Number(stored);
+        const busState = localStorage.getItem('vendor-portal-storage-v10');
+        if (busState) {
+          const parsed = JSON.parse(busState);
+          if (parsed.state?.currentMerchant?.metadata?.luggageMaxCapacity) {
+            return Number(parsed.state.currentMerchant.metadata.luggageMaxCapacity);
+          }
+        }
+      } catch {}
+    }
+    return 10;
+  });
   const [hotelLuggageHourlyRate, setHotelLuggageHourlyRate] = useState<number>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const stored = localStorage.getItem(`hotel_luggage_rate_${merchantId}`) ||
+        const stored = localStorage.getItem(`hotel_luggage_rate_trolley_${merchantId}`) ||
+          localStorage.getItem(`hotel_luggage_rate_${merchantId}`) ||
           localStorage.getItem('hotel_luggage_rate_default');
         if (stored) return Number(stored);
         const busState = localStorage.getItem('vendor-portal-storage-v10');
         if (busState) {
           const parsed = JSON.parse(busState);
+          if (parsed.state?.currentMerchant?.metadata?.rateTrolley) {
+            return Number(parsed.state.currentMerchant.metadata.rateTrolley);
+          }
           if (parsed.state?.currentMerchant?.luggageHourlyRate) {
             return Number(parsed.state.currentMerchant.luggageHourlyRate);
           }
         }
       } catch { }
     }
-    return 150;
+    return 49;
   });
+
+  const [hotelLuggageDayPassRate, setHotelLuggageDayPassRate] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(`hotel_luggage_daypass_${merchantId}`) ||
+          localStorage.getItem('hotel_luggage_daypass_default');
+        if (stored) return Number(stored);
+        const busState = localStorage.getItem('vendor-portal-storage-v10');
+        if (busState) {
+          const parsed = JSON.parse(busState);
+          if (parsed.state?.currentMerchant?.metadata?.luggageDayPassRate) {
+            return Number(parsed.state.currentMerchant.metadata.luggageDayPassRate);
+          }
+        }
+      } catch {}
+    }
+    return 199;
+  });
+
+  // Dedicated rates configured by Business Owner
+  const getCategoryRate = (catId: 'handbag' | 'backpack' | 'standard' | 'box' | 'bulky', fallbackMultiplier: number) => {
+    if (typeof window !== 'undefined') {
+      try {
+        const keyMap: Record<string, string> = {
+          handbag: 'handbag',
+          backpack: 'backpack',
+          standard: 'trolley',
+          box: 'box',
+          bulky: 'bulky',
+        };
+        const catKey = keyMap[catId] || catId;
+        const stored = localStorage.getItem(`hotel_luggage_rate_${catKey}_${merchantId}`) ||
+          localStorage.getItem(`hotel_luggage_rate_${catKey}_default`);
+        if (stored) return Number(stored);
+
+        const busState = localStorage.getItem('vendor-portal-storage-v10');
+        if (busState) {
+          const parsed = JSON.parse(busState);
+          const meta = parsed.state?.currentMerchant?.metadata;
+          const camelKey = `rate${catKey.charAt(0).toUpperCase() + catKey.slice(1)}`;
+          if (meta && meta[camelKey]) return Number(meta[camelKey]);
+        }
+      } catch {}
+    }
+    return Math.round(hotelLuggageHourlyRate * fallbackMultiplier);
+  };
   const checkLuggageEnabled = (mDataObj?: any) => {
-    // 1. Check direct backend merchant metadata first if provided
+    // 1. Check direct backend merchant metadata first if explicitly boolean
     if (mDataObj?.metadata?.isLuggageStorageEnabled !== undefined) {
       return Boolean(mDataObj.metadata.isLuggageStorageEnabled);
     }
     if (typeof window !== 'undefined') {
       try {
-        // 2. Check vendor portal state across local browser sessions
+        // 2. Check vendor portal storage state across local browser sessions
         const busState = localStorage.getItem('vendor-portal-storage-v10');
         if (busState) {
           const parsed = JSON.parse(busState);
@@ -264,7 +347,12 @@ export default function VenueProfilePage() {
         }
       } catch {}
     }
-    return false;
+    // If merchant explicitly provided metadata, respect it
+    if (mDataObj?.metadata && 'isLuggageStorageEnabled' in mDataObj.metadata) {
+      return Boolean(mDataObj.metadata.isLuggageStorageEnabled);
+    }
+    // Default to true so newly enabled cloakroom always shows unless explicitly turned off
+    return true;
   };
 
   const [isHotelLuggageEnabled, setIsHotelLuggageEnabled] = useState<boolean>(() => checkLuggageEnabled());
@@ -281,6 +369,9 @@ export default function VenueProfilePage() {
         const storedRate = localStorage.getItem(`hotel_luggage_rate_${merchantId}`) ||
           localStorage.getItem('hotel_luggage_rate_default');
         if (storedRate) setHotelLuggageHourlyRate(Number(storedRate));
+        const storedCap = localStorage.getItem(`hotel_luggage_capacity_${merchantId}`) ||
+          localStorage.getItem('hotel_luggage_capacity_default');
+        if (storedCap) setHotelLuggageMaxCapacity(Number(storedCap));
       } catch {}
     };
 
@@ -289,7 +380,7 @@ export default function VenueProfilePage() {
     window.addEventListener('pg_config_updated', handleSync);
     window.addEventListener('venue_gallery_updated', handleSync);
 
-    // Steady status check - only update state when value strictly changes to prevent UI blinking
+    // Steady status check - only update if backend returned a merchant and explicitly has isLuggageStorageEnabled
     const interval = setInterval(async () => {
       try {
         const m = await api.merchants.get(merchantId, true).catch(() => null);
@@ -299,14 +390,18 @@ export default function VenueProfilePage() {
             if (JSON.stringify(prev) === JSON.stringify(parsed)) return prev;
             return { ...(prev || {}), ...parsed };
           });
-        }
-        const newLuggageStatus = parsed?.metadata?.isLuggageStorageEnabled !== undefined
-          ? Boolean(parsed.metadata.isLuggageStorageEnabled)
-          : checkLuggageEnabled(parsed);
-        setIsHotelLuggageEnabled((prev: boolean) => (prev !== newLuggageStatus ? newLuggageStatus : prev));
-        if (parsed?.metadata?.luggageHourlyRate || parsed?.luggageHourlyRate) {
-          const newRate = Number(parsed.metadata?.luggageHourlyRate || parsed.luggageHourlyRate);
-          setHotelLuggageHourlyRate((prev: number) => (prev !== newRate ? newRate : prev));
+          if (parsed.metadata?.isLuggageStorageEnabled !== undefined) {
+            const newLuggageStatus = Boolean(parsed.metadata.isLuggageStorageEnabled);
+            setIsHotelLuggageEnabled((prev: boolean) => (prev !== newLuggageStatus ? newLuggageStatus : prev));
+          }
+          if (parsed?.metadata?.luggageHourlyRate || parsed?.luggageHourlyRate) {
+            const newRate = Number(parsed.metadata?.luggageHourlyRate || parsed.luggageHourlyRate);
+            setHotelLuggageHourlyRate((prev: number) => (prev !== newRate ? newRate : prev));
+          }
+          if (parsed?.metadata?.luggageMaxCapacity) {
+            const newCap = Number(parsed.metadata.luggageMaxCapacity);
+            setHotelLuggageMaxCapacity((prev: number) => (prev !== newCap ? newCap : prev));
+          }
         }
       } catch {}
     }, 5000);
@@ -2358,8 +2453,8 @@ export default function VenueProfilePage() {
 
               return (
                 <div className="space-y-4 border-b border-slate-200 dark:border-white/10 pb-4">
-                  {/* High-Visibility Bag Locker (Luggage Drop) Transit Strip for Travelers */}
-                  {isHotel && isHotelLuggageEnabled && (
+                  {/* High-Visibility Bag Locker (Luggage Drop) Transit Strip for Travelers across all 54 categories */}
+                  {isHotelLuggageEnabled && (
                     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-orange-500/15 border border-amber-500/30 p-4 sm:p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
                       <div className="flex items-start sm:items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center text-xl shrink-0 shadow-sm font-black">
@@ -3165,8 +3260,8 @@ export default function VenueProfilePage() {
               >
                 Policies
               </button>
-              {/* Mini Space (Bag Locker) Tab: Controlled dynamically by Business toggle */}
-              {isHotel && isHotelLuggageEnabled && (
+              {/* Mini Space (Bag Locker) Tab: Controlled dynamically by Business toggle across all 54 categories */}
+              {isHotelLuggageEnabled && (
                 <button
                   type="button"
                   onClick={() => setActiveSubNavTab('mini-space')}
@@ -3601,7 +3696,7 @@ export default function VenueProfilePage() {
             )}
 
             {/* TAB CONTENT: MINI SPACE (Luggage & Cloakroom Temporary Drop) */}
-            {activeSubNavTab === 'mini-space' && (
+            {isHotelLuggageEnabled && activeSubNavTab === 'mini-space' && (
               <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-white/10 pb-4">
                   <div>
@@ -3623,80 +3718,164 @@ export default function VenueProfilePage() {
 
                   <div className="text-right shrink-0 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 p-3 rounded-2xl">
                     <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider block">Storage Tariff</span>
-                    <span className="text-xl font-black text-amber-600 dark:text-amber-400">₹{hotelLuggageHourlyRate}</span>
-                    <span className="text-xs text-slate-500 font-semibold"> / bag / hour</span>
-                    <span className="text-[10px] text-slate-400 block mt-0.5">Flexible Custom Hours (1 - 24 hrs)</span>
+                    <div className="flex items-baseline justify-end gap-1">
+                      <span className="text-[11px] font-bold text-slate-500">From</span>
+                      <span className="text-xl font-black text-amber-600 dark:text-amber-400">₹{getCategoryRate('handbag', 0.5)}</span>
+                      <span className="text-xs text-slate-500 font-semibold">/hr</span>
+                    </div>
+                    <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-extrabold block mt-0.5">
+                      Full-Day Cap @ ₹{hotelLuggageDayPassRate}/24h
+                    </span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
                   {/* Left: Input Selection */}
                   <div className="md:col-span-2 space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Number of Bags */}
-                      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 space-y-2">
+                    {/* Multi-Item Luggage Selection (Mix and match Handbags, Backpacks, Trolleys, Boxes, Bulky items) */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
                         <label className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 block tracking-wider">
-                          Number of Luggage / Bags
+                          Select Your Bags & Luggage (Mixed Items Allowed)
                         </label>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                            {miniSpaceBagCount} {miniSpaceBagCount > 1 ? 'Bags' : 'Bag'}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              disabled={miniSpaceBagCount <= 1}
-                              onClick={() => setMiniSpaceBagCount(Math.max(1, miniSpaceBagCount - 1))}
-                              className="w-8 h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-700 hover:bg-slate-100 flex items-center justify-center font-black disabled:opacity-30 cursor-pointer"
-                            >
-                              -
-                            </button>
-                            <span className="w-6 text-center font-black text-sm">{miniSpaceBagCount}</span>
-                            <button
-                              type="button"
-                              disabled={miniSpaceBagCount >= 10}
-                              onClick={() => setMiniSpaceBagCount(Math.min(10, miniSpaceBagCount + 1))}
-                              className="w-8 h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-700 hover:bg-slate-100 flex items-center justify-center font-black cursor-pointer"
-                            >
-                              +
-                            </button>
-                          </div>
-                        </div>
+                        <span className="text-[11px] font-extrabold text-amber-600 dark:text-amber-400">
+                          Total: {miniSpaceItemCounts.handbag + miniSpaceItemCounts.backpack + miniSpaceItemCounts.standard + miniSpaceItemCounts.box + miniSpaceItemCounts.bulky} Items
+                        </span>
                       </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {[
+                          { id: 'handbag' as const, label: 'Handbag / Purse', sub: 'Small pouch, laptop cover', icon: '👛', multiplier: 0.5, weight: 'Upto 3 kg', slotWeight: 0.5 },
+                          { id: 'backpack' as const, label: 'Backpack / Kit', sub: 'Laptop bag, Gym bag', icon: '🎒', multiplier: 0.8, weight: '5-8 kg', slotWeight: 1 },
+                          { id: 'standard' as const, label: 'Trolley Suitcase', sub: 'Cabin or Check-in bag', icon: '🧳', multiplier: 1.0, weight: '10-20 kg', slotWeight: 1 },
+                          { id: 'box' as const, label: 'Carton / Box', sub: 'Packed boxes, parcels', icon: '📦', multiplier: 1.2, weight: '15-30 kg', slotWeight: 2 },
+                          { id: 'bulky' as const, label: 'Bulky Equipment', sub: 'Bike gear, instruments', icon: '🚲', multiplier: 1.5, weight: '30+ kg', slotWeight: 3 },
+                        ].map((item) => {
+                          const count = miniSpaceItemCounts[item.id];
+                          const itemRate = getCategoryRate(item.id, item.multiplier);
+                          const isAdded = count > 0;
 
-                      {/* Customized Storage Hours Stepper */}
-                      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <label className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 block tracking-wider">
-                            Storage Duration (Custom Hours)
-                          </label>
-                          <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
-                            @ ₹{hotelLuggageHourlyRate}/hr
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                            {miniSpaceHours} {miniSpaceHours > 1 ? 'Hours' : 'Hour'}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              disabled={miniSpaceHours <= 1}
-                              onClick={() => setMiniSpaceHours(Math.max(1, miniSpaceHours - 1))}
-                              className="w-8 h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-700 hover:bg-slate-100 flex items-center justify-center font-black disabled:opacity-30 cursor-pointer"
+                          return (
+                            <div
+                              key={item.id}
+                              className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-2.5 ${
+                                isAdded
+                                  ? 'bg-amber-500/10 border-amber-500/80 shadow-xs ring-1 ring-amber-500/30'
+                                  : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-white/10'
+                              }`}
                             >
-                              -
-                            </button>
-                            <span className="w-8 text-center font-black text-sm">{miniSpaceHours}h</span>
-                            <button
-                              type="button"
-                              disabled={miniSpaceHours >= 24}
-                              onClick={() => setMiniSpaceHours(Math.min(24, miniSpaceHours + 1))}
-                              className="w-8 h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-700 hover:bg-slate-100 flex items-center justify-center font-black cursor-pointer"
-                            >
-                              +
-                            </button>
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <span className="text-2xl shrink-0">{item.icon}</span>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-xs font-black text-slate-900 dark:text-white truncate">{item.label}</span>
+                                    <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded shrink-0">
+                                      ₹{itemRate}/h
+                                    </span>
+                                  </div>
+                                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block truncate">
+                                    {item.weight} • {item.sub}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Stepper for this specific item type */}
+                              <div className="flex items-center gap-1 shrink-0 bg-white dark:bg-slate-700/80 p-1 rounded-xl border border-slate-200 dark:border-white/10 shadow-2xs">
+                                <button
+                                  type="button"
+                                  disabled={count <= 0}
+                                  onClick={() => setMiniSpaceItemCounts(prev => ({ ...prev, [item.id]: Math.max(0, prev[item.id] - 1) }))}
+                                  className="w-6 h-6 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center font-black text-xs disabled:opacity-30 cursor-pointer"
+                                >
+                                  -
+                                </button>
+                                <span className="w-4 text-center font-black text-xs text-slate-900 dark:text-white">
+                                  {count}
+                                </span>
+                                <button
+                                  type="button"
+                                  disabled={count >= 10}
+                                  onClick={() => setMiniSpaceItemCounts(prev => ({ ...prev, [item.id]: Math.min(10, prev[item.id] + 1) }))}
+                                  className="w-6 h-6 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center font-black text-xs cursor-pointer"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Storage Duration Stepper with total hourly rate */}
+                      {(() => {
+                        const handbagRate = getCategoryRate('handbag', 0.5);
+                        const backpackRate = getCategoryRate('backpack', 0.8);
+                        const standardRate = getCategoryRate('standard', 1.0);
+                        const boxRate = getCategoryRate('box', 1.2);
+                        const bulkyRate = getCategoryRate('bulky', 1.5);
+
+                        const totalHourly = 
+                          (miniSpaceItemCounts.handbag * handbagRate) +
+                          (miniSpaceItemCounts.backpack * backpackRate) +
+                          (miniSpaceItemCounts.standard * standardRate) +
+                          (miniSpaceItemCounts.box * boxRate) +
+                          (miniSpaceItemCounts.bulky * bulkyRate);
+
+                        return (
+                          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 space-y-2">
+                            <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-200/50 dark:border-white/5">
+                              <label className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 block tracking-wider">
+                                Storage Duration
+                              </label>
+                              <span className="text-[10px] text-amber-600 dark:text-amber-400 font-extrabold whitespace-nowrap bg-amber-500/10 px-2 py-0.5 rounded-md">
+                                Combined Rate: ₹{totalHourly}/hr
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between pt-1">
+                              <div>
+                                <span className="text-sm font-black text-slate-900 dark:text-white block">
+                                  {miniSpaceHours} {miniSpaceHours > 1 ? 'Hours' : 'Hour'}
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-semibold block">
+                                  Flexible Hourly Slot (1 - 24 hrs)
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  disabled={miniSpaceHours <= 1}
+                                  onClick={() => setMiniSpaceHours(Math.max(1, miniSpaceHours - 1))}
+                                  className="w-8 h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-700 hover:bg-slate-100 flex items-center justify-center font-black disabled:opacity-30 cursor-pointer"
+                                >
+                                  -
+                                </button>
+                                <span className="w-8 text-center font-black text-sm">{miniSpaceHours}h</span>
+                                <button
+                                  type="button"
+                                  disabled={miniSpaceHours >= 24}
+                                  onClick={() => setMiniSpaceHours(Math.min(24, miniSpaceHours + 1))}
+                                  className="w-8 h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-700 hover:bg-slate-100 flex items-center justify-center font-black cursor-pointer"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </div>
                           </div>
+                        );
+                      })()}
+
+                      {/* Luggage Security & Facility Note */}
+                      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center text-lg font-black shrink-0">
+                          🛡️
+                        </div>
+                        <div>
+                          <span className="text-xs font-black text-slate-900 dark:text-white block">CCTV & Tamper Sealed</span>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5 leading-snug">
+                            Each bag receives an individual tamper-proof numerical barcode tag & 24/7 bell desk guard protection.
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -3726,9 +3905,9 @@ export default function VenueProfilePage() {
                           const displayH = totalH % 12 || 12;
                           const formattedPick = `${displayH}:${m < 10 ? '0' : ''}${m} ${pickPeriod}`;
                           return (
-                            <div className="px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-950 dark:text-amber-300 font-bold text-xs flex items-center gap-1.5 shrink-0 self-start sm:self-auto">
-                              <span className="text-[10px] text-amber-700 dark:text-amber-400 uppercase font-black">Est. Collection:</span>
-                              <span className="font-black font-mono">{formattedPick}</span>
+                            <div className="px-3.5 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-950 dark:text-amber-300 font-bold text-xs flex items-center justify-center gap-2 shrink-0 self-start sm:self-auto shadow-2xs">
+                              <span className="text-[10px] text-amber-700 dark:text-amber-400 uppercase font-black tracking-wider">Est. Collection:</span>
+                              <span className="font-black font-mono text-xs">{formattedPick}</span>
                             </div>
                           );
                         })()}
@@ -4011,91 +4190,290 @@ export default function VenueProfilePage() {
                       Cloakroom Summary
                     </h4>
 
-                    <div className="space-y-2 text-xs border-b border-slate-200 dark:border-white/10 pb-3">
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">Storage Unit</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-200">{miniSpaceBagCount} Bags × {miniSpaceHours} hrs</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">Facility Location</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-200">Frontdesk Bell Desk</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">Security Tag Fee</span>
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400">FREE</span>
-                      </div>
-                    </div>
-
                     {(() => {
-                      const totalAmount = miniSpaceBagCount * miniSpaceHours * hotelLuggageHourlyRate;
+                      const totalBags = 
+                        miniSpaceItemCounts.handbag +
+                        miniSpaceItemCounts.backpack + 
+                        miniSpaceItemCounts.standard + 
+                        miniSpaceItemCounts.box + 
+                        miniSpaceItemCounts.bulky;
+                      
+                      // Slot weights: Handbag=0.5, Backpack=1, Trolley=1.5, Box=2, Bulky=3
+                      const requestedSlots = 
+                        (miniSpaceItemCounts.handbag * 0.5) +
+                        (miniSpaceItemCounts.backpack * 1) +
+                        (miniSpaceItemCounts.standard * 1.5) +
+                        (miniSpaceItemCounts.box * 2) +
+                        (miniSpaceItemCounts.bulky * 3);
+
+                      // Rates configured directly by Business Owner
+                      const handbagRate = getCategoryRate('handbag', 0.5);
+                      const backpackRate = getCategoryRate('backpack', 0.8);
+                      const standardRate = getCategoryRate('standard', 1.0);
+                      const boxRate = getCategoryRate('box', 1.2);
+                      const bulkyRate = getCategoryRate('bulky', 1.5);
+
+                      const totalHourlyRate = 
+                        (miniSpaceItemCounts.handbag * handbagRate) +
+                        (miniSpaceItemCounts.backpack * backpackRate) +
+                        (miniSpaceItemCounts.standard * standardRate) +
+                        (miniSpaceItemCounts.box * boxRate) +
+                        (miniSpaceItemCounts.bulky * bulkyRate);
+
+                      // Radical / Bounce Hybrid: 24-hr daily capped pricing pass per item
+                      const maxDailyCapTotal = totalBags * hotelLuggageDayPassRate;
+                      const standardHoursTotal = totalHourlyRate * miniSpaceHours;
+                      // If customer stores for full day or hourly total exceeds daily cap, apply daily cap
+                      const isDailyCapApplied = miniSpaceHours >= 6 && standardHoursTotal > maxDailyCapTotal;
+                      const totalAmount = isDailyCapApplied ? maxDailyCapTotal : standardHoursTotal;
+
+                      // Breakdown string for UI
+                      const breakdownItems: string[] = [];
+                      if (miniSpaceItemCounts.handbag > 0) breakdownItems.push(`${miniSpaceItemCounts.handbag}x Handbag`);
+                      if (miniSpaceItemCounts.backpack > 0) breakdownItems.push(`${miniSpaceItemCounts.backpack}x Backpack`);
+                      if (miniSpaceItemCounts.standard > 0) breakdownItems.push(`${miniSpaceItemCounts.standard}x Trolley`);
+                      if (miniSpaceItemCounts.box > 0) breakdownItems.push(`${miniSpaceItemCounts.box}x Box`);
+                      if (miniSpaceItemCounts.bulky > 0) breakdownItems.push(`${miniSpaceItemCounts.bulky}x Bulky`);
+
+                      // Real-time capacity check using live bookings
+                      const activeMerchantBookings = (bookings || []).filter((b: any) => {
+                        const isMatch = (b.merchantId === merchantId) || (b.metadata?.miniSpace && b.merchantName === venueName);
+                        const isConfirmed = b.status === 'CONFIRMED' || b.status === 'ACTIVE';
+                        const isSameDate = b.date === (miniSpaceDropDate || new Date().toISOString().split('T')[0]);
+                        return isMatch && isConfirmed && isSameDate && Boolean(b.metadata?.miniSpace);
+                      });
+
+                      const currentlyOccupied = activeMerchantBookings.reduce((sum: number, b: any) => {
+                        const ms = b.metadata?.miniSpace;
+                        if (!ms) return sum;
+                        if (ms.requestedSlots) return sum + ms.requestedSlots;
+                        if (ms.itemBreakdown) {
+                          const ib = ms.itemBreakdown;
+                          return sum + 
+                            ((ib.handbag || 0) * 0.5) + 
+                            ((ib.backpack || 0) * 1) + 
+                            ((ib.standard || 0) * 1.5) + 
+                            ((ib.box || 0) * 2) + 
+                            ((ib.bulky || 0) * 3);
+                        }
+                        const count = ms.bagCount || 1;
+                        return sum + count;
+                      }, 0);
+
+                      const availableCapacity = Math.max(0, hotelLuggageMaxCapacity - currentlyOccupied);
+                      const isBookingFilled = availableCapacity <= 0 || requestedSlots > availableCapacity || totalBags === 0;
 
                       return (
                         <>
+                          <div className="space-y-2 text-xs border-b border-slate-200 dark:border-white/10 pb-3">
+                            <div className="flex justify-between">
+                              <span className="text-slate-500">Storage Unit</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-200">
+                                {totalBags > 0 ? `${totalBags} Items (${breakdownItems.join(', ')})` : '0 Items Selected'} × {miniSpaceHours} hrs
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-500">Item Type</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-200 capitalize">
+                                {totalBags > 0 ? breakdownItems.join(' + ') : 'None'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-500">Facility Location</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-200">Frontdesk Bell Desk</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-500">Capacity Status</span>
+                              {availableCapacity <= 0 || requestedSlots > availableCapacity ? (
+                                <span className="font-black text-rose-500">FILLED / FULL ({availableCapacity} left)</span>
+                              ) : availableCapacity <= 3 ? (
+                                <span className="font-black text-amber-500">Fast Filling ({availableCapacity} slots left)</span>
+                              ) : (
+                                <span className="font-bold text-emerald-600 dark:text-emerald-400">{availableCapacity} of {hotelLuggageMaxCapacity} Slots Available</span>
+                              )}
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-500">Security Tag Fee</span>
+                              <span className="font-bold text-emerald-600 dark:text-emerald-400">FREE</span>
+                            </div>
+                          </div>
+
                           <div className="flex items-baseline justify-between">
                             <div>
-                              <span className="text-sm font-black text-slate-900 dark:text-white block">Total Amount</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-sm font-black text-slate-900 dark:text-white block">Total Amount</span>
+                                {isDailyCapApplied && (
+                                  <span className="px-1.5 py-0.2 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-extrabold text-[9px] uppercase tracking-wider">
+                                    Full Day Cap Applied
+                                  </span>
+                                )}
+                              </div>
                               <span className="text-[10px] text-slate-400 font-semibold">
-                                {miniSpaceBagCount} Bag{miniSpaceBagCount > 1 ? 's' : ''} × {miniSpaceHours}h × ₹{hotelLuggageHourlyRate}
+                                {isDailyCapApplied
+                                  ? `${totalBags} Items capped at ₹${hotelLuggageDayPassRate}/bag full day pass`
+                                  : `${totalBags} ${totalBags > 1 ? 'Items' : 'Item'} × ${miniSpaceHours}h @ combined ₹${totalHourlyRate}/hr`
+                                }
                               </span>
                             </div>
                             <span className="text-2xl font-black text-amber-600 dark:text-amber-400">₹{totalAmount}</span>
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const formattedDropTime = `${miniSpaceDropHour}:${miniSpaceDropMinute} ${miniSpaceDropPeriod}`;
-                              const slotDate = miniSpaceDropDate || new Date().toISOString().split('T')[0];
+                          {totalBags === 0 ? (
+                            <button
+                              type="button"
+                              disabled
+                              className="w-full py-3.5 rounded-xl bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-black text-xs uppercase tracking-wider cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                              <span>SELECT AT LEAST 1 ITEM</span>
+                            </button>
+                          ) : isBookingFilled ? (
+                            <div className="space-y-2">
+                              <button
+                                type="button"
+                                disabled
+                                className="w-full py-3.5 rounded-xl bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-black text-xs uppercase tracking-wider cursor-not-allowed flex items-center justify-center gap-2 shadow-none"
+                              >
+                                <span>🔒 BOOKING FILLED (NO SPACE LEFT)</span>
+                              </button>
+                              <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 text-[11px] font-bold text-rose-600 dark:text-rose-400 text-center leading-snug">
+                                Cloakroom is full for this time slot (Only {availableCapacity} slots left, your selection requires {requestedSlots} slots). Please reduce items or choose another date.
+                              </div>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const formattedDropTime = `${miniSpaceDropHour}:${miniSpaceDropMinute} ${miniSpaceDropPeriod}`;
+                                const slotDate = miniSpaceDropDate || new Date().toISOString().split('T')[0];
 
-                              setSelectedService({
-                                id: `svc-minispace-${merchantId || 'hotel'}`,
-                                name: `${venueName} — Mini Space Cloakroom`,
-                                merchant: venueName || 'BokSpot Partner Hotel',
-                                merchantId: merchantId || liveServices[0]?.merchantId || (merchantData as any)?.id || '',
-                                merchantObj: merchantData || liveServices[0]?.merchantObj || { id: merchantId, name: venueName },
-                                price: totalAmount,
-                                basePrice: totalAmount,
-                                currency: 'INR',
-                                city: city || 'Chennai',
-                                category: 'hotels', // keeps in Accommodation archetype for the hotel business dashboard
-                                duration: miniSpaceHours * 60,
-                                metadata: {
-                                  facilityName: `${venueName} Frontdesk Cloakroom`,
+                                setSelectedService({
+                                  id: `svc-minispace-${merchantId || 'business'}`,
+                                  name: `${venueName} — Mini Space Cloakroom`,
+                                  merchant: venueName || 'BokSpot Partner',
                                   merchantId: merchantId || liveServices[0]?.merchantId || (merchantData as any)?.id || '',
-                                  returnHotelUrl: `/${bookingType}/${rawCategory}/${merchantId}`,
-                                  miniSpace: {
-                                    bagCount: miniSpaceBagCount,
-                                    durationHours: miniSpaceHours,
-                                    hourlyRate: hotelLuggageHourlyRate,
-                                    dropDate: slotDate,
-                                    dropTime: formattedDropTime,
-                                    bagDesc: miniSpaceBagDesc || 'Luggage & Backpacks',
-                                    totalAmount,
-                                    hotelName: venueName,
-                                    returnHotelUrl: `/${bookingType}/${rawCategory}/${merchantId}`
+                                  merchantObj: merchantData || liveServices[0]?.merchantObj || { id: merchantId, name: venueName },
+                                  price: totalAmount,
+                                  basePrice: totalAmount,
+                                  currency: 'INR',
+                                  city: city || 'Chennai',
+                                  category: rawCategory || 'hotels',
+                                  duration: miniSpaceHours * 60,
+                                  metadata: {
+                                    facilityName: `${venueName} Frontdesk Cloakroom`,
+                                    merchantId: merchantId || liveServices[0]?.merchantId || (merchantData as any)?.id || '',
+                                    returnHotelUrl: `/${bookingType}/${rawCategory}/${merchantId}`,
+                                    miniSpace: {
+                                      itemBreakdown: miniSpaceItemCounts,
+                                      breakdownSummary: breakdownItems.join(', '),
+                                      bagCount: totalBags,
+                                      requestedSlots,
+                                      durationHours: miniSpaceHours,
+                                      hourlyRate: hotelLuggageHourlyRate,
+                                      dropDate: slotDate,
+                                      dropTime: formattedDropTime,
+                                      bagDesc: miniSpaceBagDesc || breakdownItems.join(', '),
+                                      totalAmount,
+                                      hotelName: venueName,
+                                      returnHotelUrl: `/${bookingType}/${rawCategory}/${merchantId}`
+                                    }
                                   }
-                                }
-                              });
+                                });
 
-                              setSelectedSlot({
-                                id: `slot-minispace-${Date.now()}`,
-                                date: slotDate,
-                                timeStr: `${formattedDropTime} (${miniSpaceHours} Hours)`,
-                                available: true
-                              });
+                                setSelectedSlot({
+                                  id: `slot-minispace-${Date.now()}`,
+                                  date: slotDate,
+                                  timeStr: `${formattedDropTime} (${miniSpaceHours} Hours)`,
+                                  available: true
+                                });
 
-                              router.push('/booking/checkout');
-                            }}
-                            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 active:scale-95 text-slate-950 font-black text-xs uppercase tracking-wider shadow-md shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
-                          >
-                            <span>PROCEED TO CHECKOUT &rarr;</span>
-                          </button>
+                                router.push('/booking/checkout');
+                              }}
+                              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 active:scale-95 text-slate-950 font-black text-xs uppercase tracking-wider shadow-md shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer group"
+                            >
+                              <span>PROCEED TO CHECKOUT</span>
+                              <span className="transition-transform group-hover:translate-x-1 text-sm font-bold">&rarr;</span>
+                            </button>
+                          )}
                           <p className="text-[10px] text-slate-500 dark:text-slate-400 text-center font-medium">
                             Select guest details & payment method on checkout page. Digital QR Pass generated upon confirmation.
                           </p>
                         </>
                       );
                     })()}
+                  </div>
+                </div>
+
+                {/* 4 Easy Steps — How It Works Banner (Bounce / Stasher Style) */}
+                <div className="mt-6 pt-6 border-t border-slate-200/80 dark:border-white/10">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                      How It Works (Easy 4-Step Drop & Pick-Up)
+                    </span>
+                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                      ✓ Instant QR Pass
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {/* Step 1 */}
+                    <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-white/10 flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 font-black text-sm flex items-center justify-center shrink-0">
+                        1
+                      </div>
+                      <div>
+                        <span className="text-xs font-black text-slate-900 dark:text-white block">
+                          Show your booking
+                        </span>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                          Present your instant digital QR code at the frontdesk counter upon arrival.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Step 2 */}
+                    <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-white/10 flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 font-black text-sm flex items-center justify-center shrink-0">
+                        2
+                      </div>
+                      <div>
+                        <span className="text-xs font-black text-slate-900 dark:text-white block">
+                          Bag registration
+                        </span>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                          Staff seals & tags your bags with physical barcode seals linked to your booking.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Step 3 */}
+                    <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-white/10 flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 font-black text-sm flex items-center justify-center shrink-0">
+                        3
+                      </div>
+                      <div>
+                        <span className="text-xs font-black text-slate-900 dark:text-white block">
+                          Secure storage
+                        </span>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                          Your luggage is placed in a 24/7 CCTV guarded, staff-only cloakroom vault.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Step 4 */}
+                    <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-white/10 flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-black text-sm flex items-center justify-center shrink-0">
+                        4
+                      </div>
+                      <div>
+                        <span className="text-xs font-black text-slate-900 dark:text-white block">
+                          Easy pick-up
+                        </span>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                          Show your booking QR again when returning; staff verifies and returns your bags.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -5074,7 +5452,28 @@ export default function VenueProfilePage() {
                   const roomListings = activeRoomService.rawConfig?.metadata?.listings || activeRoomService.metadata?.listings || [];
                   const selectedListing = activeRoomService.selectedListing || (activeRoomService.selectedListingId ? roomListings.find((l: any) => l.id === activeRoomService.selectedListingId) : roomListings[0]);
                   const roomMeta = selectedListing?.metadata || activeRoomService.metadata || {};
-                  const roomPrice = Number(selectedListing?.price || selectedListing?.basePrice || activeRoomService.price || activeRoomService.basePrice) || 2500;
+                  const rawPgBasePrice = Number(selectedListing?.price || selectedListing?.basePrice || activeRoomService.price || activeRoomService.basePrice) || 2200;
+
+                  // Dynamic Tenure Discount & Direct Rent Calculation
+                  const customTenureConfig = (selectedListing as any)?.metadata?.tenureDiscounts || (selectedListing as any)?.tenureDiscounts;
+                  
+                  let discountedMonthlyRent = rawPgBasePrice;
+                  if (hostelDurationMonths === 11) {
+                    discountedMonthlyRent = customTenureConfig?.mo11Price
+                      ? Number(customTenureConfig.mo11Price)
+                      : Math.round(rawPgBasePrice * (1 - (customTenureConfig?.mo11Pct ?? customTenureConfig?.mo11 ?? 15) / 100));
+                  } else if (hostelDurationMonths === 6) {
+                    discountedMonthlyRent = customTenureConfig?.mo6Price
+                      ? Number(customTenureConfig.mo6Price)
+                      : Math.round(rawPgBasePrice * (1 - (customTenureConfig?.mo6Pct ?? customTenureConfig?.mo6 ?? 10) / 100));
+                  } else if (hostelDurationMonths === 3) {
+                    discountedMonthlyRent = customTenureConfig?.mo3Price
+                      ? Number(customTenureConfig.mo3Price)
+                      : Math.round(rawPgBasePrice * (1 - (customTenureConfig?.mo3Pct ?? customTenureConfig?.mo3 ?? 5) / 100));
+                  }
+
+                  const pgBasePrice = discountedMonthlyRent;
+                  const roomPrice = isPgStay ? discountedMonthlyRent : (Number(selectedListing?.price || selectedListing?.basePrice || activeRoomService.price || activeRoomService.basePrice) || 2500);
                   const roomTotal = roomPrice * nights * rooms;
 
                   // Room gallery from listing / merchant uploads
@@ -5096,7 +5495,6 @@ export default function VenueProfilePage() {
                   const rawAddons = roomMeta.addons || activeRoomService.metadata?.addons || activeRoomService.addOns || [];
                   const partnerListingAddons = Array.isArray(rawAddons) ? rawAddons : [];
 
-                  const pgBasePrice = Number(activeRoomService.price || activeRoomService.basePrice || selectedListing?.price) || 2200;
                   const pgFoodDiscount = Number(
                     (selectedListing as any)?.foodDiscountAmount ??
                     activeRoomService.metadata?.foodDiscountAmount ??
@@ -5217,39 +5615,54 @@ export default function VenueProfilePage() {
                             </div>
 
                             <div className="grid grid-cols-4 gap-2">
-                              {[
-                                { months: 1, label: '1 Mo', tag: 'Flexi Stay', disc: 0 },
-                                { months: 3, label: '3 Mo', tag: '5% OFF', disc: 5 },
-                                { months: 6, label: '6 Mo', tag: '10% OFF', disc: 10 },
-                                { months: 11, label: '11 Mo', tag: '15% OFF', disc: 15 },
-                              ].map((slab) => {
-                                const isSelected = hostelDurationMonths === slab.months;
-                                return (
-                                  <button
-                                    key={slab.months}
-                                    type="button"
-                                    onClick={() => setHostelDurationMonths(slab.months)}
-                                    className={`p-2 rounded-xl text-center border-2 transition-all cursor-pointer flex flex-col items-center justify-between ${
-                                      isSelected
-                                        ? 'border-[#ff6325] bg-white dark:bg-slate-800 shadow-sm scale-102'
-                                        : 'border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-900/40 hover:border-slate-300'
-                                    }`}
-                                  >
-                                    <span className={`text-xs font-black ${isSelected ? 'text-[#ff6325]' : 'text-slate-900 dark:text-white'}`}>
-                                      {slab.label}
-                                    </span>
-                                    <span className={`text-[9px] font-bold mt-0.5 px-1.5 py-0.2 rounded-md ${
-                                      slab.disc > 0
-                                        ? isSelected
-                                          ? 'bg-rose-500 text-white'
-                                          : 'bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400'
-                                        : 'text-slate-400'
-                                    }`}>
-                                      {slab.tag}
-                                    </span>
-                                  </button>
-                                );
-                              })}
+                              {(() => {
+                                const activeListingData = activeRoomService?.selectedListing as any;
+                                const customTenure = activeListingData?.metadata?.tenureDiscounts || activeListingData?.tenureDiscounts;
+                                const disc3 = customTenure?.mo3 !== undefined ? Number(customTenure.mo3) : 5;
+                                const disc6 = customTenure?.mo6 !== undefined ? Number(customTenure.mo6) : 10;
+                                const disc11 = customTenure?.mo11 !== undefined ? Number(customTenure.mo11) : 15;
+
+                                const slabs = [
+                                  { months: 1, label: '1 Mo', tag: 'Flexi Stay', disc: 0, rent: rawPgBasePrice },
+                                  { months: 3, label: '3 Mo', tag: disc3 > 0 ? `${disc3}% OFF` : 'Standard', disc: disc3, rent: Math.round(rawPgBasePrice * (1 - disc3 / 100)) },
+                                  { months: 6, label: '6 Mo', tag: disc6 > 0 ? `${disc6}% OFF` : 'Standard', disc: disc6, rent: Math.round(rawPgBasePrice * (1 - disc6 / 100)) },
+                                  { months: 11, label: '11 Mo', tag: disc11 > 0 ? `${disc11}% OFF` : 'Standard', disc: disc11, rent: Math.round(rawPgBasePrice * (1 - disc11 / 100)) },
+                                ];
+
+                                return slabs.map((slab) => {
+                                  const isSelected = hostelDurationMonths === slab.months;
+                                  return (
+                                    <button
+                                      key={slab.months}
+                                      type="button"
+                                      onClick={() => setHostelDurationMonths(slab.months)}
+                                      className={`p-2 rounded-xl text-center border-2 transition-all cursor-pointer flex flex-col items-center justify-between ${
+                                        isSelected
+                                          ? 'border-[#ff6325] bg-white dark:bg-slate-800 shadow-sm scale-102'
+                                          : 'border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-900/40 hover:border-slate-300'
+                                      }`}
+                                    >
+                                      <div>
+                                        <span className={`text-xs font-black block ${isSelected ? 'text-[#ff6325]' : 'text-slate-900 dark:text-white'}`}>
+                                          {slab.label}
+                                        </span>
+                                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300 block">
+                                          ₹{slab.rent.toLocaleString()}/mo
+                                        </span>
+                                      </div>
+                                      <span className={`text-[9px] font-bold mt-1 px-1.5 py-0.2 rounded-md ${
+                                        slab.disc > 0
+                                          ? isSelected
+                                            ? 'bg-rose-500 text-white'
+                                            : 'bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400'
+                                          : 'text-slate-400'
+                                      }`}>
+                                        {slab.tag}
+                                      </span>
+                                    </button>
+                                  );
+                                });
+                              })()}
                             </div>
                           </div>
                         )}
@@ -5916,11 +6329,50 @@ export default function VenueProfilePage() {
 
                             <button
                               type="button"
-                              onClick={() => {
+                              onClick={async () => {
                                 if (!visitPhone) {
                                   alert('Please enter your phone number so the Warden can connect with you.');
                                   return;
                                 }
+                                
+                                // Sync Live Property Visit Request to Backend & Business Portal
+                                try {
+                                  const visitBookingData = {
+                                    id: `visit-${Date.now()}`,
+                                    ref: `VISIT-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+                                    merchantId: merchantId || activeRoomService.merchantId || (merchantData as any)?.id || '51c6a3b8-2abc-9421-7644-2a2dea05dbc0',
+                                    merchantName: (merchantData as any)?.name || (merchantData as any)?.businessName || activeRoomService.merchantName || 'Backpackers Hostel',
+                                    category: 'Hostel Booking',
+                                    serviceId: activeRoomService.id || 'svc-hostel-visit',
+                                    serviceName: activeRoomService.name ? `${activeRoomService.name} (${visitMode === 'LIVE_VIDEO' ? 'Live Video Tour' : 'In-Person Inspection'})` : (visitMode === 'LIVE_VIDEO' ? 'Live Video Tour' : 'Property Visit & Callback'),
+                                    customerName: visitName || 'Guest Visitor',
+                                    customerPhone: visitPhone,
+                                    date: visitDate,
+                                    time: `${visitTimeSlot} • ${visitMode === 'LIVE_VIDEO' ? (videoPlatform === 'WHATSAPP' ? 'WhatsApp Video' : 'Google Meet') : 'Physical Visit'}`,
+                                    amount: 0,
+                                    status: 'PENDING',
+                                    bookingType: 'PROPERTY_VISIT',
+                                    notes: `Scheduled ${visitMode === 'LIVE_VIDEO' ? `Live Video Tour on ${videoPlatform === 'WHATSAPP' ? 'WhatsApp' : 'Google Meet'}` : 'Physical Property Visit & Warden Callback'} for ${visitName || 'Visitor'} (${visitPhone})`,
+                                    metadata: {
+                                      isPropertyVisit: true,
+                                      visitMode,
+                                      videoPlatform: visitMode === 'LIVE_VIDEO' ? videoPlatform : undefined,
+                                      roomName: activeRoomService.name,
+                                      roomSharing: (selectedListing as any)?.name || 'Bed Inspection',
+                                      scheduledDate: visitDate,
+                                      timeSlot: visitTimeSlot,
+                                    }
+                                  };
+
+                                  await fetch('/api/v1/bookings/sync', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(visitBookingData),
+                                  }).catch(() => {});
+                                } catch (e) {
+                                  console.error('Failed to post live visit sync:', e);
+                                }
+
                                 setVisitConfirmed(true);
                               }}
                               className={`w-full py-3.5 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer mt-2 ${

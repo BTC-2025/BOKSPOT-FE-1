@@ -107,6 +107,19 @@ Thank you for booking with BETA!
           <p className="mt-3 text-xs text-[color:var(--color-on-surface-variant)] font-medium">Show this QR code at the reception desk</p>
         </div>
 
+        {/* Cancellation & Grace Period Policy Summary Card */}
+        <div className="mt-4 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-left space-y-1.5 text-xs">
+          <div className="flex items-center justify-between text-amber-600 dark:text-amber-400 font-black">
+            <span className="flex items-center gap-1.5">
+              <span>🛡️</span> Flexible Cancellation & Grace Period
+            </span>
+            <span className="text-[10px] uppercase bg-amber-500/20 px-1.5 py-0.2 rounded font-bold">Guaranteed</span>
+          </div>
+          <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-snug">
+            Free cancellation with 100% refund available up to 2 hours before scheduled time. 15-minute free grace period applies for luggage collection.
+          </p>
+        </div>
+
         <div className="mt-6 flex gap-3">
           <button onClick={handleDownloadTicket} className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-[color:var(--color-outline-variant)]/40 bg-[color:var(--color-surface-container-high)] py-3 text-sm font-semibold hover:border-[color:var(--color-primary)]/40 transition-colors text-[color:var(--color-on-surface)]">
             <Download className="h-4 w-4 text-[color:var(--color-primary)]" /> Save Ticket

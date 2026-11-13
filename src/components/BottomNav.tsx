@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
 const NAV_ITEMS = [
   { href: '/',           icon: 'home',      label: 'Home'       },
@@ -12,6 +13,16 @@ const NAV_ITEMS = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  const [originNav, setOriginNav] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem('bokspot_nav_origin');
+      setOriginNav(stored);
+    } catch {
+      // ignore
+    }
+  }, []);
 
   return (
     <nav
@@ -25,10 +36,6 @@ export function BottomNav() {
     >
       <div className="flex justify-around items-center h-[66px] max-w-md mx-auto px-2">
         {(() => {
-          let originNav: string | null = null;
-          if (typeof window !== 'undefined') {
-            originNav = sessionStorage.getItem('bokspot_nav_origin');
-          }
           const isHomePath = pathname === '/' || pathname === '/home' || pathname.startsWith('/home/');
           const isExplicitCategories = pathname === '/categories' || pathname.startsWith('/service') || pathname.startsWith('/venue');
           const isBookings = pathname === '/booking' || pathname === '/bookings' || pathname === '/tracks' || pathname.startsWith('/booking/') || pathname.startsWith('/split');

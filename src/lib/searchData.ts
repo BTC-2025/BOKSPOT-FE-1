@@ -453,7 +453,8 @@ export function getHrefForCategoryItem(groupTitle: string, item: string): string
   else if (itemLower.includes('hotel') && !itemLower.includes('hostel')) slug = 'hotels';
   else if (itemLower.includes('resort')) slug = 'resorts';
   else if (itemLower.includes('villa') || itemLower.includes('homestay')) slug = 'villas';
-  else if (itemLower.includes('hostel') || itemLower.includes('pg') || itemLower.includes('coliving')) slug = 'pg-hostels';
+  else if (itemLower.includes('hostel')) slug = 'hostels';
+  else if (itemLower.includes('pg') || itemLower.includes('coliving')) slug = 'pg-hostels';
   else if (itemLower.includes('camping')) slug = 'camping';
   
   // Entertainment & Events
