@@ -219,7 +219,7 @@ export default function VenueProfilePage() {
   }>({
     handbag: 0,
     backpack: 0,
-    standard: 1, // default 1 trolley
+    standard: 0,
     box: 0,
     bulky: 0,
   });
@@ -3743,13 +3743,13 @@ export default function VenueProfilePage() {
                         </span>
                       </div>
                       
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {[
-                          { id: 'handbag' as const, label: 'Handbag / Purse', sub: 'Small pouch, laptop cover', icon: '👛', multiplier: 0.5, weight: 'Upto 3 kg', slotWeight: 0.5 },
-                          { id: 'backpack' as const, label: 'Backpack / Kit', sub: 'Laptop bag, Gym bag', icon: '🎒', multiplier: 0.8, weight: '5-8 kg', slotWeight: 1 },
-                          { id: 'standard' as const, label: 'Trolley Suitcase', sub: 'Cabin or Check-in bag', icon: '🧳', multiplier: 1.0, weight: '10-20 kg', slotWeight: 1 },
-                          { id: 'box' as const, label: 'Carton / Box', sub: 'Packed boxes, parcels', icon: '📦', multiplier: 1.2, weight: '15-30 kg', slotWeight: 2 },
-                          { id: 'bulky' as const, label: 'Bulky Equipment', sub: 'Bike gear, instruments', icon: '🚲', multiplier: 1.5, weight: '30+ kg', slotWeight: 3 },
+                          { id: 'handbag' as const, label: 'Handbag', sub: 'Pouch, sleeves', icon: '👛', multiplier: 0.5, weight: 'Upto 3 kg', slotWeight: 0.5 },
+                          { id: 'backpack' as const, label: 'Backpack', sub: 'Laptop & kit bags', icon: '🎒', multiplier: 0.8, weight: '5-8 kg', slotWeight: 1 },
+                          { id: 'standard' as const, label: 'Trolley Bag', sub: 'Cabin or check-in', icon: '🧳', multiplier: 1.0, weight: '10-20 kg', slotWeight: 1 },
+                          { id: 'box' as const, label: 'Carton Box', sub: 'Parcels, goods', icon: '📦', multiplier: 1.2, weight: '15-30 kg', slotWeight: 2 },
+                          { id: 'bulky' as const, label: 'Bulky Gear', sub: 'Bike gear, sports', icon: '🚲', multiplier: 1.5, weight: '30+ kg', slotWeight: 3 },
                         ].map((item) => {
                           const count = miniSpaceItemCounts[item.id];
                           const itemRate = getCategoryRate(item.id, item.multiplier);
@@ -3758,7 +3758,7 @@ export default function VenueProfilePage() {
                           return (
                             <div
                               key={item.id}
-                              className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-2.5 ${
+                              className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
                                 isAdded
                                   ? 'bg-amber-500/10 border-amber-500/80 shadow-xs ring-1 ring-amber-500/30'
                                   : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-white/10'
@@ -3767,13 +3767,13 @@ export default function VenueProfilePage() {
                               <div className="flex items-center gap-2.5 min-w-0">
                                 <span className="text-2xl shrink-0">{item.icon}</span>
                                 <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-xs font-black text-slate-900 dark:text-white truncate">{item.label}</span>
-                                    <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded shrink-0">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="text-xs font-black text-slate-900 dark:text-white whitespace-nowrap">{item.label}</span>
+                                    <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded shrink-0">
                                       ₹{itemRate}/h
                                     </span>
                                   </div>
-                                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block truncate">
+                                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block whitespace-nowrap">
                                     {item.weight} • {item.sub}
                                   </span>
                                 </div>
