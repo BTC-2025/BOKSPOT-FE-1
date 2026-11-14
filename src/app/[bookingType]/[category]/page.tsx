@@ -15,6 +15,7 @@ import dynamic from 'next/dynamic';
 import { useLocationStore, useBookingFlowStore, useUserStore, ALL_CITIES, POPULAR_CITIES } from '../../../lib/store';
 import { api, Service } from '../../../lib/api';
 import { calculateDistance } from '../../../lib/mockData';
+import { getSportCategoryConfig } from '../../../lib/sportsData';
 
 const MapComponent = dynamic(() => import('../../../components/MapComponent'), {
   ssr: false,
@@ -114,6 +115,137 @@ const SORT_OPTIONS = [
   { value: 'price', label: 'Lowest Price' },
   { value: 'reviews', label: 'Most Reviewed' },
 ];
+
+export function getCategoryHeroTheme(category: string, bookingType: string, city: string, categoryName: string) {
+  const normCat = (category || '').toLowerCase();
+  const normType = (bookingType || '').toLowerCase();
+  const cName = categoryName || 'Experiences';
+  const cityName = city || 'Chennai';
+
+  // 1. SPORTS & TURF
+  if (
+    normType.includes('sport') ||
+    ['football-turf', 'cricket-ground', 'badminton', 'tennis', 'basketball', 'swimming', 'play-arena', 'turfs'].includes(normCat)
+  ) {
+    let img = 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1920&q=80&auto=format&fit=crop';
+    if (normCat.includes('cricket')) {
+      img = 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=1920&q=80&auto=format&fit=crop';
+    } else if (normCat.includes('badminton') || normCat.includes('tennis')) {
+      img = 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=1920&q=80&auto=format&fit=crop';
+    } else if (normCat.includes('swimming')) {
+      img = 'https://images.unsplash.com/photo-1576610616656-d3aa5d1f4534?w=1920&q=80&auto=format&fit=crop';
+    } else if (normCat.includes('basketball')) {
+      img = 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1920&q=80&auto=format&fit=crop';
+    }
+
+    return {
+      bgImage: img,
+      subtitle: 'PREMIUM ARENAS • INSTANT SLOT CONFIRMATION',
+      title: `Book Top ${cName} in ${cityName}`,
+      description: `Reserve floodlit courts, FIFA-grade turfs, and certified sporting arenas with real-time slot lock in ${cityName}.`,
+      badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
+      whereLabel: 'WHERE / VENUE',
+      wherePlaceholder: `Search ${cName} arenas, clubs or areas in ${cityName}...`,
+      searchBtnLabel: 'Search Slots',
+    };
+  }
+
+  // 2. VEHICLE & GEAR RENTALS
+  if (
+    normType.includes('rental') ||
+    ['car-rental', 'bike-rental', 'cycle-rental', 'sports-bike', 'camera', 'sound-system', 'event-equip'].includes(normCat)
+  ) {
+    let img = 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1920&q=80&auto=format&fit=crop';
+    if (normCat.includes('bike') || normCat.includes('cycle')) {
+      img = 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=1920&q=80&auto=format&fit=crop';
+    } else if (normCat.includes('camera') || normCat.includes('sound')) {
+      img = 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=1920&q=80&auto=format&fit=crop';
+    }
+
+    return {
+      bgImage: img,
+      subtitle: 'SELF-DRIVE & VERIFIED GEAR • ZERO HIDDEN DEPOSIT',
+      title: `Rent Top ${cName} in ${cityName}`,
+      description: `Explore premium fleet & high-end gear delivered or picked up across ${cityName} with instant security check.`,
+      badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
+      whereLabel: 'PICKUP LOCATION',
+      wherePlaceholder: `Search pickup hub, station, or landmark in ${cityName}...`,
+      searchBtnLabel: 'Find Rentals',
+    };
+  }
+
+  // 3. ENTERTAINMENT & EVENTS
+  if (
+    normType.includes('entertainment') ||
+    ['movies', 'theatre', 'concerts', 'events', 'exhibitions', 'workshops', 'gaming'].includes(normCat)
+  ) {
+    return {
+      bgImage: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1920&q=80&auto=format&fit=crop',
+      subtitle: 'LIVE EXPERIENCES • INSTANT DIGITAL TICKETS',
+      title: `Discover ${cName} in ${cityName}`,
+      description: `Experience the best live concerts, blockbusters, and premier shows with verified QR entrance passes.`,
+      badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
+      whereLabel: 'CITY / VENUE',
+      wherePlaceholder: `Search shows, theatres, or events in ${cityName}...`,
+      searchBtnLabel: 'Explore Shows',
+    };
+  }
+
+  // 4. LIFESTYLE, HEALTHCARE & WELLNESS
+  if (
+    normType.includes('lifestyle') ||
+    ['dining', 'salons', 'gym-yoga', 'doctor', 'pet-grooming', 'studio', 'electrician', 'plumber', 'cleaning'].includes(normCat)
+  ) {
+    let img = 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1920&q=80&auto=format&fit=crop';
+    if (normCat.includes('doctor')) {
+      img = 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=1920&q=80&auto=format&fit=crop';
+    } else if (normCat.includes('dining')) {
+      img = 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1920&q=80&auto=format&fit=crop';
+    } else if (normCat.includes('gym')) {
+      img = 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1920&q=80&auto=format&fit=crop';
+    }
+
+    return {
+      bgImage: img,
+      subtitle: 'VERIFIED SPECIALISTS • ZERO WAITING TIME',
+      title: `Book ${cName} in ${cityName}`,
+      description: `Connect with certified practitioners, stylists, and local master professionals with doorstep & clinic booking.`,
+      badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
+      whereLabel: 'LOCATION / CLINIC',
+      wherePlaceholder: `Search clinics, salons, or locations in ${cityName}...`,
+      searchBtnLabel: 'Book Appointment',
+    };
+  }
+
+  // 5. STAYS & ACCOMMODATION (Default hotel reference)
+  if (
+    normType.includes('stay') ||
+    ['hotels', 'resorts', 'villas', 'hostels', 'pg-hostels', 'camping'].includes(normCat)
+  ) {
+    return {
+      bgImage: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1920&q=80&auto=format&fit=crop',
+      subtitle: 'PREMIUM STAYS • BETTER EXPERIENCES',
+      title: `Find Your Perfect Stay in ${cityName}`,
+      description: `Discover handpicked ${cName.toLowerCase()} & verified stays in ${cityName} for your next getaway or living arrangement.`,
+      badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
+      whereLabel: 'WHERE',
+      wherePlaceholder: 'Search destination, hotel or city...',
+      searchBtnLabel: 'Search Stays',
+    };
+  }
+
+  // 6. DEFAULT / ALL OTHER 54 CATEGORIES
+  return {
+    bgImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80&auto=format&fit=crop',
+    subtitle: 'CURATED CHOICES • VERIFIED DISPATCH',
+    title: `Find & Book ${cName} in ${cityName}`,
+    description: `Curated top-rated choices and verified dispatcher portal in ${cityName} with instant confirmation.`,
+    badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
+    whereLabel: 'SEARCH / AREA',
+    wherePlaceholder: `Search ${cName} in ${cityName}...`,
+    searchBtnLabel: 'Search',
+  };
+}
 
 function MockQRCode({ value }: { value: string }) {
   let hash = 0;
@@ -1574,6 +1706,16 @@ export default function ProviderDiscoveryPage() {
   const isHotelCategory = category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'pg-hostels' || category === 'camping' || bookingType === 'stay-accommodation' || bookingType === 'home';
   const isHostelOrPg = category === 'hostels' || category === 'pg-hostels' || (categoryName || '').toLowerCase().includes('hostel') || (categoryName || '').toLowerCase().includes('pg');
   const isPgCategory = category === 'pg-hostels';
+  const isSportsCategory = (bookingType || '').toLowerCase().includes('sport') || ['football-turf', 'cricket-ground', 'badminton', 'tennis', 'basketball', 'swimming', 'play-arena', 'turfs'].includes((category || '').toLowerCase());
+
+  // Sports & Turf Dedicated Search States
+  const [sportsSlotDate, setSportsSlotDate] = useState(() => queryDate || new Date().toISOString().split('T')[0]);
+  const [sportsSlotTime, setSportsSlotTime] = useState(() => querySlot || '06:00 PM - 07:00 PM');
+  const [sportsDurationHours, setSportsDurationHours] = useState<number>(1);
+  const [isSportsSlotDropdownOpen, setIsSportsSlotDropdownOpen] = useState(false);
+  const [isSportsDatePickerOpen, setIsSportsDatePickerOpen] = useState(false);
+  const [sportsCalDate, setSportsCalDate] = useState<Date>(() => new Date());
+  const [sportsFormatFilter, setSportsFormatFilter] = useState<string>('all');
 
   // Hostel & PG Dedicated Search States
   const [hostelMoveInDate, setHostelMoveInDate] = useState(() => new Date().toISOString().split('T')[0]);
@@ -1624,6 +1766,8 @@ export default function ProviderDiscoveryPage() {
         setIsDurationDropdownOpen(false);
         setIsHostelOccupancyOpen(false);
         setIsMoveInDatePickerOpen(false);
+        setIsSportsSlotDropdownOpen(false);
+        setIsSportsDatePickerOpen(false);
       }
     };
 
@@ -1911,6 +2055,109 @@ export default function ProviderDiscoveryPage() {
           ];
         }
 
+        // Generic Sports & Recreation Master Archetype Fallback (Categories 22-28)
+        const sportConfig = getSportCategoryConfig(category);
+        if (sportConfig && list.length === 0) {
+          const targetCity = city || 'Chennai';
+
+          // Check if custom branch or listings configured by business vendor in portal
+          let merchantBranchList: any[] = [];
+          if (typeof window !== 'undefined') {
+            try {
+              const busStorageRaw = localStorage.getItem('vendor-portal-storage-v10');
+              if (busStorageRaw) {
+                const busData = JSON.parse(busStorageRaw);
+                const curM = busData.state?.currentMerchant;
+                if (curM && curM.username === sportConfig.username && Array.isArray(curM.branches) && curM.branches.length > 0) {
+                  merchantBranchList = curM.branches;
+                }
+              }
+            } catch (e) {}
+          }
+
+          if (merchantBranchList.length > 0) {
+            list = merchantBranchList.map((br: any) => ({
+              id: `svc-${sportConfig.slug}-${br.id}`,
+              name: `${br.name} — ${sportConfig.categoryName}`,
+              category: { name: sportConfig.categoryName, slug: sportConfig.slug },
+              rating: 4.9,
+              reviewCount: 384,
+              basePrice: String(sportConfig.defaultPrice),
+              image: sportConfig.heroImage,
+              branchName: br.name,
+              address: br.address,
+              merchant: {
+                id: sportConfig.merchantId,
+                name: br.name,
+                city: br.city || targetCity,
+                address: br.address || `Sports Hub Arena, Stadium Road, ${targetCity}`,
+                rating: 4.9,
+                username: sportConfig.username,
+                metadata: {
+                  isFacility: true,
+                  branchId: br.id,
+                  units: sportConfig.units,
+                  addons: sportConfig.addons,
+                  mandatoryRule: sportConfig.mandatoryRule,
+                  amenities: sportConfig.amenities,
+                  includedGear: sportConfig.includedGear,
+                  supervisorTitle: sportConfig.supervisorTitle
+                }
+              },
+              metadata: {
+                isFacility: true,
+                branchId: br.id,
+                branchName: br.name,
+                address: br.address,
+                startingPrice: sportConfig.defaultPrice,
+                amenities: sportConfig.amenities,
+                mandatoryRule: sportConfig.mandatoryRule,
+                units: sportConfig.units,
+                addons: sportConfig.addons
+              }
+            }));
+          } else {
+            list = [
+              {
+                id: `svc-${sportConfig.slug}-${sportConfig.username.toLowerCase()}`,
+                name: `${sportConfig.merchantName} — ${sportConfig.categoryName}`,
+                category: { name: sportConfig.categoryName, slug: sportConfig.slug },
+                rating: 4.9,
+                reviewCount: 384,
+                basePrice: String(sportConfig.defaultPrice),
+                image: sportConfig.heroImage,
+                branchName: sportConfig.merchantName,
+                address: `Sports Hub Arena, Stadium Road, ${targetCity}`,
+                merchant: {
+                  id: sportConfig.merchantId,
+                  name: sportConfig.merchantName,
+                  city: targetCity,
+                  address: `Sports Hub Arena, Stadium Road, ${targetCity}`,
+                  rating: 4.9,
+                  username: sportConfig.username,
+                  metadata: {
+                    isFacility: true,
+                    units: sportConfig.units,
+                    addons: sportConfig.addons,
+                    mandatoryRule: sportConfig.mandatoryRule,
+                    amenities: sportConfig.amenities,
+                    includedGear: sportConfig.includedGear,
+                    supervisorTitle: sportConfig.supervisorTitle
+                  }
+                },
+                metadata: {
+                  isFacility: true,
+                  startingPrice: sportConfig.defaultPrice,
+                  amenities: sportConfig.amenities,
+                  mandatoryRule: sportConfig.mandatoryRule,
+                  units: sportConfig.units,
+                  addons: sportConfig.addons
+                }
+              }
+            ];
+          }
+        }
+
         if (active) {
           setServicesList(list);
         }
@@ -1964,8 +2211,24 @@ export default function ProviderDiscoveryPage() {
       const sName = (s.name || '').toLowerCase();
       const mName = (s.merchant?.name || s.merchantName || '').toLowerCase();
       const isTurfOrSports = sCat.includes('turf') || sCat.includes('sport') || sCat.includes('cricket') || sCat.includes('badminton') ||
-        sName.includes('turf') || sName.includes('court') || mName.includes('turf');
+        sCat.includes('tennis') || sCat.includes('basketball') || sCat.includes('swimming') || sCat.includes('play-arena') ||
+        sName.includes('turf') || sName.includes('court') || sName.includes('pool') || sName.includes('pitch') || sName.includes('arena') ||
+        mName.includes('turf') || mName.includes('arena') || mName.includes('court');
       if (isTurfOrSports) return false;
+    }
+
+    // Sports & Facility Strict Category Guard: Filter out Stays, Hotels, Clinics, Salons
+    const isSportsCat = category.includes('badminton') || category.includes('tennis') || category.includes('basketball') ||
+      category.includes('swimming') || category.includes('play-arena') || category.includes('turf') || category.includes('cricket');
+    if (isSportsCat) {
+      const sCat = (s.category?.name || s.category?.slug || s.category || '').toLowerCase();
+      const sName = (s.name || '').toLowerCase();
+      const mName = (s.merchant?.name || s.merchantName || '').toLowerCase();
+      const isStayOrWellness = sCat.includes('hotel') || sCat.includes('resort') || sCat.includes('villa') || sCat.includes('hostel') ||
+        sCat.includes('doctor') || sCat.includes('salon') || sCat.includes('spa') ||
+        sName.includes('hotel') || sName.includes('resort') || sName.includes('villa') || sName.includes('hostel') ||
+        mName.includes('hotel') || mName.includes('resort') || mName.includes('villa') || mName.includes('hostel');
+      if (isStayOrWellness) return false;
     }
 
     // Price range filter (only apply if user explicitly reduced it from default 50000)
@@ -2162,98 +2425,74 @@ export default function ProviderDiscoveryPage() {
     return matchName || matchMerchant || matchCity || matchAddress || matchDesc || matchMeta;
   });
 
+  // Dynamic Category Theme Config for Hero Banner and Search Dock
+  const categoryHeroTheme = getCategoryHeroTheme(category, bookingType, city, categoryName);
+
   return (
     <main className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] transition-colors duration-300 relative overflow-hidden pt-[98px] lg:pt-[104px]">
       {/* Ambient Luxury Background Glows */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-[#ff6325]/10 via-[#0a3161]/5 to-transparent blur-3xl pointer-events-none -z-10" />
       <div className="absolute top-40 right-10 w-72 h-72 bg-[#ff6325]/5 rounded-full blur-3xl pointer-events-none -z-10" />
 
-      {/* Inline Breadcrumb (Only for non-stay categories) */}
-      {!isHotelCategory && (
-        <div className="container-main flex items-center justify-between pt-2 pb-1.5">
-          <div className="flex items-center gap-3 min-w-0">
-            <Link
-              href={`/${bookingType}`}
-              className="p-2.5 shrink-0 rounded-xl bg-[var(--color-surface)]/70 backdrop-blur-md border border-[var(--color-outline-variant)]/40 hover:border-[#ff6325]/60 hover:bg-[#ff6325]/10 text-[var(--text-primary)] transition-all shadow-sm group"
-            >
-              <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
-            </Link>
-            <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)] min-w-0">
-              <Link href="/" className="hover:text-[#ff6325] transition-colors shrink-0">Home</Link>
-              <ChevronRight size={13} className="shrink-0 opacity-40" />
-              <Link href={`/${bookingType}`} className="hover:text-[#ff6325] transition-colors truncate shrink-0 capitalize">{bookingType}</Link>
-              <ChevronRight size={13} className="shrink-0 opacity-40" />
-              <span className="text-[var(--text-primary)] font-bold truncate bg-[#ff6325]/10 text-[#ff6325] px-2.5 py-0.5 rounded-md border border-[#ff6325]/20">{categoryName}</span>
-            </div>
-          </div>
+      {/* ── FULL-WIDTH LUXURY HERO BANNER (Dynamic for all 54 categories) ── */}
+      <div className="relative w-full shadow-2xl border-b border-slate-200/60 dark:border-white/10 pb-8 sm:pb-10">
+        {/* Dynamic Category Hero Background Image */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <img
+            src={categoryHeroTheme.bgImage}
+            alt={`${categoryName} Banner`}
+            className="w-full h-full object-cover object-center"
+          />
+          {/* Dark Navy to Sunset horizontal gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#031833] via-[#03264d]/95 sm:via-[#03264d]/85 to-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#021329] via-transparent to-black/40" />
         </div>
-      )}
 
-      {/* ── FULL-WIDTH LUXURY STAY HERO BANNER ── */}
-      {isHotelCategory ? (
-        <div className="relative w-full shadow-2xl border-b border-slate-200/60 dark:border-white/10 pb-8 sm:pb-10">
-          {/* Panoramic Luxury Sunset Villa Background */}
-          <div className="absolute inset-0 z-0 overflow-hidden">
-            <img
-              src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1920&q=80&auto=format&fit=crop"
-              alt="Luxury Resort Banner"
-              className="w-full h-full object-cover object-right sm:object-center"
-            />
-            {/* Dark Navy to Sunset horizontal gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#031833] via-[#03264d]/95 sm:via-[#03264d]/85 to-black/30" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#021329] via-transparent to-black/40" />
-          </div>
-
-          <div className="relative z-10 container-main max-w-6xl mx-auto pt-6 pb-8 text-white space-y-4">
-            {/* Top Navigation Row: Back Button + Breadcrumbs + Pill Tag */}
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <Link
-                  href={`/${bookingType}`}
-                  className="p-2 rounded-xl bg-white/10 hover:bg-[#ff6325] backdrop-blur-md border border-white/20 text-white transition-all shadow-md group shrink-0"
-                  title="Go Back"
-                >
-                  <ArrowLeft size={15} className="group-hover:-translate-x-0.5 transition-transform" />
-                </Link>
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-white/80">
-                  <Link href="/" className="hover:text-[#ff6325] transition-colors">Home</Link>
-                  <ChevronRight size={12} className="opacity-50" />
-                  <Link href={`/${bookingType}`} className="hover:text-[#ff6325] transition-colors capitalize">{bookingType}</Link>
-                  <ChevronRight size={12} className="opacity-50" />
-                  <span className="text-white font-bold">{categoryName}</span>
-                </div>
-              </div>
-
-              <div className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#ff6325] text-white shadow-md">
-                <MapPin size={11} className="text-white" />
-                <span>{categoryName.toUpperCase()} • {city || 'CHENNAI'}</span>
+        <div className="relative z-10 container-main max-w-6xl mx-auto pt-6 pb-8 text-white space-y-4">
+          {/* Top Navigation Row: Back Button + Breadcrumbs + Pill Tag */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <Link
+                href={`/${bookingType}`}
+                className="p-2 rounded-xl bg-white/10 hover:bg-[#ff6325] backdrop-blur-md border border-white/20 text-white transition-all shadow-md group shrink-0"
+                title="Go Back"
+              >
+                <ArrowLeft size={15} className="group-hover:-translate-x-0.5 transition-transform" />
+              </Link>
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-white/80">
+                <Link href="/" className="hover:text-[#ff6325] transition-colors">Home</Link>
+                <ChevronRight size={12} className="opacity-50" />
+                <Link href={`/${bookingType}`} className="hover:text-[#ff6325] transition-colors capitalize">{bookingType}</Link>
+                <ChevronRight size={12} className="opacity-50" />
+                <span className="text-white font-bold">{categoryName}</span>
               </div>
             </div>
 
-            {/* Clean Hero Title Row - Compact, Balanced & Centered */}
-            <div className="text-center pt-1 pb-2 space-y-1.5">
-              <p className="text-[11px] sm:text-xs font-black uppercase tracking-[0.2em] text-slate-300 drop-shadow">
-                PREMIUM STAYS &nbsp;•&nbsp; BETTER EXPERIENCES
-              </p>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-tight text-white drop-shadow-md">
-                Find Your Perfect Stay in <span className="text-[#ff6325]">{city || 'Bangalore'}</span>
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-200/90 font-medium max-w-3xl mx-auto drop-shadow truncate">
-                {(() => {
-                  const catLabel = categoryName ? categoryName.toLowerCase() : 'stays';
-                  return `Discover handpicked ${catLabel} & verified stays in ${city || 'your destination'} for your next getaway`;
-                })()}
-              </p>
+            <div className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#ff6325] text-white shadow-md">
+              <MapPin size={11} className="text-white" />
+              <span>{categoryHeroTheme.badge}</span>
             </div>
           </div>
-        </div>
-      ) : null}
 
-      {/* ── MODERN UNIFIED PILL SEARCH DOCK (Matching Reference Design) ── */}
-      {isHotelCategory && (
-        <div ref={searchDockRef} className="w-full flex justify-center sticky top-[98px] z-30 px-4 pt-3 pb-2 -mt-3 mb-4 bg-[var(--bg-base)] transition-all">
-          <div className="w-full max-w-5xl bg-white dark:bg-slate-900 rounded-full p-2 sm:p-2.5 shadow-2xl shadow-slate-900/25 border border-slate-200/90 dark:border-white/10 hover:shadow-orange-500/10 transition-all">
-            {isHostelOrPg ? (
+          {/* Clean Hero Title Row - Compact, Balanced & Centered */}
+          <div className="text-center pt-1 pb-2 space-y-1.5">
+            <p className="text-[11px] sm:text-xs font-black uppercase tracking-[0.2em] text-slate-300 drop-shadow">
+              {categoryHeroTheme.subtitle}
+            </p>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-tight text-white drop-shadow-md">
+              {categoryHeroTheme.title}
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-200/90 font-medium max-w-3xl mx-auto drop-shadow truncate">
+              {categoryHeroTheme.description}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── MODERN UNIFIED PILL SEARCH DOCK (Matching Reference Design for All Categories) ── */}
+      <div ref={searchDockRef} className="w-full flex justify-center sticky top-[98px] z-30 px-4 pt-3 pb-2 -mt-3 mb-4 bg-[var(--bg-base)] transition-all">
+        <div className="w-full max-w-5xl bg-white dark:bg-slate-900 rounded-full p-2 sm:p-2.5 shadow-2xl shadow-slate-900/25 border border-slate-200/90 dark:border-white/10 hover:shadow-orange-500/10 transition-all">
+          {isHostelOrPg ? (
               /* =========================================================================
                * DEDICATED HOSTEL / PG & CO-LIVING SEARCH DOCK (Stanza Living / Zolo Style)
                * WHERE (Area/Tech Park) | MOVE-IN DATE | STAY DURATION | GENDER & SHARING
@@ -2682,6 +2921,295 @@ export default function ProviderDiscoveryPage() {
                   </button>
                 </div>
               </div>
+            ) : isSportsCategory ? (
+              /* =========================================================================
+               * DEDICATED SPORTS & TURF SEARCH DOCK (District / Playo Style)
+               * WHERE (Arena / Area) | SLOT DATE | SEARCH SLOTS
+               * ========================================================================= */
+              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+
+                {/* 1. Arena / Turf Location or Name */}
+                <div className="flex-[1.5] relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors cursor-pointer group">
+                  <div className="flex items-center gap-3">
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <MapPin size={18} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">WHERE / VENUE</span>
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onFocus={(e) => {
+                          setShowAutocomplete(true);
+                          e.target.select();
+                        }}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          setShowAutocomplete(true);
+                        }}
+                        placeholder={`Search ${categoryName} arena, club or area...`}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const q = searchQuery.trim().toLowerCase();
+                            if (q) {
+                              const matchedCity = ALL_CITIES.find(c => c.toLowerCase() === q);
+                              if (matchedCity) {
+                                const popMatch = POPULAR_CITIES.find(p => p.name.toLowerCase() === matchedCity.toLowerCase());
+                                if (popMatch) {
+                                  setLocation(popMatch.lat, popMatch.lng, popMatch.name);
+                                } else {
+                                  setCity(matchedCity);
+                                }
+                              }
+                            }
+                            setShowAutocomplete(false);
+                            const el = document.getElementById('hotel-results-anchor');
+                            el?.scrollIntoView({ behavior: 'smooth' });
+                          }
+                        }}
+                        className="w-full bg-transparent text-xs sm:text-sm font-bold text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-normal outline-none truncate"
+                      />
+                    </div>
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSearchQuery('');
+                        }}
+                        className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1"
+                        title="Clear"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Autocomplete Dropdown */}
+                  {showAutocomplete && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowAutocomplete(false)} />
+                      <div className="absolute top-full left-0 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl p-2 z-50 max-h-72 overflow-y-auto">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1.5 flex items-center justify-between">
+                          <span>{searchQuery ? `Matching "${searchQuery}"` : `Popular Arenas & Areas`}</span>
+                          <span className="text-[9px] text-[#ff6325]">{city || 'Chennai'}</span>
+                        </div>
+                        {(() => {
+                          const q = searchQuery.toLowerCase().trim();
+                          const matches = (servicesList || [])
+                            .filter((s: any) => {
+                              if (!q) return true;
+                              const sName = (s.name || '').toLowerCase();
+                              const sCity = (s.city || s.merchant?.city || '').toLowerCase();
+                              return sName.includes(q) || sCity.includes(q);
+                            })
+                            .slice(0, 6)
+                            .map((s: any) => ({
+                              label: s.name,
+                              type: s.merchant?.name || 'Verified Arena',
+                              icon: '⚽'
+                            }));
+
+                          if (matches.length === 0) {
+                            return (
+                              <div className="px-3 py-3 text-center text-xs text-slate-400">
+                                Press Search to find all slots for "{searchQuery}".
+                              </div>
+                            );
+                          }
+
+                          return matches.map((item, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSearchQuery(item.label);
+                                setShowAutocomplete(false);
+                              }}
+                              className="w-full text-left flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 cursor-pointer transition-colors"
+                            >
+                              <span className="flex items-center gap-2 font-semibold truncate">
+                                <span>{item.icon}</span>
+                                <span className="truncate">{item.label}</span>
+                              </span>
+                              <span className="text-[10px] text-slate-400 shrink-0 font-medium ml-2">{item.type}</span>
+                            </button>
+                          ));
+                        })()}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="h-8 w-px bg-slate-200 dark:bg-white/10 hidden md:block" />
+
+                {/* 2. Slot Play Date (Single Date Picker) */}
+                <div className="flex-1 relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSportsCalDate(new Date(sportsSlotDate));
+                      setIsSportsDatePickerOpen(!isSportsDatePickerOpen);
+                    }}
+                    className="flex items-center gap-3 w-full text-left cursor-pointer"
+                  >
+                    <div className={`transition-colors shrink-0 ${isSportsDatePickerOpen ? 'text-[#ff6325]' : 'text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325]'}`}>
+                      <Calendar size={18} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">PLAY DATE</span>
+                      <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white truncate">
+                        {(() => {
+                          try {
+                            const [y, m, d] = sportsSlotDate.split('-');
+                            const todayStr = new Date().toISOString().split('T')[0];
+                            if (sportsSlotDate === todayStr) return `Today (${d}-${m})`;
+                            return `${d}-${m}-${y}`;
+                          } catch {
+                            return sportsSlotDate;
+                          }
+                        })()}
+                      </span>
+                    </div>
+                    <ChevronDown size={14} className={`text-slate-400 shrink-0 transition-transform ${isSportsDatePickerOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Single Date Calendar Popover */}
+                  {isSportsDatePickerOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsSportsDatePickerOpen(false)} />
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-76 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-white/15 shadow-2xl p-4 z-50 text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
+                        {/* Quick Day Shortcuts */}
+                        <div className="grid grid-cols-3 gap-1.5 mb-3">
+                          {[
+                            { label: 'Today', offset: 0 },
+                            { label: 'Tomorrow', offset: 1 },
+                            { label: 'Weekend', offset: (() => { const d = new Date(); return (6 - d.getDay() + 7) % 7 || 7; })() },
+                          ].map((tab, idx) => {
+                            const d = new Date();
+                            d.setDate(d.getDate() + tab.offset);
+                            const val = d.toISOString().split('T')[0];
+                            const isSel = sportsSlotDate === val;
+                            return (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => {
+                                  setSportsSlotDate(val);
+                                  setIsSportsDatePickerOpen(false);
+                                }}
+                                className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
+                                  isSel
+                                    ? 'bg-[#ff6325] text-white shadow-xs'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+                                }`}
+                              >
+                                {tab.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Calendar Month Header */}
+                        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-2 mb-3 border border-slate-150/60 dark:border-white/5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newD = new Date(sportsCalDate);
+                              newD.setMonth(newD.getMonth() - 1);
+                              setSportsCalDate(newD);
+                            }}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition-all cursor-pointer"
+                          >
+                            <ChevronLeft size={15} />
+                          </button>
+                          <span className="font-extrabold text-xs tracking-tight text-slate-900 dark:text-white">
+                            {sportsCalDate.toLocaleString('default', { month: 'short' })} {sportsCalDate.getFullYear()}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newD = new Date(sportsCalDate);
+                              newD.setMonth(newD.getMonth() + 1);
+                              setSportsCalDate(newD);
+                            }}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition-all cursor-pointer"
+                          >
+                            <ChevronRight size={15} />
+                          </button>
+                        </div>
+
+                        {/* Days Grid */}
+                        <div className="grid grid-cols-7 gap-1 text-center">
+                          {(() => {
+                            const year = sportsCalDate.getFullYear();
+                            const month = sportsCalDate.getMonth();
+                            const firstDayIndex = new Date(year, month, 1).getDay();
+                            const totalDays = new Date(year, month + 1, 0).getDate();
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+
+                            const cells = [];
+                            for (let i = 0; i < firstDayIndex; i++) {
+                              cells.push(<div key={`empty-${i}`} className="h-8 w-8" />);
+                            }
+
+                            for (let day = 1; day <= totalDays; day++) {
+                              const monthStr = String(month + 1).padStart(2, '0');
+                              const dayStr = String(day).padStart(2, '0');
+                              const dateStr = `${year}-${monthStr}-${dayStr}`;
+                              const cellDate = new Date(year, month, day);
+                              const isPast = cellDate < today;
+                              const isSelected = dateStr === sportsSlotDate;
+
+                              cells.push(
+                                <button
+                                  key={`d-${day}`}
+                                  type="button"
+                                  disabled={isPast}
+                                  onClick={() => {
+                                    setSportsSlotDate(dateStr);
+                                    setIsSportsDatePickerOpen(false);
+                                  }}
+                                  className={`h-8 w-8 mx-auto rounded-full text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
+                                    isSelected
+                                      ? 'bg-[#ff6325] text-white shadow-md shadow-orange-500/30 font-black scale-105'
+                                      : isPast
+                                      ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                                      : 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                  }`}
+                                >
+                                  {day}
+                                </button>
+                              );
+                            }
+                            return cells;
+                          })()}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 3. Search Action Button */}
+                <div className="p-1 shrink-0 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAutocomplete(false);
+                      setIsSportsSlotDropdownOpen(false);
+                      setIsSportsDatePickerOpen(false);
+                      const el = document.getElementById('hotel-results-anchor');
+                      el?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="w-full md:w-auto px-7 py-3.5 rounded-full bg-[#ff6325] hover:bg-[#e0531b] active:scale-95 text-white flex items-center justify-center gap-2.5 font-bold text-sm shadow-lg shadow-[#ff6325]/35 hover:shadow-[#ff6325]/50 transition-all cursor-pointer group"
+                  >
+                    <Search size={17} className="group-hover:scale-110 transition-transform" />
+                    <span>Search Arenas</span>
+                  </button>
+                </div>
+              </div>
             ) : (
               /* =========================================================================
                * STANDARD HOTEL / RESORT / VILLA SEARCH DOCK (Daily Check-in / Check-out)
@@ -2695,7 +3223,7 @@ export default function ProviderDiscoveryPage() {
                     <MapPin size={18} />
                   </div>
                   <div className="flex flex-col min-w-0 flex-1">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">WHERE</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">{categoryHeroTheme.whereLabel}</span>
                     <input
                       type="text"
                       value={searchQuery}
@@ -2707,7 +3235,7 @@ export default function ProviderDiscoveryPage() {
                         setSearchQuery(e.target.value);
                         setShowAutocomplete(true);
                       }}
-                      placeholder="Search destination, hotel or city..."
+                      placeholder={categoryHeroTheme.wherePlaceholder}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           const q = searchQuery.trim().toLowerCase();
@@ -3266,247 +3794,245 @@ export default function ProviderDiscoveryPage() {
                   className="w-full md:w-auto px-7 py-3.5 rounded-full bg-[#ff6325] hover:bg-[#e0531b] active:scale-95 text-white flex items-center justify-center gap-2.5 font-bold text-sm shadow-lg shadow-[#ff6325]/35 hover:shadow-[#ff6325]/50 transition-all cursor-pointer group"
                 >
                   <Search size={17} className="group-hover:scale-110 transition-transform" />
-                  <span>Search</span>
+                  <span>{categoryHeroTheme.searchBtnLabel}</span>
                 </button>
               </div>
             </div>
             )}
           </div>
         </div>
-      )}
 
-      <div className={`container-main max-w-7xl mx-auto ${isHotelCategory ? 'pt-0 pb-6' : 'py-4'}`}>
+      <div className={`container-main max-w-7xl mx-auto pt-0 pb-6`}>
         {/* Sleek Airbnb-Style Luxury Filter & Sort Capsule Toolbar */}
-        {isHotelCategory && (
-          <div className="flex flex-col gap-3 mb-6 px-1">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              {/* Unified Interactive Filter Pills */}
-              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-                {/* 1. Price Range Pill */}
-                <div className="relative">
-                  <select
-                    value={priceRange}
-                    onChange={(e) => setPriceRange(Number(e.target.value))}
-                    className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${priceRange < 50000
-                        ? 'bg-[#ff6325]/10 border-[#ff6325] text-[#ff6325]'
-                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20 shadow-xs'
-                      }`}
-                  >
-                    <option value={50000}>₹ Any Price</option>
-                    <option value={3500}>Under ₹3,500</option>
-                    <option value={7500}>Under ₹7,500</option>
-                    <option value={15000}>Under ₹15,000</option>
-                    <option value={30000}>Under ₹30,000</option>
-                  </select>
-                  <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
-
-                {/* 2. Rating Pill */}
-                <div className="relative">
-                  <select
-                    value={minRating}
-                    onChange={(e) => setMinRating(Number(e.target.value))}
-                    className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${minRating > 0
-                        ? 'bg-[#ff6325]/10 border-[#ff6325] text-[#ff6325]'
-                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20 shadow-xs'
-                      }`}
-                  >
-                    <option value={0}>★ Any Rating</option>
-                    <option value={4.0}>★ 4.0+ Above</option>
-                    <option value={4.5}>★ 4.5+ Top Rated</option>
-                    <option value={4.8}>★ 4.8+ Luxury</option>
-                  </select>
-                  <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
-
-                {/* 3. PG & Hostel Contextual Dropdowns (Gender & Food) seamlessly in the same row */}
-                {(isPgCategory || category === 'hostels' || (categoryName || '').toLowerCase().includes('hostel')) && (
-                  <>
-                    {/* Gender Dropdown Pill */}
-                    <div className="relative">
-                      <select
-                        value={pgGenderFilter}
-                        onChange={(e) => setPgGenderFilter(e.target.value as any)}
-                        className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${
-                          pgGenderFilter !== 'all'
-                            ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
-                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
-                        }`}
-                      >
-                        <option value="all">👥 All Genders (PG)</option>
-                        <option value="gents">🚹 Gents Only</option>
-                        <option value="ladies">🚺 Ladies Only</option>
-                        <option value="coliving">👥 Coliving Stay</option>
-                      </select>
-                      <ChevronDown size={12} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${pgGenderFilter !== 'all' ? 'text-white' : 'text-slate-400'}`} />
-                    </div>
-
-                    {/* Food Model Pill */}
-                    <div className="relative">
-                      <select
-                        value={pgFoodFilter}
-                        onChange={(e) => setPgFoodFilter(e.target.value as any)}
-                        className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${
-                          pgFoodFilter !== 'all'
-                            ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
-                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
-                        }`}
-                      >
-                        <option value="all">🍛 Any Meal Plan</option>
-                        <option value="with-food">🍲 3 Meals Included</option>
-                        <option value="self-cooking">🍳 Self-Cooking</option>
-                      </select>
-                      <ChevronDown size={12} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${pgFoodFilter !== 'all' ? 'text-white' : 'text-slate-400'}`} />
-                    </div>
-
-                    {/* Sharing Room Dropdown */}
-                    <div className="relative">
-                      <select
-                        value={pgSharingFilter}
-                        onChange={(e) => setPgSharingFilter(e.target.value as any)}
-                        className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${
-                          pgSharingFilter !== 'all'
-                            ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
-                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
-                        }`}
-                      >
-                        <option value="all">🛏️ Any Sharing</option>
-                        <option value="single">Single Room</option>
-                        <option value="2-sharing">2-Sharing</option>
-                        <option value="3-sharing">3-Sharing</option>
-                        <option value="4-sharing">4-Sharing</option>
-                      </select>
-                      <ChevronDown size={12} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${pgSharingFilter !== 'all' ? 'text-white' : 'text-slate-400'}`} />
-                    </div>
-
-                    {/* Dedicated Ladies PG Contextual Quick Filters */}
-                    {pgGenderFilter === 'ladies' && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => setLadiesWardenOnly(!ladiesWardenOnly)}
-                          className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
-                            ladiesWardenOnly
-                              ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
-                              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
-                          }`}
-                        >
-                          <span>👩‍💼 Lady Warden</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setLadiesLunchBoxOnly(!ladiesLunchBoxOnly)}
-                          className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
-                            ladiesLunchBoxOnly
-                              ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
-                              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
-                          }`}
-                        >
-                          <span>🍱 Packed Lunch Box</span>
-                        </button>
-                      </>
-                    )}
-
-                    {/* Dedicated Co-Living Contextual Quick Filters */}
-                    {pgGenderFilter === 'coliving' && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => setColivingCoworkingOnly(!colivingCoworkingOnly)}
-                          className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
-                            colivingCoworkingOnly
-                              ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
-                              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
-                          }`}
-                        >
-                          <span>💻 Coworking Lounge</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setColivingPowerBackupOnly(!colivingPowerBackupOnly)}
-                          className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
-                            colivingPowerBackupOnly
-                              ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
-                              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
-                          }`}
-                        >
-                          <span>⚡ 100% Power Backup</span>
-                        </button>
-                      </>
-                    )}
-                  </>
-                )}
-
-                {/* 4. Free Cancellation Pill */}
-                <button
-                  type="button"
-                  onClick={() => setFreeCancellationOnly(!freeCancellationOnly)}
-                  className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${freeCancellationOnly
-                      ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
-                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 hover:bg-slate-50'
+        <div className="flex flex-col gap-3 mb-6 px-1">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            {/* Unified Interactive Filter Pills */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+              {/* 1. Price Range Pill */}
+              <div className="relative">
+                <select
+                  value={priceRange}
+                  onChange={(e) => setPriceRange(Number(e.target.value))}
+                  className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${priceRange < 50000
+                      ? 'bg-[#ff6325]/10 border-[#ff6325] text-[#ff6325]'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20 shadow-xs'
                     }`}
                 >
-                  <span>Free Cancellation</span>
-                </button>
-
-                {/* 5. Pet Friendly Pill */}
-                <button
-                  type="button"
-                  onClick={() => setPetFriendlyOnly(!petFriendlyOnly)}
-                  className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${petFriendlyOnly || pets
-                      ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
-                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 hover:bg-slate-50'
-                    }`}
-                >
-                  <span>🐾 Pet Friendly</span>
-                </button>
-
-                {/* 6. Just Luxury (Golden Mystery Pill) — Only for Hotels, Resorts, Villas (Hidden on PG & Hostels) */}
-                {!isPgCategory && category !== 'hostels' && !category.includes('pg') && (
-                  <button
-                    type="button"
-                    onClick={() => setIsLuxuryMode(!isLuxuryMode)}
-                    className={`px-4 py-1.5 rounded-full border text-xs font-black transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-sm ${isLuxuryMode
-                        ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 border-amber-300 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/30'
-                        : 'bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300 hover:border-amber-400 hover:bg-amber-500/15'
-                      }`}
-                    title="Filter only 5-Star & Ultra Luxury stays with confidential blind booking"
-                  >
-                    <Sparkles size={13} className={isLuxuryMode ? 'text-slate-950 animate-spin' : 'text-amber-500'} />
-                    <span>✨ Just Luxury</span>
-                    {isLuxuryMode && (
-                      <span className="text-[9px] uppercase px-1.5 py-0.2 bg-black/80 text-amber-300 rounded font-black tracking-wider">
-                        Secret Mode
-                      </span>
-                    )}
-                  </button>
-                )}
-
-                {/* Reset Filters (Only appears when any filter is active) */}
-                {(priceRange < 50000 || minRating > 0 || freeCancellationOnly || petFriendlyOnly || isLuxuryMode || pgGenderFilter !== 'all' || pgFoodFilter !== 'all' || pgSharingFilter !== 'all') && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPriceRange(50000);
-                      setMinRating(0);
-                      setFreeCancellationOnly(false);
-                      setPetFriendlyOnly(false);
-                      setIsLuxuryMode(false);
-                      setPgGenderFilter('all');
-                      setPgFoodFilter('all');
-                      setPgSharingFilter('all');
-                    }}
-                    className="px-2.5 py-1 rounded-full text-[11px] font-bold text-slate-400 hover:text-[#ff6325] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                  >
-                    Reset all
-                  </button>
-                )}
+                  <option value={50000}>₹ Any Price</option>
+                  <option value={3500}>Under ₹3,500</option>
+                  <option value={7500}>Under ₹7,500</option>
+                  <option value={15000}>Under ₹15,000</option>
+                  <option value={30000}>Under ₹30,000</option>
+                </select>
+                <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
 
-            {/* Right: Clean Sort Pill */}
-            <div className="flex items-center gap-2 ml-auto">
+              {/* 2. Rating Pill */}
+              <div className="relative">
+                <select
+                  value={minRating}
+                  onChange={(e) => setMinRating(Number(e.target.value))}
+                  className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${minRating > 0
+                      ? 'bg-[#ff6325]/10 border-[#ff6325] text-[#ff6325]'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20 shadow-xs'
+                    }`}
+                >
+                  <option value={0}>★ Any Rating</option>
+                  <option value={4.0}>★ 4.0+ Above</option>
+                  <option value={4.5}>★ 4.5+ Top Rated</option>
+                  <option value={4.8}>★ 4.8+ Luxury</option>
+                </select>
+                <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
+
+              {/* 3. PG & Hostel Contextual Dropdowns (Gender & Food) seamlessly in the same row */}
+              {(isPgCategory || category === 'hostels' || (categoryName || '').toLowerCase().includes('hostel')) && (
+                <>
+                  {/* Gender Dropdown Pill */}
+                  <div className="relative">
+                    <select
+                      value={pgGenderFilter}
+                      onChange={(e) => setPgGenderFilter(e.target.value as any)}
+                      className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${
+                        pgGenderFilter !== 'all'
+                          ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
+                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                      }`}
+                    >
+                      <option value="all">👥 All Genders (PG)</option>
+                      <option value="gents">🚹 Gents Only</option>
+                      <option value="ladies">🚺 Ladies Only</option>
+                      <option value="coliving">👥 Coliving Stay</option>
+                    </select>
+                    <ChevronDown size={12} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${pgGenderFilter !== 'all' ? 'text-white' : 'text-slate-400'}`} />
+                  </div>
+
+                  {/* Food Model Pill */}
+                  <div className="relative">
+                    <select
+                      value={pgFoodFilter}
+                      onChange={(e) => setPgFoodFilter(e.target.value as any)}
+                      className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${
+                        pgFoodFilter !== 'all'
+                          ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
+                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                      }`}
+                    >
+                      <option value="all">🍛 Any Meal Plan</option>
+                      <option value="with-food">🍲 3 Meals Included</option>
+                      <option value="self-cooking">🍳 Self-Cooking</option>
+                    </select>
+                    <ChevronDown size={12} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${pgFoodFilter !== 'all' ? 'text-white' : 'text-slate-400'}`} />
+                  </div>
+
+                  {/* Sharing Room Dropdown */}
+                  <div className="relative">
+                    <select
+                      value={pgSharingFilter}
+                      onChange={(e) => setPgSharingFilter(e.target.value as any)}
+                      className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${
+                        pgSharingFilter !== 'all'
+                          ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
+                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                      }`}
+                    >
+                      <option value="all">🛏️ Any Sharing</option>
+                      <option value="single">Single Room</option>
+                      <option value="2-sharing">2-Sharing</option>
+                      <option value="3-sharing">3-Sharing</option>
+                      <option value="4-sharing">4-Sharing</option>
+                    </select>
+                    <ChevronDown size={12} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${pgSharingFilter !== 'all' ? 'text-white' : 'text-slate-400'}`} />
+                  </div>
+
+                  {/* Dedicated Ladies PG Contextual Quick Filters */}
+                  {pgGenderFilter === 'ladies' && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setLadiesWardenOnly(!ladiesWardenOnly)}
+                        className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
+                          ladiesWardenOnly
+                            ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                        }`}
+                      >
+                        <span>👩‍💼 Lady Warden</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setLadiesLunchBoxOnly(!ladiesLunchBoxOnly)}
+                        className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
+                          ladiesLunchBoxOnly
+                            ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                        }`}
+                      >
+                        <span>🍱 Packed Lunch Box</span>
+                      </button>
+                    </>
+                  )}
+
+                  {/* Dedicated Co-Living Contextual Quick Filters */}
+                  {pgGenderFilter === 'coliving' && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setColivingCoworkingOnly(!colivingCoworkingOnly)}
+                        className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
+                          colivingCoworkingOnly
+                            ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                        }`}
+                      >
+                        <span>💻 Coworking Lounge</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setColivingPowerBackupOnly(!colivingPowerBackupOnly)}
+                        className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
+                          colivingPowerBackupOnly
+                            ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                        }`}
+                      >
+                        <span>⚡ 100% Power Backup</span>
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
+
+              {/* 4. Free Cancellation Pill */}
+              <button
+                type="button"
+                onClick={() => setFreeCancellationOnly(!freeCancellationOnly)}
+                className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${freeCancellationOnly
+                    ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+              >
+                <span>Free Cancellation</span>
+              </button>
+
+              {/* 5. Pet Friendly Pill */}
+              <button
+                type="button"
+                onClick={() => setPetFriendlyOnly(!petFriendlyOnly)}
+                className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${petFriendlyOnly || pets
+                    ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+              >
+                <span>🐾 Pet Friendly</span>
+              </button>
+
+              {/* 6. Just Luxury (Golden Mystery Pill) — Only for Hotels, Resorts, Villas (Hidden on PG & Hostels) */}
+              {!isPgCategory && category !== 'hostels' && !category.includes('pg') && (
+                <button
+                  type="button"
+                  onClick={() => setIsLuxuryMode(!isLuxuryMode)}
+                  className={`px-4 py-1.5 rounded-full border text-xs font-black transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-sm ${isLuxuryMode
+                      ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 border-amber-300 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/30'
+                      : 'bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300 hover:border-amber-400 hover:bg-amber-500/15'
+                    }`}
+                  title="Filter only 5-Star & Ultra Luxury stays with confidential blind booking"
+                >
+                  <Sparkles size={13} className={isLuxuryMode ? 'text-slate-950 animate-spin' : 'text-amber-500'} />
+                  <span>✨ Just Luxury</span>
+                  {isLuxuryMode && (
+                    <span className="text-[9px] uppercase px-1.5 py-0.2 bg-black/80 text-amber-300 rounded font-black tracking-wider">
+                      Secret Mode
+                    </span>
+                  )}
+                </button>
+              )}
+
+              {/* Reset Filters (Only appears when any filter is active) */}
+              {(priceRange < 50000 || minRating > 0 || freeCancellationOnly || petFriendlyOnly || isLuxuryMode || pgGenderFilter !== 'all' || pgFoodFilter !== 'all' || pgSharingFilter !== 'all') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPriceRange(50000);
+                    setMinRating(0);
+                    setFreeCancellationOnly(false);
+                    setPetFriendlyOnly(false);
+                    setIsLuxuryMode(false);
+                    setPgGenderFilter('all');
+                    setPgFoodFilter('all');
+                    setPgSharingFilter('all');
+                  }}
+                  className="px-2.5 py-1 rounded-full text-[11px] font-bold text-slate-400 hover:text-[#ff6325] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Reset all
+                </button>
+              )}
+            </div>
+
+            {/* Right: Clean Sort Pill & View Toggle */}
+            <div className="flex items-center gap-2.5 ml-auto">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider hidden sm:inline">Sort:</span>
               <div className="relative">
                 <select
@@ -3521,35 +4047,29 @@ export default function ProviderDiscoveryPage() {
                 </select>
                 <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
-            </div>
+
+              {/* View Toggle */}
+              <button
+                type="button"
+                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 hover:border-slate-300 text-xs font-bold text-slate-700 dark:text-slate-300 transition-all cursor-pointer shadow-xs"
+                title="Toggle Grid / List View"
+              >
+                {viewMode === 'grid' ? (
+                  <>
+                    <Grid size={13} className="text-[#ff6325]" />
+                    <span className="hidden sm:inline">Grid</span>
+                  </>
+                ) : (
+                  <>
+                    <List size={13} className="text-[#ff6325]" />
+                    <span className="hidden sm:inline">List</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
-        )}
-        {!isHotelCategory && (
-          /* Luxury Hero Header for Other Categories */
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8 relative"
-          >
-            <div className="inline-flex items-center gap-2 text-[11px] font-bold text-[#ff6325] uppercase tracking-wider mb-2.5 px-3 py-1 rounded-full bg-[#ff6325]/10 border border-[#ff6325]/20 backdrop-blur-md shadow-sm">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff6325] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ff6325]"></span>
-              </span>
-              <MapPin size={12} className="text-[#ff6325]" />
-              <span>Search Hub: {city} Terminal</span>
-            </div>
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[color:var(--color-on-surface)] flex items-center gap-3">
-              {categoryName}
-              <Sparkles size={24} className="text-[#ff6325]/80 hidden sm:inline-block animate-pulse" />
-            </h1>
-            <p className="text-sm text-[color:var(--color-on-surface-variant)] mt-2 max-w-xl font-normal leading-relaxed">
-              Curated top-rated choices and verified dispatcher portal in {city}.
-            </p>
-          </motion.div>
-        )}
-
+        </div>
         <div className="mt-4">
           {category === 'cabs' && <CabBookingView categoryName={categoryName} city={city} initialQuery={{ date: queryDate, slot: querySlot, city: queryCity, venue: queryVenue }} />}
           {category === 'flights' && <FlightBookingView categoryName={categoryName} city={city} initialQuery={{ date: queryDate, slot: querySlot, city: queryCity, venue: queryVenue }} />}
@@ -3561,74 +4081,6 @@ export default function ProviderDiscoveryPage() {
           {/* Standard fallback listing for all other categories */}
           {!isCustomBooking && (
             <div className="space-y-6">
-              {/* ── UNIFIED ALL-IN-ONE SEARCH BAR & FILTER DOCK (For Non-Stay Categories) ── */}
-              {!isHotelCategory && (
-                <div className="rounded-2xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface-container)]/80 backdrop-blur-xl p-3 shadow-xl space-y-3">
-                  {/* ── STANDARD SINGLE SEARCH INPUT ROW (Other Categories) ── */}
-                  <div className="flex flex-col sm:flex-row gap-2.5 items-center justify-between">
-                    <div className="relative flex-1 w-full flex items-center rounded-xl border border-[color:var(--color-outline-variant)]/40 bg-[color:var(--color-surface)] px-3.5 py-2.5 focus-within:border-[#0a3161] dark:focus-within:border-[#ff6325] focus-within:ring-2 focus-within:ring-[#0a3161]/15 dark:focus-within:ring-[#ff6325]/15 transition-all shadow-xs">
-                      <Search size={16} className="text-[#0a3161] dark:text-[#ff6325] mr-2.5 shrink-0" />
-                      <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder={`Search ${categoryName} by name, area, or service...`}
-                        className="w-full bg-transparent text-xs sm:text-sm font-medium text-[color:var(--color-on-surface)] placeholder-[color:var(--color-outline)] outline-none"
-                      />
-                      {searchQuery && (
-                        <button
-                          onClick={() => setSearchQuery('')}
-                          className="text-[color:var(--color-outline)] hover:text-[color:var(--color-on-surface)] text-xs p-1 cursor-pointer"
-                          title="Clear search"
-                        >
-                          <X size={14} />
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end shrink-0">
-                      {/* Sort Selector */}
-                      <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[color:var(--color-surface)] border border-[color:var(--color-outline-variant)]/30">
-                        <SlidersHorizontal size={13} className="text-[#0a3161] dark:text-[#ff6325] shrink-0" />
-                        <select
-                          value={sortBy}
-                          onChange={(e) => setSortBy(e.target.value)}
-                          className="bg-transparent text-xs font-bold text-[color:var(--color-on-surface)] outline-none cursor-pointer"
-                        >
-                          {SORT_OPTIONS.map((opt) => (
-                            <option key={opt.value} value={opt.value} className="bg-[color:var(--color-surface)] text-[color:var(--color-on-surface)] font-medium">
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Toggle for Grid / List */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setViewMode(viewMode === 'grid' ? 'list' : 'grid');
-                        }}
-                        className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-[color:var(--color-outline-variant)]/30 bg-[color:var(--color-surface)] hover:border-[#0a3161] dark:hover:border-[#ff6325] text-xs font-extrabold text-[color:var(--color-on-surface)] transition-all cursor-pointer shadow-xs active:scale-95"
-                        title="Click to toggle view (Grid / List)"
-                      >
-                        {viewMode === 'grid' ? (
-                          <>
-                            <Grid size={14} className="text-[#0a3161] dark:text-[#ff6325]" />
-                            <span className="capitalize">Grid</span>
-                          </>
-                        ) : (
-                          <>
-                            <List size={14} className="text-[#0a3161] dark:text-[#ff6325]" />
-                            <span className="capitalize">List</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               <div id="hotel-results-anchor" className="scroll-mt-6">
                 {loading ? (
                   <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5' : 'grid-cols-1 gap-4'}`}>
@@ -3768,7 +4220,8 @@ export default function ProviderDiscoveryPage() {
 
                       // Check whether merchant opted into Secret Mystery deals
                       const checkMysteryOptIn = () => {
-                        if (isItemPgOrHostel) return false;
+                        const isStayCat = category === 'hotels' || category === 'resorts' || category === 'villas';
+                        if (!isStayCat || isItemPgOrHostel) return false;
                         if (typeof window !== 'undefined') {
                           const mId = m?.id || group.merchantId;
                           const directStore = localStorage.getItem(`hotel_mystery_optin_${mId}`);
@@ -3783,7 +4236,7 @@ export default function ProviderDiscoveryPage() {
                         const mMeta = m?.metadata || s?.metadata || {};
                         if (m?.isMysteryModeOptIn !== undefined) return Boolean(m.isMysteryModeOptIn);
                         if (mMeta?.isMysteryModeOptIn !== undefined) return Boolean(mMeta.isMysteryModeOptIn);
-                        return true; // When user clicks Just Luxury, luxury stays default to true blind mystery
+                        return false; // Stays only use mystery mode if business vendor explicitly enabled it
                       };
                       const isMysteryOptedIn = checkMysteryOptIn();
                       const isCardSecret = Boolean(isLuxuryMode && isHotelCategory && isMysteryOptedIn);
@@ -3798,7 +4251,7 @@ export default function ProviderDiscoveryPage() {
                           <Link
                             href={isHotelCategory
                               ? `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?checkIn=${checkInDate}&checkOut=${checkOutDate}&adults=${adults}&children=${children}&childAges=${encodeURIComponent(JSON.stringify(childAges))}&rooms=${rooms}&pets=${pets}&petCount=${petCount}${isCardSecret ? '&isLuxury=true' : ''}`
-                              : `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?date=${encodeURIComponent(queryDate || '')}&slot=${encodeURIComponent(querySlot || '')}&city=${encodeURIComponent(queryCity || city || '')}&venue=${encodeURIComponent(queryVenue || '')}`
+                              : `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?date=${encodeURIComponent(sportsSlotDate || queryDate || new Date().toISOString().split('T')[0])}&city=${encodeURIComponent(queryCity || city || '')}&venue=${encodeURIComponent(queryVenue || m.name || '')}`
                             }
                             className="block h-full"
                           >

@@ -19,15 +19,16 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<'upi' | 'card' | 'netbanking'>('upi');
   const [timeLeft, setTimeLeft] = useState(585);
   const [selectedAddons, setSelectedAddons] = useState<number[]>([]);
+  const [isEditingAddons, setIsEditingAddons] = useState(false);
 
-  // District App Style: Group / Split Billing State
+  // BokSpot Split with Friends State
   const [isSplitEnabled, setIsSplitEnabled] = useState(false);
   const [splitCount, setSplitCount] = useState(2);
   const [splitPayerNames, setSplitPayerNames] = useState<string[]>(['You (Organizer)', 'Friend 2']);
   const [splitInitiatorPaysNow, setSplitInitiatorPaysNow] = useState(true);
 
-  // Payment Timing & Mode: 100% Online vs Partial Advance + Venue Pay
-  const [payMode, setPayMode] = useState<'FULL_ONLINE' | 'PARTIAL_ADVANCE'>('FULL_ONLINE');
+  // BokSpot Universal Payment Model: 100% Online, 30% Advance Deposit, or Pay at Venue
+  const [payMode, setPayMode] = useState<'FULL_ONLINE' | 'PARTIAL_ADVANCE' | 'PAY_AT_VENUE'>('FULL_ONLINE');
 
   useEffect(() => {
     if (user) {
@@ -75,6 +76,7 @@ export default function CheckoutPage() {
   const isPgStay = Boolean(selectedService.metadata?.pgBooking);
   const isHotel = Boolean(selectedService.metadata?.hotelBooking);
   const isMiniSpace = Boolean(selectedService.metadata?.miniSpace);
+  const isTurfBooking = Boolean(selectedService.metadata?.turfBooking);
   const merchantDisplayName = typeof selectedService.merchant === 'string'
     ? selectedService.merchant
     : (selectedService.merchant?.name || selectedService.merchantObj?.name || 'BokSpot Verified Partner');
@@ -85,20 +87,52 @@ export default function CheckoutPage() {
   const realHotelName = selectedService.metadata?.hotelBooking?.realHotelName || selectedService.metadata?.hotelBooking?.venueName || merchantDisplayName;
   const pgSelectedAddons = selectedService.metadata?.pgBooking?.selectedAddons || [];
   const pgAddonsTotal = pgSelectedAddons.reduce((sum: number, a: any) => sum + (Number(a.price) || 0), 0);
+
+  // Available addons pool from listing or service metadata
   const availableAddons = (listing?.addons && listing.addons.length > 0)
     ? listing.addons
     : (meta.addons && meta.addons.length > 0)
       ? meta.addons
       : (selectedService.selectedListing?.addons || selectedService.metadata?.addons || []);
-  const checkoutAddonsTotal = selectedAddons.reduce((sum: number, idx: number) => sum + (availableAddons[idx]?.price || 0), 0);
-  const addonsTotal = isPgStay ? pgAddonsTotal : checkoutAddonsTotal;
 
-  // For PG: separate base rent from add-ons so price breakdown shows both distinctly
+  // Pre-selected addons passed from venue detail page (e.g. Turf/Court match addons or appointments)
+  const incomingAddons: any[] = selectedService.metadata?.turfBooking?.selectedAddons ||
+    selectedService.metadata?.selectedAddons ||
+    [];
+
+  // Auto-sync incoming pre-selected addons to selectedAddons indexes on initial load
+  useEffect(() => {
+    if (incomingAddons && incomingAddons.length > 0 && availableAddons && availableAddons.length > 0) {
+      const matchedIndexes: number[] = [];
+      incomingAddons.forEach((inc: any) => {
+        const incName = typeof inc === 'string' ? inc : (inc?.name || '');
+        const foundIdx = availableAddons.findIndex((a: any) => (a.name || a) === incName);
+        if (foundIdx !== -1 && !matchedIndexes.includes(foundIdx)) {
+          matchedIndexes.push(foundIdx);
+        }
+      });
+      if (matchedIndexes.length > 0) {
+        setSelectedAddons(prev => {
+          const combined = Array.from(new Set([...prev, ...matchedIndexes]));
+          return combined;
+        });
+      }
+    }
+  }, [selectedService]);
+
+  const checkoutAddonsTotal = selectedAddons.reduce((sum: number, idx: number) => sum + (Number(availableAddons[idx]?.price) || 0), 0);
+  const addonsTotal = isPgStay
+    ? pgAddonsTotal
+    : (selectedAddons.length > 0 ? checkoutAddonsTotal : (Number(selectedService.metadata?.addonsCost) || 0));
+
+  // Base price extraction: for turf/court, use pure slot cost before addons
   const basePrice = isPgStay
     ? (selectedService.price - pgAddonsTotal)
     : isHotel
       ? Math.round(selectedService.price / 1.12) // extract pre-tax price from inclusive total
-      : (listing?.price || selectedService.price || 0);
+      : isTurfBooking
+        ? (Number(selectedService.metadata?.turfBooking?.baseSlotCost) || Number(listing?.price) || Math.max(0, Number(selectedService.price) - addonsTotal))
+        : (listing?.price || selectedService.price || 0);
 
   const platformFee = 29;
   const gst = isPgStay
@@ -113,12 +147,21 @@ export default function CheckoutPage() {
       ? (selectedService.price + addonsTotal + platformFee)
       : (basePrice + addonsTotal + platformFee + gst);
 
-  // Partial Advance calculation (e.g. 30% online advance for venues/turfs, 70% at venue)
-  const advanceAmount = payMode === 'PARTIAL_ADVANCE' ? Math.round(total * 0.3) : total;
-  const balanceAtVenue = payMode === 'PARTIAL_ADVANCE' ? total - advanceAmount : 0;
+  // BokSpot Universal Payment Model calculation:
+  // - FULL_ONLINE: 100% paid online upfront
+  // - PARTIAL_ADVANCE: 30% online advance deposit to hold slot/booking, 70% paid at venue
+  // - PAY_AT_VENUE: ₹0 online upfront, 100% paid on arrival at venue
+  const advanceAmount = payMode === 'PAY_AT_VENUE'
+    ? 0
+    : payMode === 'PARTIAL_ADVANCE'
+      ? Math.round(total * 0.3)
+      : total;
 
-  // Split Billing calculation
-  const splitPerPersonAmt = isSplitEnabled ? Math.round(advanceAmount / splitCount) : advanceAmount;
+  const balanceAtVenue = total - advanceAmount;
+
+  // Split Billing calculation: splits the payable online amount (or total if PAY_AT_VENUE isn't applicable with split)
+  const splitBaseAmount = payMode === 'PARTIAL_ADVANCE' ? advanceAmount : total;
+  const splitPerPersonAmt = isSplitEnabled ? Math.round(splitBaseAmount / splitCount) : advanceAmount;
   const amountToPayNow = isSplitEnabled
     ? (splitInitiatorPaysNow ? splitPerPersonAmt : 0)
     : advanceAmount;
@@ -247,10 +290,10 @@ export default function CheckoutPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50/70 pt-20 sm:pt-24 pb-24">
+    <main className="min-h-screen bg-slate-50/70 pt-28 sm:pt-32 pb-24">
       {/* Checkout Title Bar (Clean in-page header) */}
-      <div className="bg-transparent mb-2">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-1 flex items-center justify-between gap-4">
+      <div className="bg-transparent mb-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -312,7 +355,7 @@ export default function CheckoutPage() {
                       </span>
                     ) : (
                       <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-orange-50 text-orange-700 border border-orange-200/60">
-                        {isPgStay ? 'PG / Hostel Stay' : 'Room Booking'}
+                        {isPgStay ? 'PG / Hostel Stay' : isTurfBooking ? 'Turf / Sports Slot' : isMiniSpace ? 'Cloakroom Locker' : 'Service Booking'}
                       </span>
                     )}
                     <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
@@ -389,33 +432,90 @@ export default function CheckoutPage() {
               {/* Date & Time Slot Row */}
               <div className="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="bg-slate-50 rounded-xl p-3 border border-slate-200/60">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Stay Start Date</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">
+                    {isPgStay ? 'Stay Start Date' : isTurfBooking ? 'Slot Date' : 'Booking Date'}
+                  </p>
                   <p className="text-xs font-extrabold text-slate-900">{formatDate(selectedSlot.date)}</p>
                 </div>
                 <div className="bg-blue-50/60 rounded-xl p-3 border border-blue-200/50">
-                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-wider mb-1">Check-in Plan</p>
+                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-wider mb-1">
+                    {isPgStay ? 'Check-in Plan' : isTurfBooking ? 'Playing Time' : 'Time Slot'}
+                  </p>
                   <p className="text-xs font-extrabold text-slate-900">
-                    {selectedSlot.time || selectedSlot.timeStr || '1st Month Lease (Starts on check-in)'}
+                    {selectedSlot.time || selectedSlot.timeStr || (isPgStay ? '1st Month Lease (Starts on check-in)' : 'Standard Slot')}
                   </p>
                 </div>
               </div>
+
+              {/* Selected Add-ons Display with Edit/Customize Button for all 54 categories */}
+              {!isPgStay && (
+                <div className="p-3.5 bg-orange-50/60 rounded-xl border border-orange-200/70 space-y-2.5 mt-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase text-orange-950 tracking-wider flex items-center gap-1.5">
+                      <span>✨</span> Selected Add-ons / Inclusions ({selectedAddons.length}):
+                    </span>
+                    {availableAddons && availableAddons.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingAddons(!isEditingAddons)}
+                        className="px-2.5 py-1 rounded-lg text-xs font-black bg-white hover:bg-orange-100 text-[#ff6325] border border-orange-200 shadow-2xs transition-all cursor-pointer flex items-center gap-1"
+                      >
+                        <span>{isEditingAddons ? '✓ Done' : '✏️ Edit Add-ons'}</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {selectedAddons.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedAddons.map((idx: number) => {
+                        const add = availableAddons[idx];
+                        if (!add) return null;
+                        return (
+                          <span key={idx} className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-orange-200 rounded-lg text-xs font-bold text-gray-800 shadow-2xs">
+                            <span>{add.icon || '🏸'}</span>
+                            <span>{add.name}</span>
+                            <span className="text-orange-600 font-extrabold ml-0.5">(+₹{Number(add.price).toLocaleString()})</span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between text-xs text-slate-500 font-medium py-0.5">
+                      <span>No additional add-ons selected for this booking.</span>
+                      {availableAddons && availableAddons.length > 0 && !isEditingAddons && (
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingAddons(true)}
+                          className="text-xs font-bold text-[#ff6325] hover:underline cursor-pointer"
+                        >
+                          + Add Equipment / Extras
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* 1.5 Optional Add-ons & Equipment Upgrades (Universal for all 54 Categories with Live Stock Lock) */}
-            {availableAddons && availableAddons.length > 0 && !isPgStay && (
-              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-5 sm:p-6 space-y-4">
+            {/* 1.5 Optional Add-ons & Equipment Upgrades Editor (Toggled via Edit Add-ons) */}
+            {availableAddons && availableAddons.length > 0 && !isPgStay && isEditingAddons && (
+              <div className="bg-white rounded-2xl border-2 border-orange-200/90 shadow-sm p-5 sm:p-6 space-y-4 animate-fade-in">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <div>
                     <h3 className="font-black text-base text-slate-900 flex items-center gap-2">
-                      <Sparkles size={18} className="text-[#ff6325]" /> Optional Add-ons & Upgrades
+                      <Sparkles size={18} className="text-[#ff6325]" /> Edit Add-ons & Equipment
                     </h3>
                     <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                      Customise your booking with exclusive inclusions & equipment
+                      Select or uncheck inclusions & equipment for this booking
                     </p>
                   </div>
-                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider bg-slate-100 px-2.5 py-1 rounded-md">
-                    Verified Availability
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingAddons(false)}
+                    className="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-all cursor-pointer shadow-2xs"
+                  >
+                    Done
+                  </button>
                 </div>
 
                 <div className="space-y-2.5">
@@ -578,7 +678,270 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* 3. Payment Method */}
+            {/* 3. BokSpot Universal Payment Model: 100% Online, 30% Advance, Pay at Venue */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-5 sm:p-6 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div>
+                  <h3 className="font-black text-base text-slate-900 flex items-center gap-2">
+                    <CreditCard size={18} className="text-[#ff6325]" /> How Would You Like to Pay?
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    Choose full payment, a 30% advance deposit to lock your slot, or pay entirely at the venue
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Mode 1: 100% Full Payment */}
+                <button
+                  type="button"
+                  onClick={() => setPayMode('FULL_ONLINE')}
+                  className={`p-3.5 rounded-2xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    payMode === 'FULL_ONLINE'
+                      ? 'border-[#033266] bg-[#033266]/5 shadow-xs ring-2 ring-[#033266]/10'
+                      : 'border-slate-200/80 hover:border-slate-300 bg-white'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="font-black text-xs text-slate-900 flex items-center gap-1.5">
+                        <span>💳</span> 100% Full Pay
+                      </span>
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        payMode === 'FULL_ONLINE' ? 'border-[#033266] bg-[#033266]' : 'border-slate-300'
+                      }`}>
+                        {payMode === 'FULL_ONLINE' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-slate-500 leading-snug">
+                      Instant barcode pass & VIP priority confirmation
+                    </p>
+                  </div>
+                  <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-400">Pay Now</span>
+                    <span className="text-xs font-black text-slate-900">₹{total.toLocaleString()}</span>
+                  </div>
+                </button>
+
+                {/* Mode 2: 30% Advance Deposit */}
+                <button
+                  type="button"
+                  onClick={() => setPayMode('PARTIAL_ADVANCE')}
+                  className={`p-3.5 rounded-2xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    payMode === 'PARTIAL_ADVANCE'
+                      ? 'border-amber-500 bg-amber-50/70 shadow-xs ring-2 ring-amber-500/10'
+                      : 'border-slate-200/80 hover:border-slate-300 bg-white'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="font-black text-xs text-amber-950 flex items-center gap-1.5">
+                        <span>⚡</span> 30% Advance
+                      </span>
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        payMode === 'PARTIAL_ADVANCE' ? 'border-amber-600 bg-amber-600' : 'border-slate-300'
+                      }`}>
+                        {payMode === 'PARTIAL_ADVANCE' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-amber-900/80 leading-snug">
+                      Lock slot with 30% deposit; pay remaining 70% at venue
+                    </p>
+                  </div>
+                  <div className="mt-3 pt-2 border-t border-amber-200/60 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-amber-800">Pay Now</span>
+                    <span className="text-xs font-black text-amber-950">₹{Math.round(total * 0.3).toLocaleString()}</span>
+                  </div>
+                </button>
+
+                {/* Mode 3: Pay at Venue */}
+                <button
+                  type="button"
+                  onClick={() => setPayMode('PAY_AT_VENUE')}
+                  className={`p-3.5 rounded-2xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    payMode === 'PAY_AT_VENUE'
+                      ? 'border-emerald-600 bg-emerald-50/70 shadow-xs ring-2 ring-emerald-600/10'
+                      : 'border-slate-200/80 hover:border-slate-300 bg-white'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="font-black text-xs text-emerald-950 flex items-center gap-1.5">
+                        <span>🏢</span> Pay at Venue
+                      </span>
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        payMode === 'PAY_AT_VENUE' ? 'border-emerald-600 bg-emerald-600' : 'border-slate-300'
+                      }`}>
+                        {payMode === 'PAY_AT_VENUE' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-emerald-900/80 leading-snug">
+                      Zero advance online. Pay cash/UPI on arrival
+                    </p>
+                  </div>
+                  <div className="mt-3 pt-2 border-t border-emerald-200/60 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-emerald-800">Pay Now</span>
+                    <span className="text-xs font-black text-emerald-950">₹0</span>
+                  </div>
+                </button>
+              </div>
+
+              {payMode === 'PARTIAL_ADVANCE' && (
+                <div className="p-3 rounded-xl bg-amber-50/80 border border-amber-200/70 flex items-center justify-between text-xs text-amber-950 animate-fade-in">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🔒</span>
+                    <div>
+                      <span className="font-black block">Slot Locked with ₹{Math.round(total * 0.3).toLocaleString()} Token Deposit</span>
+                      <span className="text-[11px] text-amber-800">Pay the remaining balance of ₹{(total - Math.round(total * 0.3)).toLocaleString()} at the reception upon arrival.</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {payMode === 'PAY_AT_VENUE' && (
+                <div className="p-3 rounded-xl bg-emerald-50/80 border border-emerald-200/70 flex items-center justify-between text-xs text-emerald-950 animate-fade-in">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🏢</span>
+                    <div>
+                      <span className="font-black block">No Upfront Payment Required</span>
+                      <span className="text-[11px] text-emerald-800">Your reservation is held. Pay ₹{total.toLocaleString()} directly at the counter via Cash, UPI, or Card.</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 4. Group Split Billing (BokSpot Split Pay) */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-5 sm:p-6 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200/60 flex items-center justify-center text-indigo-600">
+                    <Users size={18} />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-base text-slate-900 flex items-center gap-1.5">
+                      Split Bill with Friends
+                      <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                        BokSpot Split
+                      </span>
+                    </h3>
+                    <p className="text-xs text-slate-500">Divide this booking amount equally among teammates or group</p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={isSplitEnabled}
+                    onChange={(e) => {
+                      const enabled = e.target.checked;
+                      setIsSplitEnabled(enabled);
+                      if (enabled && splitPayerNames.length < splitCount) {
+                        setSplitPayerNames(['You (Organizer)', ...Array.from({ length: splitCount - 1 }).map((_, i) => `Friend ${i + 2}`)]);
+                      }
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+
+              {isSplitEnabled ? (
+                <div className="space-y-4 pt-1 animate-fade-in">
+                  {/* Participant Counter */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-indigo-50/60 border border-indigo-100">
+                    <div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-indigo-900 block">Total People Splitting</span>
+                      <p className="text-xs text-indigo-600 font-medium">Split evenly between 2 to 10 members</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (splitCount > 2) {
+                            const newCount = splitCount - 1;
+                            setSplitCount(newCount);
+                            setSplitPayerNames(prev => prev.slice(0, newCount));
+                          }
+                        }}
+                        disabled={splitCount <= 2}
+                        className="w-9 h-9 rounded-xl bg-white border border-indigo-200 text-indigo-900 font-black text-lg flex items-center justify-center hover:bg-indigo-100 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition-all"
+                      >
+                        -
+                      </button>
+                      <div className="text-center min-w-[3rem]">
+                        <span className="text-xl font-black text-indigo-950">{splitCount}</span>
+                        <span className="text-[10px] text-indigo-700 block font-bold">Members</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (splitCount < 10) {
+                            const newCount = splitCount + 1;
+                            setSplitCount(newCount);
+                            setSplitPayerNames(prev => [...prev, `Friend ${newCount}`]);
+                          }
+                        }}
+                        disabled={splitCount >= 10}
+                        className="w-9 h-9 rounded-xl bg-white border border-indigo-200 text-indigo-900 font-black text-lg flex items-center justify-center hover:bg-indigo-100 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition-all"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Per Person Breakdown Banner */}
+                  <div className="p-3.5 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 text-white flex items-center justify-between shadow-xs">
+                    <div>
+                      <p className="text-[11px] font-semibold text-indigo-100 uppercase tracking-wide">Each Person Pays</p>
+                      <p className="text-xl font-black">₹{splitPerPersonAmt.toLocaleString()}</p>
+                    </div>
+                    <div className="text-right text-xs text-indigo-100">
+                      <span>Total: ₹{splitBaseAmount.toLocaleString()}</span>
+                      <span className="block text-[11px] opacity-80">({splitCount} × ₹{splitPerPersonAmt.toLocaleString()})</span>
+                    </div>
+                  </div>
+
+                  {/* Payment Distribution Option */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-700 block">Organizer Payment Mode:</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => setSplitInitiatorPaysNow(true)}
+                        className={`p-3 rounded-xl border-2 text-left transition-all ${
+                          splitInitiatorPaysNow
+                            ? 'border-indigo-600 bg-indigo-50/70 shadow-2xs'
+                            : 'border-slate-200 hover:border-slate-300 bg-white'
+                        }`}
+                      >
+                        <p className="text-xs font-black text-slate-900">Pay My Share Now (₹{splitPerPersonAmt})</p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">You pay your part now, friends receive payment links</p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setSplitInitiatorPaysNow(false)}
+                        className={`p-3 rounded-xl border-2 text-left transition-all ${
+                          !splitInitiatorPaysNow
+                            ? 'border-indigo-600 bg-indigo-50/70 shadow-2xs'
+                            : 'border-slate-200 hover:border-slate-300 bg-white'
+                        }`}
+                      >
+                        <p className="text-xs font-black text-slate-900">Collect All via Links (₹0 Now)</p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">Hold slot and generate split links for all members</p>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/60 text-xs text-slate-600">
+                  <span className="text-base">💡</span>
+                  <p>Turn on <strong>Split Bill</strong> to automatically divide the amount between you and your group with shareable payment links.</p>
+                </div>
+              )}
+            </div>
+
+            {/* 4. Payment Method */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-5 sm:p-6 space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <h3 className="font-black text-base text-slate-900 flex items-center gap-2">
@@ -698,6 +1061,19 @@ export default function CheckoutPage() {
                     </div>
                   )}
 
+                  {payMode === 'PAY_AT_VENUE' && (
+                    <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200/60 space-y-1 text-xs">
+                      <div className="flex justify-between font-bold text-emerald-900">
+                        <span>Pay Online Now:</span>
+                        <span>₹0</span>
+                      </div>
+                      <div className="flex justify-between text-emerald-700">
+                        <span>Due at Venue on Arrival:</span>
+                        <span className="font-bold">₹{total.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  )}
+
                   {isSplitEnabled && (
                     <div className="p-2.5 rounded-xl bg-indigo-50 border border-indigo-200/60 space-y-1 text-xs">
                       <div className="flex justify-between font-bold text-indigo-900">
@@ -797,6 +1173,10 @@ export default function CheckoutPage() {
                     'Session Expired'
                   ) : isSplitEnabled && !splitInitiatorPaysNow ? (
                     <><span className="text-lg">👥</span> Generate {splitCount} Split Links & Hold Slot</>
+                  ) : payMode === 'PAY_AT_VENUE' ? (
+                    <><Shield size={18} /> Confirm Reservation (Pay at Venue)</>
+                  ) : payMode === 'PARTIAL_ADVANCE' ? (
+                    <><Shield size={18} /> Pay ₹{amountToPayNow.toLocaleString()} Advance & Lock Slot</>
                   ) : (
                     <><Shield size={18} /> Pay ₹{amountToPayNow.toLocaleString()} & Lock Slot</>
                   )}

@@ -6,8 +6,9 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Map, Clock, CheckCircle2, ChevronRight, ChevronLeft, ChevronDown, Info, ShieldCheck, Search, Users, Utensils, X, Calendar, Bed, Star, Heart, Check, MapPin, ExternalLink, Headphones, Award, Minus, Plus, Sparkles } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useLocationStore, useBookingFlowStore } from '@/lib/store';
+import { useLocationStore, useBookingFlowStore, ALL_CITIES, POPULAR_CITIES } from '@/lib/store';
 import { BokspotLoader } from '@/components/ui/BokspotLoader';
+import { getSportCategoryConfig } from '@/lib/sportsData';
 
 const CATEGORY_NAMES: Record<string, string> = {
   // Travel & Transport
@@ -37,7 +38,7 @@ export default function VenueProfilePage() {
   const rawCategory = params?.category as string;
   const category = rawCategory === 'stayhotel' || rawCategory === 'stay-hotel' || rawCategory === 'hotel' ? 'hotels' : (rawCategory === 'resort' ? 'resorts' : (rawCategory === 'villa' ? 'villas' : rawCategory));
   const merchantId = params?.merchantId as string;
-  const { city } = useLocationStore();
+  const { city, setCity, setLocation } = useLocationStore();
   const { setSelectedService, setSelectedSlot, bookings } = useBookingFlowStore();
   const searchParams = useSearchParams();
   const isHotel = category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'pg-hostels' || category === 'camping' || bookingType === 'stay-accommodation' || bookingType === 'home';
@@ -55,10 +56,10 @@ export default function VenueProfilePage() {
 
   // PG Food Exclusion Discount Toggle state (Optional without food: -₹1,500/mo)
   const [isFoodExcluded, setIsFoodExcluded] = useState(false);
-  const isFacility = category === 'football-turf' || category === 'cricket-ground' || category === 'badminton' || category === 'tennis' || category === 'basketball' || category === 'studio' || category === 'meeting-room' || category === 'podcast' || category === 'gaming' || bookingType === 'sports-turf';
+  const isFacility = category === 'football-turf' || category === 'cricket-ground' || category === 'badminton' || category === 'tennis' || category === 'basketball' || category === 'swimming' || category === 'play-arena' || category === 'studio' || category === 'meeting-room' || category === 'podcast' || category === 'gaming' || bookingType === 'sports-turf';
   const isAppointment = category === 'doctor' || category === 'salons' || category === 'gym-yoga' || category === 'pet-grooming';
   const isRental = category === 'sports-bike' || category === 'car-rental' || category === 'bike-rental' || category === 'camera' || category === 'cycle-rental' || category === 'sound-system' || category === 'event-equip' || bookingType === 'rental-equipment';
-  const isPass = category === 'movies' || category === 'concerts' || category === 'theatre' || category === 'events' || category === 'exhibitions' || category === 'swimming' || category === 'play-arena' || category === 'darshan' || category === 'coworking';
+  const isPass = category === 'movies' || category === 'concerts' || category === 'theatre' || category === 'events' || category === 'exhibitions' || category === 'darshan' || category === 'coworking';
   const isHomeCall = category === 'electrician' || category === 'plumber' || category === 'cleaning' || category === 'technician' || category === 'babysitting' || category === 'elder-care';
 
   const todayStr = new Date().toISOString().split('T')[0];
@@ -92,6 +93,17 @@ export default function VenueProfilePage() {
   const [hostelFoodIncluded, setHostelFoodIncluded] = useState<boolean>(searchParams?.get('foodIncluded') !== 'false');
   const [isMoveInCalOpen, setIsMoveInCalOpen] = useState(false);
   const [moveInCalMonthDate, setMoveInCalMonthDate] = useState(() => new Date());
+
+  // Sports dedicated search dock states (matching category discovery page)
+  const [sportsSlotDate, setSportsSlotDate] = useState(() => searchParams?.get('date') || todayStr);
+  const [sportsSlotTime, setSportsSlotTime] = useState(() => searchParams?.get('slot') || '06:00 PM - 07:00 PM');
+  const [sportsDurationHours, setSportsDurationHours] = useState<number>(1);
+  const [sportsFormatFilter, setSportsFormatFilter] = useState<string>('all');
+  const [isSportsDatePickerOpen, setIsSportsDatePickerOpen] = useState(false);
+  const [isSportsSlotDropdownOpen, setIsSportsSlotDropdownOpen] = useState(false);
+  const [sportsCalDate, setSportsCalDate] = useState(() => new Date());
+  const [editSearchQuery, setEditSearchQuery] = useState('');
+  const [showEditSearchAutocomplete, setShowEditSearchAutocomplete] = useState(false);
 
   // Compute stay duration in nights
   const nights = React.useMemo(() => {
@@ -457,6 +469,16 @@ export default function VenueProfilePage() {
               const expCat = (expectedCategoryName || '').toLowerCase();
               const urlCat = (category || '').toLowerCase().replace(/-/g, ' ');
 
+              // Strict Category Isolation: prevent cross-category contamination
+              const isCrossCategory = (urlCat.includes('tennis') && !sCat.includes('tennis') && !catSlug.includes('tennis')) ||
+                (urlCat.includes('basketball') && !sCat.includes('basketball') && !catSlug.includes('basketball')) ||
+                (urlCat.includes('swimming') && !sCat.includes('swimming') && !catSlug.includes('swimming')) ||
+                (urlCat.includes('badminton') && !sCat.includes('badminton') && !catSlug.includes('badminton')) ||
+                (urlCat.includes('play-arena') && !sCat.includes('play') && !catSlug.includes('play')) ||
+                ((urlCat.includes('turf') || urlCat.includes('football')) && (sCat.includes('resort') || sCat.includes('hotel') || sCat.includes('room') || sCat.includes('villa')));
+
+              if (isCrossCategory) return false;
+
               isMatchType = sCat === expCat ||
                 catSlug === category.toLowerCase() ||
                 sCat.includes(urlCat) ||
@@ -470,15 +492,163 @@ export default function VenueProfilePage() {
           let finalServices = merchantServices;
           if (finalServices.length === 0) {
             const fallbackCategoryMatch = res.data.filter((s: any) => {
+              const isMatchMerchant = (s.merchantId === merchantId) || (s.merchantObj?.id === merchantId) || (s.merchant === merchantId) || (s.merchantObj?.name === merchantId) || (s.merchant === decodeURIComponent(merchantId));
               const catName = (s.category || '').toLowerCase();
               const svcName = (s.name || '').toLowerCase();
               const catSlug = (s.categoryObj?.slug || '').toLowerCase();
-              return catName.includes(category.toLowerCase()) || svcName.includes(category.toLowerCase()) || catSlug.includes(category.toLowerCase());
+              return isMatchMerchant && (catName.includes(category.toLowerCase()) || svcName.includes(category.toLowerCase()) || catSlug.includes(category.toLowerCase()));
             });
 
             if (fallbackCategoryMatch.length > 0) {
               finalServices = fallbackCategoryMatch;
             }
+          }
+
+          // Dynamic Generic Sports Archetype Fallback (Categories 22-28)
+          const sportCfg = getSportCategoryConfig(category);
+          if (finalServices.length === 0 && sportCfg) {
+            const targetCity = city || 'Chennai';
+
+            // Check if vendor locally updated this in Business Portal
+            let customListings = sportCfg.units.map(u => ({
+              id: u.id,
+              name: u.name,
+              price: u.price,
+              description: u.description,
+              images: [u.imageUrl, ...sportCfg.galleryImages],
+              metadata: {
+                surface: u.surface,
+                badge: u.badge,
+                addons: sportCfg.addons,
+                mandatoryRule: sportCfg.mandatoryRule,
+                equipmentAddons: sportCfg.includedGear,
+                refereeOrManager: sportCfg.supervisorTitle
+              }
+            }));
+
+            if (typeof window !== 'undefined') {
+              try {
+                const busStorageRaw = localStorage.getItem('vendor-portal-storage-v10');
+                if (busStorageRaw) {
+                  const busData = JSON.parse(busStorageRaw);
+                  const storedServices = busData.state?.services || [];
+                  const activeBranchId = busData.state?.currentMerchant?.activeBranchId;
+                  const matchedService = storedServices.find((s: any) => {
+                    const matchCat = s.category === sportCfg.categoryName ||
+                      s.name?.includes(sportCfg.categoryName) ||
+                      s.metadata?.originalCategory === sportCfg.categoryName ||
+                      (category.includes('turf') && (s.category?.toLowerCase().includes('turf') || s.name?.toLowerCase().includes('turf')));
+                    const matchBranch = activeBranchId ? (!s.branchId || s.branchId === activeBranchId) : true;
+                    return matchCat && matchBranch;
+                  });
+                  if (matchedService && Array.isArray(matchedService.listings) && matchedService.listings.length > 0) {
+                    customListings = matchedService.listings.map((l: any) => ({
+                      id: l.id,
+                      name: l.name,
+                      price: Number(l.price || l.basePrice || sportCfg.defaultPrice),
+                      originalPrice: l.originalPrice ? Number(l.originalPrice) : undefined,
+                      discountPercentage: l.discountPercentage ? Number(l.discountPercentage) : undefined,
+                      offerBadge: l.offerBadge || l.metadata?.offerBadge || undefined,
+                      bannerTagline: l.bannerTagline || l.metadata?.bannerTagline || undefined,
+                      description: l.description || '',
+                      schedule: l.schedule || l.metadata?.schedule || undefined,
+                      images: (l.images && l.images.length > 0) ? l.images : (l.imageUrl ? [l.imageUrl] : sportCfg.galleryImages),
+                      metadata: {
+                        surface: l.metadata?.surface || l.surface || 'Standard Court Surface',
+                        badge: l.metadata?.badge || l.offerBadge || 'Verified Unit',
+                        offerBadge: l.offerBadge || l.metadata?.offerBadge || undefined,
+                        bannerTagline: l.bannerTagline || l.metadata?.bannerTagline || undefined,
+                        originalPrice: l.originalPrice ? Number(l.originalPrice) : undefined,
+                        discountPercentage: l.discountPercentage ? Number(l.discountPercentage) : undefined,
+                        schedule: l.schedule || l.metadata?.schedule || undefined,
+                        addons: l.metadata?.addons || sportCfg.addons,
+                        mandatoryRule: l.metadata?.mandatoryRule || sportCfg.mandatoryRule,
+                        equipmentAddons: l.metadata?.equipmentAddons || sportCfg.includedGear,
+                        refereeOrManager: l.metadata?.refereeOrManager || sportCfg.supervisorTitle
+                      }
+                    }));
+                  }
+                }
+              } catch (e) {}
+            }
+
+            // Retrieve custom branch info if configured by vendor
+            let activeBranchName = sportCfg.merchantName;
+            let activeBranchAddress = `BokSpot Sports Hub Arena, Stadium Road, ${targetCity}`;
+            if (typeof window !== 'undefined') {
+              try {
+                const busStorageRaw = localStorage.getItem('vendor-portal-storage-v10');
+                if (busStorageRaw) {
+                  const busData = JSON.parse(busStorageRaw);
+                  const curM = busData.state?.currentMerchant;
+                  // Match by username OR if current merchant has a branch matching sports facility
+                  if (curM && (curM.username === sportCfg.username || curM.id === merchantId)) {
+                    if (Array.isArray(curM.branches) && curM.branches.length > 0) {
+                      const matchedBranch = curM.branches.find((b: any) => 
+                        (curM.activeBranchId && b.id === curM.activeBranchId && (b.category?.toLowerCase().includes('turf') || b.businessType?.toLowerCase().includes('sports'))) ||
+                        b.category === sportCfg.categoryName ||
+                        b.name?.toLowerCase().includes('arena') ||
+                        b.name?.toLowerCase().includes('turf')
+                      ) || curM.branches.find((b: any) => b.id === curM.activeBranchId) || curM.branches[0];
+
+                      if (matchedBranch) {
+                        activeBranchName = matchedBranch.name || curM.merchantName;
+                        activeBranchAddress = matchedBranch.address || activeBranchAddress;
+                      }
+                    } else if (curM.merchantName) {
+                      activeBranchName = curM.merchantName;
+                      activeBranchAddress = curM.address || activeBranchAddress;
+                    }
+                  }
+                }
+              } catch (e) {}
+            }
+
+            finalServices = [
+              {
+                id: `svc-${sportCfg.slug}-${sportCfg.username.toLowerCase()}`,
+                name: `${activeBranchName} — ${sportCfg.categoryName}`,
+                category: sportCfg.categoryName,
+                rating: 4.9,
+                reviewCount: 384,
+                basePrice: String(customListings[0]?.price || sportCfg.defaultPrice),
+                price: Number(customListings[0]?.price || sportCfg.defaultPrice),
+                description: `Premier ${sportCfg.categoryName} arena located in ${targetCity}. Equipped with international standard surfaces, professional lighting, and player amenities.`,
+                merchantId: sportCfg.merchantId,
+                merchant: activeBranchName,
+                branchName: activeBranchName,
+                address: activeBranchAddress,
+                merchantObj: {
+                  id: sportCfg.merchantId,
+                  name: activeBranchName,
+                  city: targetCity,
+                  address: activeBranchAddress,
+                  rating: 4.9,
+                  username: sportCfg.username,
+                  metadata: {
+                    isFacility: true,
+                    units: customListings,
+                    addons: sportCfg.addons,
+                    mandatoryRule: sportCfg.mandatoryRule,
+                    amenities: sportCfg.amenities,
+                    includedGear: sportCfg.includedGear,
+                    supervisorTitle: sportCfg.supervisorTitle
+                  }
+                },
+                metadata: {
+                  isFacility: true,
+                  facilityName: activeBranchName,
+                  merchantName: activeBranchName,
+                  branchName: activeBranchName,
+                  address: activeBranchAddress,
+                  amenities: sportCfg.amenities,
+                  mandatoryRule: sportCfg.mandatoryRule,
+                  supervisorTitle: sportCfg.supervisorTitle,
+                  includedGear: sportCfg.includedGear,
+                  listings: customListings
+                }
+              }
+            ];
           }
 
           setLiveServices(finalServices);
@@ -513,10 +683,20 @@ export default function VenueProfilePage() {
     (liveServices.length > 0 ? (liveServices[0].merchant || 'Venue') : 'Loading...');
 
   const checkMysteryOptIn = () => {
+    // 0. Only genuine stays/accommodations can have mystery mode (never facilities/sports, appointments, rentals, passes, home calls)
+    if (isFacility || isAppointment || isRental || isPass || isHomeCall) {
+      return false;
+    }
     // 1. Hostels / PG are never blind mystery mode
     if (isPgStay || category === 'hostels' || category === 'pg-hostels' || (merchantData?.name || '').toLowerCase().includes('hostel')) {
       return false;
     }
+    // 2. Only luxury hotel/resort/villa categories
+    const isMysteryEligibleCategory = category === 'hotels' || category === 'resorts' || category === 'villas';
+    if (!isMysteryEligibleCategory) {
+      return false;
+    }
+
     if (typeof window !== 'undefined') {
       const directStore = localStorage.getItem(`hotel_mystery_optin_${merchantId}`);
       if (directStore !== null) return directStore === 'true';
@@ -532,7 +712,7 @@ export default function VenueProfilePage() {
     }
     if (merchantData?.isMysteryModeOptIn !== undefined) return Boolean(merchantData.isMysteryModeOptIn);
     if (merchantData?.metadata?.isMysteryModeOptIn !== undefined) return Boolean(merchantData.metadata.isMysteryModeOptIn);
-    return true;
+    return false;
   };
 
   const isMysteryOptedIn = checkMysteryOptIn();
@@ -675,8 +855,15 @@ export default function VenueProfilePage() {
         if (stored) {
           const parsedG = JSON.parse(stored);
           if (Array.isArray(parsedG) && parsedG.length > 0) {
-            parsedG.forEach(addIfValid);
-            break;
+            // For sports/turfs, do not inject hotel room photos that were stored in a generic key
+            const isTurfContaminated = isFacility && parsedG.some((img: string) => {
+              const lower = (img || '').toLowerCase();
+              return lower.includes('bed') || lower.includes('bedroom') || lower.includes('room') || lower.includes('hotel');
+            });
+            if (!isTurfContaminated) {
+              parsedG.forEach(addIfValid);
+              break;
+            }
           }
         }
       }
@@ -685,33 +872,65 @@ export default function VenueProfilePage() {
         if (busStore) {
           const parsed = JSON.parse(busStore);
           const curM = parsed.state?.currentMerchant;
-          if (curM?.gallery && Array.isArray(curM.gallery)) {
-            curM.gallery.forEach(addIfValid);
+          // Check active branch gallery first if multi-branch merchant
+          if (curM && Array.isArray(curM.branches)) {
+            const sportsBranch = curM.branches.find((b: any) => 
+              (isFacility && (b.category?.toLowerCase().includes('turf') || b.businessType?.toLowerCase().includes('sports') || b.name?.toLowerCase().includes('arena') || b.name?.toLowerCase().includes('turf')))
+            );
+            if (sportsBranch && Array.isArray(sportsBranch.gallery) && sportsBranch.gallery.length > 0) {
+              sportsBranch.gallery.forEach(addIfValid);
+            }
+          }
+
+          // Only take parent gallery if the merchant category / branch matches this page archetype (avoid showing hotel room photos on turf)
+          if (extractedImages.length === 0) {
+            const curMCat = (curM?.category || '').toLowerCase();
+            const isCompatible = isFacility
+              ? (curMCat.includes('turf') || curMCat.includes('sport') || curMCat.includes('arena') || curMCat.includes('ground') || curMCat.includes('court') || curMCat.includes('badminton') || curMCat.includes('football') || curMCat.includes('cricket'))
+              : (!curMCat.includes('turf') && !curMCat.includes('sport'));
+
+            if (isCompatible && curM?.gallery && Array.isArray(curM.gallery)) {
+              curM.gallery.forEach(addIfValid);
+            }
           }
         }
       }
     } catch {}
   }
 
-  // Also include backend merchant gallery/images
-  (finalMerchantObj.images || []).forEach(addIfValid);
-  (finalMerchantObj.gallery || []).forEach(addIfValid);
-  (finalMerchantObj.metadata?.gallery || []).forEach(addIfValid);
+  // Also include backend merchant gallery/images only if compatible
+  const mCat = (finalMerchantObj?.category || '').toLowerCase();
+  const isMerchantCompatible = isFacility
+    ? (mCat.includes('turf') || mCat.includes('sport') || mCat.includes('arena') || mCat.includes('court') || mCat.includes('badminton') || mCat.includes('football') || mCat.includes('cricket'))
+    : (!mCat.includes('turf') && !mCat.includes('sport'));
 
-  // 2. Next Priority: Room listings / service photos
+  if (isMerchantCompatible) {
+    (finalMerchantObj.images || []).forEach(addIfValid);
+    (finalMerchantObj.gallery || []).forEach(addIfValid);
+    (finalMerchantObj.metadata?.gallery || []).forEach(addIfValid);
+  }
+
+  // 2. Next Priority: Room listings / service photos (strictly matching current category)
   liveServices.forEach((svc: any) => {
-    const svcListings = svc.metadata?.listings || svc.rawConfig?.metadata?.listings || [];
-    svcListings.forEach((l: any) => {
-      addIfValid(l.imageUrl);
-      addIfValid(l.image);
-      (l.images || []).forEach(addIfValid);
-      (l.metadata?.gallery || []).forEach(addIfValid);
-    });
-    addIfValid(svc.imageUrl);
-    addIfValid(svc.image);
-    (svc.images || []).forEach(addIfValid);
-    (svc.metadata?.images || []).forEach(addIfValid);
-    (svc.metadata?.gallery || []).forEach(addIfValid);
+    const sCat = (svc.category || svc.categoryObj?.slug || '').toLowerCase();
+    const isSvcCompatible = isFacility
+      ? (sCat.includes('turf') || sCat.includes('sport') || sCat.includes('arena') || sCat.includes('court') || sCat.includes('play') || sCat.includes('swimming') || sCat.includes('badminton') || sCat.includes('football') || sCat.includes('cricket'))
+      : true;
+
+    if (isSvcCompatible) {
+      const svcListings = svc.metadata?.listings || svc.rawConfig?.metadata?.listings || [];
+      svcListings.forEach((l: any) => {
+        addIfValid(l.imageUrl);
+        addIfValid(l.image);
+        (l.images || []).forEach(addIfValid);
+        (l.metadata?.gallery || []).forEach(addIfValid);
+      });
+      addIfValid(svc.imageUrl);
+      addIfValid(svc.image);
+      (svc.images || []).forEach(addIfValid);
+      (svc.metadata?.images || []).forEach(addIfValid);
+      (svc.metadata?.gallery || []).forEach(addIfValid);
+    }
   });
 
   // Fallback photos based on category (Turf/Sports vs Hotel)
@@ -732,10 +951,18 @@ export default function VenueProfilePage() {
 
   // Venue profile about text (distinct from court/pitch listing description)
   const aboutText = isFacility
-    ? (firstSvc?.description ||
-      firstListing?.description ||
-      firstSvc?.metadata?.about ||
-      `Premier sports arena and multi-sport turf facility located in ${city || 'Chennai'}. Equipped with FIFA certified astro turf, high-mast floodlights, and professional player amenities.`)
+    ? (() => {
+        // If merchant has an aboutText, check if it's hotel-specific (e.g., contains 'Hotel Suites')
+        const rawMAbout = finalMerchantObj.aboutText || finalMerchantObj.about || finalMerchantObj.description || '';
+        const isHotelSpecificText = rawMAbout.toLowerCase().includes('hotel') || rawMAbout.toLowerCase().includes('resort') || rawMAbout.toLowerCase().includes('suite');
+        if (rawMAbout && !isHotelSpecificText) {
+          return rawMAbout;
+        }
+        return firstSvc?.description ||
+          firstListing?.description ||
+          firstSvc?.metadata?.about ||
+          `Premier sports arena and multi-sport turf facility located in ${city || 'Chennai'}. Equipped with FIFA certified astro turf, high-mast floodlights, and professional player amenities.`;
+      })()
     : (finalMerchantObj.description ||
       finalMerchantObj.aboutText ||
       finalMerchantObj.about ||
@@ -795,150 +1022,466 @@ export default function VenueProfilePage() {
         </div>
 
         {/* ============================================================
-         * SECTION C: STAY DETAILS SUMMARY BAR & EDIT SEARCH (TOP POSITION)
+         * SECTION C: CONTEXTUAL SUMMARY BAR & EDIT SEARCH DOCK (ALL BOOKINGS)
          * ============================================================ */}
-        {isHotel && (
-          <div className="mb-6 sticky top-[98px] z-30 pt-3 pb-2 -mt-3 bg-[#f8fafc] dark:bg-[#090b10] transition-all">
-            <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-md flex flex-wrap items-center justify-between gap-4">
-              {isPgStay ? (
-                <div className="flex flex-wrap items-center gap-6 text-xs">
-                  {/* Move-in Date */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
-                      <Calendar size={18} />
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
-                        Move-in Date
-                      </span>
-                      <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
-                        {(() => {
-                          try {
-                            const [y, m, d] = hostelMoveInDate.split('-');
-                            return `${d}-${m}-${y}`;
-                          } catch {
-                            return hostelMoveInDate;
-                          }
-                        })()}
-                      </span>
-                    </div>
+        <div className="mb-6 sticky top-[98px] z-30 pt-3 pb-2 -mt-3 bg-[#f8fafc] dark:bg-[#090b10] transition-all flex flex-col items-center">
+          <div className={`p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-md flex items-center justify-between gap-4 transition-all ${isFacility ? 'w-fit max-w-full' : 'w-full'}`}>
+            {isPgStay ? (
+              <div className="flex flex-wrap items-center gap-6 text-xs">
+                {/* Move-in Date */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                    <Calendar size={18} />
                   </div>
-
-                  <div className="h-8 w-px bg-slate-200 dark:bg-white/10 hidden lg:block" />
-
-                  {/* Stay Duration */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
-                      <Clock size={18} />
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
-                        Duration
-                      </span>
-                      <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
-                        {hostelDurationMonths} Month{hostelDurationMonths > 1 ? 's' : ''} Stay
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="h-8 w-px bg-slate-200 dark:bg-white/10 hidden lg:block" />
-
-                  {/* Gender & Sharing Preference */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
-                      <Users size={18} />
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
-                        Type & Sharing
-                      </span>
-                      <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm capitalize">
-                        {hostelGender === 'all' ? 'Any Gender' : hostelGender} • {hostelSharing === 'all' ? 'Any Sharing' : hostelSharing}
-                      </span>
-                      {hostelFoodIncluded && (
-                        <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold ml-1.5 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50">
-                          🍱 3 Meals
-                        </span>
-                      )}
-                    </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
+                      Move-in Date
+                    </span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
+                      {(() => {
+                        try {
+                          const [y, m, d] = hostelMoveInDate.split('-');
+                          return `${d}-${m}-${y}`;
+                        } catch {
+                          return hostelMoveInDate;
+                        }
+                      })()}
+                    </span>
                   </div>
                 </div>
-              ) : (
-                <div className="flex flex-wrap items-center gap-6 text-xs">
-                  {/* Stay Dates */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
-                      <Calendar size={18} />
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
-                        Dates & Nights
-                      </span>
-                      <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
-                        {new Date(checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {new Date(checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                      </span>
-                      <span className="text-[10px] text-[#033266] dark:text-[#ff6325] font-bold ml-1.5 px-2 py-0.5 rounded-md bg-[#033266]/10 dark:bg-[#ff6325]/15">
-                        {nights} Night{nights > 1 ? 's' : ''}
-                      </span>
-                    </div>
+
+                <div className="h-8 w-px bg-slate-200 dark:bg-white/10 hidden lg:block" />
+
+                {/* Stay Duration */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                    <Clock size={18} />
                   </div>
-
-                  <div className="h-8 w-px bg-slate-200 dark:bg-white/10 hidden lg:block" />
-
-                  {/* Occupancy */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
-                      <Users size={18} />
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
-                        Guests & Units
-                      </span>
-                      <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
-                        {adults + children} Guest{adults + children > 1 ? 's' : ''} ({adults} Adults{children > 0 ? `, ${children} Children` : ''}) • {rooms} Room{rooms > 1 ? 's' : ''}
-                      </span>
-                      {(pets || petCount > 0) && (
-                        <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold ml-1.5 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50">
-                          🐾 {petCount || 1} Pet
-                        </span>
-                      )}
-                    </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
+                      Duration
+                    </span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
+                      {hostelDurationMonths} Month{hostelDurationMonths > 1 ? 's' : ''} Stay
+                    </span>
                   </div>
                 </div>
-              )}
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2.5 ml-auto">
-                <button
-                  type="button"
-                  onClick={() => setIsEditSearchOpen(!isEditSearchOpen)}
-                  className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs transition-colors cursor-pointer border border-slate-200 dark:border-white/10"
-                >
-                  {isEditSearchOpen ? 'Close Editor' : 'Edit Search'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const el = document.getElementById('available-rooms-section');
-                    el?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                  className="px-4 py-2 bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                >
-                  <span>Select Room</span>
-                  <ChevronRight size={14} />
-                </button>
+                <div className="h-8 w-px bg-slate-200 dark:bg-white/10 hidden lg:block" />
+
+                {/* Gender & Sharing Preference */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                    <Users size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
+                      Type & Sharing
+                    </span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm capitalize">
+                      {hostelGender === 'all' ? 'Any Gender' : hostelGender} • {hostelSharing === 'all' ? 'Any Sharing' : hostelSharing}
+                    </span>
+                    {hostelFoodIncluded && (
+                      <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold ml-1.5 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50">
+                        🍱 3 Meals
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : isFacility ? (
+              /* Dedicated Sports & Arena Summary Bar (District / Playo Style) */
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs w-full lg:w-auto">
+                {/* 1. Arena Location */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#ff6325]/10 text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                    <MapPin size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-wider block">
+                      WHERE / VENUE
+                    </span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm truncate max-w-[160px] block">
+                      {venueName}
+                    </span>
+                  </div>
+                </div>
 
-            {/* Quick Inline Date / Occupancy Editor */}
-            {isEditSearchOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-3 p-5 bg-white dark:bg-[#0f1219] rounded-3xl border border-slate-200 dark:border-white/10 shadow-lg text-xs space-y-4"
+                <div className="h-8 w-px bg-slate-200 dark:bg-white/10 hidden md:block" />
+
+                {/* 2. Slot Play Date */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#ff6325]/10 text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                    <Calendar size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-wider block">
+                      PLAY DATE
+                    </span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
+                      {(() => {
+                        try {
+                          const curD = selectedDate || sportsSlotDate;
+                          const [y, m, d] = curD.split('-');
+                          const isT = curD === todayStr;
+                          return isT ? `Today (${d}-${m})` : `${d}-${m}-${y}`;
+                        } catch {
+                          return selectedDate || sportsSlotDate;
+                        }
+                      })()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : isRental ? (
+              /* Dedicated Rental Summary Bar */
+              <div className="flex flex-wrap items-center gap-6 text-xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                    <Calendar size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">Rental Period</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
+                      {rentalStartDate} ➔ {rentalEndDate} ({rentalDays} Days)
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : isAppointment ? (
+              /* Dedicated Appointment Summary Bar */
+              <div className="flex flex-wrap items-center gap-6 text-xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                    <Calendar size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">Consultation Date</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
+                      {selectedDate} • {selectedApptSlot || 'Select Time Slot'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Standard Stays / Hotel Summary Bar */
+              <div className="flex flex-wrap items-center gap-6 text-xs">
+                {/* Stay Dates */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                    <Calendar size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
+                      Dates & Nights
+                    </span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
+                      {new Date(checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {new Date(checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                    <span className="text-[10px] text-[#033266] dark:text-[#ff6325] font-bold ml-1.5 px-2 py-0.5 rounded-md bg-[#033266]/10 dark:bg-[#ff6325]/15">
+                      {nights} Night{nights > 1 ? 's' : ''}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="h-8 w-px bg-slate-200 dark:bg-white/10 hidden lg:block" />
+
+                {/* Occupancy */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                    <Users size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
+                      Guests & Units
+                    </span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
+                      {adults + children} Guest{adults + children > 1 ? 's' : ''} ({adults} Adults{children > 0 ? `, ${children} Children` : ''}) • {rooms} Room{rooms > 1 ? 's' : ''}
+                    </span>
+                    {(pets || petCount > 0) && (
+                      <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold ml-1.5 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50">
+                        🐾 {petCount || 1} Pet
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2.5 ml-4 sm:ml-6">
+              <button
+                type="button"
+                onClick={() => setIsEditSearchOpen(!isEditSearchOpen)}
+                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-extrabold text-xs transition-colors cursor-pointer border border-slate-200 dark:border-white/10"
               >
-                {isPgStay ? (
-                  /* ================= Dedicated Hostel & PG Editor ================= */
+                {isEditSearchOpen ? 'Close Editor' : 'Edit Search'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById(isFacility ? 'available-slots-section' : 'available-rooms-section');
+                  el?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="px-4 py-2 bg-[#ff6325] hover:bg-[#e04e13] active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+              >
+                <span>{isFacility ? 'Select Court & Slot' : isRental ? 'Select Gear' : isAppointment ? 'Select Specialist' : 'Select Room'}</span>
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Inline Date / Occupancy / Slot Editor */}
+          {isEditSearchOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`mt-3 p-5 bg-white dark:bg-[#0f1219] rounded-3xl border border-slate-200 dark:border-white/10 shadow-lg text-xs space-y-4 ${isFacility ? 'w-full max-w-2xl' : 'w-full'}`}
+            >
+              {isFacility ? (
+                /* ================= Dedicated Sports & Turf Slot Editor (Matching Category Search Dock: Venue & Play Date) ================= */
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {/* 1. Venue / Area Display with Search & Switcher */}
+                    <div className="relative">
+                      <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                        WHERE / VENUE
+                      </label>
+                      <div className="relative flex items-center">
+                        <MapPin size={14} className="text-[#ff6325] shrink-0 absolute left-3 pointer-events-none" />
+                        <input
+                          type="text"
+                          value={editSearchQuery || venueName}
+                          onFocus={(e) => {
+                            if (!editSearchQuery) setEditSearchQuery(venueName);
+                            setShowEditSearchAutocomplete(true);
+                            e.target.select();
+                          }}
+                          onChange={(e) => {
+                            setEditSearchQuery(e.target.value);
+                            setShowEditSearchAutocomplete(true);
+                          }}
+                          placeholder="Search venue or location..."
+                          className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 rounded-xl pl-8 pr-7 py-2 font-bold text-xs text-slate-900 dark:text-white outline-none focus:border-[#ff6325] transition-all truncate"
+                        />
+                        {editSearchQuery ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditSearchQuery('');
+                              setShowEditSearchAutocomplete(false);
+                            }}
+                            className="absolute right-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-white p-0.5"
+                          >
+                            <X size={13} />
+                          </button>
+                        ) : (
+                          <ChevronDown size={13} className="absolute right-2.5 text-slate-400 pointer-events-none" />
+                        )}
+                      </div>
+
+                      {/* Autocomplete Dropdown for venues, branches & cities */}
+                      {showEditSearchAutocomplete && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setShowEditSearchAutocomplete(false)} />
+                          <div className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl p-2 z-50 max-h-60 overflow-y-auto">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1 flex items-center justify-between border-b border-slate-100 dark:border-white/10 mb-1">
+                              <span>Select Venue or City</span>
+                              <span className="text-[#ff6325]">{city || 'Chennai'}</span>
+                            </div>
+
+                            {/* Available Branches / Venues */}
+                            {(() => {
+                              const q = (editSearchQuery || '').toLowerCase().trim();
+                              
+                              // Check multi-branches from business portal or live merchants
+                              let venueOptions: Array<{ id: string; name: string; type: string; address?: string }> = [];
+                              if (typeof window !== 'undefined') {
+                                try {
+                                  const busStorageRaw = localStorage.getItem('vendor-portal-storage-v10');
+                                  if (busStorageRaw) {
+                                    const busData = JSON.parse(busStorageRaw);
+                                    const curM = busData.state?.currentMerchant;
+                                    if (curM && Array.isArray(curM.branches)) {
+                                      curM.branches.forEach((b: any) => {
+                                        venueOptions.push({
+                                          id: curM.id || merchantId,
+                                          name: b.name || curM.merchantName,
+                                          type: b.category || 'Branch Location',
+                                          address: b.address || b.city
+                                        });
+                                      });
+                                    }
+                                  }
+                                } catch {}
+                              }
+
+                              // Add current venue if not listed
+                              if (!venueOptions.some(v => v.name.toLowerCase() === venueName.toLowerCase())) {
+                                venueOptions.unshift({
+                                  id: merchantId,
+                                  name: venueName,
+                                  type: 'Current Venue',
+                                  address: address
+                                });
+                              }
+
+                              const filteredVenues = venueOptions.filter(v => !q || v.name.toLowerCase().includes(q) || (v.address && v.address.toLowerCase().includes(q)));
+
+                              const matchingCities = ALL_CITIES.filter(c => q && c.toLowerCase().includes(q)).slice(0, 3);
+
+                              return (
+                                <div className="space-y-1">
+                                  {filteredVenues.map((v, idx) => (
+                                    <button
+                                      key={`v-${idx}`}
+                                      type="button"
+                                      onClick={() => {
+                                        setEditSearchQuery(v.name);
+                                        setShowEditSearchAutocomplete(false);
+                                        // If different merchant / branch, navigate
+                                        const newQuery = new URLSearchParams(window.location.search);
+                                        newQuery.set('venue', v.name);
+                                        newQuery.set('date', sportsSlotDate);
+                                        router.push(`/${bookingType}/${category}/${v.id}?${newQuery.toString()}`);
+                                      }}
+                                      className={`w-full text-left px-2.5 py-2 rounded-xl text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                                        v.name === venueName ? 'bg-[#ff6325]/10 text-[#ff6325] font-bold' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200'
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-2 truncate">
+                                        <MapPin size={13} className="shrink-0 text-[#ff6325]" />
+                                        <span className="truncate">{v.name}</span>
+                                      </div>
+                                      <span className="text-[10px] text-slate-400 shrink-0 ml-1.5">{v.type}</span>
+                                    </button>
+                                  ))}
+
+                                  {matchingCities.length > 0 && (
+                                    <div className="pt-1 border-t border-slate-100 dark:border-white/10 mt-1">
+                                      <div className="text-[9px] uppercase font-bold text-slate-400 px-2 py-0.5">Change City</div>
+                                      {matchingCities.map(c => (
+                                        <button
+                                          key={`c-${c}`}
+                                          type="button"
+                                          onClick={() => {
+                                            const popMatch = POPULAR_CITIES.find(p => p.name.toLowerCase() === c.toLowerCase());
+                                            if (popMatch) {
+                                              setLocation(popMatch.lat, popMatch.lng, popMatch.name);
+                                            } else {
+                                              setCity(c);
+                                            }
+                                            setShowEditSearchAutocomplete(false);
+                                            router.push(`/${bookingType}/${category}?city=${encodeURIComponent(c)}&date=${sportsSlotDate}`);
+                                          }}
+                                          className="w-full text-left px-2.5 py-1.5 rounded-xl text-xs hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 flex items-center justify-between cursor-pointer"
+                                        >
+                                          <span>📍 Explore {c}</span>
+                                          <span className="text-[9px] text-[#ff6325]">Browse Category →</span>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* 2. Play Date */}
+                    <div>
+                      <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                        PLAY DATE
+                      </label>
+                      <input
+                        type="date"
+                        value={sportsSlotDate}
+                        min={todayStr}
+                        onChange={(e) => {
+                          setSportsSlotDate(e.target.value);
+                          setSelectedDate(e.target.value);
+                        }}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 font-bold text-slate-900 dark:text-white outline-none cursor-pointer"
+                      />
+                    </div>
+
+                    {/* 3. Quick Date Shortcuts */}
+                    <div>
+                      <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                        QUICK SHORTCUTS
+                      </label>
+                      <div className="grid grid-cols-3 gap-1.5 pt-0.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSportsSlotDate(todayStr);
+                            setSelectedDate(todayStr);
+                          }}
+                          className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                            sportsSlotDate === todayStr ? 'bg-[#ff6325] text-white' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200'
+                          }`}
+                        >
+                          Today
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const d = new Date();
+                            d.setDate(d.getDate() + 1);
+                            const val = d.toISOString().split('T')[0];
+                            setSportsSlotDate(val);
+                            setSelectedDate(val);
+                          }}
+                          className="py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition-all cursor-pointer"
+                        >
+                          Tomorrow
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const d = new Date();
+                            const offset = (6 - d.getDay() + 7) % 7 || 7;
+                            d.setDate(d.getDate() + offset);
+                            const val = d.toISOString().split('T')[0];
+                            setSportsSlotDate(val);
+                            setSelectedDate(val);
+                          }}
+                          className="py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition-all cursor-pointer"
+                        >
+                          Weekend
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/5">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditSearchOpen(false)}
+                      className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditSearchOpen(false);
+                        const newQuery = new URLSearchParams(window.location.search);
+                        newQuery.set('date', sportsSlotDate);
+                        window.history.replaceState(null, '', `?${newQuery.toString()}`);
+                        const el = document.getElementById('available-slots-section');
+                        el?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className="px-6 py-2 bg-[#ff6325] text-white rounded-xl font-black text-xs hover:bg-[#e04e13] active:scale-95 transition-all cursor-pointer shadow-md"
+                    >
+                      Search Slots
+                    </button>
+                  </div>
+                </div>
+              ) : isPgStay ? (
+                /* ================= Dedicated Hostel & PG Editor ================= */
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                       {/* Move-in Date */}
@@ -1561,7 +2104,6 @@ export default function VenueProfilePage() {
               </motion.div>
             )}
           </div>
-        )}
 
         {/* ============================================================
          * SECTION B: OPTION 1 — 2-SIDES SPLIT HERO (Left: 58% Gallery | Right: 42% Overview & Map)
@@ -1918,7 +2460,8 @@ export default function VenueProfilePage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
               <div>
                 <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>⚽</span> Select Time Slot & Court
+                  <span>{category === 'badminton' ? '🏸' : category === 'tennis' ? '🎾' : category === 'cricket-ground' ? '🏏' : category === 'basketball' ? '🏀' : category === 'swimming' ? '🏊' : category === 'play-arena' ? '🧗' : '⚽'}</span>
+                  <span>Select Time Slot & Unit</span>
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   Book 1-hour slots. Instant 5-minute temporary reservation hold upon selection.
@@ -1933,6 +2476,23 @@ export default function VenueProfilePage() {
                 </div>
               )}
             </div>
+
+            {/* Mandatory Venue Rule Pill Banner */}
+            {(() => {
+              const rule = firstListing?.metadata?.mandatoryRule || firstSvc?.metadata?.mandatoryRule || getSportCategoryConfig(category)?.mandatoryRule;
+              if (!rule) return null;
+              return (
+                <div className="p-3 sm:p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-amber-900 dark:text-amber-200">
+                  <span className="text-2xl shrink-0">{rule.icon || '⚠️'}</span>
+                  <div className="min-w-0">
+                    <span className="text-xs font-black block tracking-tight">{rule.title}</span>
+                    <span className="text-[11px] text-amber-800 dark:text-amber-300 font-medium leading-relaxed block mt-0.5">
+                      {rule.desc}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Available Courts / Pitches Selector */}
             {(() => {
@@ -1968,11 +2528,25 @@ export default function VenueProfilePage() {
               const activeListing = activePitch.rawListing || activePitch.parentService || {};
               const activeMeta = activeListing.metadata || activePitch.parentService?.metadata || {};
 
+              const unitSelectionLabel = category === 'badminton'
+                ? 'Choose Badminton Court'
+                : category === 'tennis'
+                  ? 'Choose Tennis Court'
+                  : category === 'basketball'
+                    ? 'Choose Basketball Court'
+                    : category === 'swimming'
+                      ? 'Choose Pool Lane / Leisure Zone'
+                      : category === 'play-arena'
+                        ? 'Choose Jump Zone / Session Unit'
+                        : category === 'cricket-ground'
+                          ? 'Choose Pitch / Net Unit'
+                          : 'Choose Court / Pitch Unit';
+
               return (
                 <div className="space-y-4">
                   <div>
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">
-                      Choose Court / Pitch Unit
+                      {unitSelectionLabel}
                     </span>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                       {allAvailablePitches.map((pitch) => {
@@ -2000,15 +2574,29 @@ export default function VenueProfilePage() {
                               <span className="text-xs font-black text-slate-900 dark:text-white line-clamp-1">
                                 {pitch.name}
                               </span>
-                              <span className="text-xs font-extrabold text-[#ff6325] shrink-0">
-                                ₹{pitch.price}/hr
-                              </span>
+                              <div className="text-right shrink-0">
+                                <span className="text-xs font-extrabold text-[#ff6325] block">
+                                  ₹{pitch.price}/hr
+                                </span>
+                                {pitch.rawListing?.originalPrice && pitch.rawListing.originalPrice > pitch.price && (
+                                  <span className="text-[10px] text-slate-400 line-through block">
+                                    ₹{pitch.rawListing.originalPrice}
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            {pitch.description && (
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
-                                {pitch.description}
-                              </p>
-                            )}
+                            <div className="mt-1 flex items-center justify-between gap-1">
+                              {pitch.description ? (
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                                  {pitch.description}
+                                </p>
+                              ) : <span />}
+                              {(pitch.rawListing?.offerBadge || pitch.rawListing?.metadata?.offerBadge) && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
+                                  {pitch.rawListing.offerBadge || pitch.rawListing.metadata?.offerBadge}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         );
                       })}
@@ -2048,14 +2636,24 @@ export default function VenueProfilePage() {
 
                       {/* Right Big Price Box */}
                       <div className="w-full md:w-auto flex md:flex-col items-center md:items-end justify-between md:justify-center p-3 sm:p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 shrink-0">
-                        <div className="flex items-baseline gap-1">
+                        <div className="flex items-baseline gap-2">
                           <span className="text-2xl sm:text-3xl font-black text-[#033266] dark:text-[#ff6325]">
                             ₹{activePitch.price}
                           </span>
+                          {((activeListing.originalPrice && activeListing.originalPrice > activePitch.price) || (activeMeta.originalPrice && activeMeta.originalPrice > activePitch.price)) && (
+                            <span className="text-sm font-bold text-slate-400 line-through">
+                              ₹{activeListing.originalPrice || activeMeta.originalPrice}
+                            </span>
+                          )}
                           <span className="text-xs font-bold text-slate-500 dark:text-slate-400">/hr</span>
                         </div>
+                        {(activeListing.discountPercentage || activeMeta.discountPercentage) && (
+                          <span className="text-[10px] font-black text-rose-600 dark:text-rose-400">
+                            Save {activeListing.discountPercentage || activeMeta.discountPercentage}% OFF
+                          </span>
+                        )}
                         <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-100/80 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-200/50 dark:border-amber-700/40 mt-1 flex items-center gap-1">
-                          <span>☀️</span> {activeListing.offerBadge || 'Prime Evening Slot'}
+                          <span>☀️</span> {activeListing.offerBadge || activeMeta.offerBadge || 'Prime Evening Slot'}
                         </span>
                       </div>
                     </div>
@@ -2196,12 +2794,14 @@ export default function VenueProfilePage() {
                     const ds = d.toISOString().split('T')[0];
                     const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
                     const isSelected = selectedDate === ds;
-                    const daySlotCount = publishedSchedule.filter((s: any) => {
-                      if (s.specificDate) {
-                        return s.specificDate === ds;
-                      }
-                      return s.dayOfWeek?.toLowerCase() === dayName.toLowerCase();
-                    }).length;
+                    const daySlotCount = publishedSchedule.length > 0
+                      ? publishedSchedule.filter((s: any) => {
+                          if (s.specificDate) {
+                            return s.specificDate === ds;
+                          }
+                          return s.dayOfWeek?.toLowerCase() === dayName.toLowerCase();
+                        }).length
+                      : 16; // Standard 16 operational slots (06:00 AM - 10:00 PM)
 
                     return (
                       <button
@@ -2235,7 +2835,7 @@ export default function VenueProfilePage() {
               );
             })()}
 
-            {/* Slot Grid - Purely driven by Business Published Schedule */}
+            {/* Slot Grid - Purely driven by Business Published Schedule with Smart Fallback */}
             {(() => {
               // Extract selected date day of week (e.g. 'Monday', 'Tuesday'...)
               const targetDayOfWeek = new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' });
@@ -2249,49 +2849,113 @@ export default function VenueProfilePage() {
                 currentListing?.schedule || currentListing?.metadata?.schedule || selectedTurfService?.schedule || [];
 
               // Priority 1: Specific Date match (e.g. 2026-10-28)
-              // Priority 2: Fallback or combine with recurring day of week match
+              // Priority 2: Recurring day of week match
               const dateSpecificSlots = publishedSchedule.filter(s => s.specificDate === selectedDate);
-              const daySlots = (dateSpecificSlots.length > 0
+              const hasVendorSchedule = publishedSchedule.length > 0;
+              let daySlots = (dateSpecificSlots.length > 0
                 ? dateSpecificSlots
                 : publishedSchedule.filter(s => !s.specificDate && s.dayOfWeek?.toLowerCase() === targetDayOfWeek.toLowerCase())
               ).sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-              if (daySlots.length === 0) {
-                // Check if any other day has slots
-                const daysWithSlots = Array.from(new Set(publishedSchedule.map(s => s.specificDate || s.dayOfWeek).filter(Boolean)));
+              const baseTariff = Number(currentListing?.price) || Number(selectedTurfService?.price) || 1200;
 
-                return (
-                  <div className="py-8 px-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-dashed border-slate-200 dark:border-white/10 text-center space-y-3">
-                    <span className="text-3xl block">⏳</span>
-                    <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                      No slots published for {targetDayOfWeek} ({selectedDate})
-                    </h4>
-                    {daysWithSlots.length > 0 ? (
-                      <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                        This venue currently has slots scheduled for <strong className="text-slate-700 dark:text-slate-300">{daysWithSlots.join(', ')}</strong>. Click on one of those dates/days above to book!
-                      </p>
-                    ) : (
-                      <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                        Venue has not published booking slots yet. Please check back shortly.
-                      </p>
-                    )}
-                  </div>
-                );
+              // If merchant has NOT published custom schedule, generate dynamic 0.5 hr / 1 hr / 2 hr slots based on selected duration
+              if (!hasVendorSchedule || daySlots.length === 0) {
+                const generatedSlots: Array<{ startTime: string; endTime: string; price: number }> = [];
+                // 06:00 (6.0) to 23:00 (23.0)
+                const startHour = 6;
+                const endHour = 23;
+                const dur = sportsDurationHours || 1;
+                const step = dur === 0.5 ? 0.5 : (dur >= 2 ? 1 : 1);
+
+                for (let h = startHour; h + dur <= endHour; h += step) {
+                  const formatTime = (timeVal: number) => {
+                    const hr = Math.floor(timeVal);
+                    const min = Math.round((timeVal - hr) * 60);
+                    const period = hr >= 12 ? 'PM' : 'AM';
+                    const displayHr = hr % 12 === 0 ? 12 : hr % 12;
+                    return `${String(displayHr).padStart(2, '0')}:${String(min).padStart(2, '0')} ${period}`;
+                  };
+                  const startTimeStr = formatTime(h);
+                  const endTimeStr = formatTime(h + dur);
+                  // Pricing multiplier based on duration & prime evening peak
+                  const isPeak = h >= 17 && h < 22;
+                  const peakMultiplier = isPeak ? 1.15 : (h >= 12 && h < 16 ? 0.9 : 1.0);
+                  const slotCost = Math.round(baseTariff * dur * peakMultiplier);
+                  generatedSlots.push({
+                    startTime: startTimeStr,
+                    endTime: endTimeStr,
+                    price: slotCost
+                  });
+                }
+                daySlots = generatedSlots;
               }
 
               return (
                 <div className="space-y-4 pt-2">
+                  {/* District / Playo Style Duration Selector Bar (- / + / Quick Pills) */}
+                  <div className="p-4 rounded-2xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-[#ff6325]/10 text-[#ff6325] flex items-center justify-center font-bold">
+                        <Clock size={16} />
+                      </div>
+                      <div>
+                        <span className="text-xs font-black text-slate-900 dark:text-white block">
+                          Game Duration
+                        </span>
+                        <span className="text-[10px] text-slate-500 block">
+                          {hasVendorSchedule ? 'Business published custom slots' : 'Choose play hours (0.5 hr, 1 hr, 2 hrs+)'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {/* Interactive - / + Duration Controller */}
+                      <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-1 border border-slate-200/80 dark:border-white/10">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newDur = Math.max(0.5, (sportsDurationHours || 1) - 0.5);
+                            setSportsDurationHours(newDur);
+                            setSelectedHourSlot(null);
+                            setPricingResult(null);
+                          }}
+                          className="w-7 h-7 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white font-black hover:bg-slate-200 flex items-center justify-center cursor-pointer shadow-xs transition-transform active:scale-95"
+                          title="Decrease duration"
+                        >
+                          <Minus size={13} />
+                        </button>
+                        <span className="px-3 text-xs font-black text-slate-900 dark:text-white min-w-[55px] text-center">
+                          {sportsDurationHours} Hr{sportsDurationHours > 1 ? 's' : ''}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newDur = Math.min(4, (sportsDurationHours || 1) + 0.5);
+                            setSportsDurationHours(newDur);
+                            setSelectedHourSlot(null);
+                            setPricingResult(null);
+                          }}
+                          className="w-7 h-7 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white font-black hover:bg-slate-200 flex items-center justify-center cursor-pointer shadow-xs transition-transform active:scale-95"
+                          title="Increase duration"
+                        >
+                          <Plus size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                      ⚡ Available Slots for {targetDayOfWeek} ({daySlots.length} Slots)
+                      ⚡ Available Slots for {targetDayOfWeek} ({daySlots.length} Slots • {sportsDurationHours} Hr Duration)
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
                     {daySlots.map((slot, sIdx) => {
                       const timeLabel = `${slot.startTime} - ${slot.endTime}`;
                       const isSelected = selectedHourSlot === timeLabel;
-                      const slotPrice = Number(slot.price) || Number(selectedTurfService?.price) || 1350;
+                      const slotPrice = Number(slot.price) || Math.round(baseTariff * (sportsDurationHours || 1));
 
                       return (
                         <button
@@ -2305,14 +2969,14 @@ export default function VenueProfilePage() {
                             const calc = await api.services.calculatePricing({
                               archetype: 'FacilityHourly',
                               basePrice: slotPrice,
-                              durationHours: 1,
+                              durationHours: sportsDurationHours || 1,
                               isNightPeak: false,
                               quantity: 1
                             });
                             setPricingResult({
                               ...calc,
                               finalPayable: slotPrice,
-                              breakdownSummary: `₹${slotPrice} / slot`
+                              breakdownSummary: `₹${slotPrice} / slot (${sportsDurationHours}h)`
                             });
                             setIsPricingCalculating(false);
                           }}
@@ -2323,7 +2987,7 @@ export default function VenueProfilePage() {
                         >
                           <span className="text-xs font-black block">{slot.startTime}</span>
                           <span className="text-[10px] opacity-75 font-semibold mt-0.5 block">to {slot.endTime}</span>
-                          <span className="text-[10px] font-black text-[#ff6325] dark:text-amber-400 mt-1 block">
+                          <span className={`text-[10px] font-black mt-1 block ${isSelected ? 'text-white' : 'text-[#ff6325] dark:text-amber-400'}`}>
                             ₹{slotPrice}
                           </span>
                         </button>
@@ -2340,13 +3004,11 @@ export default function VenueProfilePage() {
               // Sum any selected addons
               const activeListingObj = selectedTurfService?.rawListing || liveServices[0]?.metadata?.listings?.[0] || {};
               const activeMetaObj = activeListingObj.metadata || {};
-              const defaultAddonsList = [
-                { name: 'Certified Match Referee', price: 300 },
-                { name: 'High-Res Match Video Recording', price: 500 },
-                { name: 'Chilled Energy Drinks (Pack of 6)', price: 250 },
-                { name: 'Extra Pro Match Ball (Size 5)', price: 150 },
-                { name: 'Warm-up Bibs Set (10 Pack)', price: 100 },
-                { name: 'Ice Pack & Recovery First-Aid Kit', price: 120 }
+              const sportFallbackCfg = getSportCategoryConfig(category);
+              const defaultAddonsList = sportFallbackCfg?.addons || [
+                { id: 'referee', name: 'Certified Match Referee', price: 300, icon: '👨‍⚖️', desc: 'Official qualified referee for 60 mins match management & fair play.' },
+                { id: 'video', name: 'High-Res Match Video Recording', price: 500, icon: '📹', desc: 'Full match recording delivered via HD cloud link within 24 hours.' },
+                { id: 'drinks', name: 'Chilled Energy Drinks (Pack of 6)', price: 250, icon: '🧴', desc: 'Ice-chilled electrolyte sports beverages ready at bench.' }
               ];
               const availableAddons = (Array.isArray(activeMetaObj.addons) && activeMetaObj.addons.length > 0)
                 ? activeMetaObj.addons
@@ -2368,7 +3030,7 @@ export default function VenueProfilePage() {
                   <div className="space-y-1 text-center sm:text-left">
                     <div className="flex items-center justify-center sm:justify-start gap-2">
                       <span className="text-sm font-black text-white">
-                        ⚽ {selectedTurfService?.name || '7v7 Premier FIFA Astro Turf A'}
+                        {category === 'badminton' ? '🏸' : category === 'tennis' ? '🎾' : category === 'cricket-ground' ? '🏏' : category === 'basketball' ? '🏀' : category === 'swimming' ? '🏊' : category === 'play-arena' ? '🧗' : '⚽'} {selectedTurfService?.name || 'Unit Slot'}
                       </span>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
                         Slot Reserved (5m hold)
@@ -3435,7 +4097,9 @@ export default function VenueProfilePage() {
                         <p>
                           {aboutText
                             ? (isAboutExpanded || aboutText.length <= 260 ? aboutText : `${aboutText.slice(0, 260)}...`)
-                            : `Indulge in a luxurious stay at ${venueName} situated on the scenic ${city || 'Chennai'} corridor. Immerse yourself in the vibrant culture while exploring nearby beaches, entertainment hubs, and serene gardens. Experience signature hospitality, private pools, and bespoke concierge care.`}
+                            : isFacility
+                              ? `Welcome to ${venueName}, the premier sports arena in ${city || 'Chennai'}. Featuring FIFA certified AstroTurf, floodlights, team dugouts, clean amenities, and equipment support for non-stop action.`
+                              : `Indulge in a luxurious stay at ${venueName} situated on the scenic ${city || 'Chennai'} corridor. Immerse yourself in the vibrant culture while exploring nearby beaches, entertainment hubs, and serene gardens. Experience signature hospitality, private pools, and bespoke concierge care.`}
                         </p>
                         {aboutText && aboutText.length > 260 && (
                           <button
@@ -5201,13 +5865,11 @@ export default function VenueProfilePage() {
           const baseSlotCost = Number(pricingResult.finalPayable) || 1350;
           const activeListingObj = selectedTurfService?.rawListing || liveServices[0]?.metadata?.listings?.[0] || {};
           const activeMetaObj = activeListingObj.metadata || {};
-          const defaultAddonsList = [
+          const sportFallbackCfg = getSportCategoryConfig(category);
+          const defaultAddonsList = sportFallbackCfg?.addons || [
             { id: 'referee', name: 'Certified Match Referee', price: 300, icon: '👨‍⚖️', desc: 'Official qualified referee for 60 mins match management & fair play.' },
             { id: 'video', name: 'High-Res Match Video Recording', price: 500, icon: '📹', desc: 'Full match recording delivered via HD cloud link within 24 hours.' },
-            { id: 'drinks', name: 'Chilled Energy Drinks (Pack of 6)', price: 250, icon: '🧴', desc: 'Ice-chilled electrolyte sports beverages ready at bench.' },
-            { id: 'ball', name: 'Extra Pro Match Ball (Size 5)', price: 150, icon: '⚽', desc: 'FIFA standard match ball pumped to regulation pressure.' },
-            { id: 'bibs', name: 'Warm-up Bibs Set (10 Pack)', price: 100, icon: '🎽', desc: 'Clean, sanitized breathable neon training bibs.' },
-            { id: 'firstaid', name: 'Ice Pack & Recovery First-Aid Kit', price: 120, icon: '🧊', desc: 'Instant cold compress packs, compression straps, and spray.' }
+            { id: 'drinks', name: 'Chilled Energy Drinks (Pack of 6)', price: 250, icon: '🧴', desc: 'Ice-chilled electrolyte sports beverages ready at bench.' }
           ];
 
           const availableAddons = (Array.isArray(activeMetaObj.addons) && activeMetaObj.addons.length > 0)
@@ -5216,7 +5878,7 @@ export default function VenueProfilePage() {
               name: a.name || 'Custom Add-on',
               price: Number(a.price) || 0,
               icon: a.icon || '⭐',
-              desc: a.description || 'Enhance your match experience.'
+              desc: a.desc || a.description || 'Enhance your session experience.'
             }))
             : defaultAddonsList;
 
@@ -5229,21 +5891,47 @@ export default function VenueProfilePage() {
 
           const executeTurfBooking = (finalAddons: string[], finalCost: number) => {
             const totalToPay = baseSlotCost + finalCost;
+            const fullSelectedAddons = finalAddons.map(name => {
+              const matched = availableAddons.find((a: any) => a.name === name);
+              return {
+                id: matched?.id || name,
+                name: matched?.name || name,
+                price: Number(matched?.price) || 0,
+                icon: matched?.icon || '⭐',
+                desc: matched?.desc || ''
+              };
+            });
+
             setSelectedService({
               ...selectedTurfService,
-              price: totalToPay,
-              name: `${venueName} — ${selectedTurfService?.name || 'Turf Slot'}`,
+              price: baseSlotCost, // Keep pure base slot tariff distinct from add-ons
+              category: category === 'badminton' ? 'Badminton Court Booking' :
+                        category === 'tennis' ? 'Tennis Court Booking' :
+                        category === 'cricket-ground' ? 'Cricket Ground Booking' :
+                        category === 'basketball' ? 'Basketball Court Booking' :
+                        category === 'swimming' ? 'Swimming Pool Booking' :
+                        category === 'play-arena' ? 'Play Arena Pass Booking' :
+                        'Sports Turf Booking',
+              selectedListing: {
+                ...(activeListingObj || {}),
+                name: selectedTurfService?.name || activeListingObj?.name || 'Court Listing',
+                price: baseSlotCost,
+                addons: availableAddons
+              },
+              name: `${venueName} — ${selectedTurfService?.name || 'Session Slot'}`,
               metadata: {
                 ...(selectedTurfService?.metadata || {}),
-                selectedAddons: finalAddons,
+                addons: availableAddons,
+                selectedAddons: fullSelectedAddons,
                 addonsCost: finalCost,
                 turfBooking: {
                   venueName,
                   address,
                   slotDate: selectedDate,
                   slotTime: selectedHourSlot,
-                  selectedAddons: finalAddons,
+                  selectedAddons: fullSelectedAddons,
                   addonsCost: finalCost,
+                  baseSlotCost,
                   priceBreakdown: {
                     ...pricingResult,
                     finalPayable: totalToPay
@@ -5275,13 +5963,22 @@ export default function VenueProfilePage() {
                 <div className="px-6 py-5 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/60 shrink-0">
                   <div>
                     <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                      Step 2 of 2: Optional Match Add-ons
+                      Step 2 of 2: Optional Session Add-ons
                     </span>
                     <h3 className="font-extrabold text-lg sm:text-xl text-slate-900 dark:text-white mt-1 tracking-tight flex items-center gap-2">
-                      <span>⚽ Upgrade Your Match Session</span>
+                      <span>{category === 'badminton' ? '🏸' : category === 'tennis' ? '🎾' : category === 'cricket-ground' ? '🏏' : category === 'basketball' ? '🏀' : category === 'swimming' ? '🏊' : category === 'play-arena' ? '🧗' : '⚽'}</span>
+                      <span>
+                        {category === 'badminton' ? 'Upgrade Your Badminton Session' :
+                         category === 'tennis' ? 'Upgrade Your Tennis Session' :
+                         category === 'cricket-ground' ? 'Upgrade Your Cricket Match' :
+                         category === 'basketball' ? 'Upgrade Your Basketball Game' :
+                         category === 'swimming' ? 'Upgrade Your Pool Session' :
+                         category === 'play-arena' ? 'Upgrade Your Arena Jump Pass' :
+                         'Upgrade Your Match Session'}
+                      </span>
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      📅 {selectedDate} • ⏰ {selectedHourSlot} • {selectedTurfService?.name || 'Astro Turf'}
+                      📅 {selectedDate} • ⏰ {selectedHourSlot} • {selectedTurfService?.name || 'Session Unit'}
                     </p>
                   </div>
 
@@ -5351,6 +6048,30 @@ export default function VenueProfilePage() {
                         </div>
                       );
                     })}
+                  </div>
+
+                  {/* Universal BokSpot Payment Options Preview */}
+                  <div className="pt-3 border-t border-slate-200/80 dark:border-white/10 space-y-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
+                      Universal BokSpot Payment Options (Configurable at Checkout)
+                    </span>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10">
+                        <span className="text-xs block">💳</span>
+                        <span className="text-[10px] font-black text-slate-900 dark:text-white block mt-0.5">100% Online</span>
+                        <span className="text-[9px] text-slate-500 dark:text-slate-400">Instant VIP Pass</span>
+                      </div>
+                      <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50">
+                        <span className="text-xs block">⚡</span>
+                        <span className="text-[10px] font-black text-amber-900 dark:text-amber-300 block mt-0.5">30% Advance</span>
+                        <span className="text-[9px] text-amber-700 dark:text-amber-400">Hold & 70% at venue</span>
+                      </div>
+                      <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/50">
+                        <span className="text-xs block">👥</span>
+                        <span className="text-[10px] font-black text-indigo-900 dark:text-indigo-300 block mt-0.5">Split with Friends</span>
+                        <span className="text-[9px] text-indigo-700 dark:text-indigo-400">Equal share links</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 

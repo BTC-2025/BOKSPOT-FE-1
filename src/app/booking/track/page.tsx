@@ -311,8 +311,8 @@ Show this at the reception counter.
             );
           })()}
 
-        {/* ── SPECIAL BANNER FOR LUXE MYSTERY SECRET REVEAL: Instant celebration banner ── */}
-        {(Boolean(booking?.isLuxeBlindBooking) || Boolean(booking?.maskedSecretName)) && (
+        {/* ── SPECIAL BANNER FOR LUXE MYSTERY SECRET REVEAL: Instant celebration banner (Only for genuine Luxe Mystery Blind Stays) ── */}
+        {Boolean(booking?.isLuxeBlindBooking) && (
           <div className="rounded-3xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 p-6 shadow-xl border-2 border-yellow-300 relative overflow-hidden animate-fade-in">
             <div className="absolute top-0 right-0 -mt-6 -mr-6 w-32 h-32 bg-white/20 rounded-full blur-xl pointer-events-none" />
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
@@ -428,7 +428,7 @@ Show this at the reception counter.
               </div>
             </div>
 
-            {/* ── District-Style Split with Friends Group Share Card ── */}
+            {/* ── BokSpot Split with Friends Group Share Card ── */}
             {booking?.isSplitEnabled && (
               <div className="rounded-3xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/70 shadow-sm p-6 space-y-4 animate-fade-in">
                 <div className="flex items-center justify-between">

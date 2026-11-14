@@ -71,7 +71,7 @@ export default function EventTemplate({ service }: EventTemplateProps) {
 
   return (
     <div className="min-h-screen bg-[color:var(--color-surface)] flex flex-col pb-32">
-      {/* 1. Header (District Style) */}
+      {/* 1. Header (BokSpot Clean Topbar) */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-[color:var(--color-surface)]/80 backdrop-blur-xl border-b border-[color:var(--color-outline-variant)]/20 shadow-sm px-4 py-4 flex items-center justify-between transition-all">
         <button onClick={() => router.back()} className="p-2 bg-[color:var(--color-surface-container)] hover:bg-[color:var(--color-surface-variant)] rounded-full transition-colors">
           <ArrowLeft size={20} className="text-[color:var(--color-on-surface)]" />
