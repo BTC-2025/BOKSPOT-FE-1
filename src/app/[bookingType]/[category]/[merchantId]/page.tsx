@@ -9,6 +9,7 @@ import { api } from '@/lib/api';
 import { useLocationStore, useBookingFlowStore, ALL_CITIES, POPULAR_CITIES } from '@/lib/store';
 import { BokspotLoader } from '@/components/ui/BokspotLoader';
 import { getSportCategoryConfig } from '@/lib/sportsData';
+import { getEntertainmentCategoryConfig, getMovieBySlugOrId, NOW_SHOWING_MOVIES, MovieListingItem } from '@/lib/entertainmentData';
 
 const CATEGORY_NAMES: Record<string, string> = {
   // Travel & Transport
@@ -41,8 +42,10 @@ export default function VenueProfilePage() {
   const { city, setCity, setLocation } = useLocationStore();
   const { setSelectedService, setSelectedSlot, bookings } = useBookingFlowStore();
   const searchParams = useSearchParams();
-  const isHotel = category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'pg-hostels' || category === 'camping' || bookingType === 'stay-accommodation' || bookingType === 'home';
-  const isPgStay = category === 'pg-hostels' || category === 'hostels' || (bookingType === 'stay-accommodation' && (rawCategory?.includes('pg') || rawCategory?.includes('hostel')));
+  const isEntertainment = Boolean(getEntertainmentCategoryConfig(category)) || (bookingType || '').toLowerCase().includes('entertainment') || ['movies', 'theatre', 'concerts', 'events', 'exhibitions', 'workshops'].includes((category || '').toLowerCase());
+  const isPgStay = !isEntertainment && (category === 'pg-hostels' || category === 'hostels' || (bookingType === 'stay-accommodation' && (rawCategory?.includes('pg') || rawCategory?.includes('hostel'))));
+  const isFacility = !isEntertainment && (category === 'football-turf' || category === 'cricket-ground' || category === 'badminton' || category === 'tennis' || category === 'basketball' || category === 'swimming' || category === 'play-arena' || category === 'studio' || category === 'meeting-room' || category === 'podcast' || category === 'gaming' || bookingType === 'sports-turf');
+  const isHotel = !isEntertainment && !isFacility && (category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'pg-hostels' || category === 'camping' || bookingType === 'stay-accommodation' || (bookingType === 'home' && !category.includes('turf') && !category.includes('movie')));
   const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
   const [visitMode, setVisitMode] = useState<'IN_PERSON' | 'LIVE_VIDEO'>('IN_PERSON');
   const [videoPlatform, setVideoPlatform] = useState<'WHATSAPP' | 'GOOGLE_MEET'>('WHATSAPP');
@@ -56,7 +59,6 @@ export default function VenueProfilePage() {
 
   // PG Food Exclusion Discount Toggle state (Optional without food: -₹1,500/mo)
   const [isFoodExcluded, setIsFoodExcluded] = useState(false);
-  const isFacility = category === 'football-turf' || category === 'cricket-ground' || category === 'badminton' || category === 'tennis' || category === 'basketball' || category === 'swimming' || category === 'play-arena' || category === 'studio' || category === 'meeting-room' || category === 'podcast' || category === 'gaming' || bookingType === 'sports-turf';
   const isAppointment = category === 'doctor' || category === 'salons' || category === 'gym-yoga' || category === 'pet-grooming';
   const isRental = category === 'sports-bike' || category === 'car-rental' || category === 'bike-rental' || category === 'camera' || category === 'cycle-rental' || category === 'sound-system' || category === 'event-equip' || bookingType === 'rental-equipment';
   const isPass = category === 'movies' || category === 'concerts' || category === 'theatre' || category === 'events' || category === 'exhibitions' || category === 'darshan' || category === 'coworking';
@@ -150,6 +152,16 @@ export default function VenueProfilePage() {
   const [roomModalImageIdx, setRoomModalImageIdx] = useState(0);
   const [pgPaymentType, setPgPaymentType] = useState<'FULL_MONTH_RENT' | 'TOKEN_ADVANCE'>('FULL_MONTH_RENT');
 
+  // ── Selected Movie Context (BookMyShow Flow) ──
+  const movieParam = searchParams?.get('movie');
+  const [activeMovie, setActiveMovie] = useState<MovieListingItem>(() => getMovieBySlugOrId(movieParam || 'avatar-fire-and-ash'));
+
+  useEffect(() => {
+    if (movieParam) {
+      setActiveMovie(getMovieBySlugOrId(movieParam));
+    }
+  }, [movieParam]);
+
   // Lock background body scroll whenever modal is open
   useEffect(() => {
     const isAnyModalOpen = Boolean(activeRoomService && roomModalStep) || isVisitModalOpen || isGalleryOpen || isModalOpen;
@@ -201,6 +213,100 @@ export default function VenueProfilePage() {
   const [passCount, setPassCount] = useState<number>(2);
   const [selectedTier, setSelectedTier] = useState<string>('Standard VIP');
   const [popcornComboAddon, setPopcornComboAddon] = useState<boolean>(false);
+  const [selectedShowDate, setSelectedShowDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
+  const [selectedShowTime, setSelectedShowTime] = useState<string>('06:45 PM');
+  const [selectedScreenFormat, setSelectedScreenFormat] = useState<string>('IMAX Laser 3D');
+  const [selectedSeatZone, setSelectedSeatZone] = useState<string>('👑 Royal Recliner (Lounge)');
+  const [snackNachosAddon, setSnackNachosAddon] = useState<boolean>(false);
+  const [snackBeverageAddon, setSnackBeverageAddon] = useState<boolean>(false);
+  // Interactive Cinema Visual Seat Selection
+  const [selectedCinemaSeats, setSelectedCinemaSeats] = useState<string[]>(['C7', 'C8']);
+  // BookMyShow Multi-Step Stepper States: 'SHOWTIMES' | 'SEAT_COUNT' | 'SEAT_LAYOUT' | 'FNB_DRAWER'
+  const [cinemaStep, setCinemaStep] = useState<'SHOWTIMES' | 'SEAT_COUNT' | 'SEAT_LAYOUT' | 'FNB_DRAWER'>('SHOWTIMES');
+  const [selectedAudiScreen, setSelectedAudiScreen] = useState<string>('Audi 1 (IMAX)');
+  // Real-time 8-Minute Seat Lock Timer (BMS Industry Standard)
+  const [seatLockSecondsRemaining, setSeatLockSecondsRemaining] = useState<number>(480);
+  const [isSeatLockActive, setIsSeatLockActive] = useState<boolean>(false);
+  const [seatLockExpired, setSeatLockExpired] = useState<boolean>(false);
+  // Realtime Cross-Tab / Cross-User Locked Seats from other shoppers
+  const [remoteLockedSeats, setRemoteLockedSeats] = useState<string[]>([]);
+  const [clientId] = useState<string>(() => `client-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`);
+
+  // Broadcast & Sync Held Seats across browser tabs / users
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const lockKey = `bokspot_seat_locks_${merchantId}_${selectedShowDate}_${selectedShowTime}`;
+
+    const syncLockedSeats = () => {
+      try {
+        const raw = localStorage.getItem(lockKey);
+        if (raw) {
+          const locks = JSON.parse(raw);
+          const now = Date.now();
+          const otherClientSeats: string[] = [];
+          Object.entries(locks).forEach(([cId, data]: [string, any]) => {
+            if (cId !== clientId && data.expiresAt > now && Array.isArray(data.seats)) {
+              otherClientSeats.push(...data.seats);
+            }
+          });
+          setRemoteLockedSeats(Array.from(new Set(otherClientSeats)));
+        } else {
+          setRemoteLockedSeats([]);
+        }
+      } catch {}
+    };
+
+    // Initial sync and event listeners
+    syncLockedSeats();
+    window.addEventListener('storage', syncLockedSeats);
+    const interval = setInterval(syncLockedSeats, 2500);
+
+    return () => {
+      window.removeEventListener('storage', syncLockedSeats);
+      clearInterval(interval);
+    };
+  }, [merchantId, selectedShowDate, selectedShowTime, clientId]);
+
+  // Update this client's held seats in shared storage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const lockKey = `bokspot_seat_locks_${merchantId}_${selectedShowDate}_${selectedShowTime}`;
+    try {
+      const raw = localStorage.getItem(lockKey);
+      const locks = raw ? JSON.parse(raw) : {};
+      if (isSeatLockActive && selectedCinemaSeats.length > 0 && !seatLockExpired) {
+        locks[clientId] = {
+          seats: selectedCinemaSeats,
+          audi: selectedAudiScreen,
+          expiresAt: Date.now() + (seatLockSecondsRemaining * 1000)
+        };
+      } else {
+        delete locks[clientId];
+      }
+      localStorage.setItem(lockKey, JSON.stringify(locks));
+    } catch {}
+  }, [selectedCinemaSeats, isSeatLockActive, seatLockExpired, seatLockSecondsRemaining, merchantId, selectedShowDate, selectedShowTime, selectedAudiScreen, clientId]);
+
+  // Seat Lock Timer countdown effect when user proceeds to seat layout or F&B
+  useEffect(() => {
+    let timer: any = null;
+    if (isSeatLockActive && seatLockSecondsRemaining > 0) {
+      timer = setInterval(() => {
+        setSeatLockSecondsRemaining((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            setSeatLockExpired(true);
+            setIsSeatLockActive(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [isSeatLockActive, seatLockSecondsRemaining]);
 
   // ── Archetype 6: HomeCall (Electrician, Plumber, Cleaning, AC Repair) Flow States ──
   const [homeIssueCategory, setHomeIssueCategory] = useState<string>('Inspection & Diagnosis');
@@ -651,6 +757,110 @@ export default function VenueProfilePage() {
             ];
           }
 
+          // Entertainment & Live Events Master Fallback
+          const entCfg = getEntertainmentCategoryConfig(category);
+          if (entCfg && finalServices.length === 0) {
+            const targetCity = city || 'Chennai';
+            let activeBranchName = entCfg.merchantName;
+            let activeBranchAddress = `${entCfg.categoryName} Complex, Entertainment Zone, ${targetCity}`;
+
+            // Check if vendor portal has custom branches or live configurations
+            let customListings: any[] = [];
+            if (typeof window !== 'undefined') {
+              try {
+                const busStorageRaw = localStorage.getItem('vendor-portal-storage-v10');
+                if (busStorageRaw) {
+                  const busData = JSON.parse(busStorageRaw);
+                  const curM = busData.state?.currentMerchant;
+                  const storedServices = busData.state?.services || [];
+                  const activeBranchId = curM?.activeBranchId;
+
+                  if (curM && (curM.username === entCfg.username || curM.id === merchantId)) {
+                    if (Array.isArray(curM.branches) && curM.branches.length > 0) {
+                      const matchedBranch = curM.branches.find((b: any) => b.id === curM.activeBranchId) || curM.branches[0];
+                      if (matchedBranch) {
+                        activeBranchName = matchedBranch.name || curM.merchantName;
+                        activeBranchAddress = matchedBranch.address || activeBranchAddress;
+                      }
+                    } else if (curM.merchantName) {
+                      activeBranchName = curM.merchantName;
+                      activeBranchAddress = curM.address || activeBranchAddress;
+                    }
+                  }
+
+                  // Live link to configured services/listings created in business portal
+                  const matchedService = storedServices.find((s: any) => {
+                    const matchCat = s.category === entCfg.categoryName || s.metadata?.originalCategory === entCfg.categoryName;
+                    const matchBranch = activeBranchId ? (!s.branchId || s.branchId === activeBranchId) : true;
+                    return matchCat && matchBranch;
+                  });
+
+                  if (matchedService && Array.isArray(matchedService.listings) && matchedService.listings.length > 0) {
+                    customListings = matchedService.listings.map((l: any) => ({
+                      id: l.id,
+                      name: l.name,
+                      price: Number(l.price || l.basePrice || entCfg.defaultPrice),
+                      badge: l.metadata?.badge || l.offerBadge || 'Verified Tier',
+                      icon: l.metadata?.icon || '🎟️',
+                      desc: l.description || l.desc || ''
+                    }));
+                  }
+                }
+              } catch (e) {}
+            }
+
+            const effectiveSeatTiers = customListings.length > 0 ? customListings : entCfg.seatTiers;
+
+            finalServices = [
+              {
+                id: `svc-${entCfg.slug}-${entCfg.username.toLowerCase()}`,
+                name: `${activeBranchName} — ${entCfg.categoryName}`,
+                category: entCfg.categoryName,
+                rating: 4.8,
+                reviewCount: 420,
+                basePrice: String(effectiveSeatTiers[0]?.price || entCfg.defaultPrice),
+                price: Number(effectiveSeatTiers[0]?.price || entCfg.defaultPrice),
+                description: `Experience premier ${entCfg.categoryName} in ${targetCity}. Featuring cutting-edge audiovisual systems, plush seating, and verified digital admission.`,
+                merchantId: entCfg.merchantId,
+                merchant: activeBranchName,
+                branchName: activeBranchName,
+                address: activeBranchAddress,
+                merchantObj: {
+                  id: entCfg.merchantId,
+                  name: activeBranchName,
+                  city: targetCity,
+                  address: activeBranchAddress,
+                  rating: 4.8,
+                  username: entCfg.username,
+                  metadata: {
+                    isEntertainment: true,
+                    formats: entCfg.formats,
+                    languages: entCfg.languages,
+                    showtimes: entCfg.showtimes,
+                    seatTiers: effectiveSeatTiers,
+                    snackAddons: entCfg.snackAddons,
+                    amenities: entCfg.amenities,
+                    venueRules: entCfg.venueRules
+                  }
+                },
+                metadata: {
+                  isEntertainment: true,
+                  facilityName: activeBranchName,
+                  merchantName: activeBranchName,
+                  branchName: activeBranchName,
+                  address: activeBranchAddress,
+                  amenities: entCfg.amenities,
+                  venueRules: entCfg.venueRules,
+                  formats: entCfg.formats,
+                  languages: entCfg.languages,
+                  showtimes: entCfg.showtimes,
+                  seatTiers: effectiveSeatTiers,
+                  snackAddons: entCfg.snackAddons
+                }
+              }
+            ];
+          }
+
           setLiveServices(finalServices);
           if (mData) {
             const parsedM = (mData as any).data || mData;
@@ -683,17 +893,12 @@ export default function VenueProfilePage() {
     (liveServices.length > 0 ? (liveServices[0].merchant || 'Venue') : 'Loading...');
 
   const checkMysteryOptIn = () => {
-    // 0. Only genuine stays/accommodations can have mystery mode (never facilities/sports, appointments, rentals, passes, home calls)
-    if (isFacility || isAppointment || isRental || isPass || isHomeCall) {
+    // 0. Only genuine stays/accommodations and sports arenas can have mystery mode (never simple appointments, rentals, passes, home calls)
+    if (isAppointment || isRental || isPass || isHomeCall) {
       return false;
     }
     // 1. Hostels / PG are never blind mystery mode
     if (isPgStay || category === 'hostels' || category === 'pg-hostels' || (merchantData?.name || '').toLowerCase().includes('hostel')) {
-      return false;
-    }
-    // 2. Only luxury hotel/resort/villa categories
-    const isMysteryEligibleCategory = category === 'hotels' || category === 'resorts' || category === 'villas';
-    if (!isMysteryEligibleCategory) {
       return false;
     }
 
@@ -705,25 +910,48 @@ export default function VenueProfilePage() {
         const uStore = localStorage.getItem(`hotel_mystery_optin_${uName}`);
         if (uStore !== null) return uStore === 'true';
       }
+
+      // Also check business portal live storage (vendor-portal-storage-v10)
+      try {
+        const busStoreRaw = localStorage.getItem('vendor-portal-storage-v10');
+        if (busStoreRaw) {
+          const busData = JSON.parse(busStoreRaw);
+          const curM = busData.state?.currentMerchant;
+          const isSameMerchant = curM && (
+            (curM.id === merchantId) ||
+            (uName && curM.username === uName) ||
+            ((merchantData?.name || '').toLowerCase() === (curM.merchantName || '').toLowerCase()) ||
+            (!merchantId)
+          );
+          if (isSameMerchant) {
+            if (curM.isMysteryModeOptIn !== undefined) return Boolean(curM.isMysteryModeOptIn);
+            if (curM.metadata?.isMysteryModeOptIn !== undefined) return Boolean(curM.metadata.isMysteryModeOptIn);
+          }
+        }
+      } catch {}
+
       const h101Store = localStorage.getItem('hotel_mystery_optin_H101');
-      if (h101Store !== null) return h101Store === 'true';
+      if ((uName === 'H101' || (merchantData?.name || '').toLowerCase().includes('grand hotel')) && h101Store !== null) {
+        return h101Store === 'true';
+      }
       const defaultStore = localStorage.getItem('hotel_mystery_optin_default');
       if (defaultStore !== null) return defaultStore === 'true';
     }
     if (merchantData?.isMysteryModeOptIn !== undefined) return Boolean(merchantData.isMysteryModeOptIn);
     if (merchantData?.metadata?.isMysteryModeOptIn !== undefined) return Boolean(merchantData.metadata.isMysteryModeOptIn);
-    return false;
+    return true;
   };
 
   const isMysteryOptedIn = checkMysteryOptIn();
 
-  const isLuxeBlindBooking = Boolean(isLuxury && isHotel && isMysteryOptedIn);
+  const isLuxeBlindBooking = Boolean(isLuxury && isMysteryOptedIn);
 
   const venueName = (() => {
     if (isLuxeBlindBooking) {
       const raw = `${rawVenueName} ${JSON.stringify(merchantData || {})} ${JSON.stringify(liveServices[0]?.metadata || {})}`.toLowerCase();
       let archetype = 'Luxury Suite';
-      if (raw.includes('villa') || category.includes('villa')) archetype = 'Architectural Villa';
+      if (raw.includes('turf') || category.includes('turf') || raw.includes('arena') || isFacility) archetype = 'Secret Pro FIFA Arena';
+      else if (raw.includes('villa') || category.includes('villa')) archetype = 'Architectural Villa';
       else if (raw.includes('resort') || category.includes('resort')) archetype = 'Beachfront Resort';
       else if (raw.includes('palace') || raw.includes('heritage')) archetype = 'Heritage Palace Suite';
       else if (raw.includes('penthouse')) archetype = 'Skyline Penthouse';
@@ -1089,6 +1317,67 @@ export default function VenueProfilePage() {
                   </div>
                 </div>
               </div>
+            ) : isEntertainment ? (
+              /* Dedicated Entertainment & Cinema Summary Bar */
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs w-full lg:w-auto">
+                {/* 1. Cinema / Venue Location */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#ff6325]/10 text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                    <MapPin size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-wider block">
+                      CINEMA / VENUE
+                    </span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm truncate max-w-[180px] block">
+                      {venueName}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="h-8 w-px bg-slate-200 dark:bg-white/10 hidden md:block" />
+
+                {/* 2. Show Date with Quick Date Switcher */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#ff6325]/10 text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                    <Calendar size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-wider block">
+                      SHOW DATE
+                    </span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
+                      {(() => {
+                        try {
+                          const curD = selectedShowDate || sportsSlotDate || todayStr;
+                          const [y, m, d] = curD.split('-');
+                          const isT = curD === todayStr;
+                          return isT ? `Today (${d}-${m})` : `${d}-${m}-${y}`;
+                        } catch {
+                          return selectedShowDate || todayStr;
+                        }
+                      })()}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="h-8 w-px bg-slate-200 dark:bg-white/10 hidden md:block" />
+
+                {/* 3. Screen Format & Showtime */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#ff6325]/10 text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                    <Sparkles size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-wider block">
+                      EXPERIENCE & TIME
+                    </span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
+                      {selectedScreenFormat} • {selectedShowTime}
+                    </span>
+                  </div>
+                </div>
+              </div>
             ) : isFacility ? (
               /* Dedicated Sports & Arena Summary Bar (District / Playo Style) */
               <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs w-full lg:w-auto">
@@ -1220,12 +1509,13 @@ export default function VenueProfilePage() {
               <button
                 type="button"
                 onClick={() => {
-                  const el = document.getElementById(isFacility ? 'available-slots-section' : 'available-rooms-section');
+                  const targetId = isEntertainment ? 'entertainment-booking-section' : isFacility ? 'available-slots-section' : 'available-rooms-section';
+                  const el = document.getElementById(targetId);
                   el?.scrollIntoView({ behavior: 'smooth' });
                 }}
                 className="px-4 py-2 bg-[#ff6325] hover:bg-[#e04e13] active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               >
-                <span>{isFacility ? 'Select Court & Slot' : isRental ? 'Select Gear' : isAppointment ? 'Select Specialist' : 'Select Room'}</span>
+                <span>{isFacility ? 'Select Court & Slot' : isEntertainment ? 'Select Tickets & Seats' : isRental ? 'Select Gear' : isAppointment ? 'Select Specialist' : 'Select Room'}</span>
                 <ChevronRight size={14} />
               </button>
             </div>
@@ -1236,9 +1526,146 @@ export default function VenueProfilePage() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`mt-3 p-5 bg-white dark:bg-[#0f1219] rounded-3xl border border-slate-200 dark:border-white/10 shadow-lg text-xs space-y-4 ${isFacility ? 'w-full max-w-2xl' : 'w-full'}`}
+              className={`mt-3 p-5 bg-white dark:bg-[#0f1219] rounded-3xl border border-slate-200 dark:border-white/10 shadow-lg text-xs space-y-4 ${isFacility || isEntertainment ? 'w-full max-w-2xl' : 'w-full'}`}
             >
-              {isFacility ? (
+              {isEntertainment ? (
+                /* ================= Dedicated Entertainment & Movie Show Date Editor ================= */
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {/* 1. Venue & Screen Format */}
+                    <div className="relative">
+                      <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                        CINEMA / VENUE
+                      </label>
+                      <div className="relative flex items-center">
+                        <MapPin size={14} className="text-[#ff6325] shrink-0 absolute left-3 pointer-events-none" />
+                        <input
+                          type="text"
+                          readOnly
+                          value={venueName}
+                          className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 rounded-xl pl-8 pr-3 py-2 font-bold text-xs text-slate-900 dark:text-white outline-none truncate"
+                        />
+                      </div>
+                    </div>
+
+                    {/* 2. Interactive Show Date Selector */}
+                    <div>
+                      <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                        SHOW DATE
+                      </label>
+                      <div className="relative flex items-center">
+                        <Calendar size={14} className="text-[#ff6325] shrink-0 absolute left-3 pointer-events-none" />
+                        <input
+                          type="date"
+                          min={todayStr}
+                          value={selectedShowDate || sportsSlotDate || todayStr}
+                          onChange={(e) => {
+                            setSelectedShowDate(e.target.value);
+                            setSportsSlotDate(e.target.value);
+                          }}
+                          className="w-full bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 rounded-xl pl-8 pr-3 py-2 font-bold text-xs text-slate-900 dark:text-white outline-none focus:border-[#ff6325] transition-all cursor-pointer"
+                        />
+                      </div>
+                    </div>
+
+                    {/* 3. Quick Date Pills (Today, Tomorrow, Weekend) */}
+                    <div>
+                      <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                        QUICK SELECT
+                      </label>
+                      <div className="grid grid-cols-3 gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedShowDate(todayStr);
+                            setSportsSlotDate(todayStr);
+                          }}
+                          className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                            (selectedShowDate || sportsSlotDate) === todayStr ? 'bg-[#ff6325] text-white' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700'
+                          }`}
+                        >
+                          Today
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const d = new Date();
+                            d.setDate(d.getDate() + 1);
+                            const val = d.toISOString().split('T')[0];
+                            setSelectedShowDate(val);
+                            setSportsSlotDate(val);
+                          }}
+                          className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                            (selectedShowDate || sportsSlotDate) === tomorrowDate.toISOString().split('T')[0] ? 'bg-[#ff6325] text-white' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700'
+                          }`}
+                        >
+                          Tomorrow
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const d = new Date();
+                            const offset = (6 - d.getDay() + 7) % 7 || 7;
+                            d.setDate(d.getDate() + offset);
+                            const val = d.toISOString().split('T')[0];
+                            setSelectedShowDate(val);
+                            setSportsSlotDate(val);
+                          }}
+                          className="py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer"
+                        >
+                          Weekend
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Show Timing Quick Selector */}
+                  <div>
+                    <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1.5">
+                      AVAILABLE SHOWTIMES
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {['10:30 AM', '01:45 PM', '04:30 PM', '06:45 PM', '09:45 PM'].map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => setSelectedShowTime(t)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                            selectedShowTime === t
+                              ? 'bg-[#ff6325] text-white shadow-xs'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/5">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditSearchOpen(false)}
+                      className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditSearchOpen(false);
+                        const newQuery = new URLSearchParams(window.location.search);
+                        newQuery.set('date', selectedShowDate || sportsSlotDate || todayStr);
+                        newQuery.set('time', selectedShowTime);
+                        window.history.replaceState(null, '', `?${newQuery.toString()}`);
+                      }}
+                      className="px-6 py-2 bg-[#ff6325] text-white rounded-xl font-black text-xs hover:bg-[#e04e13] active:scale-95 transition-all cursor-pointer shadow-md"
+                    >
+                      Apply Date & Time
+                    </button>
+                  </div>
+                </div>
+              ) : isFacility ? (
                 /* ================= Dedicated Sports & Turf Slot Editor (Matching Category Search Dock: Venue & Play Date) ================= */
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -5431,152 +5858,834 @@ export default function VenueProfilePage() {
         )}
 
         {/* ============================================================
-         * SECTION D7: PASSES, MOVIES & TURNSTILE ENTRY (ARCHETYPE 5: PassEntry)
+         * SECTION D7: BOOKMYSHOW & DISTRICT MULTI-STEP CINEMA TICKETING WIZARD
          * ============================================================ */}
-        {isPass && (
-          <div className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>🎟️</span> Event Passes & Turnstile Entry
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Instant digital turnstile QR pass delivered via BNX SMS & WhatsApp.
-                </p>
+        {isPass && (() => {
+          // Dynamic binding to live service metadata created by business partner
+          const activeEntSvc = liveServices.find(s => s.metadata?.isEntertainment || s.category?.toLowerCase().includes('movie') || s.category?.toLowerCase().includes('cinema')) || liveServices[0];
+          const dynamicFormats: Array<{ id: string; label: string; sub: string; icon: string }> = (activeEntSvc?.metadata?.formats && Array.isArray(activeEntSvc.metadata.formats))
+            ? activeEntSvc.metadata.formats.map((fmt: any) => {
+                if (typeof fmt === 'string') {
+                  const icon = fmt.includes('IMAX') ? '🎥' : fmt.includes('Atmos') ? '🔊' : fmt.includes('4DX') ? '⚡' : '👓';
+                  const sub = fmt.includes('IMAX') ? 'Next-Gen 4K Laser Projection' : fmt.includes('Atmos') ? 'Immersive 64-Channel Spatial Audio' : fmt.includes('4DX') ? 'Synchronised Motion Seats' : 'Crystal Clear Digital Laser';
+                  return { id: fmt, label: fmt, sub, icon };
+                }
+                return { id: fmt.id || fmt.name, label: fmt.label || fmt.name, sub: fmt.sub || 'Cinema Standard', icon: fmt.icon || '🎥' };
+              })
+            : [
+                { id: 'IMAX Laser 3D', label: 'IMAX Laser 3D', sub: 'Next-Gen 4K Laser Projection', icon: '🎥' },
+                { id: 'Dolby Atmos 7.1', label: 'Dolby Atmos 7.1', sub: 'Immersive 64-Channel Spatial Audio', icon: '🔊' },
+                { id: '4DX Motion', label: '4DX Motion & Scent', sub: 'Synchronised Motion Seats', icon: '⚡' },
+                { id: 'RealD 3D / 2D', label: 'RealD 3D / 2D Standard', sub: 'Crystal Clear Digital Laser', icon: '👓' }
+              ];
+
+          const dynamicShowtimes: Array<{ time: string; status: string; audi: string }> = (activeEntSvc?.metadata?.showtimes && Array.isArray(activeEntSvc.metadata.showtimes))
+            ? activeEntSvc.metadata.showtimes.map((st: any) => ({
+                time: st.time || '10:30 AM',
+                status: st.status || (st.fillingFast ? 'Fast Filling' : 'Available'),
+                audi: st.screen || st.audi || 'Audi 1'
+              }))
+            : [
+                { time: '10:30 AM', status: 'Almost Full', audi: 'Audi 1 (IMAX)' },
+                { time: '02:15 PM', status: 'Available', audi: 'Audi 1 (IMAX)' },
+                { time: '06:45 PM', status: 'Fast Filling', audi: 'Audi 2 (Dolby Atmos)' },
+                { time: '10:00 PM', status: 'Available', audi: 'Audi 2 (Dolby Atmos)' }
+              ];
+
+          const dynamicSeatTiers: Array<{ id: string; name: string; price: number; icon: string; desc: string }> = (activeEntSvc?.metadata?.seatTiers && Array.isArray(activeEntSvc.metadata.seatTiers))
+            ? activeEntSvc.metadata.seatTiers.map((tier: any) => ({
+                id: tier.id || tier.name,
+                name: tier.name || 'Standard Tier',
+                price: Number(tier.price) || 190,
+                icon: tier.icon || '🎟️',
+                desc: tier.desc || 'Standard cinema seat'
+              }))
+            : [
+                { id: 'recliner', name: 'Royal Recliner (Lounge)', price: 380, icon: '👑', desc: 'Motorized lounger + Butler dining' },
+                { id: 'prime', name: 'Prime Circle', price: 250, icon: '🌟', desc: 'Optimum center rows + Extra legroom' },
+                { id: 'classic', name: 'Classic Executive', price: 190, icon: '🎟️', desc: 'Standard cushioned cinema seat' }
+              ];
+
+          const dynamicSnacks: Array<{ id: string; name: string; price: number; icon: string; desc: string }> = (activeEntSvc?.metadata?.snackAddons && Array.isArray(activeEntSvc.metadata.snackAddons))
+            ? activeEntSvc.metadata.snackAddons.map((snk: any) => ({
+                id: snk.id || snk.name,
+                name: snk.name,
+                price: Number(snk.price) || 150,
+                icon: snk.icon || '🍿',
+                desc: snk.desc || 'Fresh cinema concession'
+              }))
+            : [
+                { id: 'popcorn', name: 'Tub Popcorn + Coke Combo', price: 240, icon: '🍿', desc: 'Large Salted & Caramel popcorn tub with 500ml chilled Coke' },
+                { id: 'nachos', name: 'Warm Cheesy Nachos', price: 180, icon: '🌮', desc: 'Crisp tortilla chips served with warm melted jalapeno salsa dip' },
+                { id: 'coffee', name: 'Cold Coffee / Iced Tea', price: 120, icon: '🥤', desc: 'Chilled refreshing brew delivered directly to your cinema lounger' }
+              ];
+
+          const reclinerTier = dynamicSeatTiers.find(t => t.name.toLowerCase().includes('recliner') || t.id.toLowerCase().includes('recliner')) || dynamicSeatTiers[0];
+          const primeTier = dynamicSeatTiers.find(t => t.name.toLowerCase().includes('prime') || t.id.toLowerCase().includes('prime')) || dynamicSeatTiers[1] || dynamicSeatTiers[0];
+          const classicTier = dynamicSeatTiers.find(t => t.name.toLowerCase().includes('classic') || t.id.toLowerCase().includes('classic') || t.id.toLowerCase().includes('executive')) || dynamicSeatTiers[dynamicSeatTiers.length - 1];
+
+          return (
+          <div id="entertainment-booking-section" className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
+            
+            {/* Quick Movie Selector Strip (Allows instant switching between now-showing movies in this theatre) */}
+            <div className="space-y-2 pb-4 border-b border-slate-200/80 dark:border-white/10">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <span>🎬</span> Now Showing At This Multiplex ({NOW_SHOWING_MOVIES.length} Movies)
+                </span>
+                <span className="text-[10px] font-bold text-[#ff6325]">Click any poster to switch show</span>
               </div>
 
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-900/50 text-xs font-bold">
-                <span>📱 Scan QR for Turnstile Entry</span>
-              </div>
-            </div>
-
-            {/* Pass Tiers */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {[
-                { name: 'Silver General', price: 299, desc: 'Single Entry • Standard Zone' },
-                { name: 'Standard VIP', price: 599, desc: 'Priority Gate Entry • Lounge Access' },
-                { name: 'Platinum All-Access', price: 999, desc: 'VIP Lounge + F&B Voucher included' }
-              ].map(tier => (
-                <div
-                  key={tier.name}
-                  onClick={() => setSelectedTier(tier.name)}
-                  className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${selectedTier === tier.name
-                    ? 'bg-[#033266]/5 dark:bg-[#ff6325]/10 border-[#033266] dark:border-[#ff6325]'
-                    : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
-                    }`}
-                >
-                  <div>
-                    <h4 className="text-xs font-black text-slate-900 dark:text-white">{tier.name}</h4>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{tier.desc}</p>
-                  </div>
-                  <span className="text-base font-black text-[#033266] dark:text-[#ff6325] mt-3">₹{tier.price} / pass</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Quantity Selector */}
-            <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10">
-              <div>
-                <h4 className="text-xs font-extrabold text-slate-900 dark:text-white">Number of Attendees / Passes</h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">Max 10 passes per transaction</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setPassCount(Math.max(1, passCount - 1))}
-                  className="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 font-bold text-sm text-slate-900 dark:text-white"
-                >
-                  -
-                </button>
-                <span className="text-sm font-black text-slate-900 dark:text-white w-4 text-center">{passCount}</span>
-                <button
-                  type="button"
-                  onClick={() => setPassCount(Math.min(10, passCount + 1))}
-                  className="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 font-bold text-sm text-slate-900 dark:text-white"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            {/* F&B Snack Combo Add-on */}
-            <div
-              onClick={() => setPopcornComboAddon(!popcornComboAddon)}
-              className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${popcornComboAddon
-                ? 'bg-amber-500/10 border-amber-500'
-                : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10'
-                }`}
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">🍿</span>
-                <div>
-                  <h4 className="text-xs font-black text-slate-900 dark:text-white">Add Large Tub Popcorn & Beverage Combo</h4>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Save 25% compared to counter price</p>
-                </div>
-              </div>
-              <span className="text-xs font-black text-amber-600 dark:text-amber-400">+₹250</span>
-            </div>
-
-            {/* Confirm Passes Card */}
-            {(() => {
-              const tierPrices: Record<string, number> = { 'Silver General': 299, 'Standard VIP': 599, 'Platinum All-Access': 999 };
-              const unitPrice = tierPrices[selectedTier] || 599;
-              const subtotal = unitPrice * passCount + (popcornComboAddon ? 250 : 0);
-
-              return (
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div>
-                    <span className="text-xs font-black text-slate-900 dark:text-white block">
-                      {selectedTier} ({passCount} Pass{passCount > 1 ? 'es' : ''})
-                    </span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
-                      {popcornComboAddon ? 'Includes F&B Combo • ' : ''}Valid for event date
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                    <div className="text-right">
-                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Payable</span>
-                      <span className="text-xl font-black text-[#033266] dark:text-[#ff6325]">
-                        ₹{subtotal.toLocaleString()}
-                      </span>
-                    </div>
-
+              <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none">
+                {NOW_SHOWING_MOVIES.map((mov) => {
+                  const isCur = activeMovie.id === mov.id || activeMovie.slug === mov.slug;
+                  return (
                     <button
+                      key={mov.id}
                       type="button"
                       onClick={() => {
-                        setSelectedService({
-                          id: `pass-${Date.now()}`,
-                          name: `${venueName} — ${selectedTier}`,
-                          price: subtotal,
-                          metadata: {
-                            passBooking: {
-                              venueName,
-                              tier: selectedTier,
-                              passCount,
-                              popcornComboAddon,
-                              totalPayable: subtotal
-                            }
-                          }
-                        });
-                        setSelectedSlot({
-                          id: `pass-slot-${Date.now()}`,
-                          timeStr: `${passCount} × ${selectedTier} (Digital Pass)`,
-                          date: selectedDate,
-                          available: true
-                        });
-                        router.push('/booking/checkout');
+                        setActiveMovie(mov);
+                        router.replace(`/${bookingType}/${category}/${merchantId}?movie=${mov.slug}`, { scroll: false });
                       }}
-                      className="px-6 py-3 rounded-xl bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+                      className={`flex items-center gap-2.5 p-1.5 pr-3 rounded-2xl border text-left transition-all cursor-pointer shrink-0 ${
+                        isCur
+                          ? 'border-[#ff6325] bg-[#ff6325]/10 shadow-sm shadow-[#ff6325]/20 ring-1 ring-[#ff6325]'
+                          : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 hover:border-slate-300 dark:hover:border-white/20'
+                      }`}
                     >
-                      Get {passCount} Pass{passCount > 1 ? 'es' : ''} &rarr;
+                      <div className="w-10 h-14 rounded-xl overflow-hidden bg-slate-900 shrink-0 relative">
+                        <img src={mov.posterUrl} alt={mov.title} className="w-full h-full object-cover" />
+                        <span className="absolute bottom-0 inset-x-0 bg-black/80 text-[8px] font-black text-amber-400 text-center py-0.5">
+                          ★{mov.rating}
+                        </span>
+                      </div>
+                      <div className="min-w-0 max-w-[130px]">
+                        <h4 className={`text-xs font-black truncate ${isCur ? 'text-[#ff6325]' : 'text-slate-800 dark:text-white'}`}>
+                          {mov.title}
+                        </h4>
+                        <span className="text-[10px] text-slate-400 font-medium block truncate">
+                          {mov.certificate} • {mov.runtime}
+                        </span>
+                        <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 truncate block">
+                          {mov.formats[0]}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Header Specs Banner - Displays Currently Active Selected Movie Details */}
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 border-b border-slate-200 dark:border-white/10 pb-5">
+              <div className="flex items-start gap-4">
+                <div className="relative w-20 h-28 sm:w-24 sm:h-32 rounded-2xl overflow-hidden shadow-lg border border-white/15 shrink-0 bg-slate-900">
+                  <img
+                    src={activeMovie.posterUrl}
+                    alt={activeMovie.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-md text-amber-400 font-black text-[9px]">
+                    ★ {activeMovie.rating}
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 font-black text-[10px] tracking-wide border border-amber-500/30">
+                      {activeMovie.certificate}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[10px]">
+                      {activeMovie.genres.join(' / ')}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[10px]">
+                      ⏱️ {activeMovie.runtime}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 font-bold text-[10px]">
+                      {activeMovie.languages.join(', ')}
+                    </span>
+                  </div>
+
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>🎬</span> {activeMovie.title}
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xl line-clamp-2">
+                    {activeMovie.synopsis}
+                  </p>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="text-[11px] font-bold text-slate-400">At Theatre:</span>
+                    <span className="text-xs font-black text-[#ff6325]">{venueName}</span>
+                    <span className="text-slate-400 text-xs">•</span>
+                    <span className="text-xs text-slate-400 font-medium">{address || 'Chennai Location'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-900/50 text-xs font-bold shrink-0 shadow-xs">
+                <span>📱 Contactless Turnstile M-Ticket</span>
+              </div>
+            </div>
+
+            {/* STEP PROGRESS BAR (BookMyShow standard 4 steps + Live 8-Min Seat Lock Timer) */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between px-2 sm:px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 text-xs font-bold">
+                <div className={`flex items-center gap-1.5 ${cinemaStep === 'SHOWTIMES' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'SHOWTIMES' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>1</span>
+                  <span>Date & Show</span>
+                </div>
+                <span className="text-slate-300 dark:text-slate-600 font-normal">→</span>
+                <div className={`flex items-center gap-1.5 ${cinemaStep === 'SEAT_COUNT' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'SEAT_COUNT' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>2</span>
+                  <span>Seats Qty</span>
+                </div>
+                <span className="text-slate-300 dark:text-slate-600 font-normal">→</span>
+                <div className={`flex items-center gap-1.5 ${cinemaStep === 'SEAT_LAYOUT' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'SEAT_LAYOUT' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>3</span>
+                  <span>Seat Layout</span>
+                </div>
+                <span className="text-slate-300 dark:text-slate-600 font-normal">→</span>
+                <div className={`flex items-center gap-1.5 ${cinemaStep === 'FNB_DRAWER' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'FNB_DRAWER' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>4</span>
+                  <span>Grab a Bite</span>
+                </div>
+              </div>
+
+              {/* BookMyShow Live Seat Lock Indicator Banner (Runs in Stages 3 & 4) */}
+              {(cinemaStep === 'SEAT_LAYOUT' || cinemaStep === 'FNB_DRAWER') && (
+                <div className={`px-4 py-2 rounded-2xl flex items-center justify-between border transition-all ${
+                  seatLockExpired
+                    ? 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
+                    : 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{seatLockExpired ? '⚠️' : '⏱️'}</span>
+                    <span className="text-xs font-bold">
+                      {seatLockExpired
+                        ? 'Seats Lock Expired! Another user may book these seats.'
+                        : `Seats are locked for you in ${selectedAudiScreen}:`}
+                    </span>
+                    {!seatLockExpired && (
+                      <span className="text-xs font-black text-slate-900 dark:text-white">
+                        {selectedCinemaSeats.join(', ') || `${passCount} Seats`}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {!seatLockExpired ? (
+                      <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 px-3 py-1 rounded-xl border border-amber-500/30">
+                        <span className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-400">Lock Expires In:</span>
+                        <span className="font-mono text-xs font-black text-[#ff6325]">
+                          {Math.floor(seatLockSecondsRemaining / 60).toString().padStart(2, '0')}:{(seatLockSecondsRemaining % 60).toString().padStart(2, '0')}
+                        </span>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSeatLockSecondsRemaining(480);
+                          setSeatLockExpired(false);
+                          setIsSeatLockActive(true);
+                        }}
+                        className="px-3 py-1 rounded-xl bg-rose-600 text-white font-black text-[10px] uppercase cursor-pointer hover:bg-rose-700 shadow-sm"
+                      >
+                        Renew Lock (8 Mins)
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ============================================================
+             * STAGE 1: SHOWTIMES, DATE & MULTIPLEX AUDI SCHEDULE
+             * ============================================================ */}
+            {cinemaStep === 'SHOWTIMES' && (
+              <div className="space-y-6 animate-fade-in">
+                {/* 1. Show Date Quick Selector */}
+                <div>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                    Select Show Date
+                  </label>
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                    {[0, 1, 2, 3, 4].map(offset => {
+                      const d = new Date();
+                      d.setDate(d.getDate() + offset);
+                      const dStr = d.toISOString().split('T')[0];
+                      const dayName = offset === 0 ? 'Today' : offset === 1 ? 'Tomorrow' : d.toLocaleDateString('en-US', { weekday: 'short' });
+                      const dateLabel = d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+                      const isSelected = selectedShowDate === dStr;
+
+                      return (
+                        <button
+                          key={dStr}
+                          type="button"
+                          onClick={() => setSelectedShowDate(dStr)}
+                          className={`px-4 py-2.5 rounded-2xl border text-center transition-all cursor-pointer shrink-0 ${
+                            isSelected
+                              ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md shadow-orange-500/20 font-black'
+                              : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          <span className="text-[10px] uppercase font-bold block opacity-80">{dayName}</span>
+                          <span className="text-xs font-extrabold block mt-0.5">{dateLabel}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2. Format & Audio Standard */}
+                <div>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                    Experience Format & Audio Quality
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    {dynamicFormats.map(fmt => {
+                      const isSelected = selectedScreenFormat === fmt.id;
+                      return (
+                        <button
+                          key={fmt.id}
+                          type="button"
+                          onClick={() => setSelectedScreenFormat(fmt.id)}
+                          className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-[#ff6325]/10 border-[#ff6325] text-[#ff6325] shadow-xs ring-2 ring-[#ff6325]/20'
+                              : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5 font-bold text-xs">
+                            <span>{fmt.icon}</span>
+                            <span className="truncate">{fmt.label}</span>
+                          </div>
+                          <span className="text-[10px] text-slate-400 block mt-1 truncate">{fmt.sub}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3. Showtime Bands (Audi Screenings) */}
+                <div>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                    Available Showtimes (Click timing to pick seats)
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {dynamicShowtimes.map(show => (
+                      <button
+                        key={show.time}
+                        type="button"
+                        onClick={() => {
+                          setSelectedShowTime(show.time);
+                          setSelectedAudiScreen(show.audi);
+                          setCinemaStep('SEAT_COUNT');
+                        }}
+                        className="p-3.5 rounded-2xl border text-center transition-all cursor-pointer bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#ff6325] hover:bg-orange-50/30 text-slate-900 dark:text-white group hover:shadow-md"
+                      >
+                        <span className="text-base font-black block group-hover:text-[#ff6325]">{show.time}</span>
+                        <span className="text-[11px] opacity-80 block mt-0.5">{show.audi}</span>
+                        <span className={`inline-block text-[9px] font-bold px-1.5 py-0.5 rounded mt-2 ${
+                          show.status.includes('Full') ? 'bg-rose-500/15 text-rose-500' :
+                          show.status.includes('Fast') ? 'bg-amber-500/15 text-amber-500' :
+                          'bg-emerald-500/15 text-emerald-500'
+                        }`}>
+                          {show.status}
+                        </span>
+                        <span className="text-[10px] text-[#ff6325] font-extrabold block mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">Select Seats &rarr;</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ============================================================
+             * STAGE 2: HOW MANY SEATS? (BOOKMYSHOW VEHICLE/AVATAR MODAL)
+             * ============================================================ */}
+            {cinemaStep === 'SEAT_COUNT' && (
+              <div className="space-y-6 animate-fade-in py-2">
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
+                  <div>
+                    <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                      <span>🎟️</span> How Many Seats?
+                    </h3>
+                    <p className="text-xs text-slate-500">{selectedAudiScreen} • {selectedShowDate} • {selectedShowTime}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCinemaStep('SHOWTIMES')}
+                    className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-white px-2 py-1"
+                  >
+                    ← Change Time
+                  </button>
+                </div>
+
+                {/* BMS Style Vehicles and Numbers Selector */}
+                <div className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap py-4">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => {
+                    const icon = n === 1 ? '🚲' : n === 2 ? '🛵' : n === 3 ? '🛺' : n <= 5 ? '🚗' : '🚌';
+                    const isSelected = passCount === n;
+                    return (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setPassCount(n)}
+                        className={`w-12 h-14 sm:w-14 sm:h-16 rounded-2xl flex flex-col items-center justify-center transition-all cursor-pointer border ${
+                          isSelected
+                            ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-lg shadow-orange-500/30 scale-105 font-black'
+                            : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:border-[#ff6325]'
+                        }`}
+                      >
+                        <span className="text-base sm:text-lg mb-0.5">{icon}</span>
+                        <span className="text-xs sm:text-sm font-black">{n}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Available Price Tiers Preview */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                  {dynamicSeatTiers.map(tier => (
+                    <div
+                      key={tier.name}
+                      onClick={() => setSelectedSeatZone(tier.name)}
+                      className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                        selectedSeatZone === tier.name
+                          ? 'bg-[#ff6325]/10 border-[#ff6325] ring-2 ring-[#ff6325]/20'
+                          : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10'
+                      }`}
+                    >
+                      <div>
+                        <h4 className="text-xs font-black text-slate-900 dark:text-white">{tier.icon} {tier.name}</h4>
+                        <p className="text-[10px] text-slate-400 mt-0.5">{tier.desc}</p>
+                      </div>
+                      <span className="text-sm font-black text-[#ff6325] shrink-0 ml-2">₹{tier.price}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Proceed to Seat Layout */}
+                <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-white/10">
+                  <span className="text-xs font-bold text-slate-500">
+                    Booking <span className="text-slate-900 dark:text-white font-extrabold">{passCount} seat{passCount > 1 ? 's' : ''}</span> under <span className="text-[#ff6325] font-extrabold">{selectedSeatZone}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Pre-populate adjacent seats matching count
+                      const autoSeats = Array.from({ length: passCount }, (_, i) => `C${7 + i}`);
+                      setSelectedCinemaSeats(autoSeats);
+                      setSeatLockSecondsRemaining(480);
+                      setSeatLockExpired(false);
+                      setIsSeatLockActive(true);
+                      setCinemaStep('SEAT_LAYOUT');
+                    }}
+                    className="px-6 py-3 rounded-xl bg-[#ff6325] hover:bg-[#e04e13] text-white font-black text-xs uppercase tracking-wider shadow-md transition-all cursor-pointer"
+                  >
+                    Select Seats on Layout &rarr;
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ============================================================
+             * STAGE 3: IMMERSIVE FULL THEATRE SEAT LAYOUT
+             * ============================================================ */}
+            {cinemaStep === 'SEAT_LAYOUT' && (
+              <div className="space-y-4 animate-fade-in">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-white/10 pb-3">
+                  <div>
+                    <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                      <span>💺</span> {selectedAudiScreen} — Seat Layout
+                    </h3>
+                    <p className="text-xs text-slate-500">Click any seat to select or unselect. Target: {passCount} Seat{passCount > 1 ? 's' : ''}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setCinemaStep('SEAT_COUNT')}
+                      className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                    >
+                      ← Change Qty ({passCount})
+                    </button>
+                    {/* Legend */}
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
+                      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/20 inline-block" /> Free</span>
+                      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-[#ff6325] inline-block shadow-xs" /> Selected</span>
+                      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-500/40 border border-amber-500 inline-block" /> Held by Other</span>
+                      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-slate-300 dark:bg-slate-700 opacity-60 inline-block" /> Taken</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Curved Screen Bar */}
+                <div className="p-6 rounded-2xl bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 text-center">
+                  <div className="w-3/4 mx-auto mb-6">
+                    <div className="h-2.5 rounded-t-full bg-gradient-to-r from-transparent via-[#ff6325] to-transparent shadow-md shadow-orange-500/30" />
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-2">
+                      ⬇ SCREEN THIS WAY ⬇
+                    </p>
+                  </div>
+
+                  {/* Seat Grid Rows */}
+                  <div className="space-y-4 max-w-xl mx-auto overflow-x-auto pb-2">
+                    {/* Row A: Recliner */}
+                    <div>
+                      <div className="flex items-center justify-between text-[11px] font-extrabold text-amber-600 dark:text-amber-400 mb-1.5 px-2">
+                        <span>{reclinerTier.icon} {reclinerTier.name}</span>
+                        <span>₹{reclinerTier.price} / seat</span>
+                      </div>
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-[10px] font-bold text-slate-400 w-3 text-center">A</span>
+                        <div className="flex items-center gap-1.5">
+                          {['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8'].map(seatId => {
+                            const isBooked = ['A3', 'A4'].includes(seatId);
+                            const isHeldByOther = remoteLockedSeats.includes(seatId);
+                            const isSelected = selectedCinemaSeats.includes(seatId);
+                            return (
+                              <button
+                                key={seatId}
+                                type="button"
+                                disabled={isBooked || isHeldByOther}
+                                title={isHeldByOther ? `${seatId} is temporarily held by another customer` : seatId}
+                                onClick={() => {
+                                  if (isSelected) {
+                                    setSelectedCinemaSeats(selectedCinemaSeats.filter(s => s !== seatId));
+                                  } else {
+                                    if (selectedCinemaSeats.length >= passCount) {
+                                      // replace oldest
+                                      setSelectedCinemaSeats([...selectedCinemaSeats.slice(1), seatId]);
+                                    } else {
+                                      setSelectedCinemaSeats([...selectedCinemaSeats, seatId]);
+                                    }
+                                  }
+                                }}
+                                className={`w-7 h-7 rounded-lg text-[9px] font-black transition-all cursor-pointer flex items-center justify-center ${
+                                  isBooked
+                                    ? 'bg-slate-300 dark:bg-slate-700/60 text-slate-400 cursor-not-allowed opacity-50'
+                                    : isHeldByOther
+                                      ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40 cursor-not-allowed'
+                                      : isSelected
+                                        ? 'bg-[#ff6325] text-white shadow-md shadow-orange-500/30 scale-105'
+                                        : 'bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/15 text-slate-700 dark:text-slate-300 hover:border-[#ff6325]'
+                                }`}
+                              >
+                                {seatId.slice(1)}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Rows B, C, D: Prime */}
+                    <div className="pt-2 border-t border-slate-200/60 dark:border-white/5">
+                      <div className="flex items-center justify-between text-[11px] font-extrabold text-blue-600 dark:text-blue-400 mb-1.5 px-2">
+                        <span>{primeTier.icon} {primeTier.name}</span>
+                        <span>₹{primeTier.price} / seat</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {['B', 'C', 'D'].map(row => (
+                          <div key={row} className="flex items-center justify-center gap-2">
+                            <span className="text-[10px] font-bold text-slate-400 w-3 text-center">{row}</span>
+                            <div className="flex items-center gap-1.5">
+                              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => {
+                                const seatId = `${row}${num}`;
+                                const isBooked = (row === 'B' && [2, 3].includes(num)) || (row === 'C' && [4, 5].includes(num));
+                                const isHeldByOther = remoteLockedSeats.includes(seatId);
+                                const isSelected = selectedCinemaSeats.includes(seatId);
+                                return (
+                                  <button
+                                    key={seatId}
+                                    type="button"
+                                    disabled={isBooked || isHeldByOther}
+                                    title={isHeldByOther ? `${seatId} is temporarily held by another customer` : seatId}
+                                    onClick={() => {
+                                      if (isSelected) {
+                                        setSelectedCinemaSeats(selectedCinemaSeats.filter(s => s !== seatId));
+                                      } else {
+                                        if (selectedCinemaSeats.length >= passCount) {
+                                          setSelectedCinemaSeats([...selectedCinemaSeats.slice(1), seatId]);
+                                        } else {
+                                          setSelectedCinemaSeats([...selectedCinemaSeats, seatId]);
+                                        }
+                                      }
+                                    }}
+                                    className={`w-6 h-6 rounded-md text-[9px] font-black transition-all cursor-pointer flex items-center justify-center ${
+                                      isBooked
+                                        ? 'bg-slate-300 dark:bg-slate-700/60 text-slate-400 cursor-not-allowed opacity-50'
+                                        : isHeldByOther
+                                          ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40 cursor-not-allowed'
+                                          : isSelected
+                                            ? 'bg-[#ff6325] text-white shadow-md shadow-orange-500/30 scale-105'
+                                            : 'bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/15 text-slate-700 dark:text-slate-300 hover:border-[#ff6325]'
+                                    }`}
+                                  >
+                                    {num}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Rows E, F: Classic */}
+                    <div className="pt-2 border-t border-slate-200/60 dark:border-white/5">
+                      <div className="flex items-center justify-between text-[11px] font-extrabold text-slate-600 dark:text-slate-400 mb-1.5 px-2">
+                        <span>{classicTier.icon} {classicTier.name}</span>
+                        <span>₹{classicTier.price} / seat</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {['E', 'F'].map(row => (
+                          <div key={row} className="flex items-center justify-center gap-2">
+                            <span className="text-[10px] font-bold text-slate-400 w-3 text-center">{row}</span>
+                            <div className="flex items-center gap-1.5">
+                              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => {
+                                const seatId = `${row}${num}`;
+                                const isBooked = (row === 'E' && [7, 8].includes(num));
+                                const isHeldByOther = remoteLockedSeats.includes(seatId);
+                                const isSelected = selectedCinemaSeats.includes(seatId);
+                                return (
+                                  <button
+                                    key={seatId}
+                                    type="button"
+                                    disabled={isBooked || isHeldByOther}
+                                    title={isHeldByOther ? `${seatId} is temporarily held by another customer` : seatId}
+                                    onClick={() => {
+                                      if (isSelected) {
+                                        setSelectedCinemaSeats(selectedCinemaSeats.filter(s => s !== seatId));
+                                      } else {
+                                        if (selectedCinemaSeats.length >= passCount) {
+                                          setSelectedCinemaSeats([...selectedCinemaSeats.slice(1), seatId]);
+                                        } else {
+                                          setSelectedCinemaSeats([...selectedCinemaSeats, seatId]);
+                                        }
+                                      }
+                                    }}
+                                    className={`w-6 h-6 rounded-md text-[9px] font-black transition-all cursor-pointer flex items-center justify-center ${
+                                      isBooked
+                                        ? 'bg-slate-300 dark:bg-slate-700/60 text-slate-400 cursor-not-allowed opacity-50'
+                                        : isHeldByOther
+                                          ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40 cursor-not-allowed'
+                                          : isSelected
+                                            ? 'bg-[#ff6325] text-white shadow-md shadow-orange-500/30 scale-105'
+                                            : 'bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/15 text-slate-700 dark:text-slate-300 hover:border-[#ff6325]'
+                                    }`}
+                                  >
+                                    {num}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Seat Status Indicator */}
+                  <div className="mt-4 pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-xs px-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-extrabold text-slate-700 dark:text-slate-200">Selected Seats:</span>
+                      <div className="flex items-center gap-1 flex-wrap">
+                        {selectedCinemaSeats.length > 0 ? (
+                          selectedCinemaSeats.map(s => (
+                            <span key={s} className="px-2 py-0.5 rounded-md bg-[#ff6325] text-white font-black text-[10px]">
+                              {s}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-slate-400 italic">No seats clicked</span>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-slate-500 font-bold">
+                      {selectedCinemaSeats.length} / {passCount} Seats Selected
+                    </span>
+                  </div>
+                </div>
+
+                {/* Seat Layout Bottom Action Bar */}
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10">
+                  <div>
+                    {(() => {
+                      let ticketPrice = 0;
+                      selectedCinemaSeats.forEach(seat => {
+                        if (seat.startsWith('A')) ticketPrice += reclinerTier.price;
+                        else if (['B', 'C', 'D'].includes(seat[0])) ticketPrice += primeTier.price;
+                        else ticketPrice += classicTier.price;
+                      });
+                      if (selectedCinemaSeats.length === 0) ticketPrice = primeTier.price * passCount;
+                      return (
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-slate-400 block">Ticket Total</span>
+                          <span className="text-xl font-black text-[#ff6325]">₹{ticketPrice.toLocaleString()}</span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCinemaStep('FNB_DRAWER')}
+                      className="px-6 py-3 rounded-xl bg-[#ff6325] hover:bg-[#e04e13] text-white font-black text-xs uppercase tracking-wider shadow-md transition-all cursor-pointer"
+                    >
+                      Proceed to Grab a Bite &rarr;
                     </button>
                   </div>
                 </div>
-              );
-            })()}
+              </div>
+            )}
+
+            {/* ============================================================
+             * STAGE 4: GRAB A BITE (BOOKMYSHOW GOURMET CONCESSIONS DRAWER)
+             * ============================================================ */}
+            {cinemaStep === 'FNB_DRAWER' && (
+              <div className="space-y-6 animate-fade-in py-2">
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
+                  <div>
+                    <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                      <span>🍿</span> Grab a Bite! (Pre-order & Save 20%)
+                    </h3>
+                    <p className="text-xs text-slate-500">Delicious cinema popcorn, warm nachos, and beverages delivered right to your seat</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCinemaStep('SEAT_LAYOUT')}
+                    className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                  >
+                    ← Change Seats ({selectedCinemaSeats.join(', ')})
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {dynamicSnacks.map((snk, idx) => {
+                    const isAdded = idx === 0 ? popcornComboAddon : idx === 1 ? snackNachosAddon : snackBeverageAddon;
+                    const toggleFn = idx === 0 ? () => setPopcornComboAddon(!popcornComboAddon) : idx === 1 ? () => setSnackNachosAddon(!snackNachosAddon) : () => setSnackBeverageAddon(!snackBeverageAddon);
+                    return (
+                      <div
+                        key={snk.id || snk.name}
+                        onClick={toggleFn}
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${isAdded
+                          ? 'bg-amber-500/10 border-amber-500 ring-2 ring-amber-500/20'
+                          : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                          }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="text-3xl">{snk.icon}</span>
+                          <div>
+                            <h4 className="text-xs font-black text-slate-900 dark:text-white">{snk.name}</h4>
+                            <p className="text-[10px] text-slate-400 mt-0.5">{snk.desc}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between mt-4 pt-2 border-t border-slate-200/60 dark:border-white/10">
+                          <span className="text-sm font-black text-amber-600 dark:text-amber-400">+₹{snk.price}</span>
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${isAdded ? 'bg-amber-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>
+                            {isAdded ? '✓ Added' : '+ Add'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Final Order Summary & Handover to Checkout */}
+                {(() => {
+                  const count = Math.max(1, selectedCinemaSeats.length);
+                  let ticketPrice = 0;
+                  selectedCinemaSeats.forEach(seat => {
+                    if (seat.startsWith('A')) ticketPrice += reclinerTier.price;
+                    else if (['B', 'C', 'D'].includes(seat[0])) ticketPrice += primeTier.price;
+                    else ticketPrice += classicTier.price;
+                  });
+                  if (selectedCinemaSeats.length === 0) ticketPrice = primeTier.price * count;
+
+                  const s0Price = dynamicSnacks[0]?.price || 240;
+                  const s1Price = dynamicSnacks[1]?.price || 180;
+                  const s2Price = dynamicSnacks[2]?.price || 120;
+                  const fnbCost = (popcornComboAddon ? s0Price : 0) + (snackNachosAddon ? s1Price : 0) + (snackBeverageAddon ? s2Price : 0);
+                  const subtotal = ticketPrice + fnbCost;
+
+                  return (
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
+                      <div>
+                        <span className="text-xs font-black text-slate-900 dark:text-white block">
+                          {venueName} • {selectedAudiScreen} ({count} Ticket{count > 1 ? 's' : ''})
+                        </span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
+                          {selectedShowDate} • {selectedShowTime} • {selectedScreenFormat} • Seats: {selectedCinemaSeats.join(', ') || 'Auto-assigned'}
+                          {fnbCost > 0 ? ` • +₹${fnbCost} Concessions` : ' • No F&B added'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                        <div className="text-right">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Payable</span>
+                          <span className="text-xl font-black text-[#ff6325]">
+                            ₹{subtotal.toLocaleString()}
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedService({
+                              id: `ent-pass-${Date.now()}`,
+                              name: `${activeMovie.title} — ${selectedScreenFormat}`,
+                              price: subtotal,
+                              imageUrl: activeMovie.posterUrl,
+                              metadata: {
+                                isEntertainmentBooking: true,
+                                movieTitle: activeMovie.title,
+                                moviePoster: activeMovie.posterUrl,
+                                certificate: activeMovie.certificate,
+                                runtime: activeMovie.runtime,
+                                entertainmentBooking: {
+                                  movieTitle: activeMovie.title,
+                                  moviePoster: activeMovie.posterUrl,
+                                  venueName,
+                                  category,
+                                  showDate: selectedShowDate,
+                                  showTime: selectedShowTime,
+                                  format: selectedScreenFormat,
+                                  audiScreen: selectedAudiScreen,
+                                  seatZone: selectedSeatZone,
+                                  seats: selectedCinemaSeats,
+                                  ticketsCount: count,
+                                  fnbAddons: {
+                                    popcorn: popcornComboAddon,
+                                    nachos: snackNachosAddon,
+                                    beverage: snackBeverageAddon
+                                  },
+                                  totalPayable: subtotal
+                                }
+                              }
+                            });
+                            setSelectedSlot({
+                              id: `ent-slot-${Date.now()}`,
+                              timeStr: `${activeMovie.title} • ${selectedShowDate} at ${selectedShowTime} (${selectedScreenFormat})`,
+                              date: selectedShowDate,
+                              available: true
+                            });
+                            router.push('/booking/checkout');
+                          }}
+                          className="px-6 py-3 rounded-xl bg-[#ff6325] hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+                        >
+                          Book M-Ticket &rarr;
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
           </div>
-        )}
+        );
+        })()}
 
         {/* ============================================================
          * SECTION D8: HOME REPAIR & CLEANING VISITS (ARCHETYPE 6: HomeCall)

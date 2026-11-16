@@ -16,6 +16,8 @@ import { useLocationStore, useBookingFlowStore, useUserStore, ALL_CITIES, POPULA
 import { api, Service } from '../../../lib/api';
 import { calculateDistance } from '../../../lib/mockData';
 import { getSportCategoryConfig } from '../../../lib/sportsData';
+import { getEntertainmentCategoryConfig, NOW_SHOWING_MOVIES, MovieListingItem } from '../../../lib/entertainmentData';
+import { Film, Clapperboard, Play, Flame } from 'lucide-react';
 
 const MapComponent = dynamic(() => import('../../../components/MapComponent'), {
   ssr: false,
@@ -1707,6 +1709,13 @@ export default function ProviderDiscoveryPage() {
   const isHostelOrPg = category === 'hostels' || category === 'pg-hostels' || (categoryName || '').toLowerCase().includes('hostel') || (categoryName || '').toLowerCase().includes('pg');
   const isPgCategory = category === 'pg-hostels';
   const isSportsCategory = (bookingType || '').toLowerCase().includes('sport') || ['football-turf', 'cricket-ground', 'badminton', 'tennis', 'basketball', 'swimming', 'play-arena', 'turfs'].includes((category || '').toLowerCase());
+  const isEntertainmentCategory = (bookingType || '').toLowerCase().includes('entertainment') || ['movies', 'theatre', 'concerts', 'events', 'exhibitions', 'workshops', 'gaming'].includes((category || '').toLowerCase());
+
+  // Entertainment Dedicated Search States
+  const [entLanguageFilter, setEntLanguageFilter] = useState<string>('all');
+  const [entFormatFilter, setEntFormatFilter] = useState<string>('all');
+  const [entTimeFilter, setEntTimeFilter] = useState<string>('all'); // 'all' | 'morning' | 'afternoon' | 'evening' | 'night'
+  const [entExperienceFilter, setEntExperienceFilter] = useState<string>('all'); // 'all' | 'imax' | '4dx' | 'dolby' | 'recliner'
 
   // Sports & Turf Dedicated Search States
   const [sportsSlotDate, setSportsSlotDate] = useState(() => queryDate || new Date().toISOString().split('T')[0]);
@@ -1716,6 +1725,11 @@ export default function ProviderDiscoveryPage() {
   const [isSportsDatePickerOpen, setIsSportsDatePickerOpen] = useState(false);
   const [sportsCalDate, setSportsCalDate] = useState<Date>(() => new Date());
   const [sportsFormatFilter, setSportsFormatFilter] = useState<string>('all');
+
+  // Cinema / Theatre Picker Modal States (BookMyShow standard: Select Movie -> Pick Theatre/Branch -> Showtimes)
+  const [selectedMovieForTheatres, setSelectedMovieForTheatres] = useState<MovieListingItem | null>(null);
+  const [showTheatreModal, setShowTheatreModal] = useState<boolean>(false);
+  const [theatreFilterDate, setTheatreFilterDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
 
   // Hostel & PG Dedicated Search States
   const [hostelMoveInDate, setHostelMoveInDate] = useState(() => new Date().toISOString().split('T')[0]);
@@ -1771,18 +1785,22 @@ export default function ProviderDiscoveryPage() {
       }
     };
 
-    // Instant update when business portal changes PG configurations
-    const handlePgConfigUpdate = () => {
+    // Instant update when business portal changes PG or Mystery configurations
+    const handleConfigUpdate = () => {
       setMounted(m => !m); // trigger immediate rerender with new dynamic values
     };
-    window.addEventListener('pg_config_updated', handlePgConfigUpdate);
-    window.addEventListener('storage', handlePgConfigUpdate);
+    window.addEventListener('pg_config_updated', handleConfigUpdate);
+    window.addEventListener('hotel_mystery_toggle', handleConfigUpdate);
+    window.addEventListener('hotel_luggage_toggle', handleConfigUpdate);
+    window.addEventListener('storage', handleConfigUpdate);
 
     document.addEventListener('mousedown', handleGlobalClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleGlobalClickOutside);
-      window.removeEventListener('pg_config_updated', handlePgConfigUpdate);
-      window.removeEventListener('storage', handlePgConfigUpdate);
+      window.removeEventListener('pg_config_updated', handleConfigUpdate);
+      window.removeEventListener('hotel_mystery_toggle', handleConfigUpdate);
+      window.removeEventListener('hotel_luggage_toggle', handleConfigUpdate);
+      window.removeEventListener('storage', handleConfigUpdate);
     };
   }, []);
 
@@ -1794,6 +1812,12 @@ export default function ProviderDiscoveryPage() {
   const [freeCancellationOnly, setFreeCancellationOnly] = useState<boolean>(false);
   const [petFriendlyOnly, setPetFriendlyOnly] = useState<boolean>(false);
   const [isLuxuryMode, setIsLuxuryMode] = useState<boolean>(false);
+
+  // Sports Specific Faceted Filters State
+  const [sportsSurfaceFilter, setSportsSurfaceFilter] = useState<string>('all');
+  const [floodlightsOnly, setFloodlightsOnly] = useState<boolean>(false);
+  const [acCourtsOnly, setAcCourtsOnly] = useState<boolean>(false);
+  const [equipmentProvidedOnly, setEquipmentProvidedOnly] = useState<boolean>(false);
 
 
   const [servicesList, setServicesList] = useState<Service[]>(() => {
@@ -2158,6 +2182,165 @@ export default function ProviderDiscoveryPage() {
           }
         }
 
+        // Generic Entertainment & Live Events Master Archetype Fallback (Categories 15-21)
+        const entConfig = getEntertainmentCategoryConfig(category);
+        if (entConfig && list.length === 0) {
+          const targetCity = city || 'Chennai';
+
+          // Check if custom branch or offerings configured by business vendor in portal
+          let merchantBranchList: any[] = [];
+          if (typeof window !== 'undefined') {
+            try {
+              const busStorageRaw = localStorage.getItem('vendor-portal-storage-v10');
+              if (busStorageRaw) {
+                const busData = JSON.parse(busStorageRaw);
+                const curM = busData.state?.currentMerchant;
+                if (curM && curM.username === entConfig.username && Array.isArray(curM.branches) && curM.branches.length > 0) {
+                  merchantBranchList = curM.branches;
+                }
+              }
+            } catch (e) {}
+          }
+
+          if (merchantBranchList.length > 0) {
+            list = merchantBranchList.map((br: any) => ({
+              id: `svc-${entConfig.slug}-${br.id}`,
+              name: `${br.name} — ${entConfig.categoryName}`,
+              category: { name: entConfig.categoryName, slug: entConfig.slug },
+              rating: 4.8,
+              reviewCount: 420,
+              basePrice: String(entConfig.defaultPrice),
+              image: entConfig.heroImage,
+              branchName: br.name,
+              address: br.address,
+              city: br.city || targetCity,
+              merchant: {
+                id: entConfig.merchantId,
+                name: br.name,
+                city: br.city || targetCity,
+                address: br.address || `${entConfig.categoryName} Complex, Entertainment Zone, ${targetCity}`,
+                rating: 4.8,
+                username: entConfig.username,
+                metadata: {
+                  isEntertainment: true,
+                  branchId: br.id,
+                  formats: entConfig.formats,
+                  languages: entConfig.languages,
+                  showtimes: entConfig.showtimes,
+                  seatTiers: entConfig.seatTiers,
+                  snackAddons: entConfig.snackAddons,
+                  amenities: entConfig.amenities,
+                  venueRules: entConfig.venueRules
+                }
+              },
+              metadata: {
+                isEntertainment: true,
+                branchId: br.id,
+                branchName: br.name,
+                address: br.address,
+                startingPrice: entConfig.defaultPrice,
+                formats: entConfig.formats,
+                languages: entConfig.languages,
+                showtimes: entConfig.showtimes,
+                seatTiers: entConfig.seatTiers,
+                snackAddons: entConfig.snackAddons,
+                amenities: entConfig.amenities,
+                venueRules: entConfig.venueRules
+              }
+            }));
+          } else if (Array.isArray(entConfig.branches) && entConfig.branches.length > 0) {
+            list = entConfig.branches.map((br: any) => ({
+              id: `svc-${entConfig.slug}-${br.id}`,
+              name: `${br.name} — ${entConfig.categoryName}`,
+              category: { name: entConfig.categoryName, slug: entConfig.slug },
+              rating: 4.8,
+              reviewCount: 390,
+              basePrice: String(entConfig.defaultPrice),
+              image: entConfig.heroImage,
+              branchName: br.name,
+              address: br.address,
+              city: br.city || targetCity,
+              merchant: {
+                id: entConfig.merchantId,
+                name: br.name,
+                city: br.city || targetCity,
+                address: br.address,
+                rating: 4.8,
+                username: entConfig.username,
+                metadata: {
+                  isEntertainment: true,
+                  branchId: br.id,
+                  formats: entConfig.formats,
+                  languages: entConfig.languages,
+                  showtimes: entConfig.showtimes,
+                  seatTiers: entConfig.seatTiers,
+                  snackAddons: entConfig.snackAddons,
+                  amenities: entConfig.amenities,
+                  venueRules: entConfig.venueRules
+                }
+              },
+              metadata: {
+                isEntertainment: true,
+                branchId: br.id,
+                branchName: br.name,
+                address: br.address,
+                startingPrice: entConfig.defaultPrice,
+                formats: entConfig.formats,
+                languages: entConfig.languages,
+                showtimes: entConfig.showtimes,
+                seatTiers: entConfig.seatTiers,
+                snackAddons: entConfig.snackAddons,
+                amenities: entConfig.amenities,
+                venueRules: entConfig.venueRules
+              }
+            }));
+          } else {
+            list = [
+              {
+                id: `svc-${entConfig.slug}-${entConfig.username.toLowerCase()}`,
+                name: `${entConfig.merchantName} — ${entConfig.categoryName}`,
+                category: { name: entConfig.categoryName, slug: entConfig.slug },
+                rating: 4.8,
+                reviewCount: 420,
+                basePrice: String(entConfig.defaultPrice),
+                image: entConfig.heroImage,
+                branchName: entConfig.merchantName,
+                address: `${entConfig.categoryName} Complex, Entertainment Zone, ${targetCity}`,
+                city: targetCity,
+                merchant: {
+                  id: entConfig.merchantId,
+                  name: entConfig.merchantName,
+                  city: targetCity,
+                  address: `${entConfig.categoryName} Complex, Entertainment Zone, ${targetCity}`,
+                  rating: 4.8,
+                  username: entConfig.username,
+                  metadata: {
+                    isEntertainment: true,
+                    formats: entConfig.formats,
+                    languages: entConfig.languages,
+                    showtimes: entConfig.showtimes,
+                    seatTiers: entConfig.seatTiers,
+                    snackAddons: entConfig.snackAddons,
+                    amenities: entConfig.amenities,
+                    venueRules: entConfig.venueRules
+                  }
+                },
+                metadata: {
+                  isEntertainment: true,
+                  startingPrice: entConfig.defaultPrice,
+                  formats: entConfig.formats,
+                  languages: entConfig.languages,
+                  showtimes: entConfig.showtimes,
+                  seatTiers: entConfig.seatTiers,
+                  snackAddons: entConfig.snackAddons,
+                  amenities: entConfig.amenities,
+                  venueRules: entConfig.venueRules
+                }
+              }
+            ];
+          }
+        }
+
         if (active) {
           setServicesList(list);
         }
@@ -2296,56 +2479,82 @@ export default function ProviderDiscoveryPage() {
       }
     }
 
-    // Just Luxury Mystery Mode: Show ONLY properties where business turned ON mystery deals & maintains 4.5★+
+    // Just Luxury Mode: Works for ALL categories & bookings (Hotels, Resorts, Stays, Sports & Turfs, Experiences)
     if (isLuxuryMode) {
-      // 1. Hostels / PG are excluded from mystery luxury mode
-      const isHostelOrPg = isPgCategory || 
-        category === 'hostels' || 
-        (categoryName || '').toLowerCase().includes('hostel') ||
-        (s.name || '').toLowerCase().includes('hostel') ||
-        (s.merchant?.name || '').toLowerCase().includes('hostel') ||
-        (s.name || '').toLowerCase().includes('dorm') ||
-        Boolean(s.merchant?.metadata?.isPgProperty || s.merchantObj?.metadata?.isPgProperty);
-      if (isHostelOrPg) return false;
-
-      // 2. Check if partner opted into Mystery Deals in Business Portal
-      const mId = s.merchantId || s.merchant?.id || s.merchantObj?.id;
-      const mUname = s.merchant?.username || s.merchantObj?.username;
-      let isMysteryOptedIn: boolean | null = null;
-      if (typeof window !== 'undefined') {
-        const storedId = mId ? localStorage.getItem(`hotel_mystery_optin_${mId}`) : null;
-        const storedUname = mUname ? localStorage.getItem(`hotel_mystery_optin_${mUname}`) : null;
-        const storedH101 = localStorage.getItem('hotel_mystery_optin_H101');
-        const storedDef = localStorage.getItem('hotel_mystery_optin_default');
-        if (storedId !== null) isMysteryOptedIn = storedId === 'true';
-        else if (storedUname !== null) isMysteryOptedIn = storedUname === 'true';
-        else if (storedH101 !== null) isMysteryOptedIn = storedH101 === 'true';
-        else if (storedDef !== null) isMysteryOptedIn = storedDef === 'true';
-      }
-
-      // If partner turned OFF in business portal, immediately exclude
-      if (isMysteryOptedIn === false) return false;
-
-      const mMeta = s.merchant?.metadata || s.merchantObj?.metadata || s.metadata || {};
-      if (s.merchant?.isMysteryModeOptIn === false || mMeta?.isMysteryModeOptIn === false) {
-        return false;
-      }
-
-      // Check if merchant opted in OR qualifies as verified luxe hotel
       const customerRating = Number(s.rating || s.merchantObj?.rating || s.merchant?.rating || 4.8);
-      const isGrandHotel = (s.merchant?.name || s.merchantName || '').toLowerCase().includes('grand hotel');
-      const isExplicitOptIn = isMysteryOptedIn === true ||
-        s.merchant?.isMysteryModeOptIn === true ||
-        mMeta?.isMysteryModeOptIn === true ||
+      const sPrice = parseFloat(s.basePrice || s.price || '0');
+      const rawText = `${s.name || ''} ${s.description || ''} ${s.merchant?.name || ''} ${JSON.stringify(s.metadata || {})}`.toLowerCase();
+
+      // Check explicit Luxury tier from Business Portal or verified badges
+      const mMeta = s.merchant?.metadata || s.merchantObj?.metadata || s.metadata || {};
+      const isExplicitLuxe = s.tier === 'LUXURY' ||
+        s.merchant?.tier === 'LUXURY' ||
+        s.merchantObj?.tier === 'LUXURY' ||
+        s.isLuxeVerified === true ||
         s.merchant?.isLuxeVerified === true ||
         s.merchantObj?.isLuxeVerified === true ||
-        mMeta?.isLuxeVerified === true ||
-        s.merchant?.tier === 'LUXURY' ||
-        s.tier === 'LUXURY' ||
-        (isGrandHotel && isMysteryOptedIn !== false);
+        mMeta.isLuxeVerified === true ||
+        mMeta.tier === 'LUXURY' ||
+        rawText.includes('luxury') ||
+        rawText.includes('5-star') ||
+        rawText.includes('5 star') ||
+        rawText.includes('fifa') ||
+        rawText.includes('pro arena') ||
+        rawText.includes('olympic') ||
+        rawText.includes('ac wooden court') ||
+        rawText.includes('premium villa');
 
-      if (!isExplicitOptIn || customerRating < 4.5) {
-        return false;
+      // In Sports category, Luxury filters for FIFA standard / AC Courts / Olympic pools / 4.5★+ facilities
+      if (isSportsCategory) {
+        if (!isExplicitLuxe && (customerRating < 4.6 || sPrice < 1000)) return false;
+      } else {
+        // In Stay & Accommodation, filters 4.5★+ luxury stays & confidential mystery deals
+        if (!isExplicitLuxe && (customerRating < 4.5 || sPrice < 2500)) return false;
+      }
+    }
+
+    // Sports Specific Filters (Surface type, Floodlights, AC Court, Equipment gear)
+    if (isSportsCategory) {
+      const rawSportText = `${s.name || ''} ${s.description || ''} ${JSON.stringify(s.metadata || {})} ${JSON.stringify(s.merchant?.metadata || {})}`.toLowerCase();
+      
+      if (sportsSurfaceFilter !== 'all') {
+        const filterNorm = sportsSurfaceFilter.toLowerCase();
+        if (!rawSportText.includes(filterNorm)) return false;
+      }
+
+      if (floodlightsOnly) {
+        const hasFloodlights = rawSportText.includes('floodlight') || rawSportText.includes('floodlights') || rawSportText.includes('night match') || rawSportText.includes('led light');
+        if (!hasFloodlights) return false;
+      }
+
+      if (acCourtsOnly) {
+        const hasAc = rawSportText.includes('ac indoor') || rawSportText.includes('air conditioned') || rawSportText.includes('fully air-conditioned') || rawSportText.includes('indoor wooden');
+        if (!hasAc) return false;
+      }
+
+      if (equipmentProvidedOnly) {
+        const hasEquipment = rawSportText.includes('equipment') || rawSportText.includes('gear') || rawSportText.includes('balls provided') || rawSportText.includes('rackets provided') || rawSportText.includes('bats provided');
+        if (!hasEquipment) return false;
+      }
+    }
+
+    // Entertainment & Live Events Filters (Language, Screen Format, Timing Band)
+    if (isEntertainmentCategory) {
+      const rawEntText = `${s.name || ''} ${s.description || ''} ${JSON.stringify(s.metadata || {})} ${JSON.stringify(s.merchant?.metadata || {})}`.toLowerCase();
+
+      if (entLanguageFilter !== 'all') {
+        const langNorm = entLanguageFilter.toLowerCase();
+        if (!rawEntText.includes(langNorm)) return false;
+      }
+
+      if (entFormatFilter !== 'all') {
+        const formatNorm = entFormatFilter.toLowerCase();
+        if (!rawEntText.includes(formatNorm)) return false;
+      }
+
+      if (entExperienceFilter !== 'all') {
+        const expNorm = entExperienceFilter.toLowerCase();
+        if (!rawEntText.includes(expNorm)) return false;
       }
     }
 
@@ -2395,12 +2604,9 @@ export default function ProviderDiscoveryPage() {
       }
     }
 
-    // Unified Intelligent Search Query
+    // Unified Intelligent Search Query (Matches Venue, Merchant, City, Address, Description, Amenities, Tags)
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
-
-    // If query matches the current selected city, keep all hotels in this city visible
-    if (query === (city || '').toLowerCase().trim()) return true;
 
     // Check query for special keywords (e.g. "top rated", "pet", "cheap", "ac", "pool")
     if (query.includes('top rated') || query.includes('best') || query.includes('5 star')) {
@@ -2412,14 +2618,23 @@ export default function ProviderDiscoveryPage() {
     }
 
     // Deep match across all attributes: Name, Merchant, City, Address, Description, Amenities, Tags
-    const matchName = s.name?.toLowerCase().includes(query);
-    const matchMerchant = s.merchant?.name?.toLowerCase().includes(query);
-    const matchCity = s.city?.toLowerCase().includes(query) || s.merchant?.city?.toLowerCase().includes(query);
-    const matchAddress = s.merchant?.address?.toLowerCase().includes(query);
-    const matchDesc = s.description && s.description.toLowerCase().includes(query);
-
-    // Check metadata / amenities / features
+    const sName = (s.name || '').toLowerCase();
+    const mName = (s.merchant?.name || s.merchantName || s.branchName || '').toLowerCase();
+    const sCity = (s.city || s.merchant?.city || '').toLowerCase();
+    const sAddress = (s.address || s.merchant?.address || s.metadata?.address || '').toLowerCase();
+    const sDesc = (s.description || '').toLowerCase();
     const metadataStr = JSON.stringify(s.metadata || {}).toLowerCase();
+
+    // If query matches current city, don't drop listings unless specific venue query was typed
+    if (query === (city || '').toLowerCase().trim()) {
+      return true;
+    }
+
+    const matchName = sName.includes(query);
+    const matchMerchant = mName.includes(query);
+    const matchCity = sCity.includes(query);
+    const matchAddress = sAddress.includes(query);
+    const matchDesc = sDesc.includes(query);
     const matchMeta = metadataStr.includes(query);
 
     return matchName || matchMerchant || matchCity || matchAddress || matchDesc || matchMeta;
@@ -2992,25 +3207,50 @@ export default function ProviderDiscoveryPage() {
                       <div className="absolute top-full left-0 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl p-2 z-50 max-h-72 overflow-y-auto">
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1.5 flex items-center justify-between">
                           <span>{searchQuery ? `Matching "${searchQuery}"` : `Popular Arenas & Areas`}</span>
-                          <span className="text-[9px] text-[#ff6325]">{city || 'Chennai'}</span>
+                          <span className="text-[9px] text-[#ff6325]">{city || 'All India'}</span>
                         </div>
                         {(() => {
                           const q = searchQuery.toLowerCase().trim();
-                          const matches = (servicesList || [])
+
+                          // 1. Matching cities from ALL_CITIES (e.g. Hyderabad, Chennai, Bangalore...)
+                          const matchingCities = q
+                            ? ALL_CITIES.filter(c => c.toLowerCase().includes(q)).slice(0, 5).map(c => ({
+                              label: c,
+                              type: 'City Destination',
+                              icon: '📍',
+                              isCity: true
+                            }))
+                            : [
+                              { label: city || 'Chennai', type: 'Current City', icon: '📍', isCity: true },
+                              ...POPULAR_CITIES.filter(p => p.name !== city).slice(0, 3).map(p => ({
+                                label: p.name,
+                                type: 'Popular City',
+                                icon: '📍',
+                                isCity: true
+                              }))
+                            ];
+
+                          // 2. Matching arenas / services from servicesList
+                          const matchingArenas = (servicesList || [])
                             .filter((s: any) => {
                               if (!q) return true;
                               const sName = (s.name || '').toLowerCase();
+                              const mName = (s.merchant?.name || s.branchName || s.merchantName || '').toLowerCase();
                               const sCity = (s.city || s.merchant?.city || '').toLowerCase();
-                              return sName.includes(q) || sCity.includes(q);
+                              const sAddress = (s.address || s.merchant?.address || '').toLowerCase();
+                              return sName.includes(q) || mName.includes(q) || sCity.includes(q) || sAddress.includes(q);
                             })
-                            .slice(0, 6)
+                            .slice(0, 5)
                             .map((s: any) => ({
-                              label: s.name,
-                              type: s.merchant?.name || 'Verified Arena',
-                              icon: '⚽'
+                              label: s.branchName || s.merchant?.name || s.name,
+                              type: s.name || s.merchant?.name || 'Verified Arena',
+                              icon: '⚽',
+                              isCity: false
                             }));
 
-                          if (matches.length === 0) {
+                          const combinedMatches = [...matchingCities, ...matchingArenas];
+
+                          if (combinedMatches.length === 0) {
                             return (
                               <div className="px-3 py-3 text-center text-xs text-slate-400">
                                 Press Search to find all slots for "{searchQuery}".
@@ -3018,12 +3258,20 @@ export default function ProviderDiscoveryPage() {
                             );
                           }
 
-                          return matches.map((item, idx) => (
+                          return combinedMatches.map((item, idx) => (
                             <button
                               key={idx}
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
+                                if (item.isCity) {
+                                  const popMatch = POPULAR_CITIES.find(p => p.name.toLowerCase() === item.label.toLowerCase());
+                                  if (popMatch) {
+                                    setLocation(popMatch.lat, popMatch.lng, popMatch.name);
+                                  } else {
+                                    setCity(item.label);
+                                  }
+                                }
                                 setSearchQuery(item.label);
                                 setShowAutocomplete(false);
                               }}
@@ -3207,6 +3455,399 @@ export default function ProviderDiscoveryPage() {
                   >
                     <Search size={17} className="group-hover:scale-110 transition-transform" />
                     <span>Search Arenas</span>
+                  </button>
+                </div>
+              </div>
+            ) : isEntertainmentCategory ? (
+              /* =========================================================================
+               * DEDICATED ENTERTAINMENT, CINEMA & SHOWS SEARCH DOCK (BookMyShow / District Style)
+               * CITY / THEATRE / SHOW | SHOW DATE | FORMAT / TIME | EXPLORE SHOWS
+               * ========================================================================= */
+              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+
+                {/* 1. Cinema / Theatre / Event Venue or Title */}
+                <div className="flex-[1.4] relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors cursor-pointer group">
+                  <div className="flex items-center gap-3">
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <MapPin size={18} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">CITY / CINEMA / SHOW</span>
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onFocus={(e) => {
+                          setShowAutocomplete(true);
+                          e.target.select();
+                        }}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          setShowAutocomplete(true);
+                        }}
+                        placeholder={`Search ${categoryName} theatre, artist or city...`}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const q = searchQuery.trim().toLowerCase();
+                            if (q) {
+                              const matchedCity = ALL_CITIES.find(c => c.toLowerCase() === q);
+                              if (matchedCity) {
+                                const popMatch = POPULAR_CITIES.find(p => p.name.toLowerCase() === matchedCity.toLowerCase());
+                                if (popMatch) {
+                                  setLocation(popMatch.lat, popMatch.lng, popMatch.name);
+                                } else {
+                                  setCity(matchedCity);
+                                }
+                              }
+                            }
+                            setShowAutocomplete(false);
+                            const el = document.getElementById('hotel-results-anchor');
+                            el?.scrollIntoView({ behavior: 'smooth' });
+                          }
+                        }}
+                        className="w-full bg-transparent text-xs sm:text-sm font-bold text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-normal outline-none truncate"
+                      />
+                    </div>
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSearchQuery('');
+                        }}
+                        className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1"
+                        title="Clear"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Autocomplete Dropdown */}
+                  {showAutocomplete && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowAutocomplete(false)} />
+                      <div className="absolute top-full left-0 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl p-2 z-50 max-h-72 overflow-y-auto">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1.5 flex items-center justify-between">
+                          <span>{searchQuery ? `Matching "${searchQuery}"` : `Popular Shows & Theatres`}</span>
+                          <span className="text-[9px] text-[#ff6325]">{city || 'All India'}</span>
+                        </div>
+                        {(() => {
+                          const q = searchQuery.toLowerCase().trim();
+
+                          // 1. Matching cities from ALL_CITIES
+                          const matchingCities = q
+                            ? ALL_CITIES.filter(c => c.toLowerCase().includes(q)).slice(0, 5).map(c => ({
+                              label: c,
+                              type: 'City Destination',
+                              icon: '📍',
+                              isCity: true
+                            }))
+                            : [
+                              { label: city || 'Chennai', type: 'Current City', icon: '📍', isCity: true },
+                              ...POPULAR_CITIES.filter(p => p.name !== city).slice(0, 3).map(p => ({
+                                label: p.name,
+                                type: 'Popular City',
+                                icon: '📍',
+                                isCity: true
+                              }))
+                            ];
+
+                          // 2. Matching entertainment listings / branches
+                          const matchingVenues = (servicesList || [])
+                            .filter((s: any) => {
+                              if (!q) return true;
+                              const sName = (s.name || '').toLowerCase();
+                              const mName = (s.merchant?.name || s.branchName || s.merchantName || '').toLowerCase();
+                              const sCity = (s.city || s.merchant?.city || '').toLowerCase();
+                              const sAddress = (s.address || s.merchant?.address || '').toLowerCase();
+                              return sName.includes(q) || mName.includes(q) || sCity.includes(q) || sAddress.includes(q);
+                            })
+                            .slice(0, 5)
+                            .map((s: any) => ({
+                              label: s.branchName || s.merchant?.name || s.name,
+                              type: s.name || s.merchant?.name || 'Verified Venue',
+                              icon: '🎭',
+                              isCity: false
+                            }));
+
+                          const combinedMatches = [...matchingCities, ...matchingVenues];
+
+                          if (combinedMatches.length === 0) {
+                            return (
+                              <div className="px-3 py-3 text-center text-xs text-slate-400">
+                                Press Search to explore all shows for "{searchQuery}".
+                              </div>
+                            );
+                          }
+
+                          return combinedMatches.map((item, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (item.isCity) {
+                                  const popMatch = POPULAR_CITIES.find(p => p.name.toLowerCase() === item.label.toLowerCase());
+                                  if (popMatch) {
+                                    setLocation(popMatch.lat, popMatch.lng, popMatch.name);
+                                  } else {
+                                    setCity(item.label);
+                                  }
+                                }
+                                setSearchQuery(item.label);
+                                setShowAutocomplete(false);
+                              }}
+                              className="w-full text-left flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 cursor-pointer transition-colors"
+                            >
+                              <span className="flex items-center gap-2 font-semibold truncate">
+                                <span>{item.icon}</span>
+                                <span className="truncate">{item.label}</span>
+                              </span>
+                              <span className="text-[10px] text-slate-400 shrink-0 font-medium ml-2">{item.type}</span>
+                            </button>
+                          ));
+                        })()}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 2. Show Date Selector (Quick Pills: Today, Tomorrow, Weekend) */}
+                <div className="flex-1 relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
+                  <button
+                    type="button"
+                    onClick={() => setIsSportsDatePickerOpen(!isSportsDatePickerOpen)}
+                    className="flex items-center gap-3 w-full text-left cursor-pointer"
+                  >
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <Calendar size={18} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">SHOW DATE</span>
+                      <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white truncate">
+                        {(() => {
+                          const today = new Date();
+                          const todayStr = today.toISOString().split('T')[0];
+                          const tmrw = new Date();
+                          tmrw.setDate(tmrw.getDate() + 1);
+                          const tmrwStr = tmrw.toISOString().split('T')[0];
+
+                          if (sportsSlotDate === todayStr) return `Today (${today.getDate()} ${today.toLocaleDateString('en-US', { month: 'short' })})`;
+                          if (sportsSlotDate === tmrwStr) return `Tomorrow (${tmrw.getDate()} ${tmrw.toLocaleDateString('en-US', { month: 'short' })})`;
+                          const chosen = new Date(sportsSlotDate);
+                          return `${chosen.toLocaleDateString('en-US', { weekday: 'short' })}, ${chosen.getDate()} ${chosen.toLocaleDateString('en-US', { month: 'short' })}`;
+                        })()}
+                      </span>
+                    </div>
+                    <ChevronDown size={14} className={`text-slate-400 transition-transform shrink-0 ${isSportsDatePickerOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Show Date Picker Modal */}
+                  {isSportsDatePickerOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsSportsDatePickerOpen(false)} />
+                      <div className="absolute top-full left-0 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl p-4 z-50">
+                        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-white/10">
+                          <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">Select Show Date</span>
+                          <button
+                            type="button"
+                            onClick={() => setIsSportsDatePickerOpen(false)}
+                            className="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xs font-bold"
+                          >
+                            ✕
+                          </button>
+                        </div>
+
+                        {/* Quick Date Tabs */}
+                        <div className="grid grid-cols-3 gap-1.5 mb-3">
+                          {[
+                            { label: 'Today', days: 0 },
+                            { label: 'Tomorrow', days: 1 },
+                            { label: 'Weekend', days: (() => {
+                              const d = new Date();
+                              const day = d.getDay();
+                              return day === 0 ? 0 : 6 - day;
+                            })() },
+                          ].map((tab, idx) => {
+                            const d = new Date();
+                            d.setDate(d.getDate() + tab.days);
+                            const val = d.toISOString().split('T')[0];
+                            const isSel = sportsSlotDate === val;
+                            return (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => {
+                                  setSportsSlotDate(val);
+                                  setIsSportsDatePickerOpen(false);
+                                }}
+                                className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
+                                  isSel
+                                    ? 'bg-[#ff6325] text-white shadow-xs'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                }`}
+                              >
+                                {tab.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Interactive Month Navigator */}
+                        <div className="flex items-center justify-between mb-2 px-1 bg-slate-50 dark:bg-slate-800/50 p-1.5 rounded-xl">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newD = new Date(sportsCalDate);
+                              newD.setMonth(newD.getMonth() - 1);
+                              setSportsCalDate(newD);
+                            }}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition-all cursor-pointer"
+                          >
+                            <ChevronLeft size={15} />
+                          </button>
+                          <span className="font-extrabold text-xs tracking-tight text-slate-900 dark:text-white">
+                            {sportsCalDate.toLocaleString('default', { month: 'short' })} {sportsCalDate.getFullYear()}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newD = new Date(sportsCalDate);
+                              newD.setMonth(newD.getMonth() + 1);
+                              setSportsCalDate(newD);
+                            }}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition-all cursor-pointer"
+                          >
+                            <ChevronRight size={15} />
+                          </button>
+                        </div>
+
+                        {/* Days Grid */}
+                        <div className="grid grid-cols-7 gap-1 text-center">
+                          {(() => {
+                            const year = sportsCalDate.getFullYear();
+                            const month = sportsCalDate.getMonth();
+                            const firstDayIndex = new Date(year, month, 1).getDay();
+                            const totalDays = new Date(year, month + 1, 0).getDate();
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+
+                            const cells = [];
+                            for (let i = 0; i < firstDayIndex; i++) {
+                              cells.push(<div key={`empty-${i}`} className="h-8 w-8" />);
+                            }
+
+                            for (let day = 1; day <= totalDays; day++) {
+                              const monthStr = String(month + 1).padStart(2, '0');
+                              const dayStr = String(day).padStart(2, '0');
+                              const dateStr = `${year}-${monthStr}-${dayStr}`;
+                              const cellDate = new Date(year, month, day);
+                              const isPast = cellDate < today;
+                              const isSelected = dateStr === sportsSlotDate;
+
+                              cells.push(
+                                <button
+                                  key={`d-${day}`}
+                                  type="button"
+                                  disabled={isPast}
+                                  onClick={() => {
+                                    setSportsSlotDate(dateStr);
+                                    setIsSportsDatePickerOpen(false);
+                                  }}
+                                  className={`h-8 w-8 mx-auto rounded-full text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
+                                    isSelected
+                                      ? 'bg-[#ff6325] text-white shadow-md shadow-orange-500/30 font-black scale-105'
+                                      : isPast
+                                      ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                                      : 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                  }`}
+                                >
+                                  {day}
+                                </button>
+                              );
+                            }
+                            return cells;
+                          })()}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 3. Screen Format & Timing Quick Pill Filter */}
+                <div className="flex-1 relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
+                  <button
+                    type="button"
+                    onClick={() => setIsSportsSlotDropdownOpen(!isSportsSlotDropdownOpen)}
+                    className="flex items-center gap-3 w-full text-left cursor-pointer"
+                  >
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <Sparkles size={18} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">FORMAT / EXPERIENCE</span>
+                      <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white truncate">
+                        {entFormatFilter === 'all' ? 'All Screen Formats' : entFormatFilter}
+                      </span>
+                    </div>
+                    <ChevronDown size={14} className={`text-slate-400 transition-transform shrink-0 ${isSportsSlotDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Format Dropdown Menu */}
+                  {isSportsSlotDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsSportsSlotDropdownOpen(false)} />
+                      <div className="absolute top-full right-0 mt-3 w-64 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl p-2 z-50">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1.5">
+                          Screen & Audio Experience
+                        </div>
+                        {[
+                          { id: 'all', label: 'All Formats', icon: '🎬' },
+                          { id: 'IMAX Laser', label: 'IMAX Laser 3D', icon: '📽️' },
+                          { id: 'Dolby Atmos', label: 'Dolby Atmos 7.1', icon: '🔊' },
+                          { id: '4DX', label: '4DX Motion Dynamic', icon: '💺' },
+                          { id: 'Recliner', label: 'VIP Royal Recliner', icon: '👑' },
+                        ].map((fmt) => (
+                          <button
+                            key={fmt.id}
+                            type="button"
+                            onClick={() => {
+                              setEntFormatFilter(fmt.id);
+                              setIsSportsSlotDropdownOpen(false);
+                            }}
+                            className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-colors cursor-pointer ${
+                              entFormatFilter === fmt.id
+                                ? 'bg-[#ff6325] text-white font-black'
+                                : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold'
+                            }`}
+                          >
+                            <span className="flex items-center gap-2">
+                              <span>{fmt.icon}</span>
+                              <span>{fmt.label}</span>
+                            </span>
+                            {entFormatFilter === fmt.id && <span>✓</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 4. Search Action Button */}
+                <div className="p-1 shrink-0 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAutocomplete(false);
+                      setIsSportsSlotDropdownOpen(false);
+                      setIsSportsDatePickerOpen(false);
+                      const el = document.getElementById('hotel-results-anchor');
+                      el?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="w-full md:w-auto px-7 py-3.5 rounded-full bg-[#ff6325] hover:bg-[#e0531b] active:scale-95 text-white flex items-center justify-center gap-2.5 font-bold text-sm shadow-lg shadow-[#ff6325]/35 hover:shadow-[#ff6325]/50 transition-all cursor-pointer group"
+                  >
+                    <Search size={17} className="group-hover:scale-110 transition-transform" />
+                    <span>Explore Shows</span>
                   </button>
                 </div>
               </div>
@@ -3965,53 +4606,177 @@ export default function ProviderDiscoveryPage() {
                 </>
               )}
 
-              {/* 4. Free Cancellation Pill */}
-              <button
-                type="button"
-                onClick={() => setFreeCancellationOnly(!freeCancellationOnly)}
-                className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${freeCancellationOnly
-                    ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
-                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 hover:bg-slate-50'
-                  }`}
-              >
-                <span>Free Cancellation</span>
-              </button>
+              {/* 4. Sports & Turf Specific Filters (Surface, Floodlights, AC, Gear) */}
+              {isSportsCategory && (
+                <>
+                  {/* Pitch / Surface Type */}
+                  <div className="relative">
+                    <select
+                      value={sportsSurfaceFilter}
+                      onChange={(e) => setSportsSurfaceFilter(e.target.value)}
+                      className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${
+                        sportsSurfaceFilter !== 'all'
+                          ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
+                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                      }`}
+                    >
+                      <option value="all">🏟️ Any Surface</option>
+                      <option value="fifa">FIFA Approved Turf</option>
+                      <option value="wooden">Wooden Court (Badminton/Squash)</option>
+                      <option value="clay">Red Clay / Matting</option>
+                      <option value="synthetic">Synthetic / AstroTurf</option>
+                    </select>
+                    <ChevronDown size={12} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${sportsSurfaceFilter !== 'all' ? 'text-white' : 'text-slate-400'}`} />
+                  </div>
 
-              {/* 5. Pet Friendly Pill */}
-              <button
-                type="button"
-                onClick={() => setPetFriendlyOnly(!petFriendlyOnly)}
-                className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${petFriendlyOnly || pets
-                    ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
-                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 hover:bg-slate-50'
-                  }`}
-              >
-                <span>🐾 Pet Friendly</span>
-              </button>
+                  {/* Floodlights Pill */}
+                  <button
+                    type="button"
+                    onClick={() => setFloodlightsOnly(!floodlightsOnly)}
+                    className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
+                      floodlightsOnly
+                        ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                    }`}
+                  >
+                    <span>💡 Match Floodlights</span>
+                  </button>
 
-              {/* 6. Just Luxury (Golden Mystery Pill) — Only for Hotels, Resorts, Villas (Hidden on PG & Hostels) */}
-              {!isPgCategory && category !== 'hostels' && !category.includes('pg') && (
+                  {/* AC Court Pill */}
+                  <button
+                    type="button"
+                    onClick={() => setAcCourtsOnly(!acCourtsOnly)}
+                    className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
+                      acCourtsOnly
+                        ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                    }`}
+                  >
+                    <span>❄️ AC Indoor Court</span>
+                  </button>
+
+                  {/* Equipment Provided Pill */}
+                  <button
+                    type="button"
+                    onClick={() => setEquipmentProvidedOnly(!equipmentProvidedOnly)}
+                    className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
+                      equipmentProvidedOnly
+                        ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                    }`}
+                  >
+                    <span>🏸 Gear & Kit Included</span>
+                  </button>
+                </>
+              )}
+
+              {/* 4.5. Entertainment & Live Shows Filters (Language, Audi Format, Cinema Lounge) */}
+              {isEntertainmentCategory && (
+                <>
+                  {/* Language Selector */}
+                  <div className="relative">
+                    <select
+                      value={entLanguageFilter}
+                      onChange={(e) => setEntLanguageFilter(e.target.value)}
+                      className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${
+                        entLanguageFilter !== 'all'
+                          ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
+                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                      }`}
+                    >
+                      <option value="all">🗣️ Any Language</option>
+                      <option value="tamil">Tamil</option>
+                      <option value="english">English</option>
+                      <option value="hindi">Hindi</option>
+                      <option value="telugu">Telugu</option>
+                    </select>
+                    <ChevronDown size={12} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${entLanguageFilter !== 'all' ? 'text-white' : 'text-slate-400'}`} />
+                  </div>
+
+                  {/* Format Selector (IMAX 3D / Dolby Atmos) */}
+                  <div className="relative">
+                    <select
+                      value={entFormatFilter}
+                      onChange={(e) => setEntFormatFilter(e.target.value)}
+                      className={`appearance-none pl-3.5 pr-7 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none ${
+                        entFormatFilter !== 'all'
+                          ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
+                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                      }`}
+                    >
+                      <option value="all">🎬 Any Screen Format</option>
+                      <option value="imax">IMAX Laser</option>
+                      <option value="4dx">4DX Experience</option>
+                      <option value="dolby">Dolby Atmos 7.1</option>
+                      <option value="3d">RealD 3D</option>
+                    </select>
+                    <ChevronDown size={12} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${entFormatFilter !== 'all' ? 'text-white' : 'text-slate-400'}`} />
+                  </div>
+
+                  {/* Fan-Pit / VIP Lounge Access */}
+                  <button
+                    type="button"
+                    onClick={() => setEntExperienceFilter(entExperienceFilter === 'recliner' ? 'all' : 'recliner')}
+                    className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
+                      entExperienceFilter === 'recliner'
+                        ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                    }`}
+                  >
+                    <span>👑 VIP Recliner / Fan-Pit</span>
+                  </button>
+                </>
+              )}
+
+              {/* 5. Free Cancellation Pill (Hidden in Sports if non-cancellable or customized) */}
+              {(!isSportsCategory && !isEntertainmentCategory) && (
                 <button
                   type="button"
-                  onClick={() => setIsLuxuryMode(!isLuxuryMode)}
-                  className={`px-4 py-1.5 rounded-full border text-xs font-black transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-sm ${isLuxuryMode
-                      ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 border-amber-300 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/30'
-                      : 'bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300 hover:border-amber-400 hover:bg-amber-500/15'
+                  onClick={() => setFreeCancellationOnly(!freeCancellationOnly)}
+                  className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${freeCancellationOnly
+                      ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 hover:bg-slate-50'
                     }`}
-                  title="Filter only 5-Star & Ultra Luxury stays with confidential blind booking"
                 >
-                  <Sparkles size={13} className={isLuxuryMode ? 'text-slate-950 animate-spin' : 'text-amber-500'} />
-                  <span>✨ Just Luxury</span>
-                  {isLuxuryMode && (
-                    <span className="text-[9px] uppercase px-1.5 py-0.2 bg-black/80 text-amber-300 rounded font-black tracking-wider">
-                      Secret Mode
-                    </span>
-                  )}
+                  <span>Free Cancellation</span>
                 </button>
               )}
 
+              {/* 6. Pet Friendly Pill (Only for Stays & Outdoor Parks) */}
+              {(isHotelCategory || isPgCategory) && (
+                <button
+                  type="button"
+                  onClick={() => setPetFriendlyOnly(!petFriendlyOnly)}
+                  className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${petFriendlyOnly || pets
+                      ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                >
+                  <span>🐾 Pet Friendly</span>
+                </button>
+              )}
+
+              {/* 7. Just Luxury (Golden Luxury Pill) — Universal across All Bookings */}
+              <button
+                type="button"
+                onClick={() => setIsLuxuryMode(!isLuxuryMode)}
+                className={`px-4 py-1.5 rounded-full border text-xs font-black transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-sm ${isLuxuryMode
+                    ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 border-amber-300 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/30'
+                    : 'bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300 hover:border-amber-400 hover:bg-amber-500/15'
+                  }`}
+                title={isSportsCategory ? "Filter Pro FIFA, Olympic and Luxury AC sports arenas" : "Filter 5-Star & Ultra Luxury listings"}
+              >
+                <Sparkles size={13} className={isLuxuryMode ? 'text-slate-950 animate-spin' : 'text-amber-500'} />
+                <span>✨ Just Luxury</span>
+                {isLuxuryMode && (
+                  <span className="text-[9px] uppercase px-1.5 py-0.2 bg-black/80 text-amber-300 rounded font-black tracking-wider">
+                    {isSportsCategory ? 'Pro Tier' : 'Secret Mode'}
+                  </span>
+                )}
+              </button>
+
               {/* Reset Filters (Only appears when any filter is active) */}
-              {(priceRange < 50000 || minRating > 0 || freeCancellationOnly || petFriendlyOnly || isLuxuryMode || pgGenderFilter !== 'all' || pgFoodFilter !== 'all' || pgSharingFilter !== 'all') && (
+              {(priceRange < 50000 || minRating > 0 || freeCancellationOnly || petFriendlyOnly || isLuxuryMode || pgGenderFilter !== 'all' || pgFoodFilter !== 'all' || pgSharingFilter !== 'all' || sportsSurfaceFilter !== 'all' || floodlightsOnly || acCourtsOnly || equipmentProvidedOnly) && (
                 <button
                   type="button"
                   onClick={() => {
@@ -4023,6 +4788,10 @@ export default function ProviderDiscoveryPage() {
                     setPgGenderFilter('all');
                     setPgFoodFilter('all');
                     setPgSharingFilter('all');
+                    setSportsSurfaceFilter('all');
+                    setFloodlightsOnly(false);
+                    setAcCourtsOnly(false);
+                    setEquipmentProvidedOnly(false);
                   }}
                   className="px-2.5 py-1 rounded-full text-[11px] font-bold text-slate-400 hover:text-[#ff6325] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 >
@@ -4078,8 +4847,159 @@ export default function ProviderDiscoveryPage() {
           {category === 'metro' && <MetroBookingView categoryName={categoryName} city={city} />}
           {/* {['turfs', 'football-turf', 'cricket-ground'].includes(category) && <TurfsBookingView categoryName={categoryName} city={city} />} */}
 
-          {/* Standard fallback listing for all other categories */}
-          {!isCustomBooking && (
+          {/* BookMyShow / District Style: Now Showing Movies & Premier Events Discovery Sections */}
+          {isEntertainmentCategory && (
+            <div className="space-y-8 mb-8 animate-fade-in">
+              {/* 1. Top Featured Hero Spotlight Banner */}
+              {(() => {
+                const featured = NOW_SHOWING_MOVIES.find(m => m.isFeaturedBanner) || NOW_SHOWING_MOVIES[0];
+                return (
+                  <div className="relative rounded-3xl overflow-hidden border border-white/10 shadow-2xl bg-slate-950 text-white min-h-[300px] md:min-h-[360px] flex items-center">
+                    <div
+                      className="absolute inset-0 bg-cover bg-center opacity-65 transform hover:scale-105 transition-transform duration-700"
+                      style={{ backgroundImage: `url("${featured.bannerUrl}"), url("${featured.posterUrl}")` }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-black/30" />
+
+                    <div className="relative z-10 p-6 md:p-10 max-w-xl space-y-4">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="px-3 py-1 rounded-full bg-rose-600 text-white font-black text-[10px] uppercase tracking-widest flex items-center gap-1 shadow-lg">
+                          <Flame size={12} /> Blockbuster Spotlight
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[10px] font-bold">
+                          {featured.certificate}
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[10px] font-bold">
+                          {featured.runtime}
+                        </span>
+                        <span className="text-amber-400 font-extrabold text-xs flex items-center gap-1">
+                          ★ {featured.rating}/10 <span className="text-white/60 text-[10px]">({featured.votesCount})</span>
+                        </span>
+                      </div>
+
+                      <div>
+                        <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight leading-none drop-shadow-md">
+                          {featured.title}
+                        </h1>
+                        <p className="text-xs sm:text-sm text-slate-300 font-medium mt-2 line-clamp-2">
+                          {featured.tagline} • {featured.synopsis}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-wrap pt-1">
+                        {featured.formats.map((fmt, i) => (
+                          <span key={i} className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-md text-white text-[10px] font-bold border border-white/10 transition-colors">
+                            {fmt}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="pt-2 flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedMovieForTheatres(featured);
+                            setShowTheatreModal(true);
+                          }}
+                          className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#ff6325] to-[#e04e13] hover:brightness-110 text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-[#ff6325]/30 flex items-center gap-2 cursor-pointer active:scale-95"
+                        >
+                          <Ticket size={16} /> Book Tickets
+                        </button>
+                        <span className="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5">
+                          <span>In Cinemas:</span>
+                          <strong className="text-white">CineMax Multiplex OMR & Forum</strong>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* 2. Popular Near You / Now Showing Movies Carousel / Grid */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                      <span>Popular Near You</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 uppercase tracking-wider">
+                        Now Showing
+                      </span>
+                    </h3>
+                    <p className="text-xs text-slate-400">Select any movie to choose your multiplex, showtime, and seats</p>
+                  </div>
+                  <span className="text-xs font-bold text-slate-400 hidden sm:inline-block">5 Blockbusters</span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 sm:gap-4">
+                  {NOW_SHOWING_MOVIES.map((movie) => (
+                    <div
+                      key={movie.id}
+                      onClick={() => {
+                        setSelectedMovieForTheatres(movie);
+                        setShowTheatreModal(true);
+                      }}
+                      className="group flex flex-col rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 hover:border-[#ff6325]/50 overflow-hidden shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer text-left"
+                    >
+                      {/* Movie Poster Aspect 2:3 */}
+                      <div className="relative aspect-[2/3] w-full overflow-hidden bg-slate-950">
+                        <img
+                          src={movie.posterUrl}
+                          alt={movie.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+
+                        {/* Top Rating Tag */}
+                        <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-amber-400 text-[10px] font-black border border-white/10">
+                          ★ {movie.rating}
+                          <span className="text-[9px] text-white/60 font-medium">({movie.votesCount.split(' ')[0]})</span>
+                        </div>
+
+                        {/* Top Right Certificate */}
+                        <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-white text-[9px] font-bold border border-white/10">
+                          {movie.certificate}
+                        </div>
+
+                        {/* Bottom Formats Pill on Poster */}
+                        <div className="absolute bottom-2 left-2 right-2 flex flex-wrap gap-1">
+                          {movie.formats.slice(0, 2).map((fmt, fIdx) => (
+                            <span key={fIdx} className="px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-xs text-white text-[9px] font-bold border border-white/15">
+                              {fmt.replace(' Standard', '').replace(' Motion', '')}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Movie Meta Information */}
+                      <div className="p-3 flex flex-col justify-between flex-1 space-y-2">
+                        <div>
+                          <h4 className="font-black text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1 group-hover:text-[#ff6325] transition-colors">
+                            {movie.title}
+                          </h4>
+                          <p className="text-[10px] text-slate-400 font-semibold line-clamp-1 mt-0.5">
+                            {movie.languages.slice(0, 2).join(', ')} • {movie.genres.slice(0, 2).join('/')}
+                          </p>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                            {movie.runtime}
+                          </span>
+                          <span className="px-2 py-1 rounded-lg bg-[#ff6325]/10 text-[#ff6325] group-hover:bg-[#ff6325] group-hover:text-white text-[10px] font-black transition-colors uppercase tracking-wider flex items-center gap-0.5">
+                            Book <ChevronRight size={10} />
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Standard fallback listing for all other categories (Excluded when Entertainment / Movies is active to prevent duplication) */}
+          {!isCustomBooking && !isEntertainmentCategory && (
             <div className="space-y-6">
               <div id="hotel-results-anchor" className="scroll-mt-6">
                 {loading ? (
@@ -4220,26 +5140,51 @@ export default function ProviderDiscoveryPage() {
 
                       // Check whether merchant opted into Secret Mystery deals
                       const checkMysteryOptIn = () => {
-                        const isStayCat = category === 'hotels' || category === 'resorts' || category === 'villas';
-                        if (!isStayCat || isItemPgOrHostel) return false;
                         if (typeof window !== 'undefined') {
                           const mId = m?.id || group.merchantId;
-                          const directStore = localStorage.getItem(`hotel_mystery_optin_${mId}`);
-                          if (directStore !== null) return directStore === 'true';
+                          if (mId) {
+                            const directStore = localStorage.getItem(`hotel_mystery_optin_${mId}`);
+                            if (directStore !== null) return directStore === 'true';
+                          }
                           const uStore = m?.username ? localStorage.getItem(`hotel_mystery_optin_${m?.username}`) : null;
                           if (uStore !== null) return uStore === 'true';
+
+                          // Check business portal live storage (vendor-portal-storage-v10)
+                          try {
+                            const busStoreRaw = localStorage.getItem('vendor-portal-storage-v10');
+                            if (busStoreRaw) {
+                              const busData = JSON.parse(busStoreRaw);
+                              const curM = busData.state?.currentMerchant;
+                              if (curM) {
+                                // Match current active merchant by ID, username, or name
+                                const isSameMerchant = (mId && curM.id === mId) ||
+                                  (m?.username && curM.username === m.username) ||
+                                  ((m?.name || '').toLowerCase() === (curM.merchantName || '').toLowerCase()) ||
+                                  ((group.branchName || '').toLowerCase().includes((curM.merchantName || '').toLowerCase()));
+                                
+                                if (isSameMerchant) {
+                                  if (curM.isMysteryModeOptIn !== undefined) return Boolean(curM.isMysteryModeOptIn);
+                                  if (curM.metadata?.isMysteryModeOptIn !== undefined) return Boolean(curM.metadata.isMysteryModeOptIn);
+                                }
+                              }
+                            }
+                          } catch {}
+
+                          // Check explicit merchant keys before defaults
                           const h101Store = localStorage.getItem('hotel_mystery_optin_H101');
-                          if (h101Store !== null) return h101Store === 'true';
+                          if ((m?.username === 'H101' || (m?.name || '').toLowerCase().includes('grand hotel')) && h101Store !== null) {
+                            return h101Store === 'true';
+                          }
                           const defaultStore = localStorage.getItem('hotel_mystery_optin_default');
                           if (defaultStore !== null) return defaultStore === 'true';
                         }
                         const mMeta = m?.metadata || s?.metadata || {};
                         if (m?.isMysteryModeOptIn !== undefined) return Boolean(m.isMysteryModeOptIn);
                         if (mMeta?.isMysteryModeOptIn !== undefined) return Boolean(mMeta.isMysteryModeOptIn);
-                        return false; // Stays only use mystery mode if business vendor explicitly enabled it
+                        return true; // Default true so all qualified partners display Secret Mode when Just Luxury is enabled
                       };
                       const isMysteryOptedIn = checkMysteryOptIn();
-                      const isCardSecret = Boolean(isLuxuryMode && isHotelCategory && isMysteryOptedIn);
+                      const isCardSecret = Boolean(isLuxuryMode && isMysteryOptedIn);
                       return (
                         <motion.div
                           key={group.groupKey || `${m.id || 'm'}-${group.branchName || i}-${i}`}
@@ -4349,12 +5294,21 @@ export default function ProviderDiscoveryPage() {
                                             const raw = `${typeof group.branchName === 'string' ? group.branchName : ''} ${typeof s?.name === 'string' ? s.name : ''} ${primaryUnit} ${category}`.toLowerCase();
                                             
                                             let archetype = '5-Star Luxury Stay';
-                                            if (raw.includes('villa') || category.includes('villa')) archetype = 'Secret Luxury Villa';
-                                            else if (raw.includes('resort') || category.includes('resort')) archetype = 'Secret Luxury Resort';
-                                            else if (raw.includes('palace') || raw.includes('heritage')) archetype = 'Secret Heritage Palace';
-                                            else if (raw.includes('beach') || raw.includes('ocean')) archetype = 'Secret Coastal Haven';
-                                            else if (raw.includes('city') || raw.includes('executive')) archetype = 'Secret Executive Sanctuary';
-                                            else if (raw.includes('deluxe') || raw.includes('premier')) archetype = 'Secret Premier Residence';
+                                            if (raw.includes('turf') || category.includes('turf') || raw.includes('arena') || raw.includes('court') || isSportsCategory) {
+                                              archetype = 'Secret Pro FIFA Arena';
+                                            } else if (raw.includes('villa') || category.includes('villa')) {
+                                              archetype = 'Secret Luxury Villa';
+                                            } else if (raw.includes('resort') || category.includes('resort')) {
+                                              archetype = 'Secret Luxury Resort';
+                                            } else if (raw.includes('palace') || raw.includes('heritage')) {
+                                              archetype = 'Secret Heritage Palace';
+                                            } else if (raw.includes('beach') || raw.includes('ocean')) {
+                                              archetype = 'Secret Coastal Haven';
+                                            } else if (raw.includes('city') || raw.includes('executive')) {
+                                              archetype = 'Secret Executive Sanctuary';
+                                            } else if (raw.includes('deluxe') || raw.includes('premier')) {
+                                              archetype = 'Secret Premier Residence';
+                                            }
 
                                             if (primaryUnit) {
                                               return `${archetype} • ${primaryUnit.replace(/\b(Standard|Non-AC|AC|Room)\b/gi, '').trim() || primaryUnit}`;
@@ -4479,6 +5433,227 @@ export default function ProviderDiscoveryPage() {
           )}
         </div>
       </div>
+
+      {/* =========================================================================
+       * BOOKMYSHOW STYLE THEATRE & MULTIPLEX SELECTION MODAL
+       * Triggered when user clicks any Movie poster or Book Tickets button
+       * ========================================================================= */}
+      <AnimatePresence>
+        {showTheatreModal && selectedMovieForTheatres && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowTheatreModal(false)}
+              className="fixed inset-0 bg-black/75 backdrop-blur-md"
+            />
+
+            {/* Modal Dialog Card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden z-10 max-h-[90vh] flex flex-col"
+            >
+              {/* Modal Header: Movie Overview */}
+              <div className="relative bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white p-5 sm:p-6 border-b border-white/10 shrink-0">
+                {/* Background Movie Art Accent */}
+                <div
+                  className="absolute inset-0 bg-cover bg-center opacity-25 pointer-events-none"
+                  style={{ backgroundImage: `url("${selectedMovieForTheatres.bannerUrl}"), url("${selectedMovieForTheatres.posterUrl}")` }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/90 to-slate-950/70" />
+
+                <div className="relative z-10 flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={selectedMovieForTheatres.posterUrl}
+                      alt={selectedMovieForTheatres.title}
+                      className="w-16 h-24 sm:w-20 sm:h-28 rounded-xl object-cover border border-white/20 shadow-lg shrink-0"
+                    />
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="px-2 py-0.5 rounded-md bg-rose-600 text-white font-extrabold text-[10px] uppercase">
+                          {selectedMovieForTheatres.certificate}
+                        </span>
+                        <span className="text-amber-400 font-extrabold text-xs">
+                          ★ {selectedMovieForTheatres.rating}/10
+                        </span>
+                        <span className="text-white/60 text-xs">
+                          {selectedMovieForTheatres.runtime}
+                        </span>
+                      </div>
+                      <h2 className="text-xl sm:text-2xl font-black tracking-tight leading-tight">
+                        {selectedMovieForTheatres.title}
+                      </h2>
+                      <p className="text-xs text-slate-300">
+                        {selectedMovieForTheatres.languages.join(', ')} • {selectedMovieForTheatres.genres.join(', ')}
+                      </p>
+                      <div className="flex items-center gap-1.5 pt-0.5 flex-wrap">
+                        {selectedMovieForTheatres.formats.map((fmt, fIdx) => (
+                          <span key={fIdx} className="text-[10px] font-bold px-2 py-0.5 rounded bg-white/15 text-white/90">
+                            {fmt}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Close Button */}
+                  <button
+                    type="button"
+                    onClick={() => setShowTheatreModal(false)}
+                    className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                {/* Date Filter Strip */}
+                <div className="relative z-10 mt-5 pt-4 border-t border-white/10 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+                  <span className="text-xs font-bold text-slate-400 shrink-0 mr-1 flex items-center gap-1">
+                    <Calendar size={13} /> Select Date:
+                  </span>
+                  {[0, 1, 2, 3, 4].map((offset) => {
+                    const d = new Date();
+                    d.setDate(d.getDate() + offset);
+                    const isoDate = d.toISOString().split('T')[0];
+                    const dayName = offset === 0 ? 'Today' : offset === 1 ? 'Tomorrow' : d.toLocaleDateString('en-US', { weekday: 'short' });
+                    const dateNum = d.getDate();
+                    const monthName = d.toLocaleDateString('en-US', { month: 'short' });
+                    const isSelected = theatreFilterDate === isoDate;
+                    return (
+                      <button
+                        key={isoDate}
+                        type="button"
+                        onClick={() => setTheatreFilterDate(isoDate)}
+                        className={`px-3 py-1.5 rounded-xl text-center shrink-0 cursor-pointer transition-all ${
+                          isSelected
+                            ? 'bg-[#ff6325] text-white shadow-md shadow-[#ff6325]/30 ring-2 ring-[#ff6325]/40'
+                            : 'bg-white/10 hover:bg-white/15 text-slate-200'
+                        }`}
+                      >
+                        <span className="block text-[10px] uppercase font-bold opacity-80">{dayName}</span>
+                        <span className="block text-xs font-black">{dateNum} {monthName}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Modal Body: Theatres List with Showtimes */}
+              <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
+                <div className="flex items-center justify-between pb-2">
+                  <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                    <MapPin size={16} className="text-[#ff6325]" />
+                    <span>Theatres playing in {city || 'Chennai'}</span>
+                  </h3>
+                  <span className="text-xs font-semibold text-slate-400">
+                    M-Ticket & Contactless QR available
+                  </span>
+                </div>
+
+                {/* Multiplex Branches */}
+                {(() => {
+                  const entConfig = getEntertainmentCategoryConfig('movies');
+                  const branches = entConfig?.branches || [
+                    {
+                      id: 'branch-cinemax-omr',
+                      name: 'CineMax Multiplex — OMR Marina Mall',
+                      city: 'Chennai',
+                      address: 'Marina Mall, 4th Floor, Egatoor, OMR, Chennai',
+                      offeringsSummary: 'IMAX Laser 3D, Dolby Atmos Screen 2 & 3, VIP Recliner Lounge'
+                    },
+                    {
+                      id: 'branch-cinemax-vadapalani',
+                      name: 'CineMax Multiplex — Nexus Forum Vadapalani',
+                      city: 'Chennai',
+                      address: 'Nexus Forum Mall, 3rd Floor, Vadapalani, Chennai',
+                      offeringsSummary: '4DX Motion Cinema, Dolby Atmos 7.1, 8 Screens Multiplex'
+                    }
+                  ];
+
+                  return (
+                    <div className="space-y-4">
+                      {branches.map((branch, bIdx) => (
+                        <div
+                          key={branch.id || bIdx}
+                          className="p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 hover:border-[#ff6325]/40 transition-colors"
+                        >
+                          {/* Theatre Details */}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200/80 dark:border-white/10">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">
+                                  {branch.name}
+                                </h4>
+                                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold border border-emerald-500/20">
+                                  ✓ Verified Partner
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                {branch.address}
+                              </p>
+                              <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mt-1 flex items-center gap-1.5">
+                                <span className="text-[#ff6325]">★</span>
+                                <span>{branch.offeringsSummary}</span>
+                              </p>
+                            </div>
+
+                            <Link
+                              href={`/${bookingType}/${category}/635bce5c-6d3a-56b4-b7ed-9320ea055dae?movie=${selectedMovieForTheatres.slug}&branch=${branch.id}&date=${theatreFilterDate}`}
+                              onClick={() => setShowTheatreModal(false)}
+                              className="self-start sm:self-center px-4 py-2 rounded-xl bg-slate-200 dark:bg-white/10 hover:bg-[#ff6325] hover:text-white text-slate-800 dark:text-white text-xs font-bold transition-colors cursor-pointer"
+                            >
+                              View All Shows →
+                            </Link>
+                          </div>
+
+                          {/* Showtimes Pill Row */}
+                          <div className="pt-3.5">
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-2">
+                              Available Timings & Screens:
+                            </span>
+                            <div className="flex items-center gap-2.5 flex-wrap">
+                              {(entConfig?.showtimes || [
+                                { time: '10:30 AM', screen: 'Audi 1 (IMAX Laser)', status: 'Fast Filling', fillingFast: true },
+                                { time: '02:15 PM', screen: 'Audi 1 (IMAX Laser)', status: 'Available' },
+                                { time: '06:45 PM', screen: 'Audi 2 (Dolby Atmos)', status: 'Fast Filling', fillingFast: true },
+                                { time: '10:00 PM', screen: 'Audi 2 (Dolby Atmos)', status: 'Available' }
+                              ]).map((st, sIdx) => (
+                                <Link
+                                  key={sIdx}
+                                  href={`/${bookingType}/${category}/635bce5c-6d3a-56b4-b7ed-9320ea055dae?movie=${selectedMovieForTheatres.slug}&branch=${branch.id}&date=${theatreFilterDate}&time=${encodeURIComponent(st.time)}`}
+                                  onClick={() => setShowTheatreModal(false)}
+                                  className="group/pill p-2.5 rounded-xl border border-slate-200 dark:border-white/15 bg-white dark:bg-slate-900 hover:border-[#ff6325] hover:bg-[#ff6325]/5 transition-all text-center min-w-[110px] cursor-pointer shadow-xs active:scale-95"
+                                >
+                                  <span className="block text-xs font-black text-slate-900 dark:text-white group-hover/pill:text-[#ff6325] transition-colors">
+                                    {st.time}
+                                  </span>
+                                  <span className="block text-[9px] font-bold text-slate-500 dark:text-slate-400 truncate max-w-[120px] mt-0.5">
+                                    {st.screen}
+                                  </span>
+                                  {st.fillingFast && (
+                                    <span className="inline-block mt-1 text-[8px] font-black uppercase px-1.5 py-0.2 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded">
+                                      Filling Fast
+                                    </span>
+                                  )}
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }

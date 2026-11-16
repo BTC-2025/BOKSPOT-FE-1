@@ -30,6 +30,108 @@ export default function CheckoutPage() {
   // BokSpot Universal Payment Model: 100% Online, 30% Advance Deposit, or Pay at Venue
   const [payMode, setPayMode] = useState<'FULL_ONLINE' | 'PARTIAL_ADVANCE' | 'PAY_AT_VENUE'>('FULL_ONLINE');
 
+  // Vendor Configured Payment Access Controls (Dynamically fetched from Business Portal / Merchant Policy)
+  const [vendorPolicy, setVendorPolicy] = useState<{
+    allowFullPayment: boolean;
+    allowPartialAdvance: boolean;
+    advancePercent: number;
+    allowPayAtVenue: boolean;
+    allowGroupSplit: boolean;
+  }>(() => {
+    const mId = selectedService?.merchantId || selectedService?.merchant?.id || selectedService?.merchantObj?.id || 'default';
+    const mUname = selectedService?.merchant?.username || selectedService?.merchantObj?.username || 'default';
+
+    if (typeof window !== 'undefined') {
+      const getVal = (prefix: string) => {
+        const valId = localStorage.getItem(`${prefix}_${mId}`);
+        if (valId !== null) return valId === 'true';
+        const valUname = localStorage.getItem(`${prefix}_${mUname}`);
+        if (valUname !== null) return valUname === 'true';
+        const valDef = localStorage.getItem(`${prefix}_default`);
+        if (valDef !== null) return valDef === 'true';
+        return null;
+      };
+
+      const allowFull = getVal('vendor_pay_full') ?? true;
+      const allowAdvance = getVal('vendor_pay_advance') ?? true;
+      const allowVenue = getVal('vendor_pay_venue') ?? true;
+      const allowSplit = getVal('vendor_pay_split') ?? true;
+      
+      const pctVal = localStorage.getItem(`vendor_advance_pct_${mId}`) ||
+        localStorage.getItem(`vendor_advance_pct_${mUname}`) ||
+        localStorage.getItem('vendor_advance_pct_default');
+
+      return {
+        allowFullPayment: allowFull,
+        allowPartialAdvance: allowAdvance,
+        advancePercent: pctVal ? Number(pctVal) : 30,
+        allowPayAtVenue: allowVenue,
+        allowGroupSplit: allowSplit
+      };
+    }
+
+    return {
+      allowFullPayment: true,
+      allowPartialAdvance: true,
+      advancePercent: 30,
+      allowPayAtVenue: true,
+      allowGroupSplit: true
+    };
+  });
+
+  // Keep payMode aligned with what vendor has enabled
+  useEffect(() => {
+    if (!vendorPolicy.allowFullPayment && payMode === 'FULL_ONLINE') {
+      if (vendorPolicy.allowPartialAdvance) setPayMode('PARTIAL_ADVANCE');
+      else if (vendorPolicy.allowPayAtVenue) setPayMode('PAY_AT_VENUE');
+    } else if (!vendorPolicy.allowPartialAdvance && payMode === 'PARTIAL_ADVANCE') {
+      if (vendorPolicy.allowFullPayment) setPayMode('FULL_ONLINE');
+      else if (vendorPolicy.allowPayAtVenue) setPayMode('PAY_AT_VENUE');
+    } else if (!vendorPolicy.allowPayAtVenue && payMode === 'PAY_AT_VENUE') {
+      if (vendorPolicy.allowFullPayment) setPayMode('FULL_ONLINE');
+      else if (vendorPolicy.allowPartialAdvance) setPayMode('PARTIAL_ADVANCE');
+    }
+  }, [vendorPolicy, payMode]);
+
+  // Listen for live payment policy updates if vendor toggles in another tab
+  useEffect(() => {
+    const handlePolicyUpdate = () => {
+      const mId = selectedService?.merchantId || selectedService?.merchant?.id || selectedService?.merchantObj?.id || 'default';
+      const mUname = selectedService?.merchant?.username || selectedService?.merchantObj?.username || 'default';
+      
+      const getVal = (prefix: string) => {
+        const valId = localStorage.getItem(`${prefix}_${mId}`);
+        if (valId !== null) return valId === 'true';
+        const valUname = localStorage.getItem(`${prefix}_${mUname}`);
+        if (valUname !== null) return valUname === 'true';
+        const valDef = localStorage.getItem(`${prefix}_default`);
+        if (valDef !== null) return valDef === 'true';
+        return null;
+      };
+
+      const allowFull = getVal('vendor_pay_full') ?? true;
+      const allowAdvance = getVal('vendor_pay_advance') ?? true;
+      const allowVenue = getVal('vendor_pay_venue') ?? true;
+      const allowSplit = getVal('vendor_pay_split') ?? true;
+      const pctVal = localStorage.getItem(`vendor_advance_pct_${mId}`) || localStorage.getItem(`vendor_advance_pct_${mUname}`) || localStorage.getItem('vendor_advance_pct_default');
+
+      setVendorPolicy({
+        allowFullPayment: allowFull,
+        allowPartialAdvance: allowAdvance,
+        advancePercent: pctVal ? Number(pctVal) : 30,
+        allowPayAtVenue: allowVenue,
+        allowGroupSplit: allowSplit
+      });
+    };
+
+    window.addEventListener('vendor_payment_policy_updated', handlePolicyUpdate);
+    window.addEventListener('storage', handlePolicyUpdate);
+    return () => {
+      window.removeEventListener('vendor_payment_policy_updated', handlePolicyUpdate);
+      window.removeEventListener('storage', handlePolicyUpdate);
+    };
+  }, [selectedService]);
+
   useEffect(() => {
     if (user) {
       setName(user.fullName || '');
@@ -77,6 +179,8 @@ export default function CheckoutPage() {
   const isHotel = Boolean(selectedService.metadata?.hotelBooking);
   const isMiniSpace = Boolean(selectedService.metadata?.miniSpace);
   const isTurfBooking = Boolean(selectedService.metadata?.turfBooking);
+  const isEntertainmentBooking = Boolean(selectedService.metadata?.entertainmentBooking || selectedService.metadata?.isEntertainmentBooking);
+  const entBooking = selectedService.metadata?.entertainmentBooking || {};
   const merchantDisplayName = typeof selectedService.merchant === 'string'
     ? selectedService.merchant
     : (selectedService.merchant?.name || selectedService.merchantObj?.name || 'BokSpot Verified Partner');
@@ -149,12 +253,13 @@ export default function CheckoutPage() {
 
   // BokSpot Universal Payment Model calculation:
   // - FULL_ONLINE: 100% paid online upfront
-  // - PARTIAL_ADVANCE: 30% online advance deposit to hold slot/booking, 70% paid at venue
+  // - PARTIAL_ADVANCE: Vendor configured deposit % (default 30%) online advance deposit to hold slot/booking, remaining paid at venue
   // - PAY_AT_VENUE: ₹0 online upfront, 100% paid on arrival at venue
+  const depositFraction = (vendorPolicy.advancePercent || 30) / 100;
   const advanceAmount = payMode === 'PAY_AT_VENUE'
     ? 0
     : payMode === 'PARTIAL_ADVANCE'
-      ? Math.round(total * 0.3)
+      ? Math.round(total * depositFraction)
       : total;
 
   const balanceAtVenue = total - advanceAmount;
@@ -355,7 +460,7 @@ export default function CheckoutPage() {
                       </span>
                     ) : (
                       <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-orange-50 text-orange-700 border border-orange-200/60">
-                        {isPgStay ? 'PG / Hostel Stay' : isTurfBooking ? 'Turf / Sports Slot' : isMiniSpace ? 'Cloakroom Locker' : 'Service Booking'}
+                        {isEntertainmentBooking ? '🎬 Cinema & Event M-Ticket' : isPgStay ? 'PG / Hostel Stay' : isTurfBooking ? 'Turf / Sports Slot' : isMiniSpace ? 'Cloakroom Locker' : 'Service Booking'}
                       </span>
                     )}
                     <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
@@ -370,6 +475,59 @@ export default function CheckoutPage() {
                   </p>
                 </div>
               </div>
+
+              {/* Entertainment Cinema M-Ticket Badge & Seat Allocation Card */}
+              {isEntertainmentBooking && (
+                <div className="pt-3 border-t border-slate-100 space-y-3">
+                  <div className="p-4 rounded-xl bg-gradient-to-r from-purple-900/10 via-slate-900/5 to-orange-500/10 border border-purple-300/40 dark:border-purple-500/30">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-black text-purple-900 dark:text-purple-300 flex items-center gap-1.5 uppercase tracking-wide">
+                        <span>🎟️</span> Contactless Digital M-Ticket Pass
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        Instant Turnstile QR
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
+                      <div className="bg-white/80 dark:bg-slate-800/80 p-2 rounded-lg border border-slate-200/60 dark:border-white/10">
+                        <span className="text-[10px] font-bold text-slate-400 block uppercase">Experience</span>
+                        <span className="font-extrabold text-slate-900 dark:text-white truncate block">{entBooking.format || 'IMAX Laser 3D'}</span>
+                      </div>
+                      <div className="bg-white/80 dark:bg-slate-800/80 p-2 rounded-lg border border-slate-200/60 dark:border-white/10">
+                        <span className="text-[10px] font-bold text-slate-400 block uppercase">Seat Zone</span>
+                        <span className="font-extrabold text-slate-900 dark:text-white truncate block">{entBooking.seatZone || 'Prime Circle'}</span>
+                      </div>
+                      <div className="bg-white/80 dark:bg-slate-800/80 p-2 rounded-lg border border-slate-200/60 dark:border-white/10">
+                        <span className="text-[10px] font-bold text-slate-400 block uppercase">Allocated Seats</span>
+                        <span className="font-black text-[#ff6325] truncate block">
+                          {Array.isArray(entBooking.seats) && entBooking.seats.length > 0 ? entBooking.seats.join(', ') : `${entBooking.ticketsCount || 2} Seats`}
+                        </span>
+                      </div>
+                      <div className="bg-white/80 dark:bg-slate-800/80 p-2 rounded-lg border border-slate-200/60 dark:border-white/10">
+                        <span className="text-[10px] font-bold text-slate-400 block uppercase">Tickets</span>
+                        <span className="font-extrabold text-slate-900 dark:text-white block">{entBooking.ticketsCount || 2} Pass(es)</span>
+                      </div>
+                    </div>
+
+                    {/* Pre-ordered Concessions */}
+                    {entBooking.fnbAddons && (entBooking.fnbAddons.popcorn || entBooking.fnbAddons.nachos || entBooking.fnbAddons.beverage) && (
+                      <div className="mt-2.5 pt-2 border-t border-purple-200/40 flex items-center gap-2 flex-wrap text-xs">
+                        <span className="text-[10px] font-black uppercase text-purple-800 dark:text-purple-300">🍿 In-Seat F&B:</span>
+                        {entBooking.fnbAddons.popcorn && (
+                          <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 text-[11px] font-bold">Tub Popcorn + Coke</span>
+                        )}
+                        {entBooking.fnbAddons.nachos && (
+                          <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 text-[11px] font-bold">Warm Cheesy Nachos</span>
+                        )}
+                        {entBooking.fnbAddons.beverage && (
+                          <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 text-[11px] font-bold">Cold Coffee / Iced Tea</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* PG Inclusions & Payment Mode */}
               {selectedService.metadata?.pgBooking && (
@@ -678,7 +836,7 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* 3. BokSpot Universal Payment Model: 100% Online, 30% Advance, Pay at Venue */}
+            {/* 3. BokSpot Universal Payment Model: 100% Online, Advance Deposit, Pay at Venue */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-5 sm:p-6 space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div>
@@ -686,104 +844,110 @@ export default function CheckoutPage() {
                     <CreditCard size={18} className="text-[#ff6325]" /> How Would You Like to Pay?
                   </h3>
                   <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    Choose full payment, a 30% advance deposit to lock your slot, or pay entirely at the venue
+                    Choose from vendor-approved payment terms for this booking
                   </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {/* Mode 1: 100% Full Payment */}
-                <button
-                  type="button"
-                  onClick={() => setPayMode('FULL_ONLINE')}
-                  className={`p-3.5 rounded-2xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
-                    payMode === 'FULL_ONLINE'
-                      ? 'border-[#033266] bg-[#033266]/5 shadow-xs ring-2 ring-[#033266]/10'
-                      : 'border-slate-200/80 hover:border-slate-300 bg-white'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-black text-xs text-slate-900 flex items-center gap-1.5">
-                        <span>💳</span> 100% Full Pay
-                      </span>
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                        payMode === 'FULL_ONLINE' ? 'border-[#033266] bg-[#033266]' : 'border-slate-300'
-                      }`}>
-                        {payMode === 'FULL_ONLINE' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                {vendorPolicy.allowFullPayment !== false && (
+                  <button
+                    type="button"
+                    onClick={() => setPayMode('FULL_ONLINE')}
+                    className={`p-3.5 rounded-2xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      payMode === 'FULL_ONLINE'
+                        ? 'border-[#033266] bg-[#033266]/5 shadow-xs ring-2 ring-[#033266]/10'
+                        : 'border-slate-200/80 hover:border-slate-300 bg-white'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="font-black text-xs text-slate-900 flex items-center gap-1.5">
+                          <span>💳</span> 100% Full Pay
+                        </span>
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                          payMode === 'FULL_ONLINE' ? 'border-[#033266] bg-[#033266]' : 'border-slate-300'
+                        }`}>
+                          {payMode === 'FULL_ONLINE' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </div>
                       </div>
+                      <p className="text-[11px] text-slate-500 leading-snug">
+                        Instant barcode pass & VIP priority confirmation
+                      </p>
                     </div>
-                    <p className="text-[11px] text-slate-500 leading-snug">
-                      Instant barcode pass & VIP priority confirmation
-                    </p>
-                  </div>
-                  <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-slate-400">Pay Now</span>
-                    <span className="text-xs font-black text-slate-900">₹{total.toLocaleString()}</span>
-                  </div>
-                </button>
+                    <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-slate-400">Pay Now</span>
+                      <span className="text-xs font-black text-slate-900">₹{total.toLocaleString()}</span>
+                    </div>
+                  </button>
+                )}
 
-                {/* Mode 2: 30% Advance Deposit */}
-                <button
-                  type="button"
-                  onClick={() => setPayMode('PARTIAL_ADVANCE')}
-                  className={`p-3.5 rounded-2xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
-                    payMode === 'PARTIAL_ADVANCE'
-                      ? 'border-amber-500 bg-amber-50/70 shadow-xs ring-2 ring-amber-500/10'
-                      : 'border-slate-200/80 hover:border-slate-300 bg-white'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-black text-xs text-amber-950 flex items-center gap-1.5">
-                        <span>⚡</span> 30% Advance
-                      </span>
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                        payMode === 'PARTIAL_ADVANCE' ? 'border-amber-600 bg-amber-600' : 'border-slate-300'
-                      }`}>
-                        {payMode === 'PARTIAL_ADVANCE' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                {/* Mode 2: Advance Deposit */}
+                {vendorPolicy.allowPartialAdvance !== false && (
+                  <button
+                    type="button"
+                    onClick={() => setPayMode('PARTIAL_ADVANCE')}
+                    className={`p-3.5 rounded-2xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      payMode === 'PARTIAL_ADVANCE'
+                        ? 'border-amber-500 bg-amber-50/70 shadow-xs ring-2 ring-amber-500/10'
+                        : 'border-slate-200/80 hover:border-slate-300 bg-white'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="font-black text-xs text-amber-950 flex items-center gap-1.5">
+                          <span>⚡</span> {vendorPolicy.advancePercent || 30}% Advance
+                        </span>
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                          payMode === 'PARTIAL_ADVANCE' ? 'border-amber-600 bg-amber-600' : 'border-slate-300'
+                        }`}>
+                          {payMode === 'PARTIAL_ADVANCE' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </div>
                       </div>
+                      <p className="text-[11px] text-amber-900/80 leading-snug">
+                        Lock slot with {vendorPolicy.advancePercent || 30}% deposit; pay remaining {100 - (vendorPolicy.advancePercent || 30)}% at venue
+                      </p>
                     </div>
-                    <p className="text-[11px] text-amber-900/80 leading-snug">
-                      Lock slot with 30% deposit; pay remaining 70% at venue
-                    </p>
-                  </div>
-                  <div className="mt-3 pt-2 border-t border-amber-200/60 flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-amber-800">Pay Now</span>
-                    <span className="text-xs font-black text-amber-950">₹{Math.round(total * 0.3).toLocaleString()}</span>
-                  </div>
-                </button>
+                    <div className="mt-3 pt-2 border-t border-amber-200/60 flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-amber-800">Pay Now</span>
+                      <span className="text-xs font-black text-amber-950">₹{Math.round(total * ((vendorPolicy.advancePercent || 30) / 100)).toLocaleString()}</span>
+                    </div>
+                  </button>
+                )}
 
                 {/* Mode 3: Pay at Venue */}
-                <button
-                  type="button"
-                  onClick={() => setPayMode('PAY_AT_VENUE')}
-                  className={`p-3.5 rounded-2xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
-                    payMode === 'PAY_AT_VENUE'
-                      ? 'border-emerald-600 bg-emerald-50/70 shadow-xs ring-2 ring-emerald-600/10'
-                      : 'border-slate-200/80 hover:border-slate-300 bg-white'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-black text-xs text-emerald-950 flex items-center gap-1.5">
-                        <span>🏢</span> Pay at Venue
-                      </span>
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                        payMode === 'PAY_AT_VENUE' ? 'border-emerald-600 bg-emerald-600' : 'border-slate-300'
-                      }`}>
-                        {payMode === 'PAY_AT_VENUE' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                {vendorPolicy.allowPayAtVenue !== false && (
+                  <button
+                    type="button"
+                    onClick={() => setPayMode('PAY_AT_VENUE')}
+                    className={`p-3.5 rounded-2xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      payMode === 'PAY_AT_VENUE'
+                        ? 'border-emerald-600 bg-emerald-50/70 shadow-xs ring-2 ring-emerald-600/10'
+                        : 'border-slate-200/80 hover:border-slate-300 bg-white'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="font-black text-xs text-emerald-950 flex items-center gap-1.5">
+                          <span>🏢</span> Pay at Venue
+                        </span>
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                          payMode === 'PAY_AT_VENUE' ? 'border-emerald-600 bg-emerald-600' : 'border-slate-300'
+                        }`}>
+                          {payMode === 'PAY_AT_VENUE' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </div>
                       </div>
+                      <p className="text-[11px] text-emerald-900/80 leading-snug">
+                        Zero advance online. Pay cash/UPI on arrival
+                      </p>
                     </div>
-                    <p className="text-[11px] text-emerald-900/80 leading-snug">
-                      Zero advance online. Pay cash/UPI on arrival
-                    </p>
-                  </div>
-                  <div className="mt-3 pt-2 border-t border-emerald-200/60 flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-emerald-800">Pay Now</span>
-                    <span className="text-xs font-black text-emerald-950">₹0</span>
-                  </div>
-                </button>
+                    <div className="mt-3 pt-2 border-t border-emerald-200/60 flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-emerald-800">Pay Now</span>
+                      <span className="text-xs font-black text-emerald-950">₹0</span>
+                    </div>
+                  </button>
+                )}
               </div>
 
               {payMode === 'PARTIAL_ADVANCE' && (
@@ -791,8 +955,8 @@ export default function CheckoutPage() {
                   <div className="flex items-center gap-2">
                     <span className="text-base">🔒</span>
                     <div>
-                      <span className="font-black block">Slot Locked with ₹{Math.round(total * 0.3).toLocaleString()} Token Deposit</span>
-                      <span className="text-[11px] text-amber-800">Pay the remaining balance of ₹{(total - Math.round(total * 0.3)).toLocaleString()} at the reception upon arrival.</span>
+                      <span className="font-black block">Slot Locked with ₹{Math.round(total * ((vendorPolicy.advancePercent || 30) / 100)).toLocaleString()} Token Deposit</span>
+                      <span className="text-[11px] text-amber-800">Pay the remaining balance of ₹{(total - Math.round(total * ((vendorPolicy.advancePercent || 30) / 100))).toLocaleString()} at the reception upon arrival.</span>
                     </div>
                   </div>
                 </div>
@@ -811,7 +975,8 @@ export default function CheckoutPage() {
               )}
             </div>
 
-            {/* 4. Group Split Billing (BokSpot Split Pay) */}
+            {/* 4. Group Split Billing (BokSpot Split Pay) - Conditioned on vendor policy */}
+            {vendorPolicy.allowGroupSplit !== false && (
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-5 sm:p-6 space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
@@ -940,6 +1105,7 @@ export default function CheckoutPage() {
                 </div>
               )}
             </div>
+            )}
 
             {/* 4. Payment Method */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-5 sm:p-6 space-y-4">

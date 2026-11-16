@@ -84,6 +84,7 @@ export interface PersistedBooking {
     role: string;
     status: string;
   }>;
+  metadata?: any;
 }
 
 export interface PersistedMerchant {

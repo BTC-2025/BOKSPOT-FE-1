@@ -14,6 +14,8 @@ function SuccessPageContent() {
   const booking = bookings.find(b => b.ref === ref) || bookings[0];
   
   const [copied, setCopied] = useState(false);
+  const isCinemaPass = Boolean(booking?.metadata?.isEntertainmentBooking || booking?.metadata?.entertainmentBooking || booking?.serviceName?.toLowerCase().includes('movie') || booking?.serviceName?.toLowerCase().includes('avatar'));
+  const entMeta = booking?.metadata?.entertainmentBooking || booking?.metadata || {};
 
   if (!booking) {
     return (
@@ -80,13 +82,21 @@ Thank you for booking with BETA!
             <span className="font-mono font-bold text-[color:var(--color-primary)]">{booking.ref}</span>
           </div>
           <div className="flex justify-between items-center py-0.5 border-b border-[color:var(--color-outline-variant)]/10 pb-2">
-            <span className="text-[color:var(--color-on-surface-variant)]">Service</span>
-            <span className="font-semibold text-[color:var(--color-on-surface)]">{booking.serviceName}</span>
+            <span className="text-[color:var(--color-on-surface-variant)]">Service / Show</span>
+            <span className="font-semibold text-[color:var(--color-on-surface)] truncate max-w-[200px]">{booking.serviceName}</span>
           </div>
           <div className="flex justify-between items-center py-0.5 border-b border-[color:var(--color-outline-variant)]/10 pb-2">
-            <span className="text-[color:var(--color-on-surface-variant)]">Provider</span>
+            <span className="text-[color:var(--color-on-surface-variant)]">Venue / Multiplex</span>
             <span className="font-semibold text-[color:var(--color-on-surface)]">{booking.merchantName}</span>
           </div>
+          {isCinemaPass && (entMeta.audiScreen || entMeta.seatsSelected || entMeta.seats) && (
+            <div className="flex justify-between items-center py-0.5 border-b border-[color:var(--color-outline-variant)]/10 pb-2">
+              <span className="text-[color:var(--color-on-surface-variant)]">Audi & Seats</span>
+              <span className="font-bold text-[#ff6325]">
+                {entMeta.audiScreen || 'Audi 1'} • {Array.isArray(entMeta.seatsSelected) ? entMeta.seatsSelected.join(', ') : (Array.isArray(entMeta.seats) ? entMeta.seats.join(', ') : 'Reserved')}
+              </span>
+            </div>
+          )}
           <div className="flex justify-between items-center py-0.5 border-b border-[color:var(--color-outline-variant)]/10 pb-2">
             <span className="text-[color:var(--color-on-surface-variant)]">Date & Time</span>
             <span className="font-bold text-[color:var(--color-on-surface)]">{booking.date} · {booking.time}</span>
@@ -104,19 +114,23 @@ Thank you for booking with BETA!
             alt="Booking QR Code" 
             className="mx-auto h-32 w-32 rounded-xl border border-white/10 shadow-lg p-2 bg-white"
           />
-          <p className="mt-3 text-xs text-[color:var(--color-on-surface-variant)] font-medium">Show this QR code at the reception desk</p>
+          <p className="mt-3 text-xs text-[color:var(--color-on-surface-variant)] font-medium">
+            {isCinemaPass ? 'Scan this M-Ticket QR at the cinema automated turnstile gate' : 'Show this QR code at the reception desk'}
+          </p>
         </div>
 
         {/* Cancellation & Grace Period Policy Summary Card */}
         <div className="mt-4 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-left space-y-1.5 text-xs">
           <div className="flex items-center justify-between text-amber-600 dark:text-amber-400 font-black">
             <span className="flex items-center gap-1.5">
-              <span>🛡️</span> Flexible Cancellation & Grace Period
+              <span>{isCinemaPass ? '🎟️' : '🛡️'}</span> {isCinemaPass ? 'Cinema Turnstile & Food Policy' : 'Flexible Cancellation & Grace Period'}
             </span>
             <span className="text-[10px] uppercase bg-amber-500/20 px-1.5 py-0.2 rounded font-bold">Guaranteed</span>
           </div>
           <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-snug">
-            Free cancellation with 100% refund available up to 2 hours before scheduled time. 15-minute free grace period applies for luggage collection.
+            {isCinemaPass
+              ? 'Scan the QR code directly at the automated turnstile gate for express entry. Outside food not permitted; pre-booked F&B will be served directly to your seat.'
+              : 'Free cancellation with 100% refund available up to 2 hours before scheduled time. 15-minute free grace period applies for luggage collection.'}
           </p>
         </div>
 

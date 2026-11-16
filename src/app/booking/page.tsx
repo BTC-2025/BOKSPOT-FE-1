@@ -237,94 +237,285 @@ function TracksContent() {
     }
   };
 
+  // Dynamic Tracking Selection: Active Booking resolution from real user bookings
+  const activeModeBooking = mergedBookings.find(b => {
+    const cat = (b.category || '').toLowerCase();
+    const svc = (b.serviceName || '').toLowerCase();
+    if (selectedMode === 'train') return cat.includes('train') || svc.includes('train') || cat.includes('rail');
+    if (selectedMode === 'bus') return cat.includes('bus') || svc.includes('bus');
+    if (selectedMode === 'cab') return cat.includes('cab') || cat.includes('taxi') || svc.includes('cab') || svc.includes('car');
+    if (selectedMode === 'flight') return cat.includes('flight') || svc.includes('flight') || cat.includes('airline');
+    return false;
+  }) || mergedBookings.find(b => b.status === 'CONFIRMED' || b.status === 'PENDING') || mergedBookings[0];
+
+  // Specific dynamic details directly from real bookings
+  const displayPnr = pnr.trim() || activeModeBooking?.ref || 'BK-LIVE';
+  const displayStatus = activeModeBooking?.status || 'CONFIRMED';
+  const displayCarrier = activeModeBooking?.merchantName || (
+    selectedMode === 'flight' ? 'IndiGo Airlines (6E 421)' :
+    selectedMode === 'train' ? 'Southern Railway (12675 Kovai SF)' :
+    selectedMode === 'bus' ? 'SRS Travels (Multi-Axle Volvo)' :
+    'BokSpot Prime (Toyota Etios)'
+  );
+  const displayService = activeModeBooking?.serviceName || (
+    selectedMode === 'flight' ? 'Economy Standard • MAA to BLR' :
+    selectedMode === 'train' ? 'AC Chair Car • MAS to SBC' :
+    selectedMode === 'bus' ? 'A/C Sleeper 2+1 • Chennai to Bangalore' :
+    'Airport City Drop'
+  );
+  const displayTime = activeModeBooking?.time || '14:30';
+  const displayDate = activeModeBooking?.date || 'Today';
+
   return (
     <main className="page-content w-full px-4 sm:px-6 lg:px-8 min-h-screen">
       <div className="mx-auto max-w-[1600px] pt-4 pb-14 space-y-6">
 
-        {/* ── HIGH-CONVERTING EYE-CATCHY TRACKER HERO CARD (OPTIMIZED & RESPONSIVE) ── */}
-        <div className="relative rounded-3xl overflow-hidden border border-slate-200/90 dark:border-white/10 bg-gradient-to-br from-white via-slate-50 to-orange-50/30 dark:from-[#0d1424] dark:via-[#111936] dark:to-[#0f172a] p-5 sm:p-6 shadow-sm transition-all hover:shadow-md">
-          {/* Subtle Ambient Decorative Gradient Glow */}
+        {/* ── DESIGN MOCKUP & SKETCH TRACKER HERO DOCK ── */}
+        <div className="relative rounded-3xl overflow-hidden border border-slate-200/90 dark:border-white/10 bg-gradient-to-br from-[#f8fafc] via-white to-orange-50/20 dark:from-[#0d1424] dark:via-[#111936] dark:to-[#0f172a] p-4 sm:p-6 lg:p-7 shadow-sm transition-all hover:shadow-md">
+          {/* Subtle Ambient Decorative Flight Watermark/Glow */}
           <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-orange-500/10 via-transparent to-transparent pointer-events-none" />
+          <div className="absolute -top-12 -right-12 w-48 h-48 bg-orange-400/10 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-            {/* Left: Punchy, Clear & Optimized Title */}
-            <div className="space-y-1.5 max-w-lg">
-              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-orange-100/80 dark:bg-orange-950/60 border border-orange-200 dark:border-orange-500/30">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#ff6325] animate-ping" />
-                <span className="text-[10px] font-black uppercase tracking-wider text-[#ff6325]">
-                  Instant Live Radar
-                </span>
+          <div className="relative z-10 w-full space-y-5">
+            {/* 1. TOP ROW: 4 Rich Category Cards (Replaces empty centered look with rich icon pill, live status & count) */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 w-full">
+              {[
+                {
+                  id: 'flight',
+                  icon: Plane,
+                  label: 'Flights',
+                  subtitle: 'Airport Terminals',
+                  tag: 'Radar Live',
+                  iconBg: 'bg-blue-500/15 text-blue-500',
+                },
+                {
+                  id: 'train',
+                  icon: Train,
+                  label: 'Trains',
+                  subtitle: 'IRCTC & Stations',
+                  tag: 'PF Tracking',
+                  iconBg: 'bg-indigo-500/15 text-indigo-500',
+                },
+                {
+                  id: 'bus',
+                  icon: Bus,
+                  label: 'Buses',
+                  subtitle: 'Intercity Routes',
+                  tag: 'GPS Telemetry',
+                  iconBg: 'bg-amber-500/15 text-amber-500',
+                },
+                {
+                  id: 'cab',
+                  icon: Car,
+                  label: 'Cabs',
+                  subtitle: 'Outstation & City',
+                  tag: 'Driver ETA',
+                  iconBg: 'bg-emerald-500/15 text-emerald-500',
+                },
+              ].map(({ id, icon: Icon, label, subtitle, tag, iconBg }) => {
+                const isActive = (selectedMode || 'flight') === id;
+                const matchingCount = mergedBookings.filter(b => (b.category || '').toLowerCase().includes(id) || (b.serviceName || '').toLowerCase().includes(id)).length;
+
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedMode(id);
+                      const matching = mergedBookings.find(b => (b.category || '').toLowerCase().includes(id) || (b.serviceName || '').toLowerCase().includes(id));
+                      if (matching) setPnr(matching.ref);
+                    }}
+                    className={`relative group flex items-center justify-between p-3.5 sm:p-4 rounded-2xl transition-all cursor-pointer select-none w-full text-left overflow-hidden ${
+                      isActive
+                        ? 'bg-[#0a2540] text-white shadow-xl shadow-[#0a2540]/25 ring-2 ring-[#0a2540] scale-[1.01]'
+                        : 'bg-white dark:bg-slate-800/90 text-slate-800 dark:text-slate-200 border border-slate-200/90 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs hover:shadow-xs'
+                    }`}
+                  >
+                    {/* Background Ambient Glow on Active */}
+                    {isActive && (
+                      <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
+                    )}
+
+                    {/* Left: Icon Pill + Labels */}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 ${
+                        isActive ? 'bg-white/15 text-white' : `${iconBg} dark:bg-white/10 dark:text-white`
+                      }`}>
+                        <Icon size={22} className="stroke-[2.2]" />
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm sm:text-base font-black tracking-tight truncate">{label}</span>
+                          {matchingCount > 0 && (
+                            <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black font-mono ${
+                              isActive ? 'bg-[#ff6325] text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                            }`}>
+                              {matchingCount}
+                            </span>
+                          )}
+                        </div>
+                        <span className={`text-[11px] block truncate font-medium ${
+                          isActive ? 'text-slate-300' : 'text-slate-400 dark:text-slate-400'
+                        }`}>
+                          {subtitle}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Right: Live Tag Pill */}
+                    <div className="shrink-0 pl-2">
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                        isActive
+                          ? 'bg-white/20 text-white'
+                          : 'bg-slate-100 dark:bg-slate-700/80 text-slate-600 dark:text-slate-400'
+                      }`}>
+                        {tag}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* 2. MIDDLE ROW: Left (Track Text & Subtitle) + Right (Search Box & Track Live Button) */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 bg-white/95 dark:bg-slate-900/90 border border-slate-200/90 dark:border-white/10 p-4 sm:p-5 rounded-3xl shadow-sm backdrop-blur-sm">
+              {/* Left Side: Track Title, Live Badge & Subtitle */}
+              <div className="space-y-1.5 max-w-md">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff6325] opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#ff6325]" />
+                  </span>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-[#ff6325]">
+                    Real-time Radar
+                  </span>
+                </div>
+
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                  <span>Track Your Journey &amp;</span>
+                  <span className="text-[#ff6325]">Live</span>
+                  <span>PNR</span>
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+                  Real-time satellite radar status, gate changes, and departure updates across modes.
+                </p>
               </div>
 
-              <div>
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                  <span>Track Any Booking &amp; PNR</span>
-                  <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-600/30 font-black">
-                    Live
+              {/* Right Side: Search Box + Track Live Button */}
+              <div className="w-full lg:max-w-xl space-y-2">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const targetRef = pnr.trim() || activeModeBooking?.ref;
+                    if (targetRef) router.push(`/booking/track?ref=${encodeURIComponent(targetRef)}`);
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <div className="relative flex-1 flex items-center bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200/90 dark:border-white/10 px-3.5 py-2.5 focus-within:border-[#ff6325] focus-within:ring-2 focus-within:ring-[#ff6325]/15 transition-all">
+                    <input
+                      type="text"
+                      value={pnr}
+                      onChange={e => setPnr(e.target.value)}
+                      placeholder={
+                        activeModeBooking ? `Search PNR (e.g. ${activeModeBooking.ref})...` :
+                        (selectedMode || 'flight') === 'flight' ? 'Quick Paste PNR (e.g. 6E-421)...' :
+                        selectedMode === 'train' ? 'Train PNR (e.g. 4819284729)...' :
+                        selectedMode === 'bus' ? 'Bus Ticket ID (e.g. BUS-TN09)...' :
+                        'Booking REF or Cab Code...'
+                      }
+                      className="w-full bg-transparent text-xs sm:text-sm font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none py-0.5"
+                    />
+                    <button
+                      type="button"
+                      title="Paste from clipboard"
+                      onClick={async () => {
+                        try {
+                          const text = await navigator.clipboard.readText();
+                          if (text) setPnr(text.trim());
+                        } catch { }
+                      }}
+                      className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                    >
+                      <QrCode size={17} />
+                    </button>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="px-6 py-3.5 rounded-2xl bg-[#ff6325] hover:bg-[#e04e13] text-white font-extrabold text-xs sm:text-sm tracking-wide transition-all shadow-md shadow-orange-500/25 active:scale-95 cursor-pointer flex items-center gap-1.5 shrink-0"
+                  >
+                    <span>Track Live</span>
+                    <span className="text-base leading-none">↗</span>
+                  </button>
+                </form>
+
+                {/* Sub status line under search box */}
+                <div className="flex items-center justify-between text-xs px-1">
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex h-2 w-2">
+                      <span className={`relative inline-flex rounded-full h-2 w-2 ${displayStatus === 'CONFIRMED' ? 'bg-emerald-500' : 'bg-amber-400'}`} />
+                    </span>
+                    <span className={`font-bold text-[11px] ${displayStatus === 'CONFIRMED' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                      {displayStatus === 'CONFIRMED' ? 'Confirmed & On Schedule • Departs Soon' :
+                       displayStatus === 'SPLIT_PENDING' ? 'Split Payment in Progress' :
+                       'Awaiting Partner Confirmation'}
+                    </span>
+                  </div>
+                  <span className="font-mono text-[10px] text-slate-400 font-bold">
+                    {activeModeBooking?.city ? `${activeModeBooking.city.toUpperCase()} • IN` : 'MAA ✈ BLR'}
                   </span>
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium leading-relaxed mt-0.5">
-                  Enter your flight, train, bus, turf slot, cab, or stay reference to view live status and digital QR passes.
-                </p>
+                </div>
               </div>
             </div>
 
-            {/* Right: Roomy Tactile Search Dock (No Placeholder Clipping) */}
-            <div className="w-full lg:max-w-xl space-y-2">
-              {/* Category Quick Tabs */}
-              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-white/10">
-                {TRANSPORT_MODES.map(({ id, icon: Icon, label }) => {
-                  const isActive = selectedMode === id;
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      onClick={() => setSelectedMode(selectedMode === id ? '' : id)}
-                      className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 text-xs font-bold transition-all cursor-pointer ${
-                        isActive
-                          ? 'bg-[#003580] text-white shadow-xs font-black'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-700/60'
-                      }`}
-                    >
-                      <Icon size={12} className={isActive ? 'text-orange-400' : 'text-slate-400'} />
-                      <span>{label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* High-Contrast Search Input with Generous Width */}
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (pnr.trim()) router.push(`/booking/track?ref=${encodeURIComponent(pnr.trim())}`);
-                }}
-                className="relative flex items-center p-1 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-200 focus-within:border-[#ff6325] dark:border-white/15 dark:focus-within:border-[#ff6325] shadow-xs transition-all"
-              >
-                <div className="pl-3 pr-1.5 text-slate-400 shrink-0">
-                  <Navigation size={15} className="text-[#ff6325]" />
+            {/* 3. BOTTOM ROW: Journey Live Summary Card (Full Width Content) */}
+            <div className="rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200/90 dark:border-white/10 p-4 sm:p-5 shadow-xs w-full">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                {/* Left: Carrier & Timings (5 cols) */}
+                <div className="md:col-span-5 space-y-1">
+                  <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
+                    {displayCarrier} • {displayService}
+                  </span>
+                  <div className="flex items-baseline gap-3">
+                    <div>
+                      <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">{displayTime}</span>
+                      <span className="text-[10px] text-slate-400 font-bold ml-1">Departure</span>
+                    </div>
+                    <span className="text-slate-300 dark:text-slate-600 font-light">|</span>
+                    <div>
+                      <span className="text-sm sm:text-base font-bold text-slate-600 dark:text-slate-300">{displayDate}</span>
+                      <span className="text-[10px] text-slate-400 font-bold ml-1">Scheduled</span>
+                    </div>
+                  </div>
                 </div>
-                <input
-                  type="text"
-                  value={pnr}
-                  onChange={e => setPnr(e.target.value)}
-                  placeholder={
-                    selectedMode === 'flight' ? 'Flight PNR (e.g. 6E-2849)...' :
-                    selectedMode === 'train' ? 'Train PNR (e.g. 4819284729)...' :
-                    selectedMode === 'bus' ? 'Bus Ticket ID (e.g. BUS-TN09)...' :
-                    selectedMode === 'cab' ? 'Cab Booking REF (e.g. CAB-4921)...' :
-                    'Enter Booking REF or PNR ID...'
-                  }
-                  className="min-w-0 flex-1 py-2 px-1 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 bg-transparent focus:outline-none"
-                />
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#ff6325] to-[#ff4500] hover:from-[#e04e13] hover:to-[#e03d00] text-white font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-orange-500/25 active:scale-95 cursor-pointer flex items-center gap-1 shrink-0"
-                >
-                  <span>Track Status</span>
-                  <ChevronRight size={13} />
-                </button>
-              </form>
+
+                {/* Center: Terminal / Platform Info (3 cols) */}
+                <div className="md:col-span-3 md:border-l md:border-r border-slate-100 dark:border-white/5 md:px-5 space-y-0.5">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">
+                    {selectedMode === 'train' ? 'Platform Info' : selectedMode === 'bus' ? 'Boarding Bay' : selectedMode === 'cab' ? 'Pick-up Spot' : 'Terminal Info'}
+                  </span>
+                  <div className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                    {(activeModeBooking as any)?.metadata?.terminal || (activeModeBooking as any)?.metadata?.platform || (
+                      selectedMode === 'train' ? 'PF #4 (Central)' :
+                      selectedMode === 'bus' ? 'Bay #12 (Intercity)' :
+                      selectedMode === 'cab' ? 'Pick-up Bay 2' :
+                      'T1, G14'
+                    )}
+                  </div>
+                </div>
+
+                {/* Right: Booking Summary Status & PNR (4 cols) */}
+                <div className="md:col-span-4 space-y-0.5 text-left md:text-right">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Booking Summary</span>
+                  <div className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                    Status: <span className={`font-black ${displayStatus === 'CONFIRMED' ? 'text-emerald-600' : 'text-amber-600'}`}>{displayStatus}</span>
+                  </div>
+                  <div className="text-xs font-bold text-slate-600 dark:text-slate-300 font-mono">
+                    REF / PNR: <span className="text-slate-900 dark:text-white font-black">{displayPnr}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -579,6 +770,13 @@ function TracksContent() {
 
                         {/* Middle: Location & Time Capsule */}
                         <div className="my-2.5 py-2 border-y border-slate-100 dark:border-white/5 space-y-1 text-xs">
+                          {/* Cinema Screening Specific Seat & Audi Capsule */}
+                          {(b.metadata?.isEntertainmentBooking || b.metadata?.entertainmentBooking || b.serviceName?.toLowerCase().includes('avatar') || b.serviceName?.toLowerCase().includes('movie')) && (
+                            <div className="flex items-center justify-between p-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-[#ff6325] font-black text-[11px] mb-1">
+                              <span>🎬 {b.metadata?.audiScreen || b.metadata?.entertainmentBooking?.audiScreen || 'Audi 1 (IMAX)'}</span>
+                              <span>Seats: {Array.isArray(b.metadata?.seatsSelected) ? b.metadata.seatsSelected.join(', ') : (Array.isArray(b.metadata?.entertainmentBooking?.seats) ? b.metadata.entertainmentBooking.seats.join(', ') : (b.metadata?.seats || 'C7, C8'))}</span>
+                            </div>
+                          )}
                           <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium truncate">
                             <MapPin size={12} className="shrink-0 text-[#ff6325]" />
                             <span className="truncate">{b.merchantAddress || b.city || 'Verified Venue'}</span>
