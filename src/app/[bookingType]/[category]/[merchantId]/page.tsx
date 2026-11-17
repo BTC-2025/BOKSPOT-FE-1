@@ -72,7 +72,7 @@ export default function VenueProfilePage() {
   const [isVisitCalPopoverOpen, setIsVisitCalPopoverOpen] = useState(false);
   const [visitCalMonthDate, setVisitCalMonthDate] = useState(() => new Date());
 
-  // PG Food Exclusion Discount Toggle state (Optional without food: -â‚¹1,500/mo)
+  // PG Food Exclusion Discount Toggle state (Optional without food: -₹1,500/mo)
   const [isFoodExcluded, setIsFoodExcluded] = useState(false);
 
   const todayStr = new Date().toISOString().split('T')[0];
@@ -156,14 +156,14 @@ export default function VenueProfilePage() {
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
 
-  // â”€â”€ Hotel Interactive Room Details & Add-ons Flow States â”€â”€
+  // ── Hotel Interactive Room Details & Add-ons Flow States ──
   const [activeRoomService, setActiveRoomService] = useState<any | null>(null);
   const [roomModalStep, setRoomModalStep] = useState<'DETAILS' | 'ADDONS' | 'VISIT' | null>(null);
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
   const [roomModalImageIdx, setRoomModalImageIdx] = useState(0);
   const [pgPaymentType, setPgPaymentType] = useState<'FULL_MONTH_RENT' | 'TOKEN_ADVANCE'>('FULL_MONTH_RENT');
 
-  // â”€â”€ Selected Movie Context (BookMyShow Flow) â”€â”€
+  // ── Selected Movie Context (BookMyShow Flow) ──
   const movieParam = searchParams?.get('movie');
   const [activeMovie, setActiveMovie] = useState<MovieListingItem>(() => getMovieBySlugOrId(movieParam || 'avatar-fire-and-ash'));
 
@@ -186,7 +186,7 @@ export default function VenueProfilePage() {
     };
   }, [activeRoomService, roomModalStep, isVisitModalOpen, isGalleryOpen, isModalOpen]);
 
-  // â”€â”€ Facility / Turf Interactive Slot Flow States â”€â”€
+  // ── Facility / Turf Interactive Slot Flow States ──
   const queryParamDate = searchParams?.get('date');
   const queryParamSlot = searchParams?.get('slot');
 
@@ -199,7 +199,7 @@ export default function VenueProfilePage() {
   const [pricingResult, setPricingResult] = useState<any | null>(null);
   const [isPricingCalculating, setIsPricingCalculating] = useState(false);
 
-  // â”€â”€ Archetype 3: TimeSlot (Doctor & Salon/Spa) Flow States â”€â”€
+  // ── Archetype 3: TimeSlot (Doctor & Salon/Spa) Flow States ──
   const [selectedPractitioner, setSelectedPractitioner] = useState<string>('Dr. Rajesh Kumar (Senior Consultant)');
   const [selectedApptSlot, setSelectedApptSlot] = useState<string | null>(() => {
     if (queryParamSlot && queryParamSlot !== 'Any Time (All Slots)') {
@@ -215,7 +215,7 @@ export default function VenueProfilePage() {
   const [isApptCalOpen, setIsApptCalOpen] = useState<boolean>(false);
   const [apptCalMonth, setApptCalMonth] = useState<Date>(() => new Date());
 
-  // â”€â”€ Dedicated Salon & Spa / Wellness Appointment Flow States â”€â”€
+  // ── Dedicated Salon & Spa / Wellness Appointment Flow States ──
   const [selectedWellnessStylist, setSelectedWellnessStylist] = useState<string>('Arun Varma (Creative Hair Director)');
   const [selectedTreatments, setSelectedTreatments] = useState<string[]>(['trt-haircut-men']);
   const [wellnessGenderFilter, setWellnessGenderFilter] = useState<'ALL' | 'MEN' | 'WOMEN'>('ALL');
@@ -223,28 +223,28 @@ export default function VenueProfilePage() {
   const [isWellnessCalOpen, setIsWellnessCalOpen] = useState<boolean>(false);
   const [wellnessCalMonth, setWellnessCalMonth] = useState<Date>(() => new Date());
 
-  // â”€â”€ Dedicated Gym / Yoga / Fitness Slot Flow States â”€â”€
+  // ── Dedicated Gym / Yoga / Fitness Slot Flow States ──
   const [selectedFitnessPassId, setSelectedFitnessPassId] = useState<string>('plan-quarterly-pro');
   const [fitnessFormatFilter, setFitnessFormatFilter] = useState<'ALL' | 'MEMBERSHIP' | 'OPEN_GYM' | 'YOGA_CLASS' | 'PERSONAL_TRAINING'>('ALL');
   const [selectedFitnessTimeSlot, setSelectedFitnessTimeSlot] = useState<string>('06:00 AM');
   const [isFitnessCalOpen, setIsFitnessCalOpen] = useState<boolean>(false);
   const [fitnessCalMonth, setFitnessCalMonth] = useState<Date>(() => new Date());
 
-  // â”€â”€ Archetype 4: AssetRental (Bikes, Cars, Equipment) Flow States â”€â”€
+  // ── Archetype 4: AssetRental (Bikes, Cars, Equipment) Flow States ──
   const [rentalStartDate, setRentalStartDate] = useState(() => queryParamDate || todayStr);
   const [rentalEndDate, setRentalEndDate] = useState(tomorrowStr);
   const [rentalDays, setRentalDays] = useState<number>(2);
   const [uploadedDlName, setUploadedDlName] = useState<string>('');
   const [helmetOrGearAddon, setHelmetOrGearAddon] = useState<boolean>(true);
 
-  // â”€â”€ Archetype 5: PassEntry (Movies, Events, Concerts, Darshan) Flow States â”€â”€
+  // ── Archetype 5: PassEntry (Movies, Events, Concerts, Darshan) Flow States ──
   const [passCount, setPassCount] = useState<number>(2);
   const [selectedTier, setSelectedTier] = useState<string>('Standard VIP');
   const [popcornComboAddon, setPopcornComboAddon] = useState<boolean>(false);
   const [selectedShowDate, setSelectedShowDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [selectedShowTime, setSelectedShowTime] = useState<string>('06:45 PM');
   const [selectedScreenFormat, setSelectedScreenFormat] = useState<string>('IMAX Laser 3D');
-  const [selectedSeatZone, setSelectedSeatZone] = useState<string>('ðŸ‘‘ Royal Recliner (Lounge)');
+  const [selectedSeatZone, setSelectedSeatZone] = useState<string>('👑 Royal Recliner (Lounge)');
   const [snackNachosAddon, setSnackNachosAddon] = useState<boolean>(false);
   const [snackBeverageAddon, setSnackBeverageAddon] = useState<boolean>(false);
   // Interactive Cinema Visual Seat Selection
@@ -336,7 +336,7 @@ export default function VenueProfilePage() {
     };
   }, [isSeatLockActive, seatLockSecondsRemaining]);
 
-  // â”€â”€ Archetype 6: HomeCall (Electrician, Plumber, Cleaning, AC Repair) Flow States â”€â”€
+  // ── Archetype 6: HomeCall (Electrician, Plumber, Cleaning, AC Repair) Flow States ──
   const [homeIssueCategory, setHomeIssueCategory] = useState<string>('Inspection & Diagnosis');
   const [homeAddressLine, setHomeAddressLine] = useState<string>(() => searchParams?.get('venue') || searchParams?.get('city') || '');
   const [preferredHomeWindow, setPreferredHomeWindow] = useState<string>(() => {
@@ -741,7 +741,7 @@ export default function VenueProfilePage() {
             finalServices = [
               {
                 id: `svc-${sportCfg.slug}-${sportCfg.username.toLowerCase()}`,
-                name: `${activeBranchName} â€” ${sportCfg.categoryName}`,
+                name: `${activeBranchName} — ${sportCfg.categoryName}`,
                 category: sportCfg.categoryName,
                 rating: 4.9,
                 reviewCount: 384,
@@ -829,7 +829,7 @@ export default function VenueProfilePage() {
                       name: l.name,
                       price: Number(l.price || l.basePrice || entCfg.defaultPrice),
                       badge: l.metadata?.badge || l.offerBadge || 'Verified Tier',
-                      icon: l.metadata?.icon || 'ðŸŽŸï¸',
+                      icon: l.metadata?.icon || '🎟️',
                       desc: l.description || l.desc || ''
                     }));
                   }
@@ -842,7 +842,7 @@ export default function VenueProfilePage() {
             finalServices = [
               {
                 id: `svc-${entCfg.slug}-${entCfg.username.toLowerCase()}`,
-                name: `${activeBranchName} â€” ${entCfg.categoryName}`,
+                name: `${activeBranchName} — ${entCfg.categoryName}`,
                 category: entCfg.categoryName,
                 rating: 4.8,
                 reviewCount: 420,
@@ -889,7 +889,7 @@ export default function VenueProfilePage() {
             ];
           }
 
-          // â”€â”€ Lifestyle & Local Dynamic Fallbacks â”€â”€
+          // ── Lifestyle & Local Dynamic Fallbacks ──
           const cleanCat = (category || '').toLowerCase();
           const cleanMerchantId = (merchantId || '').toLowerCase();
 
@@ -944,7 +944,7 @@ export default function VenueProfilePage() {
             finalServices = [
               {
                 id: `svc-wellness-${merchantId}`,
-                name: `${wellCfg.name} â€” Appointments`,
+                name: `${wellCfg.name} — Appointments`,
                 category: wellCfg.category,
                 rating: wellCfg.rating,
                 reviewCount: 620,
@@ -1018,7 +1018,7 @@ export default function VenueProfilePage() {
             finalServices = [
               {
                 id: `svc-doctor-${merchantId}`,
-                name: `${docCfg.name} â€” OPD Consultations`,
+                name: `${docCfg.name} — OPD Consultations`,
                 category: docCfg.category,
                 rating: docCfg.rating,
                 reviewCount: 520,
@@ -1056,7 +1056,7 @@ export default function VenueProfilePage() {
             finalServices = [
               {
                 id: `svc-home-${merchantId}`,
-                name: `${homeCfg.name} â€” ${matched.name}`,
+                name: `${homeCfg.name} — ${matched.name}`,
                 category: matched.name,
                 rating: homeCfg.rating,
                 reviewCount: 890,
@@ -1203,7 +1203,7 @@ export default function VenueProfilePage() {
     `${city || 'Chennai'}`;
 
   const address = (isLuxury && isHotel && isMysteryOptedIn)
-    ? `${city || 'Prime District'} â€¢ Full address revealed on booking confirmation`
+    ? `${city || 'Prime District'} • Full address revealed on booking confirmation`
     : rawAddress;
 
   if (loading) {
@@ -1537,11 +1537,11 @@ export default function VenueProfilePage() {
                       Type & Sharing
                     </span>
                     <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm capitalize">
-                      {hostelGender === 'all' ? 'Any Gender' : hostelGender} â€¢ {hostelSharing === 'all' ? 'Any Sharing' : hostelSharing}
+                      {hostelGender === 'all' ? 'Any Gender' : hostelGender} • {hostelSharing === 'all' ? 'Any Sharing' : hostelSharing}
                     </span>
                     {hostelFoodIncluded && (
                       <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold ml-1.5 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50">
-                        ðŸ± 3 Meals
+                        🍱 3 Meals
                       </span>
                     )}
                   </div>
@@ -1603,7 +1603,7 @@ export default function VenueProfilePage() {
                       EXPERIENCE & TIME
                     </span>
                     <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
-                      {selectedScreenFormat} â€¢ {selectedShowTime}
+                      {selectedScreenFormat} • {selectedShowTime}
                     </span>
                   </div>
                 </div>
@@ -1662,7 +1662,7 @@ export default function VenueProfilePage() {
                   <div>
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">Rental Period</span>
                     <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
-                      {rentalStartDate} âž” {rentalEndDate} ({rentalDays} Days)
+                      {rentalStartDate} ➔ {rentalEndDate} ({rentalDays} Days)
                     </span>
                   </div>
                 </div>
@@ -1679,7 +1679,7 @@ export default function VenueProfilePage() {
                       {isHomeCall ? 'Service Date & Window' : isFitness ? 'Workout / Pass Date' : isWellness ? 'Salon Appointment Date' : 'Consultation Date'}
                     </span>
                     <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
-                      {selectedDate || todayStr} â€¢ {isHomeCall ? (preferredHomeWindow || 'Morning (09:00 AM - 12:00 PM)') : isFitness ? (selectedFitnessTimeSlot || '06:00 AM Batch') : (selectedApptSlot || '10:00 AM Slot')}
+                      {selectedDate || todayStr} • {isHomeCall ? (preferredHomeWindow || 'Morning (09:00 AM - 12:00 PM)') : isFitness ? (selectedFitnessTimeSlot || '06:00 AM Batch') : (selectedApptSlot || '10:00 AM Slot')}
                     </span>
                   </div>
                 </div>
@@ -1697,7 +1697,7 @@ export default function VenueProfilePage() {
                       Dates & Nights
                     </span>
                     <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
-                      {new Date(checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} â€“ {new Date(checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {new Date(checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {new Date(checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>
                     <span className="text-[10px] text-[#033266] dark:text-[#ff6325] font-bold ml-1.5 px-2 py-0.5 rounded-md bg-[#033266]/10 dark:bg-[#ff6325]/15">
                       {nights} Night{nights > 1 ? 's' : ''}
@@ -1717,11 +1717,11 @@ export default function VenueProfilePage() {
                       Guests & Units
                     </span>
                     <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
-                      {adults + children} Guest{adults + children > 1 ? 's' : ''} ({adults} Adults{children > 0 ? `, ${children} Children` : ''}) â€¢ {rooms} Room{rooms > 1 ? 's' : ''}
+                      {adults + children} Guest{adults + children > 1 ? 's' : ''} ({adults} Adults{children > 0 ? `, ${children} Children` : ''}) • {rooms} Room{rooms > 1 ? 's' : ''}
                     </span>
                     {(pets || petCount > 0) && (
                       <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold ml-1.5 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50">
-                        ðŸ¾ {petCount || 1} Pet
+                        🐾 {petCount || 1} Pet
                       </span>
                     )}
                   </div>
@@ -2035,8 +2035,8 @@ export default function VenueProfilePage() {
                                           }}
                                           className="w-full text-left px-2.5 py-1.5 rounded-xl text-xs hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 flex items-center justify-between cursor-pointer"
                                         >
-                                          <span>ðŸ“ Explore {c}</span>
-                                          <span className="text-[9px] text-[#ff6325]">Browse Category â†’</span>
+                                          <span>📍 Explore {c}</span>
+                                          <span className="text-[9px] text-[#ff6325]">Browse Category →</span>
                                         </button>
                                       ))}
                                     </div>
@@ -2361,7 +2361,7 @@ export default function VenueProfilePage() {
                         </label>
                         <div className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white flex items-center justify-between text-xs">
                           <span>{CATEGORY_NAMES[category] || category || 'Doorstep Service'}</span>
-                          <span className="text-emerald-600 font-black">âœ“ Doorstep</span>
+                          <span className="text-emerald-600 font-black">✓ Doorstep</span>
                         </div>
                       </div>
 
@@ -2941,7 +2941,7 @@ export default function VenueProfilePage() {
                             className="w-4 h-4 rounded text-[#033266] dark:text-[#ff6325] focus:ring-0 cursor-pointer"
                           />
                           <span className="font-bold text-slate-700 dark:text-slate-300 text-xs">
-                            ðŸ¾ Traveling with Pets?
+                            🐾 Traveling with Pets?
                           </span>
                         </label>
 
@@ -2999,11 +2999,11 @@ export default function VenueProfilePage() {
           </div>
 
         {/* ============================================================
-         * SECTION B: OPTION 1 â€” 2-SIDES SPLIT HERO (Left: 58% Gallery | Right: 42% Overview & Map)
+         * SECTION B: OPTION 1 — 2-SIDES SPLIT HERO (Left: 58% Gallery | Right: 42% Overview & Map)
          * ============================================================ */}
         <div className="mb-8 w-full">
 
-          {/* Side 1: Left 58% (lg:col-span-7) â€” Modern Dynamic Photo Gallery */}
+          {/* Side 1: Left 58% (lg:col-span-7) — Modern Dynamic Photo Gallery */}
           <div className="w-full relative rounded-3xl overflow-hidden border border-slate-200/90 dark:border-white/10 shadow-sm bg-slate-100 dark:bg-slate-900 flex flex-col justify-between">
             {/* Desktop Dynamic Bento Layout (370px height for optimal proportion) */}
             <div className="hidden md:block h-[370px] p-2.5">
@@ -3021,7 +3021,7 @@ export default function VenueProfilePage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="absolute top-3 left-3 px-3 py-1 rounded-xl bg-black/60 backdrop-blur-md text-white text-[11px] font-bold shadow-sm">
-                    âœ¨ Featured Property
+                    ✨ Featured Property
                   </div>
                 </div>
 
@@ -3065,14 +3065,14 @@ export default function VenueProfilePage() {
                     onClick={() => setCurrentImageIdx((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1))}
                     className="absolute left-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white border border-white/20 text-xs shadow-md"
                   >
-                    â€¹
+                    ‹
                   </button>
                   <button
                     type="button"
                     onClick={() => setCurrentImageIdx((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1))}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 text-white border border-white/20 text-xs shadow-md"
                   >
-                    â€º
+                    ›
                   </button>
                   <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-full bg-black/70 text-white text-[10px] font-bold">
                     {currentImageIdx + 1} / {galleryImages.length}
@@ -3086,7 +3086,7 @@ export default function VenueProfilePage() {
               onClick={() => { setCurrentImageIdx(0); setIsGalleryOpen(true); }}
               className="absolute bottom-4 right-4 bg-white/95 dark:bg-slate-900/95 hover:bg-white dark:hover:bg-slate-900 text-slate-900 dark:text-white text-xs font-black px-4 py-2 rounded-xl shadow-lg border border-slate-200/80 dark:border-white/10 flex items-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
             >
-              <span>ðŸ“·</span>
+              <span>📷</span>
               <span>View All {galleryImages.length} Photos</span>
             </button>
           </div>
@@ -3101,7 +3101,7 @@ export default function VenueProfilePage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
               <div>
                 <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>{isStudio ? 'ðŸ“¸' : category === 'badminton' ? 'ðŸ¸' : category === 'tennis' ? 'ðŸŽ¾' : category === 'cricket-ground' ? 'ðŸ' : category === 'basketball' ? 'ðŸ€' : category === 'swimming' ? 'ðŸŠ' : category === 'play-arena' ? 'ðŸ§—' : 'âš½'}</span>
+                  <span>{isStudio ? '📸' : category === 'badminton' ? '🏸' : category === 'tennis' ? '🎾' : category === 'cricket-ground' ? '🏏' : category === 'basketball' ? '🏀' : category === 'swimming' ? '🏊' : category === 'play-arena' ? '🧗' : '⚽'}</span>
                   <span>{isStudio ? 'Select Studio Floor & Hourly Slot' : 'Select Time Slot & Unit'}</span>
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -3126,7 +3126,7 @@ export default function VenueProfilePage() {
               if (!rule) return null;
               return (
                 <div className="p-3 sm:p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-amber-900 dark:text-amber-200">
-                  <span className="text-2xl shrink-0">{rule.icon || 'âš ï¸'}</span>
+                  <span className="text-2xl shrink-0">{rule.icon || '⚠️'}</span>
                   <div className="min-w-0">
                     <span className="text-xs font-black block tracking-tight">{rule.title}</span>
                     <span className="text-[11px] text-amber-800 dark:text-amber-300 font-medium leading-relaxed block mt-0.5">
@@ -3221,11 +3221,11 @@ export default function VenueProfilePage() {
                               </span>
                               <div className="text-right shrink-0">
                                 <span className="text-xs font-extrabold text-[#ff6325] block">
-                                  â‚¹{pitch.price}/hr
+                                  ₹{pitch.price}/hr
                                 </span>
                                 {pitch.rawListing?.originalPrice && pitch.rawListing.originalPrice > pitch.price && (
                                   <span className="text-[10px] text-slate-400 line-through block">
-                                    â‚¹{pitch.rawListing.originalPrice}
+                                    ₹{pitch.rawListing.originalPrice}
                                   </span>
                                 )}
                               </div>
@@ -3262,7 +3262,7 @@ export default function VenueProfilePage() {
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/20 flex items-center gap-1">
-                              <span>ðŸ‘‘</span> Best Value
+                              <span>👑</span> Best Value
                             </span>
                             {activeListing.discountPercentage && (
                               <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400">
@@ -3283,11 +3283,11 @@ export default function VenueProfilePage() {
                       <div className="w-full md:w-auto flex md:flex-col items-center md:items-end justify-between md:justify-center p-3 sm:p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 shrink-0">
                         <div className="flex items-baseline gap-2">
                           <span className="text-2xl sm:text-3xl font-black text-[#033266] dark:text-[#ff6325]">
-                            â‚¹{activePitch.price}
+                            ₹{activePitch.price}
                           </span>
                           {((activeListing.originalPrice && activeListing.originalPrice > activePitch.price) || (activeMeta.originalPrice && activeMeta.originalPrice > activePitch.price)) && (
                             <span className="text-sm font-bold text-slate-400 line-through">
-                              â‚¹{activeListing.originalPrice || activeMeta.originalPrice}
+                              ₹{activeListing.originalPrice || activeMeta.originalPrice}
                             </span>
                           )}
                           <span className="text-xs font-bold text-slate-500 dark:text-slate-400">/hr</span>
@@ -3298,7 +3298,7 @@ export default function VenueProfilePage() {
                           </span>
                         )}
                         <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-100/80 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-200/50 dark:border-amber-700/40 mt-1 flex items-center gap-1">
-                          <span>â˜€ï¸</span> {activeListing.offerBadge || activeMeta.offerBadge || 'Prime Evening Slot'}
+                          <span>☀️</span> {activeListing.offerBadge || activeMeta.offerBadge || 'Prime Evening Slot'}
                         </span>
                       </div>
                     </div>
@@ -3307,7 +3307,7 @@ export default function VenueProfilePage() {
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                       <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-lg shrink-0">
-                          ðŸ¥…
+                          🥅
                         </div>
                         <div className="min-w-0">
                           <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Dimensions & Size</span>
@@ -3319,7 +3319,7 @@ export default function VenueProfilePage() {
 
                       <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-lg shrink-0">
-                          âš½
+                          ⚽
                         </div>
                         <div className="min-w-0">
                           <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Pitch Surface</span>
@@ -3331,19 +3331,19 @@ export default function VenueProfilePage() {
 
                       <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-lg shrink-0">
-                          ðŸ’¡
+                          💡
                         </div>
                         <div className="min-w-0">
                           <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Floodlights</span>
                           <span className="text-xs font-black text-slate-900 dark:text-white truncate block">
-                            {activeMeta.floodlightsSurcharge ? `â‚¹${activeMeta.floodlightsSurcharge}/hr (Night)` : 'Included in Night Play'}
+                            {activeMeta.floodlightsSurcharge ? `₹${activeMeta.floodlightsSurcharge}/hr (Night)` : 'Included in Night Play'}
                           </span>
                         </div>
                       </div>
 
                       <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-lg shrink-0">
-                          ðŸ›¡ï¸
+                          🛡️
                         </div>
                         <div className="min-w-0">
                           <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">On-site Official</span>
@@ -3358,7 +3358,7 @@ export default function VenueProfilePage() {
                     <div className="p-3.5 sm:p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40 flex items-center justify-between gap-3 text-emerald-900 dark:text-emerald-200">
                       <div className="flex items-center gap-3">
                         <div className="h-9 w-9 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-base shrink-0 shadow-xs">
-                          {isStudio ? 'ðŸ’¡' : 'âš½'}
+                          {isStudio ? '💡' : '⚽'}
                         </div>
                         <div>
                           <span className="text-xs font-black block">{isStudio ? 'Included Studio Inclusions & Equipment' : 'Included Playing Gear'}</span>
@@ -3367,7 +3367,7 @@ export default function VenueProfilePage() {
                           </span>
                         </div>
                       </div>
-                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 shrink-0">â€º</span>
+                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 shrink-0">›</span>
                     </div>
 
                     {/* Court Photos Gallery Section */}
@@ -3384,10 +3384,10 @@ export default function VenueProfilePage() {
                         <div className="space-y-3 pt-2">
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-                              <span className="text-sm">ðŸ“·</span> Court Photos ({courtImages.length})
+                              <span className="text-sm">📷</span> Court Photos ({courtImages.length})
                             </span>
                             <span className="text-xs font-bold text-[#033266] dark:text-[#ff6325] hover:underline cursor-pointer">
-                              View all â€º
+                              View all ›
                             </span>
                           </div>
 
@@ -3592,7 +3592,7 @@ export default function VenueProfilePage() {
 
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                      âš¡ Available Slots for {targetDayOfWeek} ({daySlots.length} Slots â€¢ {sportsDurationHours} Hr Duration)
+                      ⚡ Available Slots for {targetDayOfWeek} ({daySlots.length} Slots • {sportsDurationHours} Hr Duration)
                     </span>
                   </div>
 
@@ -3621,7 +3621,7 @@ export default function VenueProfilePage() {
                             setPricingResult({
                               ...calc,
                               finalPayable: slotPrice,
-                              breakdownSummary: `â‚¹${slotPrice} / slot (${sportsDurationHours}h)`
+                              breakdownSummary: `₹${slotPrice} / slot (${sportsDurationHours}h)`
                             });
                             setIsPricingCalculating(false);
                           }}
@@ -3633,7 +3633,7 @@ export default function VenueProfilePage() {
                           <span className="text-xs font-black block">{slot.startTime}</span>
                           <span className="text-[10px] opacity-75 font-semibold mt-0.5 block">to {slot.endTime}</span>
                           <span className={`text-[10px] font-black mt-1 block ${isSelected ? 'text-white' : 'text-[#ff6325] dark:text-amber-400'}`}>
-                            â‚¹{slotPrice}
+                            ₹{slotPrice}
                           </span>
                         </button>
                       );
@@ -3651,9 +3651,9 @@ export default function VenueProfilePage() {
               const activeMetaObj = activeListingObj.metadata || {};
               const sportFallbackCfg = getSportCategoryConfig(category);
               const defaultAddonsList = sportFallbackCfg?.addons || [
-                { id: 'referee', name: 'Certified Match Referee', price: 300, icon: 'ðŸ‘¨â€âš–ï¸', desc: 'Official qualified referee for 60 mins match management & fair play.' },
-                { id: 'video', name: 'High-Res Match Video Recording', price: 500, icon: 'ðŸ“¹', desc: 'Full match recording delivered via HD cloud link within 24 hours.' },
-                { id: 'drinks', name: 'Chilled Energy Drinks (Pack of 6)', price: 250, icon: 'ðŸ§´', desc: 'Ice-chilled electrolyte sports beverages ready at bench.' }
+                { id: 'referee', name: 'Certified Match Referee', price: 300, icon: '👨‍⚖️', desc: 'Official qualified referee for 60 mins match management & fair play.' },
+                { id: 'video', name: 'High-Res Match Video Recording', price: 500, icon: '📹', desc: 'Full match recording delivered via HD cloud link within 24 hours.' },
+                { id: 'drinks', name: 'Chilled Energy Drinks (Pack of 6)', price: 250, icon: '🧴', desc: 'Ice-chilled electrolyte sports beverages ready at bench.' }
               ];
               const availableAddons = (Array.isArray(activeMetaObj.addons) && activeMetaObj.addons.length > 0)
                 ? activeMetaObj.addons
@@ -3675,15 +3675,15 @@ export default function VenueProfilePage() {
                   <div className="space-y-1 text-center sm:text-left">
                     <div className="flex items-center justify-center sm:justify-start gap-2">
                       <span className="text-sm font-black text-white">
-                        {category === 'badminton' ? 'ðŸ¸' : category === 'tennis' ? 'ðŸŽ¾' : category === 'cricket-ground' ? 'ðŸ' : category === 'basketball' ? 'ðŸ€' : category === 'swimming' ? 'ðŸŠ' : category === 'play-arena' ? 'ðŸ§—' : 'âš½'} {selectedTurfService?.name || 'Unit Slot'}
+                        {category === 'badminton' ? '🏸' : category === 'tennis' ? '🎾' : category === 'cricket-ground' ? '🏏' : category === 'basketball' ? '🏀' : category === 'swimming' ? '🏊' : category === 'play-arena' ? '🧗' : '⚽'} {selectedTurfService?.name || 'Unit Slot'}
                       </span>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
                         Slot Reserved (5m hold)
                       </span>
                     </div>
                     <span className="text-xs text-blue-100 block font-medium">
-                      ðŸ“… {selectedDate} â€¢ â° {selectedHourSlot}
-                      {selectedTurfAddons.length > 0 && ` â€¢ ${selectedTurfAddons.length} Add-on(s) (+â‚¹${addonsTotal})`}
+                      📅 {selectedDate} • ⏰ {selectedHourSlot}
+                      {selectedTurfAddons.length > 0 && ` • ${selectedTurfAddons.length} Add-on(s) (+₹${addonsTotal})`}
                     </span>
                   </div>
 
@@ -3691,7 +3691,7 @@ export default function VenueProfilePage() {
                     <div className="text-right">
                       <span className="text-[10px] uppercase font-bold text-blue-200 block">Total Payable</span>
                       <span className="text-2xl font-black text-amber-400">
-                        â‚¹{grandTotal.toLocaleString()}
+                        ₹{grandTotal.toLocaleString()}
                       </span>
                     </div>
 
@@ -3702,7 +3702,7 @@ export default function VenueProfilePage() {
                       }}
                       className="px-7 py-3.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-sm uppercase tracking-wider shadow-lg active:scale-95 transition-all cursor-pointer shrink-0 flex items-center gap-2"
                     >
-                      <span>âš¡</span> Continue &rarr;
+                      <span>⚡</span> Continue &rarr;
                     </button>
                   </div>
                 </motion.div>
@@ -3765,7 +3765,7 @@ export default function VenueProfilePage() {
                     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-orange-500/15 border border-amber-500/30 p-4 sm:p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
                       <div className="flex items-start sm:items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center text-xl shrink-0 shadow-sm font-black">
-                          ðŸ§³
+                          🧳
                         </div>
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
@@ -3777,7 +3777,7 @@ export default function VenueProfilePage() {
                             </span>
                           </div>
                           <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 mt-0.5">
-                            Drop your heavy bags at the frontdesk before 12 PM check-in and explore freely. Starting at just <span className="font-extrabold text-amber-600 dark:text-amber-400">â‚¹49/bag/hr</span>.
+                            Drop your heavy bags at the frontdesk before 12 PM check-in and explore freely. Starting at just <span className="font-extrabold text-amber-600 dark:text-amber-400">₹49/bag/hr</span>.
                           </p>
                         </div>
                       </div>
@@ -4019,12 +4019,12 @@ export default function VenueProfilePage() {
                               {/* Remaining Units / Sold Out Badge */}
                               {isSoldOut ? (
                                 <div className="absolute top-3 left-3 bg-rose-600/95 backdrop-blur-md px-3 py-1 rounded-xl text-[11px] font-black text-white flex items-center gap-1.5 shadow-md">
-                                  <span>ðŸš«</span>
+                                  <span>🚫</span>
                                   <span>SOLD OUT</span>
                                 </div>
                               ) : isLowAvailability ? (
                                 <div className="absolute top-3 left-3 bg-amber-500/95 backdrop-blur-md px-3 py-1 rounded-xl text-[11px] font-black text-slate-950 flex items-center gap-1.5 shadow-md animate-pulse">
-                                  <span>ðŸ”¥</span>
+                                  <span>🔥</span>
                                   <span>ONLY {totalUnitsConfig} {isPgStay ? 'BED' : 'UNIT'}{totalUnitsConfig > 1 ? 'S' : ''} LEFT</span>
                                 </div>
                               ) : (
@@ -4046,7 +4046,7 @@ export default function VenueProfilePage() {
                                 }}
                                 className="absolute bottom-3 left-3 px-3 py-1.5 rounded-xl bg-black/75 hover:bg-black/90 backdrop-blur-md text-white text-[11px] font-bold shadow-md flex items-center gap-1.5 cursor-pointer transition-all"
                               >
-                                <span>ðŸ“·</span>
+                                <span>📷</span>
                                 <span>See Photos ({roomGallery.length})</span>
                               </button>
 
@@ -4107,7 +4107,7 @@ export default function VenueProfilePage() {
 
                               <div className="flex items-center gap-2 mt-1">
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-600 text-white font-black text-xs">
-                                  â˜… {roomRating}
+                                  ★ {roomRating}
                                 </span>
                                 <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                                   ({totalReviews} Reviews)
@@ -4171,7 +4171,7 @@ export default function VenueProfilePage() {
                                     const formattedPerk = cleanPerk.charAt(0).toUpperCase() + cleanPerk.slice(1);
                                     return (
                                       <div key={pIdx} className="flex items-start gap-2 font-bold text-slate-800 dark:text-slate-200">
-                                        <span className="text-[#033266] dark:text-[#ff6325] text-sm shrink-0 mt-0.5">âœ¨</span>
+                                        <span className="text-[#033266] dark:text-[#ff6325] text-sm shrink-0 mt-0.5">✨</span>
                                         <span className="leading-snug">{formattedPerk}</span>
                                       </div>
                                     );
@@ -4179,19 +4179,19 @@ export default function VenueProfilePage() {
                                 ) : (
                                   <>
                                     <div className="flex items-start gap-2 font-bold text-slate-800 dark:text-slate-200">
-                                      <span className="text-[#033266] dark:text-[#ff6325] text-sm shrink-0 mt-0.5">ðŸŠ</span>
+                                      <span className="text-[#033266] dark:text-[#ff6325] text-sm shrink-0 mt-0.5">🏊</span>
                                       <span className="leading-snug">Private Plunge Pool</span>
                                     </div>
                                     <div className="flex items-start gap-2 font-bold text-slate-800 dark:text-slate-200">
-                                      <span className="text-[#033266] dark:text-[#ff6325] text-sm shrink-0 mt-0.5">ðŸŒ…</span>
+                                      <span className="text-[#033266] dark:text-[#ff6325] text-sm shrink-0 mt-0.5">🌅</span>
                                       <span className="leading-snug">Sunset Deck View</span>
                                     </div>
                                     <div className="flex items-start gap-2 font-bold text-slate-800 dark:text-slate-200">
-                                      <span className="text-[#033266] dark:text-[#ff6325] text-sm shrink-0 mt-0.5">ðŸ³</span>
+                                      <span className="text-[#033266] dark:text-[#ff6325] text-sm shrink-0 mt-0.5">🍳</span>
                                       <span className="leading-snug">Floating Breakfast</span>
                                     </div>
                                     <div className="flex items-start gap-2 font-bold text-slate-800 dark:text-slate-200">
-                                      <span className="text-[#033266] dark:text-[#ff6325] text-sm shrink-0 mt-0.5">ðŸ›Žï¸</span>
+                                      <span className="text-[#033266] dark:text-[#ff6325] text-sm shrink-0 mt-0.5">🛎️</span>
                                       <span className="leading-snug">24/7 Butler Support</span>
                                     </div>
                                   </>
@@ -4212,18 +4212,18 @@ export default function VenueProfilePage() {
                                 )}
                                 {roomSize && (
                                   <div className="flex items-start gap-2 font-bold text-slate-800 dark:text-slate-200">
-                                    <span className="text-xs shrink-0 mt-0.5">ðŸ“</span>
-                                    <span className="leading-snug">{roomSize} sq.ft / {(Number(roomSize) * 0.0929).toFixed(0)} mÂ²</span>
+                                    <span className="text-xs shrink-0 mt-0.5">📐</span>
+                                    <span className="leading-snug">{roomSize} sq.ft / {(Number(roomSize) * 0.0929).toFixed(0)} m²</span>
                                   </div>
                                 )}
                                 {bathroomType && (
                                   <div className="flex items-start gap-2 font-bold text-slate-800 dark:text-slate-200">
-                                    <span className="text-xs shrink-0 mt-0.5">ðŸš¿</span>
+                                    <span className="text-xs shrink-0 mt-0.5">🚿</span>
                                     <span className="leading-snug">{bathroomType} Ensuite</span>
                                   </div>
                                 )}
                                 <div className="flex items-start gap-2 font-bold text-slate-800 dark:text-slate-200">
-                                  <span className="shrink-0 mt-0.5">{isNonAc ? 'ðŸ’¨' : 'â„ï¸'}</span>
+                                  <span className="shrink-0 mt-0.5">{isNonAc ? '💨' : '❄️'}</span>
                                   <span className="leading-snug">{isNonAc ? 'Non-AC / Fan' : 'Air Conditioned'}</span>
                                 </div>
                               </div>
@@ -4269,7 +4269,7 @@ export default function VenueProfilePage() {
                             {/* Strikethrough original rate & Discount Badge */}
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-medium text-slate-400 line-through">
-                                â‚¹{originalPrice.toLocaleString()}
+                                ₹{originalPrice.toLocaleString()}
                               </span>
                               <span className="px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-[11px] font-black border border-rose-200 dark:border-rose-900/40">
                                 -{discountPct}%
@@ -4279,7 +4279,7 @@ export default function VenueProfilePage() {
                             {/* Main Nightly / Monthly Price */}
                             <div className="mt-1">
                               <span className="text-3xl font-black text-[#033266] dark:text-[#ff6325] tracking-tight">
-                                â‚¹{startingPrice.toLocaleString()}
+                                ₹{startingPrice.toLocaleString()}
                               </span>
                               <span className="text-[11px] text-slate-400 dark:text-slate-500 font-semibold block">
                                 {(() => {
@@ -4295,8 +4295,8 @@ export default function VenueProfilePage() {
                             {/* Total Stay Price or Deposit Calculation */}
                             <div className="mt-2 text-xs font-bold text-slate-800 dark:text-slate-200">
                               {isPgStay 
-                                ? `Refundable Deposit: â‚¹${Number((roomItem.listing as any)?.securityDeposit ?? listingMeta.securityDeposit ?? roomItem.metadata?.refundableDeposit ?? 3000).toLocaleString()}`
-                                : `Total: â‚¹${stayTotal.toLocaleString()} (${nights} Night${nights > 1 ? 's' : ''})`
+                                ? `Refundable Deposit: ₹${Number((roomItem.listing as any)?.securityDeposit ?? listingMeta.securityDeposit ?? roomItem.metadata?.refundableDeposit ?? 3000).toLocaleString()}`
+                                : `Total: ₹${stayTotal.toLocaleString()} (${nights} Night${nights > 1 ? 's' : ''})`
                               }
                             </div>
 
@@ -4310,7 +4310,7 @@ export default function VenueProfilePage() {
                                       disabled
                                       className="w-full py-3.5 bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 font-black text-xs uppercase tracking-wider rounded-2xl cursor-not-allowed flex items-center justify-center gap-2 border border-slate-300 dark:border-white/10"
                                     >
-                                      <span>ðŸš« ALL BEDS OCCUPIED</span>
+                                      <span>🚫 ALL BEDS OCCUPIED</span>
                                     </button>
                                     <button
                                       type="button"
@@ -4320,7 +4320,7 @@ export default function VenueProfilePage() {
                                       }}
                                       className="w-full py-2 bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/30 dark:hover:bg-orange-900/40 text-[#ff6325] font-bold text-xs rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-1.5 border border-orange-200 dark:border-orange-900/40"
                                     >
-                                      <span>ðŸ”” Join Waitlist & Video Tour</span>
+                                      <span>🔔 Join Waitlist & Video Tour</span>
                                     </button>
                                   </>
                                 ) : (
@@ -4344,7 +4344,7 @@ export default function VenueProfilePage() {
                                     {((roomItem.listing as any)?.isTokenAdvanceEnabled ?? (listingMeta.isTokenAdvanceEnabled ?? true)) && (
                                       <div className="text-center">
                                         <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                                          ðŸ”’ Lock this bed today for just â‚¹{((roomItem.listing as any)?.tokenAdvanceAmount || listingMeta.tokenAdvanceAmount || 999).toLocaleString()}
+                                          🔒 Lock this bed today for just ₹{((roomItem.listing as any)?.tokenAdvanceAmount || listingMeta.tokenAdvanceAmount || 999).toLocaleString()}
                                         </span>
                                       </div>
                                     )}
@@ -4359,7 +4359,7 @@ export default function VenueProfilePage() {
                                         }}
                                         className="py-2 px-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-[11px] rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 border border-slate-200 dark:border-white/10"
                                       >
-                                        <span>ðŸ—“ï¸ Free Visit & Call</span>
+                                        <span>🗓️ Free Visit & Call</span>
                                       </button>
                                       <button
                                         type="button"
@@ -4369,7 +4369,7 @@ export default function VenueProfilePage() {
                                         }}
                                         className="py-2 px-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/40 text-[#1a56db] dark:text-[#60a5fa] font-bold text-[11px] rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 border border-blue-200 dark:border-blue-900/40"
                                       >
-                                        <span>ðŸ“¹ Video Tour</span>
+                                        <span>📹 Video Tour</span>
                                       </button>
                                     </div>
                                   </>
@@ -4389,7 +4389,7 @@ export default function VenueProfilePage() {
                                   } else {
                                     const roomPrice = startingPrice;
                                     const roomTotal = roomPrice * nights * rooms;
-                                    const slotStr = `${checkIn} to ${checkOut} (${nights} Night${nights > 1 ? 's' : ''}) â€¢ ${adults + children} Guests â€¢ ${rooms} Room${rooms > 1 ? 's' : ''}`;
+                                    const slotStr = `${checkIn} to ${checkOut} (${nights} Night${nights > 1 ? 's' : ''}) • ${adults + children} Guests • ${rooms} Room${rooms > 1 ? 's' : ''}`;
 
                                     const isBackpackersHostel = category === 'hostels' || venueName.toLowerCase().includes('backpackers');
                                     const effectiveMerchantId = isBackpackersHostel ? '51c6a3b8-2abc-9421-7644-2a2dea05dbc0' : (servicePayloadForModal.merchantId || merchantId);
@@ -4398,7 +4398,7 @@ export default function VenueProfilePage() {
                                     setSelectedService({
                                       ...servicePayloadForModal,
                                       price: roomTotal,
-                                      name: `${effectiveMerchantName} â€” ${roomItem.name}`,
+                                      name: `${effectiveMerchantName} — ${roomItem.name}`,
                                       merchantId: effectiveMerchantId,
                                       merchantName: effectiveMerchantName,
                                       merchant: {
@@ -4457,10 +4457,10 @@ export default function VenueProfilePage() {
 
                             {/* Micro guarantee badge */}
                             <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 text-center mt-2.5 flex items-center justify-center gap-2 flex-wrap">
-                              <span>FREE Cancellation â€¢ Pay later available</span>
+                              <span>FREE Cancellation • Pay later available</span>
                               {isHotelLuggageEnabled && (
                                 <>
-                                  <span className="text-slate-300 dark:text-slate-600">â€¢</span>
+                                  <span className="text-slate-300 dark:text-slate-600">•</span>
                                   <button
                                     type="button"
                                     onClick={(e) => {
@@ -4473,7 +4473,7 @@ export default function VenueProfilePage() {
                                     }}
                                     className="text-amber-600 dark:text-amber-400 hover:underline font-extrabold flex items-center gap-1 cursor-pointer"
                                   >
-                                    <span>ðŸ§³ Luggage Drop (â‚¹{hotelLuggageHourlyRate}/hr)</span>
+                                    <span>🧳 Luggage Drop (₹{hotelLuggageHourlyRate}/hr)</span>
                                   </button>
                                 </>
                               )}
@@ -4482,7 +4482,7 @@ export default function VenueProfilePage() {
                             {/* Urgent Scarcity Callout Box with Dynamic Merchant Offer Badge */}
                             {(offerBadgeText || !isPgStay) && (
                               <div className="mt-3 p-3 rounded-2xl bg-sky-50 dark:bg-sky-950/30 border border-sky-100 dark:border-sky-900/30 flex items-start gap-2.5">
-                                <span className="text-[#033266] dark:text-[#ff6325] font-black text-base shrink-0 leading-none">âš¡</span>
+                                <span className="text-[#033266] dark:text-[#ff6325] font-black text-base shrink-0 leading-none">⚡</span>
                                 <div>
                                   <span className="text-xs font-black text-slate-900 dark:text-white block">
                                     {offerBadgeText ? offerBadgeText : `Only ${roomItem.listing?.metadata?.totalUnits || 3} units left at this price!`}
@@ -4528,7 +4528,7 @@ export default function VenueProfilePage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
               <div>
                 <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>ðŸ©º</span> Doctor Appointment & Token Queue
+                  <span>🩺</span> Doctor Appointment & Token Queue
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   Guaranteed slot with live OPD token queue estimate to avoid waiting room congestion.
@@ -4536,7 +4536,7 @@ export default function VenueProfilePage() {
               </div>
 
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50 text-xs font-bold">
-                <span>â±ï¸ Live Token Serving: #{tokenQueueNum - 3}</span>
+                <span>⏱️ Live Token Serving: #{tokenQueueNum - 3}</span>
               </div>
             </div>
 
@@ -4547,8 +4547,8 @@ export default function VenueProfilePage() {
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
-                  { name: 'Dr. Rajesh Kumar (Senior Consultant)', fee: 600, exp: '14+ yrs exp â€¢ MBBS, MD' },
-                  { name: 'Dr. Priya Sundaram (Associate Specialist)', fee: 450, exp: '8+ yrs exp â€¢ DNB, Fellow' }
+                  { name: 'Dr. Rajesh Kumar (Senior Consultant)', fee: 600, exp: '14+ yrs exp • MBBS, MD' },
+                  { name: 'Dr. Priya Sundaram (Associate Specialist)', fee: 450, exp: '8+ yrs exp • DNB, Fellow' }
                 ].map(spec => (
                   <div
                     key={spec.name}
@@ -4562,7 +4562,7 @@ export default function VenueProfilePage() {
                       <h4 className="text-xs font-black text-slate-900 dark:text-white">{spec.name}</h4>
                       <p className="text-[10px] text-slate-500 dark:text-slate-400">{spec.exp}</p>
                     </div>
-                    <span className="text-sm font-black text-[#033266] dark:text-[#ff6325]">â‚¹{spec.fee}</span>
+                    <span className="text-sm font-black text-[#033266] dark:text-[#ff6325]">₹{spec.fee}</span>
                   </div>
                 ))}
               </div>
@@ -4743,7 +4743,7 @@ export default function VenueProfilePage() {
                     {selectedPractitioner}
                   </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
-                    {selectedDate} at {selectedApptSlot} â€¢ Est. Token #{tokenQueueNum}
+                    {selectedDate} at {selectedApptSlot} • Est. Token #{tokenQueueNum}
                   </span>
                 </div>
                 <button
@@ -4752,7 +4752,7 @@ export default function VenueProfilePage() {
                     const fee = selectedPractitioner.includes('Rajesh') ? 600 : 450;
                     setSelectedService({
                       id: `appt-${Date.now()}`,
-                      name: `${venueName} â€” ${selectedPractitioner}`,
+                      name: `${venueName} — ${selectedPractitioner}`,
                       price: fee,
                       metadata: {
                         appointmentBooking: {
@@ -4775,7 +4775,7 @@ export default function VenueProfilePage() {
                   }}
                   className="px-6 py-3 rounded-xl bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer w-full sm:w-auto"
                 >
-                  Confirm Appointment (â‚¹{selectedPractitioner.includes('Rajesh') ? '600' : '450'}) &rarr;
+                  Confirm Appointment (₹{selectedPractitioner.includes('Rajesh') ? '600' : '450'}) &rarr;
                 </button>
               </div>
             )}
@@ -4814,7 +4814,7 @@ export default function VenueProfilePage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
                 <div>
                   <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                    <span>âœ¨</span> Salon & Spa Appointment Booking
+                    <span>✨</span> Salon & Spa Appointment Booking
                   </h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     Select your beauty, grooming & spa rituals. Certified master stylists & private luxury suites.
@@ -4822,7 +4822,7 @@ export default function VenueProfilePage() {
                 </div>
 
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 text-xs font-bold">
-                  <span>âœ“ 100% Sanitized Equipment & Single-Use Kits</span>
+                  <span>✓ 100% Sanitized Equipment & Single-Use Kits</span>
                 </div>
               </div>
 
@@ -4833,7 +4833,7 @@ export default function VenueProfilePage() {
                     1. Choose Master Stylist / Spa Therapist
                   </label>
                   <span className="text-[11px] font-bold text-[#ff6325]">
-                    â­ Highly Rated Practitioners
+                    ⭐ Highly Rated Practitioners
                   </span>
                 </div>
 
@@ -4859,7 +4859,7 @@ export default function VenueProfilePage() {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between">
                             <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">{spec.name}</h4>
-                            <span className="text-[10px] font-extrabold text-amber-500">â˜… {spec.rating}</span>
+                            <span className="text-[10px] font-extrabold text-amber-500">★ {spec.rating}</span>
                           </div>
                           <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{spec.role}</p>
                           <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold block mt-0.5">
@@ -4883,10 +4883,10 @@ export default function VenueProfilePage() {
                   <div className="flex flex-wrap items-center gap-1.5">
                     {[
                       { id: 'ALL', label: 'All Services' },
-                      { id: 'HAIR', label: 'âœ‚ï¸ Haircut' },
-                      { id: 'BEARD', label: 'ðŸ§” Beard' },
-                      { id: 'SKIN_FACIAL', label: 'âœ¨ Facial' },
-                      { id: 'SPA_MASSAGE', label: 'ðŸ’† Spa Massage' }
+                      { id: 'HAIR', label: '✂️ Haircut' },
+                      { id: 'BEARD', label: '🧔 Beard' },
+                      { id: 'SKIN_FACIAL', label: '✨ Facial' },
+                      { id: 'SPA_MASSAGE', label: '💆 Spa Massage' }
                     ].map((tab) => (
                       <button
                         key={tab.id}
@@ -4926,7 +4926,7 @@ export default function VenueProfilePage() {
                         }`}
                       >
                         <div className="flex items-start gap-3">
-                          <span className="text-2xl shrink-0 mt-0.5">{trt.icon || 'âœ¨'}</span>
+                          <span className="text-2xl shrink-0 mt-0.5">{trt.icon || '✨'}</span>
                           <div>
                             <div className="flex items-center gap-2">
                               <h4 className="text-xs font-extrabold text-slate-900 dark:text-white">{trt.name}</h4>
@@ -4941,11 +4941,11 @@ export default function VenueProfilePage() {
                         </div>
 
                         <div className="text-right shrink-0">
-                          <span className="text-sm font-black text-[#ff6325]">â‚¹{trt.price}</span>
+                          <span className="text-sm font-black text-[#ff6325]">₹{trt.price}</span>
                           <span className={`block text-[10px] font-bold mt-1 px-2 py-0.5 rounded-lg ${
                             isSelected ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                           }`}>
-                            {isSelected ? 'âœ“ Added' : '+ Add'}
+                            {isSelected ? '✓ Added' : '+ Add'}
                           </span>
                         </div>
                       </div>
@@ -5113,10 +5113,10 @@ export default function VenueProfilePage() {
                 <div className="p-5 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-transparent border border-[#ff6325]/30 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div>
                     <span className="text-xs font-black text-slate-900 dark:text-white block">
-                      {selectedWellnessStylist} â€¢ {selectedTreatments.length} Service{selectedTreatments.length > 1 ? 's' : ''} ({totalSelectedDuration} mins)
+                      {selectedWellnessStylist} • {selectedTreatments.length} Service{selectedTreatments.length > 1 ? 's' : ''} ({totalSelectedDuration} mins)
                     </span>
                     <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
-                      ðŸ“… {selectedDate} at {selectedApptSlot} â€¢ Guaranteed Zero Waiting Time
+                      📅 {selectedDate} at {selectedApptSlot} • Guaranteed Zero Waiting Time
                     </span>
                   </div>
                   <button
@@ -5124,7 +5124,7 @@ export default function VenueProfilePage() {
                     onClick={() => {
                       setSelectedService({
                         id: `wellness-${Date.now()}`,
-                        name: `${venueName} â€” ${selectedWellnessStylist}`,
+                        name: `${venueName} — ${selectedWellnessStylist}`,
                         price: totalSelectedPrice,
                         metadata: {
                           appointmentBooking: {
@@ -5147,7 +5147,7 @@ export default function VenueProfilePage() {
                     }}
                     className="px-6 py-3 rounded-xl bg-[#ff6325] hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer w-full sm:w-auto"
                   >
-                    Confirm Booking (â‚¹{totalSelectedPrice.toLocaleString()}) &rarr;
+                    Confirm Booking (₹{totalSelectedPrice.toLocaleString()}) &rarr;
                   </button>
                 </div>
               )}
@@ -5180,7 +5180,7 @@ export default function VenueProfilePage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
                 <div>
                   <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                    <span>ðŸ‹ï¸</span> Gym Day Pass & Yoga Batch Booking
+                    <span>🏋️</span> Gym Day Pass & Yoga Batch Booking
                   </h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     Book daily workout slots, certified trainer sessions & group yoga batches. Instant barcode entry.
@@ -5188,7 +5188,7 @@ export default function VenueProfilePage() {
                 </div>
 
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50 text-xs font-bold">
-                  <span>âš¡ Instant QR / NFC Turnstile Pass</span>
+                  <span>⚡ Instant QR / NFC Turnstile Pass</span>
                 </div>
               </div>
 
@@ -5203,9 +5203,9 @@ export default function VenueProfilePage() {
                   <div className="flex flex-wrap items-center gap-1.5">
                     {[
                       { id: 'ALL', label: 'All Passes' },
-                      { id: 'OPEN_GYM', label: 'ðŸ‹ï¸ Open Gym' },
-                      { id: 'YOGA_CLASS', label: 'ðŸ§˜ Yoga Classes' },
-                      { id: 'PERSONAL_TRAINING', label: 'ðŸ’ª 1-on-1 PT' }
+                      { id: 'OPEN_GYM', label: '🏋️ Open Gym' },
+                      { id: 'YOGA_CLASS', label: '🧘 Yoga Classes' },
+                      { id: 'PERSONAL_TRAINING', label: '💪 1-on-1 PT' }
                     ].map((tab) => (
                       <button
                         key={tab.id}
@@ -5237,7 +5237,7 @@ export default function VenueProfilePage() {
                         }`}
                       >
                         <div className="flex items-start gap-3">
-                          <span className="text-2xl shrink-0 mt-0.5">{pass.icon || 'ðŸ‹ï¸'}</span>
+                          <span className="text-2xl shrink-0 mt-0.5">{pass.icon || '🏋️'}</span>
                           <div>
                             <div className="flex items-center gap-2">
                               <h4 className="text-xs font-extrabold text-slate-900 dark:text-white">{pass.name}</h4>
@@ -5252,7 +5252,7 @@ export default function VenueProfilePage() {
                               <div className="flex flex-wrap gap-1 mt-2">
                                 {pass.amenities.map((am: string, idx: number) => (
                                   <span key={idx} className="text-[9px] font-bold px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 rounded border border-emerald-200/50">
-                                    âœ“ {am}
+                                    ✓ {am}
                                   </span>
                                 ))}
                               </div>
@@ -5261,11 +5261,11 @@ export default function VenueProfilePage() {
                         </div>
 
                         <div className="text-right shrink-0">
-                          <span className="text-sm font-black text-[#ff6325]">â‚¹{pass.price}</span>
+                          <span className="text-sm font-black text-[#ff6325]">₹{pass.price}</span>
                           <span className={`block text-[10px] font-bold mt-1 px-2.5 py-1 rounded-lg ${
                             isSelected ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                           }`}>
-                            {isSelected ? 'âœ“ Selected' : 'Choose'}
+                            {isSelected ? '✓ Selected' : 'Choose'}
                           </span>
                         </div>
                       </div>
@@ -5292,11 +5292,11 @@ export default function VenueProfilePage() {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-bold text-slate-900 dark:text-white truncate">{tr.name}</span>
-                            <span className="text-[10px] font-extrabold text-amber-500">â˜… {tr.rating}</span>
+                            <span className="text-[10px] font-extrabold text-amber-500">★ {tr.rating}</span>
                           </div>
                           <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">{tr.role}</span>
                           <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold block mt-0.5">
-                            {tr.experienceYears}+ yrs exp â€¢ {tr.specialties?.slice(0, 2).join(', ')}
+                            {tr.experienceYears}+ yrs exp • {tr.specialties?.slice(0, 2).join(', ')}
                           </span>
                         </div>
                       </div>
@@ -5460,10 +5460,10 @@ export default function VenueProfilePage() {
               <div className="p-5 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-transparent border border-[#ff6325]/30 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
                   <span className="text-xs font-black text-slate-900 dark:text-white block">
-                    {activePass.name} â€¢ â‚¹{activePass.price}
+                    {activePass.name} • ₹{activePass.price}
                   </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
-                    ðŸ“… {selectedDate || todayStr} at {selectedFitnessTimeSlot} â€¢ Direct Turnstile QR Pass
+                    📅 {selectedDate || todayStr} at {selectedFitnessTimeSlot} • Direct Turnstile QR Pass
                   </span>
                 </div>
                 <button
@@ -5471,7 +5471,7 @@ export default function VenueProfilePage() {
                   onClick={() => {
                     setSelectedService({
                       id: `fitness-${Date.now()}`,
-                      name: `${venueName} â€” ${activePass.name}`,
+                      name: `${venueName} — ${activePass.name}`,
                       price: activePass.price,
                       metadata: {
                         isFitnessBooking: true,
@@ -5495,7 +5495,7 @@ export default function VenueProfilePage() {
                   }}
                   className="px-6 py-3 rounded-xl bg-[#ff6325] hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer w-full sm:w-auto"
                 >
-                  Book Fitness Pass (â‚¹{activePass.price}) &rarr;
+                  Book Fitness Pass (₹{activePass.price}) &rarr;
                 </button>
               </div>
             </div>
@@ -5510,7 +5510,7 @@ export default function VenueProfilePage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
               <div>
                 <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>ðŸš—</span> Vehicle / Equipment Rental Selection
+                  <span>🚗</span> Vehicle / Equipment Rental Selection
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   100% Tax-Exempt Security Deposit refunded immediately upon safe return.
@@ -5518,7 +5518,7 @@ export default function VenueProfilePage() {
               </div>
 
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 text-xs font-bold">
-                <span>ðŸ›¡ï¸ Zero Deposit Deductions Guarantee</span>
+                <span>🛡️ Zero Deposit Deductions Guarantee</span>
               </div>
             </div>
 
@@ -5567,7 +5567,7 @@ export default function VenueProfilePage() {
             {/* Mandatory DL / ID Verification Notice */}
             <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">ðŸªª</span>
+                <span className="text-2xl">🪪</span>
                 <div>
                   <h4 className="text-xs font-extrabold text-amber-900 dark:text-amber-200">
                     Mandatory Driving License / Govt ID Check
@@ -5578,7 +5578,7 @@ export default function VenueProfilePage() {
                 </div>
               </div>
               <label className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold cursor-pointer transition-all shadow-xs shrink-0">
-                <span>{uploadedDlName ? `âœ“ ${uploadedDlName}` : 'Upload DL / ID Document'}</span>
+                <span>{uploadedDlName ? `✓ ${uploadedDlName}` : 'Upload DL / ID Document'}</span>
                 <input
                   type="file"
                   accept="image/*,.pdf"
@@ -5597,7 +5597,7 @@ export default function VenueProfilePage() {
                   {liveServices[0]?.name || 'Standard Vehicle Rental'}
                 </span>
                 <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
-                  â‚¹1,500/day Ã— {rentalDays} days (â‚¹{1500 * rentalDays}) + â‚¹2,000 Refundable Security Deposit
+                  ₹1,500/day × {rentalDays} days (₹{1500 * rentalDays}) + ₹2,000 Refundable Security Deposit
                 </span>
               </div>
 
@@ -5605,7 +5605,7 @@ export default function VenueProfilePage() {
                 <div className="text-right">
                   <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Payable</span>
                   <span className="text-xl font-black text-[#033266] dark:text-[#ff6325]">
-                    â‚¹{(1500 * rentalDays + 2000).toLocaleString()}
+                    ₹{(1500 * rentalDays + 2000).toLocaleString()}
                   </span>
                 </div>
 
@@ -5617,7 +5617,7 @@ export default function VenueProfilePage() {
                     const total = baseDaily * rentalDays + deposit;
                     setSelectedService({
                       id: `rental-${Date.now()}`,
-                      name: `${venueName} â€” Rental`,
+                      name: `${venueName} — Rental`,
                       price: total,
                       metadata: {
                         rentalBooking: {
@@ -5656,17 +5656,17 @@ export default function VenueProfilePage() {
           const dynamicFormats: Array<{ id: string; label: string; sub: string; icon: string }> = (activeEntSvc?.metadata?.formats && Array.isArray(activeEntSvc.metadata.formats))
             ? activeEntSvc.metadata.formats.map((fmt: any) => {
                 if (typeof fmt === 'string') {
-                  const icon = fmt.includes('IMAX') ? 'ðŸŽ¥' : fmt.includes('Atmos') ? 'ðŸ”Š' : fmt.includes('4DX') ? 'âš¡' : 'ðŸ‘“';
+                  const icon = fmt.includes('IMAX') ? '🎥' : fmt.includes('Atmos') ? '🔊' : fmt.includes('4DX') ? '⚡' : '👓';
                   const sub = fmt.includes('IMAX') ? 'Next-Gen 4K Laser Projection' : fmt.includes('Atmos') ? 'Immersive 64-Channel Spatial Audio' : fmt.includes('4DX') ? 'Synchronised Motion Seats' : 'Crystal Clear Digital Laser';
                   return { id: fmt, label: fmt, sub, icon };
                 }
-                return { id: fmt.id || fmt.name, label: fmt.label || fmt.name, sub: fmt.sub || 'Cinema Standard', icon: fmt.icon || 'ðŸŽ¥' };
+                return { id: fmt.id || fmt.name, label: fmt.label || fmt.name, sub: fmt.sub || 'Cinema Standard', icon: fmt.icon || '🎥' };
               })
             : [
-                { id: 'IMAX Laser 3D', label: 'IMAX Laser 3D', sub: 'Next-Gen 4K Laser Projection', icon: 'ðŸŽ¥' },
-                { id: 'Dolby Atmos 7.1', label: 'Dolby Atmos 7.1', sub: 'Immersive 64-Channel Spatial Audio', icon: 'ðŸ”Š' },
-                { id: '4DX Motion', label: '4DX Motion & Scent', sub: 'Synchronised Motion Seats', icon: 'âš¡' },
-                { id: 'RealD 3D / 2D', label: 'RealD 3D / 2D Standard', sub: 'Crystal Clear Digital Laser', icon: 'ðŸ‘“' }
+                { id: 'IMAX Laser 3D', label: 'IMAX Laser 3D', sub: 'Next-Gen 4K Laser Projection', icon: '🎥' },
+                { id: 'Dolby Atmos 7.1', label: 'Dolby Atmos 7.1', sub: 'Immersive 64-Channel Spatial Audio', icon: '🔊' },
+                { id: '4DX Motion', label: '4DX Motion & Scent', sub: 'Synchronised Motion Seats', icon: '⚡' },
+                { id: 'RealD 3D / 2D', label: 'RealD 3D / 2D Standard', sub: 'Crystal Clear Digital Laser', icon: '👓' }
               ];
 
           const dynamicShowtimes: Array<{ time: string; status: string; audi: string }> = (activeEntSvc?.metadata?.showtimes && Array.isArray(activeEntSvc.metadata.showtimes))
@@ -5687,13 +5687,13 @@ export default function VenueProfilePage() {
                 id: tier.id || tier.name,
                 name: tier.name || 'Standard Tier',
                 price: Number(tier.price) || 190,
-                icon: tier.icon || 'ðŸŽŸï¸',
+                icon: tier.icon || '🎟️',
                 desc: tier.desc || 'Standard cinema seat'
               }))
             : [
-                { id: 'recliner', name: 'Royal Recliner (Lounge)', price: 380, icon: 'ðŸ‘‘', desc: 'Motorized lounger + Butler dining' },
-                { id: 'prime', name: 'Prime Circle', price: 250, icon: 'ðŸŒŸ', desc: 'Optimum center rows + Extra legroom' },
-                { id: 'classic', name: 'Classic Executive', price: 190, icon: 'ðŸŽŸï¸', desc: 'Standard cushioned cinema seat' }
+                { id: 'recliner', name: 'Royal Recliner (Lounge)', price: 380, icon: '👑', desc: 'Motorized lounger + Butler dining' },
+                { id: 'prime', name: 'Prime Circle', price: 250, icon: '🌟', desc: 'Optimum center rows + Extra legroom' },
+                { id: 'classic', name: 'Classic Executive', price: 190, icon: '🎟️', desc: 'Standard cushioned cinema seat' }
               ];
 
           const dynamicSnacks: Array<{ id: string; name: string; price: number; icon: string; desc: string }> = (activeEntSvc?.metadata?.snackAddons && Array.isArray(activeEntSvc.metadata.snackAddons))
@@ -5701,13 +5701,13 @@ export default function VenueProfilePage() {
                 id: snk.id || snk.name,
                 name: snk.name,
                 price: Number(snk.price) || 150,
-                icon: snk.icon || 'ðŸ¿',
+                icon: snk.icon || '🍿',
                 desc: snk.desc || 'Fresh cinema concession'
               }))
             : [
-                { id: 'popcorn', name: 'Tub Popcorn + Coke Combo', price: 240, icon: 'ðŸ¿', desc: 'Large Salted & Caramel popcorn tub with 500ml chilled Coke' },
-                { id: 'nachos', name: 'Warm Cheesy Nachos', price: 180, icon: 'ðŸŒ®', desc: 'Crisp tortilla chips served with warm melted jalapeno salsa dip' },
-                { id: 'coffee', name: 'Cold Coffee / Iced Tea', price: 120, icon: 'ðŸ¥¤', desc: 'Chilled refreshing brew delivered directly to your cinema lounger' }
+                { id: 'popcorn', name: 'Tub Popcorn + Coke Combo', price: 240, icon: '🍿', desc: 'Large Salted & Caramel popcorn tub with 500ml chilled Coke' },
+                { id: 'nachos', name: 'Warm Cheesy Nachos', price: 180, icon: '🌮', desc: 'Crisp tortilla chips served with warm melted jalapeno salsa dip' },
+                { id: 'coffee', name: 'Cold Coffee / Iced Tea', price: 120, icon: '🥤', desc: 'Chilled refreshing brew delivered directly to your cinema lounger' }
               ];
 
           const reclinerTier = dynamicSeatTiers.find(t => t.name.toLowerCase().includes('recliner') || t.id.toLowerCase().includes('recliner')) || dynamicSeatTiers[0];
@@ -5721,7 +5721,7 @@ export default function VenueProfilePage() {
             <div className="space-y-2 pb-4 border-b border-slate-200/80 dark:border-white/10">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <span>ðŸŽ¬</span> Now Showing At This Multiplex ({NOW_SHOWING_MOVIES.length} Movies)
+                  <span>🎬</span> Now Showing At This Multiplex ({NOW_SHOWING_MOVIES.length} Movies)
                 </span>
                 <span className="text-[10px] font-bold text-[#ff6325]">Click any poster to switch show</span>
               </div>
@@ -5746,7 +5746,7 @@ export default function VenueProfilePage() {
                       <div className="w-10 h-14 rounded-xl overflow-hidden bg-slate-900 shrink-0 relative">
                         <img src={mov.posterUrl} alt={mov.title} className="w-full h-full object-cover" />
                         <span className="absolute bottom-0 inset-x-0 bg-black/80 text-[8px] font-black text-amber-400 text-center py-0.5">
-                          â˜…{mov.rating}
+                          ★{mov.rating}
                         </span>
                       </div>
                       <div className="min-w-0 max-w-[130px]">
@@ -5754,7 +5754,7 @@ export default function VenueProfilePage() {
                           {mov.title}
                         </h4>
                         <span className="text-[10px] text-slate-400 font-medium block truncate">
-                          {mov.certificate} â€¢ {mov.runtime}
+                          {mov.certificate} • {mov.runtime}
                         </span>
                         <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 truncate block">
                           {mov.formats[0]}
@@ -5776,7 +5776,7 @@ export default function VenueProfilePage() {
                     className="w-full h-full object-cover"
                   />
                   <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-md text-amber-400 font-black text-[9px]">
-                    â˜… {activeMovie.rating}
+                    ★ {activeMovie.rating}
                   </span>
                 </div>
 
@@ -5789,7 +5789,7 @@ export default function VenueProfilePage() {
                       {activeMovie.genres.join(' / ')}
                     </span>
                     <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[10px]">
-                      â±ï¸ {activeMovie.runtime}
+                      ⏱️ {activeMovie.runtime}
                     </span>
                     <span className="px-2 py-0.5 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 font-bold text-[10px]">
                       {activeMovie.languages.join(', ')}
@@ -5797,7 +5797,7 @@ export default function VenueProfilePage() {
                   </div>
 
                   <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                    <span>ðŸŽ¬</span> {activeMovie.title}
+                    <span>🎬</span> {activeMovie.title}
                   </h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xl line-clamp-2">
                     {activeMovie.synopsis}
@@ -5806,14 +5806,14 @@ export default function VenueProfilePage() {
                   <div className="flex items-center gap-2 pt-1">
                     <span className="text-[11px] font-bold text-slate-400">At Theatre:</span>
                     <span className="text-xs font-black text-[#ff6325]">{venueName}</span>
-                    <span className="text-slate-400 text-xs">â€¢</span>
+                    <span className="text-slate-400 text-xs">•</span>
                     <span className="text-xs text-slate-400 font-medium">{address || 'Chennai Location'}</span>
                   </div>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-900/50 text-xs font-bold shrink-0 shadow-xs">
-                <span>ðŸ“± Contactless Turnstile M-Ticket</span>
+                <span>📱 Contactless Turnstile M-Ticket</span>
               </div>
             </div>
 
@@ -5824,17 +5824,17 @@ export default function VenueProfilePage() {
                   <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'SHOWTIMES' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>1</span>
                   <span>Date & Show</span>
                 </div>
-                <span className="text-slate-300 dark:text-slate-600 font-normal">â†’</span>
+                <span className="text-slate-300 dark:text-slate-600 font-normal">→</span>
                 <div className={`flex items-center gap-1.5 ${cinemaStep === 'SEAT_COUNT' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
                   <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'SEAT_COUNT' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>2</span>
                   <span>Seats Qty</span>
                 </div>
-                <span className="text-slate-300 dark:text-slate-600 font-normal">â†’</span>
+                <span className="text-slate-300 dark:text-slate-600 font-normal">→</span>
                 <div className={`flex items-center gap-1.5 ${cinemaStep === 'SEAT_LAYOUT' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
                   <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'SEAT_LAYOUT' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>3</span>
                   <span>Seat Layout</span>
                 </div>
-                <span className="text-slate-300 dark:text-slate-600 font-normal">â†’</span>
+                <span className="text-slate-300 dark:text-slate-600 font-normal">→</span>
                 <div className={`flex items-center gap-1.5 ${cinemaStep === 'FNB_DRAWER' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
                   <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'FNB_DRAWER' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>4</span>
                   <span>Grab a Bite</span>
@@ -5849,7 +5849,7 @@ export default function VenueProfilePage() {
                     : 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300'
                 }`}>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm">{seatLockExpired ? 'âš ï¸' : 'â±ï¸'}</span>
+                    <span className="text-sm">{seatLockExpired ? '⚠️' : '⏱️'}</span>
                     <span className="text-xs font-bold">
                       {seatLockExpired
                         ? 'Seats Lock Expired! Another user may book these seats.'
@@ -5998,23 +5998,23 @@ export default function VenueProfilePage() {
                 <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
                   <div>
                     <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-                      <span>ðŸŽŸï¸</span> How Many Seats?
+                      <span>🎟️</span> How Many Seats?
                     </h3>
-                    <p className="text-xs text-slate-500">{selectedAudiScreen} â€¢ {selectedShowDate} â€¢ {selectedShowTime}</p>
+                    <p className="text-xs text-slate-500">{selectedAudiScreen} • {selectedShowDate} • {selectedShowTime}</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setCinemaStep('SHOWTIMES')}
                     className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-white px-2 py-1"
                   >
-                    â† Change Time
+                    ← Change Time
                   </button>
                 </div>
 
                 {/* BMS Style Vehicles and Numbers Selector */}
                 <div className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap py-4">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => {
-                    const icon = n === 1 ? 'ðŸš²' : n === 2 ? 'ðŸ›µ' : n === 3 ? 'ðŸ›º' : n <= 5 ? 'ðŸš—' : 'ðŸšŒ';
+                    const icon = n === 1 ? '🚲' : n === 2 ? '🛵' : n === 3 ? '🛺' : n <= 5 ? '🚗' : '🚌';
                     const isSelected = passCount === n;
                     return (
                       <button
@@ -6050,7 +6050,7 @@ export default function VenueProfilePage() {
                         <h4 className="text-xs font-black text-slate-900 dark:text-white">{tier.icon} {tier.name}</h4>
                         <p className="text-[10px] text-slate-400 mt-0.5">{tier.desc}</p>
                       </div>
-                      <span className="text-sm font-black text-[#ff6325] shrink-0 ml-2">â‚¹{tier.price}</span>
+                      <span className="text-sm font-black text-[#ff6325] shrink-0 ml-2">₹{tier.price}</span>
                     </div>
                   ))}
                 </div>
@@ -6087,7 +6087,7 @@ export default function VenueProfilePage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-white/10 pb-3">
                   <div>
                     <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-                      <span>ðŸ’º</span> {selectedAudiScreen} â€” Seat Layout
+                      <span>💺</span> {selectedAudiScreen} — Seat Layout
                     </h3>
                     <p className="text-xs text-slate-500">Click any seat to select or unselect. Target: {passCount} Seat{passCount > 1 ? 's' : ''}</p>
                   </div>
@@ -6097,7 +6097,7 @@ export default function VenueProfilePage() {
                       onClick={() => setCinemaStep('SEAT_COUNT')}
                       className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-white"
                     >
-                      â† Change Qty ({passCount})
+                      ← Change Qty ({passCount})
                     </button>
                     {/* Legend */}
                     <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
@@ -6114,7 +6114,7 @@ export default function VenueProfilePage() {
                   <div className="w-3/4 mx-auto mb-6">
                     <div className="h-2.5 rounded-t-full bg-gradient-to-r from-transparent via-[#ff6325] to-transparent shadow-md shadow-orange-500/30" />
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-2">
-                      â¬‡ SCREEN THIS WAY â¬‡
+                      ⬇ SCREEN THIS WAY ⬇
                     </p>
                   </div>
 
@@ -6124,7 +6124,7 @@ export default function VenueProfilePage() {
                     <div>
                       <div className="flex items-center justify-between text-[11px] font-extrabold text-amber-600 dark:text-amber-400 mb-1.5 px-2">
                         <span>{reclinerTier.icon} {reclinerTier.name}</span>
-                        <span>â‚¹{reclinerTier.price} / seat</span>
+                        <span>₹{reclinerTier.price} / seat</span>
                       </div>
                       <div className="flex items-center justify-center gap-2">
                         <span className="text-[10px] font-bold text-slate-400 w-3 text-center">A</span>
@@ -6173,7 +6173,7 @@ export default function VenueProfilePage() {
                     <div className="pt-2 border-t border-slate-200/60 dark:border-white/5">
                       <div className="flex items-center justify-between text-[11px] font-extrabold text-blue-600 dark:text-blue-400 mb-1.5 px-2">
                         <span>{primeTier.icon} {primeTier.name}</span>
-                        <span>â‚¹{primeTier.price} / seat</span>
+                        <span>₹{primeTier.price} / seat</span>
                       </div>
                       <div className="space-y-1.5">
                         {['B', 'C', 'D'].map(row => (
@@ -6226,7 +6226,7 @@ export default function VenueProfilePage() {
                     <div className="pt-2 border-t border-slate-200/60 dark:border-white/5">
                       <div className="flex items-center justify-between text-[11px] font-extrabold text-slate-600 dark:text-slate-400 mb-1.5 px-2">
                         <span>{classicTier.icon} {classicTier.name}</span>
-                        <span>â‚¹{classicTier.price} / seat</span>
+                        <span>₹{classicTier.price} / seat</span>
                       </div>
                       <div className="space-y-1.5">
                         {['E', 'F'].map(row => (
@@ -6312,7 +6312,7 @@ export default function VenueProfilePage() {
                       return (
                         <div>
                           <span className="text-[10px] uppercase font-bold text-slate-400 block">Ticket Total</span>
-                          <span className="text-xl font-black text-[#ff6325]">â‚¹{ticketPrice.toLocaleString()}</span>
+                          <span className="text-xl font-black text-[#ff6325]">₹{ticketPrice.toLocaleString()}</span>
                         </div>
                       );
                     })()}
@@ -6339,7 +6339,7 @@ export default function VenueProfilePage() {
                 <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
                   <div>
                     <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-                      <span>ðŸ¿</span> Grab a Bite! (Pre-order & Save 20%)
+                      <span>🍿</span> Grab a Bite! (Pre-order & Save 20%)
                     </h3>
                     <p className="text-xs text-slate-500">Delicious cinema popcorn, warm nachos, and beverages delivered right to your seat</p>
                   </div>
@@ -6348,7 +6348,7 @@ export default function VenueProfilePage() {
                     onClick={() => setCinemaStep('SEAT_LAYOUT')}
                     className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-white"
                   >
-                    â† Change Seats ({selectedCinemaSeats.join(', ')})
+                    ← Change Seats ({selectedCinemaSeats.join(', ')})
                   </button>
                 </div>
 
@@ -6373,9 +6373,9 @@ export default function VenueProfilePage() {
                           </div>
                         </div>
                         <div className="flex items-center justify-between mt-4 pt-2 border-t border-slate-200/60 dark:border-white/10">
-                          <span className="text-sm font-black text-amber-600 dark:text-amber-400">+â‚¹{snk.price}</span>
+                          <span className="text-sm font-black text-amber-600 dark:text-amber-400">+₹{snk.price}</span>
                           <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${isAdded ? 'bg-amber-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>
-                            {isAdded ? 'âœ“ Added' : '+ Add'}
+                            {isAdded ? '✓ Added' : '+ Add'}
                           </span>
                         </div>
                       </div>
@@ -6404,11 +6404,11 @@ export default function VenueProfilePage() {
                     <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
                       <div>
                         <span className="text-xs font-black text-slate-900 dark:text-white block">
-                          {venueName} â€¢ {selectedAudiScreen} ({count} Ticket{count > 1 ? 's' : ''})
+                          {venueName} • {selectedAudiScreen} ({count} Ticket{count > 1 ? 's' : ''})
                         </span>
                         <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
-                          {selectedShowDate} â€¢ {selectedShowTime} â€¢ {selectedScreenFormat} â€¢ Seats: {selectedCinemaSeats.join(', ') || 'Auto-assigned'}
-                          {fnbCost > 0 ? ` â€¢ +â‚¹${fnbCost} Concessions` : ' â€¢ No F&B added'}
+                          {selectedShowDate} • {selectedShowTime} • {selectedScreenFormat} • Seats: {selectedCinemaSeats.join(', ') || 'Auto-assigned'}
+                          {fnbCost > 0 ? ` • +₹${fnbCost} Concessions` : ' • No F&B added'}
                         </span>
                       </div>
 
@@ -6416,7 +6416,7 @@ export default function VenueProfilePage() {
                         <div className="text-right">
                           <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Payable</span>
                           <span className="text-xl font-black text-[#ff6325]">
-                            â‚¹{subtotal.toLocaleString()}
+                            ₹{subtotal.toLocaleString()}
                           </span>
                         </div>
 
@@ -6425,7 +6425,7 @@ export default function VenueProfilePage() {
                           onClick={() => {
                             setSelectedService({
                               id: `ent-pass-${Date.now()}`,
-                              name: `${activeMovie.title} â€” ${selectedScreenFormat}`,
+                              name: `${activeMovie.title} — ${selectedScreenFormat}`,
                               price: subtotal,
                               imageUrl: activeMovie.posterUrl,
                               metadata: {
@@ -6457,7 +6457,7 @@ export default function VenueProfilePage() {
                             });
                             setSelectedSlot({
                               id: `ent-slot-${Date.now()}`,
-                              timeStr: `${activeMovie.title} â€¢ ${selectedShowDate} at ${selectedShowTime} (${selectedScreenFormat})`,
+                              timeStr: `${activeMovie.title} • ${selectedShowDate} at ${selectedShowTime} (${selectedScreenFormat})`,
                               date: selectedShowDate,
                               available: true
                             });
@@ -6485,15 +6485,15 @@ export default function VenueProfilePage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
               <div>
                 <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>ðŸ› ï¸</span> Doorstep Home Visit & Inspection
+                  <span>🛠️</span> Doorstep Home Visit & Inspection
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Pay only â‚¹199 inspection fee upfront. Spare parts and extra labor quoted after physical check.
+                  Pay only ₹199 inspection fee upfront. Spare parts and extra labor quoted after physical check.
                 </p>
               </div>
 
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-900/50 text-xs font-bold">
-                <span>ðŸ›¡ï¸ BOKSPOT 30-Day Service Guarantee</span>
+                <span>🛡️ BOKSPOT 30-Day Service Guarantee</span>
               </div>
             </div>
 
@@ -6513,7 +6513,7 @@ export default function VenueProfilePage() {
                       }`}
                   >
                     <span className="text-xs font-bold text-slate-900 dark:text-white">{cat}</span>
-                    <span className="text-xs font-black text-[#033266] dark:text-[#ff6325]">â‚¹199</span>
+                    <span className="text-xs font-black text-[#033266] dark:text-[#ff6325]">₹199</span>
                   </div>
                 ))}
               </div>
@@ -6567,14 +6567,14 @@ export default function VenueProfilePage() {
                   {homeIssueCategory}
                 </span>
                 <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
-                  Arrival: {preferredHomeWindow} â€¢ â‚¹199 Inspection Fee
+                  Arrival: {preferredHomeWindow} • ₹199 Inspection Fee
                 </span>
               </div>
 
               <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
                 <div className="text-right">
                   <span className="text-[10px] uppercase font-bold text-slate-400 block">Upfront Visiting Fee</span>
-                  <span className="text-xl font-black text-[#033266] dark:text-[#ff6325]">â‚¹199</span>
+                  <span className="text-xl font-black text-[#033266] dark:text-[#ff6325]">₹199</span>
                 </div>
 
                 <button
@@ -6582,7 +6582,7 @@ export default function VenueProfilePage() {
                   onClick={() => {
                     setSelectedService({
                       id: `homecall-${Date.now()}`,
-                      name: `${venueName} â€” ${homeIssueCategory}`,
+                      name: `${venueName} — ${homeIssueCategory}`,
                       price: 199,
                       metadata: {
                         homeCallBooking: {
@@ -6623,7 +6623,7 @@ export default function VenueProfilePage() {
                   {isLuxeBlindBooking && (
                     <div className="mb-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-400/40 text-amber-700 dark:text-amber-300 text-[10px] font-black uppercase tracking-wider">
                       <Sparkles size={11} className="text-amber-500" />
-                      <span>BokSpot Luxe â€¢ Confidential Blind Booking</span>
+                      <span>BokSpot Luxe • Confidential Blind Booking</span>
                     </div>
                   )}
 
@@ -6637,38 +6637,38 @@ export default function VenueProfilePage() {
                       <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-white text-[11px] font-black uppercase tracking-wider shadow-2xs ${
                         pgGenderType === 'ladies' ? 'bg-pink-600' : pgGenderType === 'gents' ? 'bg-blue-600' : 'bg-purple-600'
                       }`}>
-                        {pgGenderType === 'ladies' ? 'ðŸšº Ladies PG' : pgGenderType === 'gents' ? 'ðŸš¹ Gents PG' : 'ðŸ‘¥ Coliving Stay'}
+                        {pgGenderType === 'ladies' ? '🚺 Ladies PG' : pgGenderType === 'gents' ? '🚹 Gents PG' : '👥 Coliving Stay'}
                       </span>
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/25 text-[#ff6325] text-[11px] font-bold">
-                        <span>ðŸ”’</span> {pgGateCurfew}
+                        <span>🔒</span> {pgGateCurfew}
                       </span>
                       {pgFoodIncluded ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold">
-                          <span>ðŸ²</span> 3 Meals Included
+                          <span>🍲</span> 3 Meals Included
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[11px] font-bold">
-                          <span>ðŸ³</span> Self-Cooking
+                          <span>🍳</span> Self-Cooking
                         </span>
                       )}
                       {pgGenderType === 'ladies' && hasLadyWarden && (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-pink-500/10 border border-pink-500/25 text-pink-700 dark:text-pink-300 text-[11px] font-bold">
-                          <span>ðŸ‘©â€ðŸ’¼</span> 24/7 Lady Warden
+                          <span>👩‍💼</span> 24/7 Lady Warden
                         </span>
                       )}
                       {pgGenderType === 'ladies' && hasPackedLunchBox && (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold">
-                          <span>ðŸ±</span> Lunch Box Allowed
+                          <span>🍱</span> Lunch Box Allowed
                         </span>
                       )}
                       {(pgGenderType === 'coliving' || pgGenderType === 'unisex') && hasCoworkingLounge && (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/25 text-indigo-700 dark:text-indigo-300 text-[11px] font-bold">
-                          <span>ðŸ’»</span> Coworking Lounge
+                          <span>💻</span> Coworking Lounge
                         </span>
                       )}
                       {(pgGenderType === 'coliving' || pgGenderType === 'unisex') && hasFullPowerBackup && (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400 text-[11px] font-bold">
-                          <span>âš¡</span> 100% Power Backup
+                          <span>⚡</span> 100% Power Backup
                         </span>
                       )}
                     </div>
@@ -6683,7 +6683,7 @@ export default function VenueProfilePage() {
                     className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl transition-colors text-xs font-bold border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0f1219] shadow-xs cursor-pointer active:scale-95"
                     title="Share property"
                   >
-                    <span>ðŸ”—</span>
+                    <span>🔗</span>
                   </button>
 
                   <button
@@ -6710,7 +6710,7 @@ export default function VenueProfilePage() {
                 <div className="mt-3.5 p-3.5 rounded-2xl bg-gradient-to-br from-[#ff6325]/10 via-[#033266]/5 to-transparent border border-[#ff6325]/25 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-black uppercase tracking-wider text-[#ff6325] dark:text-[#ff6325] flex items-center gap-1.5">
-                      <span>ðŸŒ¸</span> Verified Women's Safety & Living Comfort
+                      <span>🌸</span> Verified Women's Safety & Living Comfort
                     </span>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#033266] text-white">
                       100% Safe Stays
@@ -6719,35 +6719,35 @@ export default function VenueProfilePage() {
 
                   <div className="grid grid-cols-2 gap-2 text-[11px]">
                     <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">âœ“</span>
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
                       <span><strong>Lady Warden:</strong> {hasLadyWarden ? '24/7 Resident' : 'Available'}</span>
                     </div>
                     <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">âœ“</span>
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
                       <span><strong>Floor Access:</strong> {zeroMaleFloorAccess ? 'Strictly Zero Male Floor Entry' : 'Restricted'}</span>
                     </div>
                     <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">âœ“</span>
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
                       <span><strong>Visitor Area:</strong> {hasReceptionVisitorLobby ? 'Reception Lobby Waiting Desk' : 'Front Gate'}</span>
                     </div>
                     <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">âœ“</span>
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
                       <span><strong>Parents Lounge:</strong> {hasParentsDaytimeLounge ? 'Daytime Family Lounge (10 AM - 7 PM)' : 'Allowed'}</span>
                     </div>
                     <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">âœ“</span>
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
                       <span><strong>Hygiene:</strong> {hasPeriodEmergencyKit ? 'Pad Dispenser & Period Kit' : 'Daily Housekeeping'}</span>
                     </div>
                     <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">âœ“</span>
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
                       <span><strong>Privacy:</strong> {hasPrivateDryingZone ? 'Covered Cloth Drying Zone' : 'Secure Rooms'}</span>
                     </div>
                     <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">âœ“</span>
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
                       <span><strong>Grooming:</strong> {hasVanityMirrorSocket ? 'Full Mirror & Styling Plug' : 'Wardrobes'}</span>
                     </div>
                     <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">âœ“</span>
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
                       <span><strong>Deliveries:</strong> {hasContactlessParcelHub ? 'Gate Drop Desk (No Strangers Inside)' : 'Safe Access'}</span>
                     </div>
                   </div>
@@ -6759,7 +6759,7 @@ export default function VenueProfilePage() {
                 <div className="mt-3.5 p-3.5 rounded-2xl bg-gradient-to-br from-indigo-500/10 via-[#033266]/5 to-[#ff6325]/10 border border-indigo-500/25 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-black uppercase tracking-wider text-[#033266] dark:text-[#ff6325] flex items-center gap-1.5">
-                      <span>ðŸ¢</span> Verified Co-Living Lifestyle & Remote Work Perks
+                      <span>🏢</span> Verified Co-Living Lifestyle & Remote Work Perks
                     </span>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#ff6325] text-white">
                       WFH Ready
@@ -6768,40 +6768,40 @@ export default function VenueProfilePage() {
 
                   <div className="grid grid-cols-2 gap-2 text-[11px]">
                     <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">âœ“</span>
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
                       <span><strong>Coworking:</strong> {hasCoworkingLounge ? 'Dedicated Lounge & Desks' : 'Work Desks Available'}</span>
                     </div>
                     <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">âœ“</span>
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
                       <span><strong>High-Speed Wi-Fi:</strong> {hasHighSpeedDualWifi ? 'Dual Line (300+ Mbps)' : 'High Speed Included'}</span>
                     </div>
                     <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">âœ“</span>
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
                       <span><strong>Power Backup:</strong> {hasFullPowerBackup ? '100% Non-Stop Generator (AC/Wi-Fi)' : 'Inverter Backup'}</span>
                     </div>
                     <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">âœ“</span>
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
                       <span><strong>Gaming Lounge:</strong> {hasGamingLounge ? 'PS5 / TT & Recreation' : 'Available'}</span>
                     </div>
                     <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">âœ“</span>
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
                       <span><strong>Rooftop:</strong> {hasRooftopCafe ? 'Cafe Lounge & Open Deck' : 'Hangout Area'}</span>
                     </div>
                     <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">âœ“</span>
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
                       <span><strong>Kitchen:</strong> {hasModularKitchen ? 'Self-Cooking Modular Pantry' : 'Dining Area'}</span>
                     </div>
                     <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">âœ“</span>
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
                       <span><strong>Fitness:</strong> {hasFitnessGym ? 'In-house Gym & Yoga Deck' : 'Wellness Zone'}</span>
                     </div>
                     <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">âœ“</span>
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
                       <span><strong>Commercial Laundry:</strong> {hasCommercialDryerLaundry ? 'Auto Machines & Heat Dryer' : 'Washing Area'}</span>
                     </div>
                     {hasEvChargingPoint && (
                       <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200 col-span-2">
-                        <span className="text-[#ff6325] font-bold shrink-0">âœ“</span>
+                        <span className="text-[#ff6325] font-bold shrink-0">✓</span>
                         <span><strong>EV Charging:</strong> Dedicated 16A points for electric 2-wheelers</span>
                       </div>
                     )}
@@ -6829,8 +6829,8 @@ export default function VenueProfilePage() {
               {isFacility ? (
                 <div className="px-3.5 py-2.5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40 flex items-center justify-between text-xs font-bold text-emerald-800 dark:text-emerald-300">
                   <span className="flex items-center gap-1.5">
-                    <span>ðŸ•’ Operating Hours:</span>
-                    <strong className="font-extrabold">{firstSvc?.metadata?.operatingHours || firstListing?.metadata?.operatingHours || (finalMerchantObj.operatingHours && !finalMerchantObj.operatingHours.includes('Front Desk') ? finalMerchantObj.operatingHours : '06:00 AM â€“ 11:00 PM')}</strong>
+                    <span>🕒 Operating Hours:</span>
+                    <strong className="font-extrabold">{firstSvc?.metadata?.operatingHours || firstListing?.metadata?.operatingHours || (finalMerchantObj.operatingHours && !finalMerchantObj.operatingHours.includes('Front Desk') ? finalMerchantObj.operatingHours : '06:00 AM – 11:00 PM')}</strong>
                   </span>
                   <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-md bg-emerald-200/60 dark:bg-emerald-800/60 text-emerald-900 dark:text-emerald-100">
                     Open Daily
@@ -6838,8 +6838,8 @@ export default function VenueProfilePage() {
                 </div>
               ) : (
                 <div className="px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
-                  <span className="flex items-center gap-1.5">ðŸ•’ Check-in: <strong className="text-slate-800 dark:text-slate-200 font-extrabold">{finalMerchantObj.metadata?.checkInTime || '12:00 PM'}</strong></span>
-                  <span>â€¢</span>
+                  <span className="flex items-center gap-1.5">🕒 Check-in: <strong className="text-slate-800 dark:text-slate-200 font-extrabold">{finalMerchantObj.metadata?.checkInTime || '12:00 PM'}</strong></span>
+                  <span>•</span>
                   <span className="flex items-center gap-1.5">Check-out: <strong className="text-slate-800 dark:text-slate-200 font-extrabold">{finalMerchantObj.metadata?.checkOutTime || '11:00 AM'}</strong></span>
                 </div>
               )}
@@ -6855,12 +6855,12 @@ export default function VenueProfilePage() {
                 }}
                 className="text-xs font-extrabold text-[#033266] dark:text-[#ff6325] hover:underline flex items-center gap-1 cursor-pointer py-1"
               >
-                <span>ðŸ“ View Location on Map</span>
+                <span>📍 View Location on Map</span>
                 <span>&darr;</span>
               </button>
 
               <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500">
-                {isFacility ? 'Slots & Courts listed below â†“' : 'Rooms listed below â†“'}
+                {isFacility ? 'Slots & Courts listed below ↓' : 'Rooms listed below ↓'}
               </span>
             </div>
 
@@ -6924,7 +6924,7 @@ export default function VenueProfilePage() {
                       : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/30'
                   }`}
                 >
-                  <span>ðŸ§³</span>
+                  <span>🧳</span>
                   <span className="font-bold">Mini Space (Bag Locker)</span>
                   <span className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider ${
                     activeSubNavTab === 'mini-space' ? 'bg-black text-amber-300' : 'bg-amber-500 text-white'
@@ -6936,7 +6936,7 @@ export default function VenueProfilePage() {
             </div>
           </div>
 
-          {/* 2. Main Agoda Content â€” Header stays in place, content below switches dynamically */}
+          {/* 2. Main Agoda Content — Header stays in place, content below switches dynamically */}
           <div id="agoda-overview-section" className="space-y-6">
 
             {/* TAB CONTENT: OVERVIEW (Name Card + Highlights + Staycation + About + Mini Map sidebar) */}
@@ -6949,7 +6949,7 @@ export default function VenueProfilePage() {
                       {finalMerchantObj.metadata?.offerBadge || 'Best Seller'}
                     </span>
                     <span className="text-xs text-amber-500 font-bold flex items-center gap-1">
-                      <span>â˜… â˜… â˜… â˜…</span>
+                      <span>★ ★ ★ ★</span>
                       <span className="text-[10px] text-slate-400 font-semibold ml-1">BokSpot Preferred</span>
                     </span>
                   </div>
@@ -6960,7 +6960,7 @@ export default function VenueProfilePage() {
                     </h2>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium flex items-center flex-wrap gap-1.5">
                       <span>{address || `${city || 'Chennai'}, Tamil Nadu`}</span>
-                      <span>â€¢</span>
+                      <span>•</span>
                       <button
                         type="button"
                         onClick={() => setActiveSubNavTab('location')}
@@ -6985,27 +6985,27 @@ export default function VenueProfilePage() {
                         {(() => {
                           const defaultStayHighlights = [
                             {
-                              icon: 'ðŸ³',
+                              icon: '🍳',
                               title: 'Great breakfast & inclusions',
                               description: finalMerchantObj.metadata?.breakfastDetails || 'Breakfast buffet gets strong praise for its wide spread, varied choices, and fresh multi-cuisine preparations.'
                             },
                             {
-                              icon: 'ðŸ½ï¸',
+                              icon: '🍽️',
                               title: 'Great food & dining',
                               description: 'In-house multi-cuisine dining options with seafood specialties and room service options praised by guests.'
                             },
                             {
-                              icon: 'ðŸ›Žï¸',
+                              icon: '🛎️',
                               title: 'Professional guest services',
                               description: 'Dedicated 24/7 front desk, warm concierge, express check-in, and personalized butler assistance.'
                             },
                             {
-                              icon: 'âœ¨',
+                              icon: '✨',
                               title: 'Sparkling clean & hygienic',
                               description: 'Rooms are regularly sanitized and described as clean, neat, and well kept with spotless linen.'
                             },
                             {
-                              icon: 'ðŸŠ',
+                              icon: '🏊',
                               title: 'Top property leisure facilities',
                               description: 'Private swimming pool, lawn garden, sun deck, and entertainment conveniences designed for staycations.'
                             }
@@ -7013,27 +7013,27 @@ export default function VenueProfilePage() {
 
                           const defaultFacilityHighlights = [
                             {
-                              icon: 'âš½',
+                              icon: '⚽',
                               title: 'FIFA Standard Astro Turf',
                               description: 'High-density 50mm monofilament synthetic grass with shock-absorbing rubber infill engineered for all-weather play.'
                             },
                             {
-                              icon: 'ðŸ’¡',
+                              icon: '💡',
                               title: 'High-Mast LED Floodlights',
                               description: 'Stadium-grade anti-glare illumination across all pitch zones ensuring seamless evening and late-night matches.'
                             },
                             {
-                              icon: 'ðŸš¿',
+                              icon: '🚿',
                               title: 'Player Changing Rooms & Showers',
                               description: 'Hygienic private dressing rooms, lockers, and clean showers ready for teams before and after games.'
                             },
                             {
-                              icon: 'ðŸª‘',
+                              icon: '🪑',
                               title: 'Covered Team Dugouts & Spectator Seating',
                               description: 'Weather-protected substitutes benches, scoring tables, and viewing spaces for fans and guests.'
                             },
                             {
-                              icon: 'ðŸš—',
+                              icon: '🚗',
                               title: 'Dedicated Parking & Amenities',
                               description: 'Spacious on-site two-wheeler and car parking, RO drinking water dispenser, and first-aid support.'
                             }
@@ -7061,7 +7061,7 @@ export default function VenueProfilePage() {
                             return (
                               <div key={idx} className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5">
                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg shrink-0 ${colorClass}`}>
-                                  {hl.icon || 'â­'}
+                                  {hl.icon || '⭐'}
                                 </div>
                                 <div className="min-w-0">
                                   <h4 className="text-xs font-black text-slate-900 dark:text-white">
@@ -7098,7 +7098,7 @@ export default function VenueProfilePage() {
                             onClick={() => setIsAboutExpanded(!isAboutExpanded)}
                             className="mt-2 text-xs font-extrabold text-[#033266] dark:text-[#ff6325] hover:underline cursor-pointer block"
                           >
-                            {isAboutExpanded ? 'Show less â†‘' : 'Read more â†’'}
+                            {isAboutExpanded ? 'Show less ↑' : 'Read more →'}
                           </button>
                         )}
                       </div>
@@ -7152,13 +7152,13 @@ export default function VenueProfilePage() {
                           </span>
                         </div>
                         <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                          Excellent location â€” situated conveniently near beaches and transport routes in {city || 'Chennai'}.
+                          Excellent location — situated conveniently near beaches and transport routes in {city || 'Chennai'}.
                         </p>
                       </div>
 
                       {/* Parking Tag */}
                       <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
-                        <span className="flex items-center gap-1.5">ðŸ…¿ï¸ Parking</span>
+                        <span className="flex items-center gap-1.5">🅿️ Parking</span>
                         <span className="text-emerald-600 dark:text-emerald-400 uppercase font-black text-[11px]">FREE</span>
                       </div>
 
@@ -7172,7 +7172,7 @@ export default function VenueProfilePage() {
                             {finalMerchantObj.metadata.aroundProperty.slice(0, 4).map((item: any, idx: number) => (
                               <div key={idx} className="flex items-center justify-between text-xs">
                                 <span className="text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[180px]">
-                                  ðŸ“ {item.name || item.title}
+                                  📍 {item.name || item.title}
                                 </span>
                                 <span className="text-slate-500 dark:text-slate-400 font-bold text-[11px] shrink-0">
                                   {item.distance || ''}
@@ -7262,7 +7262,7 @@ export default function VenueProfilePage() {
                           rel="noopener noreferrer"
                           className="px-4 py-2 bg-[#033266] dark:bg-[#ff6325] text-white rounded-xl text-xs font-black shadow-sm hover:opacity-95 transition-opacity"
                         >
-                          Open in Google Maps â†’
+                          Open in Google Maps →
                         </a>
                       </div>
                     </div>
@@ -7279,7 +7279,7 @@ export default function VenueProfilePage() {
                       {finalMerchantObj.metadata.aroundProperty.map((item: any, idx: number) => (
                         <div key={idx} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5">
                           <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
-                            ðŸ“ {item.name || item.title}
+                            📍 {item.name || item.title}
                           </span>
                           <span className="text-xs font-extrabold text-[#033266] dark:text-[#ff6325] px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 shadow-2xs">
                             {item.distance || ''}
@@ -7297,7 +7297,7 @@ export default function VenueProfilePage() {
               <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-5">
                 <div className="border-b border-slate-100 dark:border-white/10 pb-4">
                   <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-                    <span>ðŸ“‹</span> Property Policies & Stay Rules
+                    <span>📋</span> Property Policies & Stay Rules
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Important rules and check-in guidelines for guests staying at {venueName}
@@ -7308,21 +7308,21 @@ export default function VenueProfilePage() {
                   {isPgStay && (
                     <>
                       <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-orange-50 dark:bg-orange-950/20 border border-orange-200/60 dark:border-orange-900/40">
-                        <span className="text-[#ff6325] font-black text-sm mt-0.5">ðŸšª</span>
+                        <span className="text-[#ff6325] font-black text-sm mt-0.5">🚪</span>
                         <div>
                           <strong className="block text-slate-900 dark:text-white">Gate Curfew & Access Timings</strong>
                           <span>{pgGateCurfew}</span>
                         </div>
                       </div>
                       <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40">
-                        <span className="text-blue-600 font-black text-sm mt-0.5">ðŸ‘¥</span>
+                        <span className="text-blue-600 font-black text-sm mt-0.5">👥</span>
                         <div>
                           <strong className="block text-slate-900 dark:text-white">Stay Exclusivity</strong>
                           <span>{pgGenderType === 'ladies' ? 'Ladies Only PG (Strictly Female Guests)' : pgGenderType === 'gents' ? 'Gents Only PG (Strictly Male Guests)' : 'Unisex / Coliving Community'}</span>
                         </div>
                       </div>
                       <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40">
-                        <span className="text-emerald-600 font-black text-sm mt-0.5">ðŸ²</span>
+                        <span className="text-emerald-600 font-black text-sm mt-0.5">🍲</span>
                         <div>
                           <strong className="block text-slate-900 dark:text-white">Food / Mess Policy</strong>
                           <span>{pgFoodIncluded ? '3 Daily Meals Included with optional food exclusion discount' : 'Self-Cooking & external food allowed'}</span>
@@ -7342,7 +7342,7 @@ export default function VenueProfilePage() {
                     ]
                   ).map((policy: string, idx: number) => (
                     <div key={idx} className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5">
-                      <span className="text-[#033266] dark:text-[#ff6325] font-black text-sm mt-0.5">â€¢</span>
+                      <span className="text-[#033266] dark:text-[#ff6325] font-black text-sm mt-0.5">•</span>
                       <span className="leading-relaxed">{policy}</span>
                     </div>
                   ))}
@@ -7364,7 +7364,7 @@ export default function VenueProfilePage() {
                       </span>
                     </div>
                     <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                      <span>ðŸ§³</span> Mini Space â€” Luggage & Item Drop (Bag Locker)
+                      <span>🧳</span> Mini Space — Luggage & Item Drop (Bag Locker)
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xl">
                       Traveling or waiting for your train/flight? Safely store your luggage, backpacks, and personal baggage at {venueName} frontdesk and collect anytime with your instant QR gate pass.
@@ -7375,11 +7375,11 @@ export default function VenueProfilePage() {
                     <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider block">Storage Tariff</span>
                     <div className="flex items-baseline justify-end gap-1">
                       <span className="text-[11px] font-bold text-slate-500">From</span>
-                      <span className="text-xl font-black text-amber-600 dark:text-amber-400">â‚¹{getCategoryRate('handbag', 0.5)}</span>
+                      <span className="text-xl font-black text-amber-600 dark:text-amber-400">₹{getCategoryRate('handbag', 0.5)}</span>
                       <span className="text-xs text-slate-500 font-semibold">/hr</span>
                     </div>
                     <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-extrabold block mt-0.5">
-                      Full-Day Cap @ â‚¹{hotelLuggageDayPassRate}/24h
+                      Full-Day Cap @ ₹{hotelLuggageDayPassRate}/24h
                     </span>
                   </div>
                 </div>
@@ -7400,11 +7400,11 @@ export default function VenueProfilePage() {
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {[
-                          { id: 'handbag' as const, label: 'Handbag', sub: 'Pouch, sleeves', icon: 'ðŸ‘›', multiplier: 0.5, weight: 'Upto 3 kg', slotWeight: 0.5 },
-                          { id: 'backpack' as const, label: 'Backpack', sub: 'Laptop & kit bags', icon: 'ðŸŽ’', multiplier: 0.8, weight: '5-8 kg', slotWeight: 1 },
-                          { id: 'standard' as const, label: 'Trolley Bag', sub: 'Cabin or check-in', icon: 'ðŸ§³', multiplier: 1.0, weight: '10-20 kg', slotWeight: 1 },
-                          { id: 'box' as const, label: 'Carton Box', sub: 'Parcels, goods', icon: 'ðŸ“¦', multiplier: 1.2, weight: '15-30 kg', slotWeight: 2 },
-                          { id: 'bulky' as const, label: 'Bulky Gear', sub: 'Bike gear, sports', icon: 'ðŸš²', multiplier: 1.5, weight: '30+ kg', slotWeight: 3 },
+                          { id: 'handbag' as const, label: 'Handbag', sub: 'Pouch, sleeves', icon: '👛', multiplier: 0.5, weight: 'Upto 3 kg', slotWeight: 0.5 },
+                          { id: 'backpack' as const, label: 'Backpack', sub: 'Laptop & kit bags', icon: '🎒', multiplier: 0.8, weight: '5-8 kg', slotWeight: 1 },
+                          { id: 'standard' as const, label: 'Trolley Bag', sub: 'Cabin or check-in', icon: '🧳', multiplier: 1.0, weight: '10-20 kg', slotWeight: 1 },
+                          { id: 'box' as const, label: 'Carton Box', sub: 'Parcels, goods', icon: '📦', multiplier: 1.2, weight: '15-30 kg', slotWeight: 2 },
+                          { id: 'bulky' as const, label: 'Bulky Gear', sub: 'Bike gear, sports', icon: '🚲', multiplier: 1.5, weight: '30+ kg', slotWeight: 3 },
                         ].map((item) => {
                           const count = miniSpaceItemCounts[item.id];
                           const itemRate = getCategoryRate(item.id, item.multiplier);
@@ -7425,11 +7425,11 @@ export default function VenueProfilePage() {
                                   <div className="flex items-center gap-1.5 flex-wrap">
                                     <span className="text-xs font-black text-slate-900 dark:text-white whitespace-nowrap">{item.label}</span>
                                     <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded shrink-0">
-                                      â‚¹{itemRate}/h
+                                      ₹{itemRate}/h
                                     </span>
                                   </div>
                                   <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block whitespace-nowrap">
-                                    {item.weight} â€¢ {item.sub}
+                                    {item.weight} • {item.sub}
                                   </span>
                                 </div>
                               </div>
@@ -7485,7 +7485,7 @@ export default function VenueProfilePage() {
                                 Storage Duration
                               </label>
                               <span className="text-[10px] text-amber-600 dark:text-amber-400 font-extrabold whitespace-nowrap bg-amber-500/10 px-2 py-0.5 rounded-md">
-                                Combined Rate: â‚¹{totalHourly}/hr
+                                Combined Rate: ₹{totalHourly}/hr
                               </span>
                             </div>
                             <div className="flex items-center justify-between pt-1">
@@ -7524,7 +7524,7 @@ export default function VenueProfilePage() {
                       {/* Luggage Security & Facility Note */}
                       <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center text-lg font-black shrink-0">
-                          ðŸ›¡ï¸
+                          🛡️
                         </div>
                         <div>
                           <span className="text-xs font-black text-slate-900 dark:text-white block">CCTV & Tamper Sealed</span>
@@ -7540,7 +7540,7 @@ export default function VenueProfilePage() {
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/80 dark:border-white/10 pb-3">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-base">ðŸ“…</span>
+                            <span className="text-base">📅</span>
                             <span className="text-xs uppercase font-black text-slate-900 dark:text-white tracking-wider">
                               Luggage Handover Date & Time
                             </span>
@@ -7830,7 +7830,7 @@ export default function VenueProfilePage() {
                       </div>
                       <div className="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40">
                         <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
-                        <span>â‚¹10,000 Bag Guarantee</span>
+                        <span>₹10,000 Bag Guarantee</span>
                       </div>
                       <div className="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40">
                         <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
@@ -7924,7 +7924,7 @@ export default function VenueProfilePage() {
                             <div className="flex justify-between">
                               <span className="text-slate-500">Storage Unit</span>
                               <span className="font-bold text-slate-800 dark:text-slate-200">
-                                {totalBags > 0 ? `${totalBags} Items (${breakdownItems.join(', ')})` : '0 Items Selected'} Ã— {miniSpaceHours} hrs
+                                {totalBags > 0 ? `${totalBags} Items (${breakdownItems.join(', ')})` : '0 Items Selected'} × {miniSpaceHours} hrs
                               </span>
                             </div>
                             <div className="flex justify-between">
@@ -7965,12 +7965,12 @@ export default function VenueProfilePage() {
                               </div>
                               <span className="text-[10px] text-slate-400 font-semibold">
                                 {isDailyCapApplied
-                                  ? `${totalBags} Items capped at â‚¹${hotelLuggageDayPassRate}/bag full day pass`
-                                  : `${totalBags} ${totalBags > 1 ? 'Items' : 'Item'} Ã— ${miniSpaceHours}h @ combined â‚¹${totalHourlyRate}/hr`
+                                  ? `${totalBags} Items capped at ₹${hotelLuggageDayPassRate}/bag full day pass`
+                                  : `${totalBags} ${totalBags > 1 ? 'Items' : 'Item'} × ${miniSpaceHours}h @ combined ₹${totalHourlyRate}/hr`
                                 }
                               </span>
                             </div>
-                            <span className="text-2xl font-black text-amber-600 dark:text-amber-400">â‚¹{totalAmount}</span>
+                            <span className="text-2xl font-black text-amber-600 dark:text-amber-400">₹{totalAmount}</span>
                           </div>
 
                           {totalBags === 0 ? (
@@ -7988,7 +7988,7 @@ export default function VenueProfilePage() {
                                 disabled
                                 className="w-full py-3.5 rounded-xl bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-black text-xs uppercase tracking-wider cursor-not-allowed flex items-center justify-center gap-2 shadow-none"
                               >
-                                <span>ðŸ”’ BOOKING FILLED (NO SPACE LEFT)</span>
+                                <span>🔒 BOOKING FILLED (NO SPACE LEFT)</span>
                               </button>
                               <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 text-[11px] font-bold text-rose-600 dark:text-rose-400 text-center leading-snug">
                                 Cloakroom is full for this time slot (Only {availableCapacity} slots left, your selection requires {requestedSlots} slots). Please reduce items or choose another date.
@@ -8003,7 +8003,7 @@ export default function VenueProfilePage() {
 
                                 setSelectedService({
                                   id: `svc-minispace-${merchantId || 'business'}`,
-                                  name: `${venueName} â€” Mini Space Cloakroom`,
+                                  name: `${venueName} — Mini Space Cloakroom`,
                                   merchant: venueName || 'BokSpot Partner',
                                   merchantId: merchantId || liveServices[0]?.merchantId || (merchantData as any)?.id || '',
                                   merchantObj: merchantData || liveServices[0]?.merchantObj || { id: merchantId, name: venueName },
@@ -8058,14 +8058,14 @@ export default function VenueProfilePage() {
                   </div>
                 </div>
 
-                {/* 4 Easy Steps â€” How It Works Banner (Bounce / Stasher Style) */}
+                {/* 4 Easy Steps — How It Works Banner (Bounce / Stasher Style) */}
                 <div className="mt-6 pt-6 border-t border-slate-200/80 dark:border-white/10">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
                       How It Works (Easy 4-Step Drop & Pick-Up)
                     </span>
                     <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                      âœ“ Instant QR Pass
+                      ✓ Instant QR Pass
                     </span>
                   </div>
 
@@ -8147,12 +8147,12 @@ export default function VenueProfilePage() {
         {finalMerchantObj.metadata?.policies && finalMerchantObj.metadata.policies.length > 0 && (
           <div className="mt-10 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-              <span>ðŸ“‹</span> House Rules & Stay Policies
+              <span>📋</span> House Rules & Stay Policies
             </h3>
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300 font-medium">
               {finalMerchantObj.metadata.policies.map((policy: string, idx: number) => (
                 <li key={idx} className="flex items-start gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-white/5">
-                  <span className="text-[#033266] dark:text-[#ff6325] font-bold">â€¢</span>
+                  <span className="text-[#033266] dark:text-[#ff6325] font-bold">•</span>
                   <span>{policy}</span>
                 </li>
               ))}
@@ -8288,7 +8288,7 @@ export default function VenueProfilePage() {
         )}
       </AnimatePresence>
 
-      {/* â”€â”€ INTERACTIVE TURF MATCH ADD-ONS WORKFLOW MODAL (Resort-Style) â”€â”€ */}
+      {/* ── INTERACTIVE TURF MATCH ADD-ONS WORKFLOW MODAL (Resort-Style) ── */}
       <AnimatePresence>
         {isTurfAddonModalOpen && selectedHourSlot && pricingResult && (() => {
           const baseSlotCost = Number(pricingResult.finalPayable) || 1350;
@@ -8296,9 +8296,9 @@ export default function VenueProfilePage() {
           const activeMetaObj = activeListingObj.metadata || {};
           const sportFallbackCfg = getSportCategoryConfig(category);
           const defaultAddonsList = sportFallbackCfg?.addons || [
-            { id: 'referee', name: 'Certified Match Referee', price: 300, icon: 'ðŸ‘¨â€âš–ï¸', desc: 'Official qualified referee for 60 mins match management & fair play.' },
-            { id: 'video', name: 'High-Res Match Video Recording', price: 500, icon: 'ðŸ“¹', desc: 'Full match recording delivered via HD cloud link within 24 hours.' },
-            { id: 'drinks', name: 'Chilled Energy Drinks (Pack of 6)', price: 250, icon: 'ðŸ§´', desc: 'Ice-chilled electrolyte sports beverages ready at bench.' }
+            { id: 'referee', name: 'Certified Match Referee', price: 300, icon: '👨‍⚖️', desc: 'Official qualified referee for 60 mins match management & fair play.' },
+            { id: 'video', name: 'High-Res Match Video Recording', price: 500, icon: '📹', desc: 'Full match recording delivered via HD cloud link within 24 hours.' },
+            { id: 'drinks', name: 'Chilled Energy Drinks (Pack of 6)', price: 250, icon: '🧴', desc: 'Ice-chilled electrolyte sports beverages ready at bench.' }
           ];
 
           const availableAddons = (Array.isArray(activeMetaObj.addons) && activeMetaObj.addons.length > 0)
@@ -8306,7 +8306,7 @@ export default function VenueProfilePage() {
               id: a.id || a.name || `addon-${i}`,
               name: a.name || 'Custom Add-on',
               price: Number(a.price) || 0,
-              icon: a.icon || 'â­',
+              icon: a.icon || '⭐',
               desc: a.desc || a.description || 'Enhance your session experience.'
             }))
             : defaultAddonsList;
@@ -8326,7 +8326,7 @@ export default function VenueProfilePage() {
                 id: matched?.id || name,
                 name: matched?.name || name,
                 price: Number(matched?.price) || 0,
-                icon: matched?.icon || 'â­',
+                icon: matched?.icon || '⭐',
                 desc: matched?.desc || ''
               };
             });
@@ -8347,7 +8347,7 @@ export default function VenueProfilePage() {
                 price: baseSlotCost,
                 addons: availableAddons
               },
-              name: `${venueName} â€” ${selectedTurfService?.name || 'Session Slot'}`,
+              name: `${venueName} — ${selectedTurfService?.name || 'Session Slot'}`,
               metadata: {
                 ...(selectedTurfService?.metadata || {}),
                 addons: availableAddons,
