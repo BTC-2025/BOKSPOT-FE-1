@@ -177,6 +177,7 @@ export default function CheckoutPage() {
   const meta = listing?.metadata || {};
   const isPgStay = Boolean(selectedService.metadata?.pgBooking);
   const isHotel = Boolean(selectedService.metadata?.hotelBooking);
+  const isDining = Boolean(selectedService.metadata?.isDining || selectedService.metadata?.dining);
   const isMiniSpace = Boolean(selectedService.metadata?.miniSpace);
   const isTurfBooking = Boolean(selectedService.metadata?.turfBooking);
   const isEntertainmentBooking = Boolean(selectedService.metadata?.entertainmentBooking || selectedService.metadata?.isEntertainmentBooking);
@@ -229,18 +230,23 @@ export default function CheckoutPage() {
     ? pgAddonsTotal
     : (selectedAddons.length > 0 ? checkoutAddonsTotal : (Number(selectedService.metadata?.addonsCost) || 0));
 
-  // Base price extraction: for turf/court, use pure slot cost before addons
+  const diningPreordersTotal = isDining && Array.isArray(selectedService.metadata?.dining?.preOrderDishes)
+    ? selectedService.metadata.dining.preOrderDishes.reduce((s: number, d: any) => s + (Number(d.price || 0) * Number(d.qty || d.quantity || 1)), 0)
+    : 0;
+
   const basePrice = isPgStay
     ? (selectedService.price - pgAddonsTotal)
     : isHotel
       ? Math.round(selectedService.price / 1.12) // extract pre-tax price from inclusive total
-      : isTurfBooking
-        ? (Number(selectedService.metadata?.turfBooking?.baseSlotCost) || Number(listing?.price) || Math.max(0, Number(selectedService.price) - addonsTotal))
-        : (listing?.price || selectedService.price || 0);
+      : isDining
+        ? (Number(selectedService.metadata?.dining?.depositAmount) || 0)
+        : isTurfBooking
+          ? (Number(selectedService.metadata?.turfBooking?.baseSlotCost) || Number(listing?.price) || Math.max(0, Number(selectedService.price) - addonsTotal))
+          : (listing?.price || selectedService.price || 0);
 
   const platformFee = 29;
-  const gst = isPgStay
-    ? 0 // No GST for monthly residential stays / hostel beds
+  const gst = isPgStay || isDining
+    ? 0 // No upfront GST for monthly residential stays or dining table reservations (settled at venue)
     : isHotel
       ? (selectedService.price - basePrice) // exact 12% GST calculated in template
       : Math.round((basePrice + addonsTotal) * 0.18);
@@ -249,7 +255,9 @@ export default function CheckoutPage() {
     ? (basePrice + addonsTotal + platformFee)
     : isHotel
       ? (selectedService.price + addonsTotal + platformFee)
-      : (basePrice + addonsTotal + platformFee + gst);
+      : isDining
+        ? (basePrice + diningPreordersTotal + platformFee)
+        : (basePrice + addonsTotal + platformFee + gst);
 
   // BokSpot Universal Payment Model calculation:
   // - FULL_ONLINE: 100% paid online upfront
@@ -529,6 +537,287 @@ export default function CheckoutPage() {
                 </div>
               )}
 
+              {/* Dining & Restaurant Table Reservation Specs Banner */}
+              {selectedService.metadata?.dining && (
+                <div className="pt-3 border-t border-slate-100 space-y-2">
+                  <div className="p-4 bg-orange-50/70 border border-orange-200/80 rounded-2xl space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-[#ff6325] uppercase tracking-wider flex items-center gap-1.5">
+                        🍽️ {selectedService.metadata.dining.restaurantName || 'Restaurant Table Reservation'}
+                      </span>
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-600 text-white uppercase tracking-wider">
+                        {selectedService.metadata.dining.depositAmount === 0 ? 'Free Reservation' : 'Deposit Adjustable'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Reserved Table</span>
+                        <strong className="text-slate-800">{selectedService.metadata.dining.tableType}</strong>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Date & Time</span>
+                        <strong className="text-slate-800">{selectedService.metadata.dining.date} at {selectedService.metadata.dining.time}</strong>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Party Size</span>
+                        <strong className="text-slate-800">{selectedService.metadata.dining.guestsCount} Guests</strong>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Meal Session</span>
+                        <strong className="text-slate-800">{selectedService.metadata.dining.session} Session</strong>
+                      </div>
+                    </div>
+
+                    {selectedService.metadata.dining.celebrationType && selectedService.metadata.dining.celebrationType !== 'NONE' && (
+                      <div className="p-2 rounded-xl bg-amber-100/70 text-amber-900 text-xs font-bold flex items-center gap-1.5">
+                        <span>✨</span>
+                        <span>Celebration Setup: {selectedService.metadata.dining.celebrationType}</span>
+                      </div>
+                    )}
+
+                    {selectedService.metadata.dining.preOrderDishes && selectedService.metadata.dining.preOrderDishes.length > 0 && (
+                      <div className="pt-2 border-t border-orange-200/60">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-1">
+                          Pre-Ordered Kitchen Specialties:
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {selectedService.metadata.dining.preOrderDishes.map((dish: any, idx: number) => (
+                            <span key={idx} className="px-2 py-0.5 rounded-md bg-white border border-orange-200 text-xs font-bold text-slate-800">
+                              {dish.qty}x {dish.name} (₹{dish.price * dish.qty})
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Salon, Spa & Wellness Appointment Specs Banner */}
+              {(selectedService.metadata?.wellness || selectedService.metadata?.wellnessBooking) && (() => {
+                const wData = selectedService.metadata?.wellnessBooking || selectedService.metadata?.wellness || {};
+                return (
+                  <div className="pt-3 border-t border-slate-100 space-y-2">
+                    <div className="p-4 bg-rose-50/70 border border-rose-200/80 rounded-2xl space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black text-rose-600 uppercase tracking-wider flex items-center gap-1.5">
+                          💇 {wData.venueName || wData.salonName || 'Salon & Luxury Spa Appointment'}
+                        </span>
+                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-600 text-white uppercase tracking-wider">
+                          Confirmed Chair Slot
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-[10px] text-slate-400 font-bold uppercase block">Specialist / Stylist</span>
+                          <strong className="text-slate-800">{wData.specialistName || 'Master Stylist'}</strong>
+                          {wData.specialistRole && (
+                            <span className="text-[10px] text-rose-500 block">{wData.specialistRole}</span>
+                          )}
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-400 font-bold uppercase block">Date & Time</span>
+                          <strong className="text-slate-800">{wData.appointmentDate || wData.date} at {wData.appointmentSlot || wData.time}</strong>
+                          {wData.durationMinutes && (
+                            <span className="text-[10px] text-slate-400 block">⏱️ {wData.durationMinutes} mins duration</span>
+                          )}
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-[10px] text-slate-400 font-bold uppercase block">Selected Treatment</span>
+                          <div className="flex flex-wrap gap-1.5 mt-1">
+                            {wData.treatmentName ? (
+                              <span className="px-2.5 py-1 rounded-md bg-white border border-rose-200 font-bold text-slate-800 text-[11px] shadow-2xs">
+                                ✨ {wData.treatmentName} (₹{wData.treatmentPrice || selectedService.price})
+                              </span>
+                            ) : wData.treatments?.map((t: any, idx: number) => (
+                              <span key={idx} className="px-2.5 py-0.5 rounded-md bg-white border border-rose-200 font-bold text-slate-800 text-[11px]">
+                                {t.name} (₹{t.price} • {t.duration}m)
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {wData.specialInstructions && (
+                          <div className="col-span-2 mt-1 p-2 rounded-xl bg-white border border-rose-100 text-[11px] text-slate-700">
+                            <span className="font-bold text-slate-400 uppercase text-[9px] block">Customer Notes / Preferences:</span>
+                            {wData.specialInstructions}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Home Services (Plumber, Electrician, Cleaning) Specs Banner */}
+              {selectedService.metadata?.homeServiceBooking && (() => {
+                const hData = selectedService.metadata.homeServiceBooking;
+                return (
+                  <div className="pt-3 border-t border-slate-100 space-y-2">
+                    <div className="p-4 bg-blue-50/70 border border-blue-200/80 rounded-2xl space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black text-blue-700 uppercase tracking-wider flex items-center gap-1.5">
+                          🛠️ {hData.venueName || 'Doorstep Service Booking'}
+                        </span>
+                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-600 text-white uppercase tracking-wider">
+                          Doorstep Professional
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-[10px] text-slate-400 font-bold uppercase block">Service Package</span>
+                          <strong className="text-slate-800">{hData.packageName}</strong>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-400 font-bold uppercase block">Preferred Arrival Window</span>
+                          <strong className="text-slate-800">{hData.date} • {hData.timeWindow}</strong>
+                        </div>
+
+                        {hData.customerNotes && (
+                          <div className="col-span-2 mt-1 p-2 rounded-xl bg-white border border-blue-100 text-[11px] text-slate-700">
+                            <span className="font-bold text-slate-400 uppercase text-[9px] block">Customer Problem Notes:</span>
+                            {hData.customerNotes}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Gym, Yoga & Fitness Pass Specs Banner */}
+              {selectedService.metadata?.fitness && (
+                <div className="pt-3 border-t border-slate-100 space-y-2">
+                  <div className="p-4 bg-emerald-50/70 border border-emerald-200/80 rounded-2xl space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1.5">
+                        🏋️ {selectedService.metadata.fitness.gymName || 'Fitness Pass / Class'}
+                      </span>
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-600 text-white uppercase tracking-wider">
+                        Turnstile Pass Active
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Workout / Pass</span>
+                        <strong className="text-slate-800">{selectedService.metadata.fitness.passName}</strong>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Batch & Slot</span>
+                        <strong className="text-slate-800">{selectedService.metadata.fitness.date} • {selectedService.metadata.fitness.timeSlot}</strong>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Trainer / Coach</span>
+                        <strong className="text-slate-800">{selectedService.metadata.fitness.trainerName}</strong>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Amenities</span>
+                        <span className="text-slate-800 font-bold">
+                          {selectedService.metadata.fitness.lockerIncluded ? '🔒 Digital Locker' : ''}
+                          {selectedService.metadata.fitness.proteinShakeIncluded ? ' • 🥤 Whey Shake' : ''}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Doctor Consultation & OPD Token Specs Banner */}
+              {selectedService.metadata?.doctor && (
+                <div className="pt-3 border-t border-slate-100 space-y-2">
+                  <div className="p-4 bg-blue-50/70 border border-blue-200/80 rounded-2xl space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-blue-600 uppercase tracking-wider flex items-center gap-1.5">
+                        🩺 {selectedService.metadata.doctor.clinicName || 'Doctor Consultation'}
+                      </span>
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-600 text-white uppercase tracking-wider">
+                        OPD Token #{selectedService.metadata.doctor.tokenNumber} Reserved
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Doctor & Dept</span>
+                        <strong className="text-slate-800">{selectedService.metadata.doctor.doctorName}</strong>
+                        <span className="text-[10px] text-slate-500 block">{selectedService.metadata.doctor.role}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Slot & Mode</span>
+                        <strong className="text-slate-800">{selectedService.metadata.doctor.date} at {selectedService.metadata.doctor.timeSlot}</strong>
+                        <span className="text-[10px] text-blue-600 font-bold block">
+                          {selectedService.metadata.doctor.consultationMode === 'IN_CLINIC' ? `🏥 In-Clinic (${selectedService.metadata.doctor.opdRoom})` : '📱 Video Consultation'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Patient</span>
+                        <strong className="text-slate-800">
+                          {selectedService.metadata.doctor.patientName} ({selectedService.metadata.doctor.patientAge}y • {selectedService.metadata.doctor.patientGender})
+                        </strong>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Chief Symptoms</span>
+                        <span className="text-slate-800 font-bold line-clamp-1">
+                          {selectedService.metadata.doctor.symptoms}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Doorstep Home Service Specs Banner (Urban Company Style) */}
+              {(selectedService.metadata?.isHomeService || selectedService.metadata?.homeService || selectedService.metadata?.homeCallBooking) && (
+                <div className="pt-3 border-t border-slate-100 space-y-2">
+                  <div className="p-4 bg-amber-50/70 border border-amber-200/80 rounded-2xl space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
+                        🛠️ {selectedService.metadata.homeService?.serviceName || selectedService.metadata.homeCallBooking?.issueCategory || 'Doorstep Home Service'}
+                      </span>
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-600 text-white uppercase tracking-wider">
+                        30-Day Guarantee
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Arrival Window</span>
+                        <strong className="text-slate-800">
+                          {selectedService.metadata.homeService?.arrivalWindow || selectedService.metadata.homeCallBooking?.arrivalWindow || selectedSlot.timeStr}
+                        </strong>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Doorstep Start OTP</span>
+                        <strong className="font-mono text-amber-600 tracking-wider font-black text-sm">
+                          {selectedService.metadata.homeService?.startOtp || '4821'}
+                        </strong>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Service Address</span>
+                        <span className="text-slate-800 font-bold block truncate">
+                          📍 {selectedService.metadata.homeService?.serviceAddress || selectedService.metadata.homeCallBooking?.serviceAddress || 'Customer Doorstep'}
+                        </span>
+                      </div>
+                      {Array.isArray(selectedService.metadata.homeService?.addons) && selectedService.metadata.homeService.addons.length > 0 && (
+                        <div className="col-span-2">
+                          <span className="text-[10px] text-slate-400 font-bold uppercase block">Included Add-ons</span>
+                          <div className="flex flex-wrap gap-1.5 mt-1">
+                            {selectedService.metadata.homeService.addons.map((a: any, idx: number) => (
+                              <span key={idx} className="px-2.5 py-0.5 rounded-md bg-white border border-amber-200 font-bold text-slate-800 text-[11px]">
+                                {a.name} (+₹{a.price})
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* PG Inclusions & Payment Mode */}
               {selectedService.metadata?.pgBooking && (
                 <div className="pt-3 border-t border-slate-100 space-y-3">
@@ -606,7 +895,7 @@ export default function CheckoutPage() {
               </div>
 
               {/* Selected Add-ons Display with Edit/Customize Button for all 54 categories */}
-              {!isPgStay && (
+              {!isPgStay && !isDining && (
                 <div className="p-3.5 bg-orange-50/60 rounded-xl border border-orange-200/70 space-y-2.5 mt-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-black uppercase text-orange-950 tracking-wider flex items-center gap-1.5">
@@ -1174,9 +1463,19 @@ export default function CheckoutPage() {
 
               <div className="p-5 space-y-3.5">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-600 font-medium">{isPgStay ? 'Monthly Stay Rent / Advance' : 'Base Price'}</span>
-                  <span className="font-bold text-gray-900">₹{basePrice.toLocaleString()}</span>
+                  <span className="text-gray-600 font-medium">
+                    {isPgStay ? 'Monthly Stay Rent / Advance' : isDining ? (basePrice === 0 ? 'Table Reservation' : 'Table Reservation Deposit') : 'Base Price'}
+                  </span>
+                  <span className="font-bold text-gray-900">
+                    {isDining && basePrice === 0 ? 'FREE' : `₹${basePrice.toLocaleString()}`}
+                  </span>
                 </div>
+                {isDining && diningPreordersTotal > 0 && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-emerald-700 font-medium">Chef Specialties Pre-Order</span>
+                    <span className="font-bold text-emerald-700">+₹{diningPreordersTotal.toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-gray-600 font-medium">Platform Fee</span>
                   <span className="font-bold text-gray-900">₹{platformFee}</span>
@@ -1341,6 +1640,8 @@ export default function CheckoutPage() {
                     <><span className="text-lg">👥</span> Generate {splitCount} Split Links & Hold Slot</>
                   ) : payMode === 'PAY_AT_VENUE' ? (
                     <><Shield size={18} /> Confirm Reservation (Pay at Venue)</>
+                  ) : isDining ? (
+                    <><Shield size={18} /> {amountToPayNow === 0 ? 'Confirm Table Reservation' : `Pay ₹${amountToPayNow.toLocaleString()} & Confirm Table`}</>
                   ) : payMode === 'PARTIAL_ADVANCE' ? (
                     <><Shield size={18} /> Pay ₹{amountToPayNow.toLocaleString()} Advance & Lock Slot</>
                   ) : (

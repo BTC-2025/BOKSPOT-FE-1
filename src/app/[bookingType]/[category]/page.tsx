@@ -17,7 +17,12 @@ import { api, Service } from '../../../lib/api';
 import { calculateDistance } from '../../../lib/mockData';
 import { getSportCategoryConfig } from '../../../lib/sportsData';
 import { getEntertainmentCategoryConfig, NOW_SHOWING_MOVIES, MovieListingItem } from '../../../lib/entertainmentData';
-import { Film, Clapperboard, Play, Flame } from 'lucide-react';
+import { getDiningConfig, DiningTableType } from '../../../lib/diningData';
+import { getWellnessConfig } from '../../../lib/wellnessData';
+import { getFitnessConfig } from '../../../lib/fitnessData';
+import { getClinicConfig } from '../../../lib/clinicalData';
+import { getHomeServiceConfig } from '../../../lib/homeServicesData';
+import { Film, Clapperboard, Play, Flame, Utensils, Coffee, Award } from 'lucide-react';
 
 const MapComponent = dynamic(() => import('../../../components/MapComponent'), {
   ssr: false,
@@ -1705,11 +1710,30 @@ export default function ProviderDiscoveryPage() {
 
   const [searchQuery, setSearchQuery] = useState(() => queryVenue || queryCity || city || 'Chennai');
 
-  const isHotelCategory = category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'pg-hostels' || category === 'camping' || bookingType === 'stay-accommodation' || bookingType === 'home';
   const isHostelOrPg = category === 'hostels' || category === 'pg-hostels' || (categoryName || '').toLowerCase().includes('hostel') || (categoryName || '').toLowerCase().includes('pg');
   const isPgCategory = category === 'pg-hostels';
+  const isDoctorCategory = category === 'doctor' || (bookingType === 'lifestyle_local' && category.includes('doctor'));
+  const isHomeServicesCategory = ['plumber', 'electrician', 'cleaning', 'technician', 'babysitting', 'elder-care', 'event-organizer', 'pet-grooming'].includes(category);
+  const isAppointmentCategory = ['salons', 'spa', 'studio', 'gym-yoga'].includes(category) || (bookingType === 'lifestyle_local' && (category.includes('salon') || category.includes('spa') || category.includes('studio')));
+  const isDiningCategory = category === 'dining' || category === 'restaurants' || (bookingType === 'lifestyle-local' && (category.includes('dine') || category.includes('food') || category.includes('restaurant')));
+  const isSalonCategory = category === 'salons' || category === 'spa' || category === 'studio' || (bookingType === 'lifestyle_local' && (category.includes('salon') || category.includes('spa') || category.includes('studio')));
   const isSportsCategory = (bookingType || '').toLowerCase().includes('sport') || ['football-turf', 'cricket-ground', 'badminton', 'tennis', 'basketball', 'swimming', 'play-arena', 'turfs'].includes((category || '').toLowerCase());
   const isEntertainmentCategory = (bookingType || '').toLowerCase().includes('entertainment') || ['movies', 'theatre', 'concerts', 'events', 'exhibitions', 'workshops', 'gaming'].includes((category || '').toLowerCase());
+  const isHotelCategory = !isDoctorCategory && !isHomeServicesCategory && !isAppointmentCategory && !isDiningCategory && !isSportsCategory && !isEntertainmentCategory && (category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'pg-hostels' || category === 'camping' || bookingType === 'stay-accommodation' || bookingType === 'home');
+  const [homeServiceTimeWindow, setHomeServiceTimeWindow] = useState<string>('ALL');
+  const [doctorSpecialityFilter, setDoctorSpecialityFilter] = useState<string>('ALL');
+  const [doctorModeFilter, setDoctorModeFilter] = useState<'ALL' | 'IN_CLINIC' | 'VIDEO_CALL'>('ALL');
+
+  // Dining Dedicated Search States
+  const todayStr = new Date().toISOString().split('T')[0];
+  const tomorrowD = new Date();
+  tomorrowD.setDate(tomorrowD.getDate() + 1);
+  const tomorrowStr = tomorrowD.toISOString().split('T')[0];
+  const [diningMealSession, setDiningMealSession] = useState<'ALL' | 'LUNCH' | 'DINNER'>('ALL');
+  const [diningGuestsCount, setDiningGuestsCount] = useState<number>(2);
+  const [diningSeatingZone, setDiningSeatingZone] = useState<string>('all'); // 'all', 'AC_INDOOR', 'ROOFTOP', 'PRIVATE_DINING'
+  const [isDiningGuestsOpen, setIsDiningGuestsOpen] = useState(false);
+  const [isDiningZoneOpen, setIsDiningZoneOpen] = useState(false);
 
   // Entertainment Dedicated Search States
   const [entLanguageFilter, setEntLanguageFilter] = useState<string>('all');
@@ -2335,6 +2359,209 @@ export default function ProviderDiscoveryPage() {
                   snackAddons: entConfig.snackAddons,
                   amenities: entConfig.amenities,
                   venueRules: entConfig.venueRules
+                }
+              }
+            ];
+          }
+        }
+
+        // Generic Lifestyle & Local Services Dynamic Fallbacks (Dining, Wellness, Fitness, Doctor, Home Services)
+        const cleanCat = (category || '').toLowerCase();
+        if (cleanCat.includes('dining') || cleanCat.includes('restaurant')) {
+          if (list.length === 0) {
+            const diningCfg = getDiningConfig();
+            const targetCity = city || diningCfg.city || 'Chennai';
+            list = [
+              {
+                id: `svc-dining-grand-temple-dine`,
+                name: diningCfg.name,
+                category: { name: 'Restaurant Table Reservation', slug: 'dining' },
+                rating: diningCfg.rating,
+                reviewCount: 840,
+                basePrice: String(diningCfg.costForTwo),
+                image: diningCfg.heroImage,
+                branchName: diningCfg.name,
+                address: diningCfg.address,
+                city: targetCity,
+                merchant: {
+                  id: 'R404',
+                  name: diningCfg.name,
+                  city: targetCity,
+                  address: diningCfg.address,
+                  rating: diningCfg.rating,
+                  username: 'R404',
+                  metadata: {
+                    isDining: true,
+                    cuisines: diningCfg.cuisines,
+                    costForTwo: diningCfg.costForTwo,
+                    tableTypes: diningCfg.tableTypes,
+                    timeSlots: diningCfg.timeSlots,
+                    popularMenu: diningCfg.popularMenu,
+                    bookingDeals: diningCfg.bookingDeals
+                  }
+                },
+                metadata: {
+                  isDining: true,
+                  cuisines: diningCfg.cuisines,
+                  costForTwo: diningCfg.costForTwo,
+                  tableTypes: diningCfg.tableTypes,
+                  timeSlots: diningCfg.timeSlots,
+                  popularMenu: diningCfg.popularMenu,
+                  bookingDeals: diningCfg.bookingDeals
+                }
+              }
+            ];
+          }
+        } else if (cleanCat.includes('salon') || cleanCat.includes('spa') || cleanCat.includes('wellness') || cleanCat.includes('studio')) {
+          if (list.length === 0) {
+            const wellCfg = getWellnessConfig('style-studio');
+            const targetCity = city || wellCfg.city || 'Chennai';
+            list = [
+              {
+                id: `svc-wellness-style-studio`,
+                name: wellCfg.name,
+                category: { name: wellCfg.category, slug: 'salons' },
+                rating: wellCfg.rating,
+                reviewCount: 620,
+                basePrice: String(wellCfg.treatments[0]?.price || 499),
+                image: wellCfg.heroImage,
+                branchName: wellCfg.name,
+                address: wellCfg.address,
+                city: targetCity,
+                merchant: {
+                  id: 'S303',
+                  name: wellCfg.name,
+                  city: targetCity,
+                  address: wellCfg.address,
+                  rating: wellCfg.rating,
+                  username: 'S303',
+                  metadata: {
+                    isWellness: true,
+                    treatments: wellCfg.treatments,
+                    specialists: wellCfg.specialists,
+                    amenities: wellCfg.amenities
+                  }
+                },
+                metadata: {
+                  isWellness: true,
+                  treatments: wellCfg.treatments,
+                  specialists: wellCfg.specialists
+                }
+              }
+            ];
+          }
+        } else if (cleanCat.includes('gym') || cleanCat.includes('yoga') || cleanCat.includes('fitness')) {
+          if (list.length === 0) {
+            const fitCfg = getFitnessConfig('zenfit-clinic');
+            const targetCity = city || fitCfg.city || 'Chennai';
+            list = [
+              {
+                id: `svc-fitness-zenfit`,
+                name: fitCfg.name,
+                category: { name: fitCfg.category, slug: 'gym-yoga' },
+                rating: fitCfg.rating,
+                reviewCount: 450,
+                basePrice: String(fitCfg.passes[0]?.price || 299),
+                image: fitCfg.heroImage,
+                branchName: fitCfg.name,
+                address: fitCfg.address,
+                city: targetCity,
+                merchant: {
+                  id: 'F202',
+                  name: fitCfg.name,
+                  city: targetCity,
+                  address: fitCfg.address,
+                  rating: fitCfg.rating,
+                  username: 'F202',
+                  metadata: {
+                    isFitness: true,
+                    passes: fitCfg.passes,
+                    trainers: fitCfg.trainers,
+                    timeSlots: fitCfg.timeSlots,
+                    features: fitCfg.features
+                  }
+                },
+                metadata: {
+                  isFitness: true,
+                  passes: fitCfg.passes,
+                  trainers: fitCfg.trainers
+                }
+              }
+            ];
+          }
+        } else if (cleanCat.includes('doctor') || cleanCat.includes('clinic')) {
+          if (list.length === 0) {
+            const docCfg = getClinicConfig('apollo-dental');
+            const targetCity = city || docCfg.city || 'Chennai';
+            list = [
+              {
+                id: `svc-doctor-apollo-dental`,
+                name: docCfg.name,
+                category: { name: docCfg.category, slug: 'doctor' },
+                rating: docCfg.rating,
+                reviewCount: 520,
+                basePrice: String(docCfg.doctors[0]?.consultationFee || 600),
+                image: docCfg.heroImage,
+                branchName: docCfg.name,
+                address: docCfg.address,
+                city: targetCity,
+                merchant: {
+                  id: 'D101',
+                  name: docCfg.name,
+                  city: targetCity,
+                  address: docCfg.address,
+                  rating: docCfg.rating,
+                  username: 'D101',
+                  metadata: {
+                    isDoctor: true,
+                    doctors: docCfg.doctors,
+                    consultationModes: docCfg.consultationModes,
+                    facilities: docCfg.facilities
+                  }
+                },
+                metadata: {
+                  isDoctor: true,
+                  doctors: docCfg.doctors
+                }
+              }
+            ];
+          }
+        } else if (cleanCat.includes('electrician') || cleanCat.includes('plumber') || cleanCat.includes('clean') || cleanCat.includes('technician')) {
+          if (list.length === 0) {
+            const homeCfg = getHomeServiceConfig(cleanCat);
+            const matched = homeCfg.services.find(s => cleanCat.includes(s.category)) || homeCfg.services[0];
+            const targetCity = city || homeCfg.city || 'Chennai';
+            list = [
+              {
+                id: `svc-home-${cleanCat}-fixit`,
+                name: `${homeCfg.name} — ${matched.name}`,
+                category: { name: matched.name, slug: cleanCat },
+                rating: homeCfg.rating,
+                reviewCount: 890,
+                basePrice: String(matched.inspectionFee),
+                image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=1200&auto=format&fit=crop',
+                branchName: homeCfg.name,
+                address: homeCfg.locality,
+                city: targetCity,
+                merchant: {
+                  id: 'E201',
+                  name: homeCfg.name,
+                  city: targetCity,
+                  address: homeCfg.locality,
+                  rating: homeCfg.rating,
+                  username: 'E201',
+                  metadata: {
+                    isHomeService: true,
+                    serviceItem: matched,
+                    arrivalWindows: homeCfg.arrivalWindows,
+                    warrantyDays: homeCfg.warrantyDays
+                  }
+                },
+                metadata: {
+                  isHomeService: true,
+                  serviceItem: matched,
+                  arrivalWindows: homeCfg.arrivalWindows,
+                  warrantyDays: homeCfg.warrantyDays
                 }
               }
             ];
@@ -3851,6 +4078,595 @@ export default function ProviderDiscoveryPage() {
                   </button>
                 </div>
               </div>
+            ) : isDiningCategory ? (
+              /* =========================================================================
+               * DEDICATED RESTAURANT & TABLE RESERVATION SEARCH DOCK (Zomato Dining / Dineout Style)
+               * RESTAURANT / CUISINE | DATE & MEAL | GUESTS & SEATING | FIND A TABLE
+               * ========================================================================= */
+              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                {/* 1. Restaurant / Cuisine / Locality */}
+                <div className="flex-[1.4] relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors cursor-pointer group">
+                  <div className="flex items-center gap-3">
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <Utensils size={18} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">RESTAURANT / CUISINE</span>
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onFocus={(e) => {
+                          setShowAutocomplete(true);
+                          e.target.select();
+                        }}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          setShowAutocomplete(true);
+                        }}
+                        placeholder={`Search rooftop bistro, buffet, cafe in ${city || 'Chennai'}...`}
+                        className="w-full bg-transparent text-xs sm:text-sm font-bold text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-normal outline-none truncate"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Dining Date & Meal Session (Today Lunch / Dinner) */}
+                <div className="flex-1 relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
+                  <button
+                    type="button"
+                    onClick={() => setIsSportsDatePickerOpen(!isSportsDatePickerOpen)}
+                    className="flex items-center gap-3 w-full text-left cursor-pointer"
+                  >
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <Calendar size={18} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">DATE & SESSION</span>
+                      <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white truncate">
+                        {sportsSlotDate === todayStr ? 'Today' : sportsSlotDate} • {diningMealSession === 'ALL' ? 'Lunch / Dinner' : diningMealSession}
+                      </span>
+                    </div>
+                    <ChevronDown size={14} className="text-slate-400 shrink-0" />
+                  </button>
+
+                  {/* Dining Date & Session Picker Popover */}
+                  {isSportsDatePickerOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsSportsDatePickerOpen(false)} />
+                      <div className="absolute top-full left-0 mt-3 w-72 rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/15 shadow-2xl p-3.5 z-50 space-y-3">
+                        <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-white/5">
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-200">Meal Session</span>
+                          <div className="flex items-center gap-1">
+                            {['ALL', 'LUNCH', 'DINNER'].map((s) => (
+                              <button
+                                key={s}
+                                type="button"
+                                onClick={() => setDiningMealSession(s as any)}
+                                className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${
+                                  diningMealSession === s ? 'bg-[#ff6325] text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300'
+                                }`}
+                              >
+                                {s}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Quick Date Pills */}
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {[
+                            { label: 'Today', date: todayStr },
+                            { label: 'Tomorrow', date: tomorrowStr },
+                            {
+                              label: 'This Weekend',
+                              date: (() => {
+                                const d = new Date();
+                                const day = d.getDay();
+                                const diff = (6 - day + 7) % 7 || 7;
+                                d.setDate(d.getDate() + diff);
+                                return d.toISOString().split('T')[0];
+                              })()
+                            }
+                          ].map((p) => (
+                            <button
+                              key={p.label}
+                              type="button"
+                              onClick={() => {
+                                setSportsSlotDate(p.date);
+                                setIsSportsDatePickerOpen(false);
+                              }}
+                              className={`py-1.5 px-2 rounded-xl text-center text-xs font-bold transition-all ${
+                                sportsSlotDate === p.date
+                                  ? 'bg-[#ff6325] text-white shadow-md shadow-[#ff6325]/25'
+                                  : 'bg-slate-50 dark:bg-white/5 hover:bg-slate-100 text-slate-700 dark:text-slate-200'
+                              }`}
+                            >
+                              {p.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 3. Guests Count & Seating Preference */}
+                <div className="flex-1 relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
+                  <button
+                    type="button"
+                    onClick={() => setIsDiningGuestsOpen(!isDiningGuestsOpen)}
+                    className="flex items-center gap-3 w-full text-left cursor-pointer"
+                  >
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <Users size={18} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">GUESTS & SEATING</span>
+                      <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white truncate">
+                        {diningGuestsCount} Guests • {diningSeatingZone === 'ROOFTOP' ? 'Rooftop' : diningSeatingZone === 'AC_INDOOR' ? 'AC Hall' : diningSeatingZone === 'PRIVATE_DINING' ? 'Private Dining' : 'Any Seating'}
+                      </span>
+                    </div>
+                    <ChevronDown size={14} className="text-slate-400 shrink-0" />
+                  </button>
+
+                  {/* Guests & Seating Dropdown */}
+                  {isDiningGuestsOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsDiningGuestsOpen(false)} />
+                      <div className="absolute top-full right-0 mt-3 w-72 rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/15 shadow-2xl p-4 z-50 space-y-3">
+                        <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-white/5">
+                          <span className="text-xs font-bold text-slate-800 dark:text-white">Number of Guests</span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              disabled={diningGuestsCount <= 1}
+                              onClick={() => setDiningGuestsCount(Math.max(1, diningGuestsCount - 1))}
+                              className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs font-bold disabled:opacity-30"
+                            >
+                              <Minus size={12} />
+                            </button>
+                            <span className="w-5 text-center text-xs font-bold text-slate-900 dark:text-white">{diningGuestsCount}</span>
+                            <button
+                              type="button"
+                              onClick={() => setDiningGuestsCount(diningGuestsCount + 1)}
+                              className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs font-bold"
+                            >
+                              <Plus size={12} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Preferred Zone */}
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1.5">Seating Ambience</span>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            {[
+                              { id: 'all', label: 'Any Seating', icon: '🍽️' },
+                              { id: 'ROOFTOP', label: 'Rooftop Views', icon: '🍷' },
+                              { id: 'AC_INDOOR', label: 'AC Dining Hall', icon: '🛋️' },
+                              { id: 'PRIVATE_DINING', label: 'Private Suite', icon: '👑' }
+                            ].map((z) => (
+                              <button
+                                key={z.id}
+                                type="button"
+                                onClick={() => {
+                                  setDiningSeatingZone(z.id);
+                                  setIsDiningGuestsOpen(false);
+                                }}
+                                className={`p-2 rounded-xl text-left text-[11px] font-bold border transition-colors ${
+                                  diningSeatingZone === z.id
+                                    ? 'bg-[#ff6325]/10 border-[#ff6325] text-[#ff6325]'
+                                    : 'border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300'
+                                }`}
+                              >
+                                <span className="mr-1">{z.icon}</span> {z.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 4. Search Action Button */}
+                <div className="p-1 shrink-0 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAutocomplete(false);
+                      setIsSportsDatePickerOpen(false);
+                      setIsDiningGuestsOpen(false);
+                      const el = document.getElementById('hotel-results-anchor');
+                      el?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="w-full md:w-auto px-7 py-3.5 rounded-full bg-[#ff6325] hover:bg-[#e0531b] active:scale-95 text-white flex items-center justify-center gap-2.5 font-bold text-sm shadow-lg shadow-[#ff6325]/35 hover:shadow-[#ff6325]/50 transition-all cursor-pointer group"
+                  >
+                    <Utensils size={17} className="group-hover:scale-110 transition-transform" />
+                    <span>Find a Table</span>
+                  </button>
+                </div>
+              </div>
+            ) : isDoctorCategory ? (
+              /* =========================================================================
+               * DEDICATED DOCTOR & HEALTHCARE CONSULTATION SEARCH DOCK (Practo / Apollo Style)
+               * CLINIC / DOCTOR / HOSPITAL | SPECIALITY / DEPARTMENT | CONSULTATION MODE | APPOINTMENT DATE | BOOK CONSULTATION
+               * ========================================================================= */
+              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                {/* 1. Doctor / Clinic / Hospital / Area */}
+                <div className="flex-[1.4] relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors cursor-pointer group">
+                  <div className="flex items-center gap-3">
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <Search size={18} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                        DOCTOR / CLINIC / HOSPITAL
+                      </span>
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onFocus={(e) => {
+                          setShowAutocomplete(true);
+                          e.target.select();
+                        }}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          setShowAutocomplete(true);
+                        }}
+                        placeholder={`Search doctors, dental, skin clinics in ${city || 'Chennai'}...`}
+                        className="w-full bg-transparent text-xs sm:text-sm font-bold text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-normal outline-none truncate"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Doctor Speciality / Department */}
+                <div className="flex-1 relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
+                  <div className="flex items-center gap-3 w-full text-left">
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <Award size={18} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">SPECIALITY / FIELD</span>
+                      <select
+                        value={doctorSpecialityFilter}
+                        onChange={(e) => setDoctorSpecialityFilter(e.target.value)}
+                        className="bg-transparent text-xs sm:text-sm font-bold text-slate-800 dark:text-white outline-none cursor-pointer"
+                      >
+                        <option value="ALL" className="dark:bg-slate-900">All Specialities</option>
+                        <option value="GENERAL" className="dark:bg-slate-900">General Physician / MD</option>
+                        <option value="DENTAL" className="dark:bg-slate-900">Dentist & Orthodontist</option>
+                        <option value="DERMA" className="dark:bg-slate-900">Dermatologist (Skin & Hair)</option>
+                        <option value="PEDIA" className="dark:bg-slate-900">Pediatrician (Child Care)</option>
+                        <option value="ORTHO" className="dark:bg-slate-900">Orthopedic (Bone & Joint)</option>
+                        <option value="ENT" className="dark:bg-slate-900">ENT Specialist (Ear Nose Throat)</option>
+                        <option value="GYNAEC" className="dark:bg-slate-900">Gynecologist & Obstetrician</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Consultation Mode & Date */}
+                <div className="flex-1 relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
+                  <div className="flex items-center gap-3 w-full text-left">
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <Calendar size={18} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">MODE & DATE</span>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <select
+                          value={doctorModeFilter}
+                          onChange={(e) => setDoctorModeFilter(e.target.value as any)}
+                          className="bg-transparent text-xs font-bold text-slate-800 dark:text-white outline-none cursor-pointer"
+                        >
+                          <option value="ALL" className="dark:bg-slate-900">🏥 In-Clinic / Video</option>
+                          <option value="IN_CLINIC" className="dark:bg-slate-900">🏥 In-Clinic Visit</option>
+                          <option value="VIDEO_CALL" className="dark:bg-slate-900">📱 Video Consult</option>
+                        </select>
+                        <span className="text-slate-300">•</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCalendarViewDate(new Date(sportsSlotDate || todayStr));
+                            setIsSportsDatePickerOpen(!isSportsDatePickerOpen);
+                          }}
+                          className="text-xs font-bold text-[#ff6325] hover:underline cursor-pointer"
+                        >
+                          {sportsSlotDate === todayStr ? 'Today' : sportsSlotDate}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Clean Interactive Calendar Popover (Airbnb / Agoda Standard) */}
+                  {isSportsDatePickerOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsSportsDatePickerOpen(false)} />
+                      <div className="absolute top-full right-0 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-white/15 shadow-2xl p-4 z-50 text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
+                        {/* Calendar Month Header */}
+                        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-2 mb-3 border border-slate-150/60 dark:border-white/5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newD = new Date(calendarViewDate);
+                              newD.setMonth(newD.getMonth() - 1);
+                              setCalendarViewDate(newD);
+                            }}
+                            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
+                          >
+                            <ChevronLeft size={16} />
+                          </button>
+                          <span className="font-extrabold text-xs sm:text-sm tracking-tight text-slate-900 dark:text-white">
+                            {calendarViewDate.toLocaleString('default', { month: 'long' })} {calendarViewDate.getFullYear()}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newD = new Date(calendarViewDate);
+                              newD.setMonth(newD.getMonth() + 1);
+                              setCalendarViewDate(newD);
+                            }}
+                            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
+                          >
+                            <ChevronRight size={16} />
+                          </button>
+                        </div>
+
+                        {/* Day of Week Labels */}
+                        <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-400 mb-2">
+                          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
+                            <div key={day} className="py-1">{day}</div>
+                          ))}
+                        </div>
+
+                        {/* Days Grid */}
+                        <div className="grid grid-cols-7 gap-1 text-center">
+                          {(() => {
+                            const year = calendarViewDate.getFullYear();
+                            const month = calendarViewDate.getMonth();
+                            const firstDayIndex = new Date(year, month, 1).getDay();
+                            const totalDays = new Date(year, month + 1, 0).getDate();
+
+                            const cells = [];
+                            for (let i = 0; i < firstDayIndex; i++) {
+                              cells.push(<div key={`empty-${i}`} className="h-8 w-8" />);
+                            }
+
+                            for (let day = 1; day <= totalDays; day++) {
+                              const monthStr = String(month + 1).padStart(2, '0');
+                              const dayStr = String(day).padStart(2, '0');
+                              const dateStr = `${year}-${monthStr}-${dayStr}`;
+                              const isSelected = dateStr === (sportsSlotDate || todayStr);
+                              const isPast = dateStr < todayStr;
+
+                              cells.push(
+                                <button
+                                  key={`day-${day}`}
+                                  type="button"
+                                  disabled={isPast}
+                                  onClick={() => {
+                                    setSportsSlotDate(dateStr);
+                                    setIsSportsDatePickerOpen(false);
+                                  }}
+                                  className={`h-8 w-8 mx-auto rounded-full text-xs font-bold flex items-center justify-center transition-all ${
+                                    isSelected
+                                      ? 'bg-[#ff6325] text-white shadow-sm font-black'
+                                      : isPast
+                                      ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                                      : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer'
+                                  }`}
+                                >
+                                  {day}
+                                </button>
+                              );
+                            }
+                            return cells;
+                          })()}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 4. Action CTA Button */}
+                <div className="p-1 shrink-0 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAutocomplete(false);
+                      setIsSportsDatePickerOpen(false);
+                      const el = document.getElementById('hotel-results-anchor');
+                      el?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="w-full md:w-auto px-7 py-3.5 rounded-full bg-[#ff6325] hover:bg-[#e0531b] active:scale-95 text-white flex items-center justify-center gap-2.5 font-bold text-sm shadow-lg shadow-[#ff6325]/35 hover:shadow-[#ff6325]/50 transition-all cursor-pointer group"
+                  >
+                    <Search size={17} className="group-hover:scale-110 transition-transform" />
+                    <span>Book Doctor</span>
+                  </button>
+                </div>
+              </div>
+            ) : (isHomeServicesCategory || isAppointmentCategory) ? (
+              /* =========================================================================
+               * DEDICATED HOME SERVICES & APPOINTMENT SEARCH DOCK (Urban Company Style)
+               * SERVICE / AREA | SERVICE DATE | TIME WINDOW | BOOK PRO / SPECIALIST
+               * ========================================================================= */
+              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                {/* 1. Service / Locality */}
+                <div className="flex-[1.4] relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors cursor-pointer group">
+                  <div className="flex items-center gap-3">
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <Search size={18} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                        {isHomeServicesCategory ? 'LOCALITY / PINCODE' : 'CLINIC / SALON / AREA'}
+                      </span>
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onFocus={(e) => {
+                          setShowAutocomplete(true);
+                          e.target.select();
+                        }}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          setShowAutocomplete(true);
+                        }}
+                        placeholder={`Search ${categoryName} in ${city || 'Chennai'}...`}
+                        className="w-full bg-transparent text-xs sm:text-sm font-bold text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-normal outline-none truncate"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Service Date */}
+                <div className="flex-1 relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
+                  <button
+                    type="button"
+                    onClick={() => setIsSportsDatePickerOpen(!isSportsDatePickerOpen)}
+                    className="flex items-center gap-3 w-full text-left cursor-pointer"
+                  >
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <Calendar size={18} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">PREFERRED DATE</span>
+                      <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white truncate">
+                        {sportsSlotDate === todayStr ? 'Today' : sportsSlotDate}
+                      </span>
+                    </div>
+                  </button>
+
+                  {isSportsDatePickerOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsSportsDatePickerOpen(false)} />
+                      <div className="absolute top-full left-0 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-white/15 shadow-2xl p-4 z-50 text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
+                        {/* Calendar Month Header */}
+                        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-2 mb-3 border border-slate-150/60 dark:border-white/5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newD = new Date(calendarViewDate);
+                              newD.setMonth(newD.getMonth() - 1);
+                              setCalendarViewDate(newD);
+                            }}
+                            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
+                          >
+                            <ChevronLeft size={16} />
+                          </button>
+                          <span className="font-extrabold text-xs sm:text-sm tracking-tight text-slate-900 dark:text-white">
+                            {calendarViewDate.toLocaleString('default', { month: 'long' })} {calendarViewDate.getFullYear()}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newD = new Date(calendarViewDate);
+                              newD.setMonth(newD.getMonth() + 1);
+                              setCalendarViewDate(newD);
+                            }}
+                            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
+                          >
+                            <ChevronRight size={16} />
+                          </button>
+                        </div>
+
+                        {/* Day of Week Labels */}
+                        <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-400 mb-2">
+                          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
+                            <div key={day} className="py-1">{day}</div>
+                          ))}
+                        </div>
+
+                        {/* Days Grid */}
+                        <div className="grid grid-cols-7 gap-1 text-center">
+                          {(() => {
+                            const year = calendarViewDate.getFullYear();
+                            const month = calendarViewDate.getMonth();
+                            const firstDayIndex = new Date(year, month, 1).getDay();
+                            const totalDays = new Date(year, month + 1, 0).getDate();
+
+                            const cells = [];
+                            for (let i = 0; i < firstDayIndex; i++) {
+                              cells.push(<div key={`empty-${i}`} className="h-8 w-8" />);
+                            }
+
+                            for (let day = 1; day <= totalDays; day++) {
+                              const monthStr = String(month + 1).padStart(2, '0');
+                              const dayStr = String(day).padStart(2, '0');
+                              const dateStr = `${year}-${monthStr}-${dayStr}`;
+                              const isSelected = dateStr === (sportsSlotDate || todayStr);
+                              const isPast = dateStr < todayStr;
+
+                              cells.push(
+                                <button
+                                  key={`day-${day}`}
+                                  type="button"
+                                  disabled={isPast}
+                                  onClick={() => {
+                                    setSportsSlotDate(dateStr);
+                                    setIsSportsDatePickerOpen(false);
+                                  }}
+                                  className={`h-8 w-8 mx-auto rounded-full text-xs font-bold flex items-center justify-center transition-all ${
+                                    isSelected
+                                      ? 'bg-[#ff6325] text-white shadow-sm font-black'
+                                      : isPast
+                                      ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                                      : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer'
+                                  }`}
+                                >
+                                  {day}
+                                </button>
+                              );
+                            }
+                            return cells;
+                          })()}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 3. Preferred Time Slot Window */}
+                <div className="flex-1 relative px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
+                  <div className="flex items-center gap-3 w-full text-left">
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <Clock size={18} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">SLOT WINDOW</span>
+                      <select
+                        value={homeServiceTimeWindow}
+                        onChange={(e) => setHomeServiceTimeWindow(e.target.value)}
+                        className="bg-transparent text-xs sm:text-sm font-bold text-slate-800 dark:text-white outline-none cursor-pointer"
+                      >
+                        <option value="ALL" className="dark:bg-slate-900">Any Time Slot</option>
+                        <option value="MORNING" className="dark:bg-slate-900">Morning (09 AM – 12 PM)</option>
+                        <option value="AFTERNOON" className="dark:bg-slate-900">Afternoon (12 PM – 04 PM)</option>
+                        <option value="EVENING" className="dark:bg-slate-900">Evening (04 PM – 08 PM)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Action CTA Button */}
+                <div className="p-1 shrink-0 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAutocomplete(false);
+                      setIsSportsDatePickerOpen(false);
+                      const el = document.getElementById('hotel-results-anchor');
+                      el?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="w-full md:w-auto px-7 py-3.5 rounded-full bg-[#ff6325] hover:bg-[#e0531b] active:scale-95 text-white flex items-center justify-center gap-2.5 font-bold text-sm shadow-lg shadow-[#ff6325]/35 hover:shadow-[#ff6325]/50 transition-all cursor-pointer group"
+                  >
+                    <Search size={17} className="group-hover:scale-110 transition-transform" />
+                    <span>{isHomeServicesCategory ? 'Book Expert' : 'Book Specialist'}</span>
+                  </button>
+                </div>
+              </div>
             ) : (
               /* =========================================================================
                * STANDARD HOTEL / RESORT / VILLA SEARCH DOCK (Daily Check-in / Check-out)
@@ -4728,6 +5544,51 @@ export default function ProviderDiscoveryPage() {
                 </>
               )}
 
+              {/* Contextual Pills for Doctor Healthcare Consultation */}
+              {isDoctorCategory && (
+                <>
+                  {/* Quick Speciality Filter Pills */}
+                  {[
+                    { id: 'ALL', label: 'All Specialities' },
+                    { id: 'DENTAL', label: '🦷 Dental & Implants' },
+                    { id: 'GENERAL', label: '🩺 General Physician' },
+                    { id: 'DERMA', label: '✨ Skin & Dermatology' },
+                    { id: 'PEDIA', label: '👶 Pediatrician' }
+                  ].map(spec => (
+                    <button
+                      key={spec.id}
+                      type="button"
+                      onClick={() => setDoctorSpecialityFilter(spec.id)}
+                      className={`px-3 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
+                        doctorSpecialityFilter === spec.id
+                          ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                      }`}
+                    >
+                      <span>{spec.label}</span>
+                    </button>
+                  ))}
+
+                  {/* Consultation Mode Quick Filter Toggle */}
+                  <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-1 rounded-full shadow-xs">
+                    {(['ALL', 'IN_CLINIC', 'VIDEO_CALL'] as const).map(mode => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => setDoctorModeFilter(mode)}
+                        className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                          doctorModeFilter === mode
+                            ? 'bg-[#ff6325] text-white shadow-xs'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                        }`}
+                      >
+                        {mode === 'ALL' ? '🏥 In-Clinic & Video' : mode === 'IN_CLINIC' ? '🏥 In-Clinic' : '📱 Video Consult'}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+
               {/* 5. Free Cancellation Pill (Hidden in Sports if non-cancellable or customized) */}
               {(!isSportsCategory && !isEntertainmentCategory) && (
                 <button
@@ -5196,6 +6057,8 @@ export default function ProviderDiscoveryPage() {
                           <Link
                             href={isHotelCategory
                               ? `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?checkIn=${checkInDate}&checkOut=${checkOutDate}&adults=${adults}&children=${children}&childAges=${encodeURIComponent(JSON.stringify(childAges))}&rooms=${rooms}&pets=${pets}&petCount=${petCount}${isCardSecret ? '&isLuxury=true' : ''}`
+                              : isDiningCategory
+                              ? `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?date=${encodeURIComponent(sportsSlotDate || todayStr)}&session=${encodeURIComponent(diningMealSession)}&guests=${diningGuestsCount}&zone=${encodeURIComponent(diningSeatingZone)}`
                               : `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?date=${encodeURIComponent(sportsSlotDate || queryDate || new Date().toISOString().split('T')[0])}&city=${encodeURIComponent(queryCity || city || '')}&venue=${encodeURIComponent(queryVenue || m.name || '')}`
                             }
                             className="block h-full"
@@ -5416,6 +6279,50 @@ export default function ProviderDiscoveryPage() {
                                     </div>
                                     <span className="px-2.5 py-1.5 rounded-lg bg-[#0a3161] dark:bg-[#ff6325] text-white text-[11px] font-bold group-hover:brightness-110 flex items-center gap-1 shadow-xs transition-all">
                                       <span>{isItemPgOrHostel ? 'View Beds' : 'View Rooms'}</span>
+                                      <ChevronRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
+                                    </span>
+                                  </div>
+                                )}
+
+                                {/* Action Footer for Salon, Spa & Studio Appointments */}
+                                {isSalonCategory && !isDiningCategory && (
+                                  <div className="mt-2.5 pt-2.5 border-t border-[color:var(--color-outline-variant)]/15 flex items-center justify-between">
+                                    <div>
+                                      <span className="text-[9px] text-[color:var(--color-outline)] font-bold uppercase tracking-wider block leading-tight">
+                                        Starting from
+                                      </span>
+                                      <span className="text-sm sm:text-base font-black text-[#ff6325]">₹{group.minPrice || '499'}</span>
+                                      <span className="text-[9px] text-[color:var(--color-on-surface-variant)] font-medium">
+                                        {' '}• Certified Specialists
+                                      </span>
+                                      <span className="block text-[9px] text-emerald-600 dark:text-emerald-400 font-bold">
+                                        ✓ Instant Appointment Confirmation
+                                      </span>
+                                    </div>
+                                    <span className="px-2.5 py-1.5 rounded-lg bg-[#ff6325] text-white text-[11px] font-black group-hover:brightness-110 flex items-center gap-1 shadow-sm transition-all uppercase tracking-wider">
+                                      <span>Book Appointment</span>
+                                      <ChevronRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
+                                    </span>
+                                  </div>
+                                )}
+
+                                {/* Action Footer for Dining & Restaurant Table Reservation */}
+                                {isDiningCategory && (
+                                  <div className="mt-2.5 pt-2.5 border-t border-[color:var(--color-outline-variant)]/15 flex items-center justify-between">
+                                    <div>
+                                      <span className="text-[9px] text-[color:var(--color-outline)] font-bold uppercase tracking-wider block leading-tight">
+                                        Average Cost
+                                      </span>
+                                      <span className="text-sm sm:text-base font-black text-[#ff6325]">₹{group.minPrice || '950'}</span>
+                                      <span className="text-[9px] text-[color:var(--color-on-surface-variant)] font-medium">
+                                        {' '}for two
+                                      </span>
+                                      <span className="block text-[9px] text-emerald-600 dark:text-emerald-400 font-bold">
+                                        ✓ Free Instant Reservation
+                                      </span>
+                                    </div>
+                                    <span className="px-2.5 py-1.5 rounded-lg bg-[#ff6325] text-white text-[11px] font-black group-hover:brightness-110 flex items-center gap-1 shadow-sm transition-all uppercase tracking-wider">
+                                      <span>Reserve Table</span>
                                       <ChevronRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
                                     </span>
                                   </div>

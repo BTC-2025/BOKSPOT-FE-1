@@ -15,7 +15,17 @@ function SuccessPageContent() {
   
   const [copied, setCopied] = useState(false);
   const isCinemaPass = Boolean(booking?.metadata?.isEntertainmentBooking || booking?.metadata?.entertainmentBooking || booking?.serviceName?.toLowerCase().includes('movie') || booking?.serviceName?.toLowerCase().includes('avatar'));
+  const isDiningTable = Boolean(booking?.metadata?.isDining || booking?.metadata?.dining || booking?.category?.toLowerCase().includes('dine') || booking?.category?.toLowerCase().includes('restaurant'));
+  const isSalonAppointment = Boolean(booking?.metadata?.isWellness || booking?.metadata?.wellness || booking?.category?.toLowerCase().includes('salon') || booking?.category?.toLowerCase().includes('spa'));
+  const isFitnessBooking = Boolean(booking?.metadata?.isFitness || booking?.metadata?.fitness || booking?.category?.toLowerCase().includes('gym') || booking?.category?.toLowerCase().includes('yoga') || booking?.category?.toLowerCase().includes('fitness'));
+  const isDoctorAppointment = Boolean(booking?.metadata?.isDoctor || booking?.metadata?.doctor || booking?.category?.toLowerCase().includes('doc') || booking?.category?.toLowerCase().includes('clinic') || booking?.category?.toLowerCase().includes('dental'));
+  const isHomeService = Boolean(booking?.metadata?.isHomeService || booking?.metadata?.homeService || booking?.metadata?.homeCallBooking || booking?.category?.toLowerCase().includes('electrician') || booking?.category?.toLowerCase().includes('plumber') || booking?.category?.toLowerCase().includes('clean') || booking?.category?.toLowerCase().includes('technician'));
   const entMeta = booking?.metadata?.entertainmentBooking || booking?.metadata || {};
+  const diningMeta = booking?.metadata?.dining || {};
+  const wellnessMeta = booking?.metadata?.wellness || {};
+  const fitnessMeta = booking?.metadata?.fitness || {};
+  const doctorMeta = booking?.metadata?.doctor || {};
+  const homeMeta = booking?.metadata?.homeService || booking?.metadata?.homeCallBooking || {};
 
   if (!booking) {
     return (
@@ -97,6 +107,46 @@ Thank you for booking with BETA!
               </span>
             </div>
           )}
+          {isDiningTable && (
+            <div className="flex justify-between items-center py-0.5 border-b border-[color:var(--color-outline-variant)]/10 pb-2">
+              <span className="text-[color:var(--color-on-surface-variant)]">Reserved Table</span>
+              <span className="font-bold text-[#ff6325]">
+                {diningMeta.tableType || 'Dining Table'} • {diningMeta.guestsCount || 2} Guests
+              </span>
+            </div>
+          )}
+          {isSalonAppointment && (
+            <div className="flex justify-between items-center py-0.5 border-b border-[color:var(--color-outline-variant)]/10 pb-2">
+              <span className="text-[color:var(--color-on-surface-variant)]">Stylist Specialist</span>
+              <span className="font-bold text-rose-500">
+                {wellnessMeta.specialistName || 'Salon Specialist'} • {wellnessMeta.durationMinutes || 45} mins
+              </span>
+            </div>
+          )}
+          {isFitnessBooking && (
+            <div className="flex justify-between items-center py-0.5 border-b border-[color:var(--color-outline-variant)]/10 pb-2">
+              <span className="text-[color:var(--color-on-surface-variant)]">Fitness Pass & Coach</span>
+              <span className="font-bold text-emerald-500">
+                {fitnessMeta.passName || 'Workout Pass'} • {fitnessMeta.trainerName || 'Assigned Coach'}
+              </span>
+            </div>
+          )}
+          {isDoctorAppointment && (
+            <div className="flex justify-between items-center py-0.5 border-b border-[color:var(--color-outline-variant)]/10 pb-2">
+              <span className="text-[color:var(--color-on-surface-variant)]">OPD Doctor & Token</span>
+              <span className="font-bold text-blue-500">
+                Token #{doctorMeta.tokenNumber || '14'} • {doctorMeta.doctorName || 'Doctor'}
+              </span>
+            </div>
+          )}
+          {isHomeService && (
+            <div className="flex justify-between items-center py-0.5 border-b border-[color:var(--color-outline-variant)]/10 pb-2">
+              <span className="text-[color:var(--color-on-surface-variant)]">Doorstep Start OTP</span>
+              <span className="font-mono font-black text-amber-500 tracking-wider">
+                {homeMeta.startOtp || '4821'}
+              </span>
+            </div>
+          )}
           <div className="flex justify-between items-center py-0.5 border-b border-[color:var(--color-outline-variant)]/10 pb-2">
             <span className="text-[color:var(--color-on-surface-variant)]">Date & Time</span>
             <span className="font-bold text-[color:var(--color-on-surface)]">{booking.date} · {booking.time}</span>
@@ -115,7 +165,19 @@ Thank you for booking with BETA!
             className="mx-auto h-32 w-32 rounded-xl border border-white/10 shadow-lg p-2 bg-white"
           />
           <p className="mt-3 text-xs text-[color:var(--color-on-surface-variant)] font-medium">
-            {isCinemaPass ? 'Scan this M-Ticket QR at the cinema automated turnstile gate' : 'Show this QR code at the reception desk'}
+            {isCinemaPass
+              ? 'Scan this M-Ticket QR at the cinema automated turnstile gate'
+              : isDiningTable
+              ? 'Show this Table Booking Pass at the restaurant reception for priority seating'
+              : isSalonAppointment
+              ? 'Show this Appointment QR at the salon front desk to occupy your private chair'
+              : isFitnessBooking
+              ? 'Scan this QR code at the gym turnstile gate or present to yoga instructor'
+              : isDoctorAppointment
+              ? 'Scan this Token QR code at the clinic reception or self-check-in kiosk'
+              : isHomeService
+              ? 'Share the 4-digit OTP with the technician only when they arrive at your doorstep'
+              : 'Show this QR code at the reception desk'}
           </p>
         </div>
 
