@@ -56,11 +56,12 @@ export default function VenueProfilePage() {
   const isWellness = category === 'salons' || category === 'spa' || category === 'wellness' || (cleanCat.includes('salon') || cleanCat.includes('spa'));
   const isFitness = category === 'gym-yoga' || category === 'gym' || category === 'yoga' || cleanCat.includes('gym') || cleanCat.includes('fitness');
   const isStudio = category === 'studio' || category === 'photo-studios' || category === 'dance-studio' || category === 'podcast' || cleanCat.includes('studio');
+  const isDining = category === 'dining' || category === 'restaurants' || cleanCat.includes('dine') || cleanCat.includes('restaurant') || cleanCat.includes('food');
   const isAppointment = isDoctor;
   const isRental = category === 'sports-bike' || category === 'car-rental' || category === 'bike-rental' || category === 'camera' || category === 'cycle-rental' || category === 'sound-system' || category === 'event-equip' || bookingType === 'rental-equipment';
   const isPass = category === 'movies' || category === 'concerts' || category === 'theatre' || category === 'events' || category === 'exhibitions' || category === 'darshan' || category === 'coworking';
   const isHomeCall = category === 'electrician' || category === 'plumber' || category === 'cleaning' || category === 'technician' || category === 'babysitting' || category === 'elder-care';
-  const isHotel = !isEntertainment && !isFacility && !isAppointment && !isWellness && !isFitness && !isRental && !isPass && !isHomeCall && (category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'pg-hostels' || category === 'camping' || bookingType === 'stay-accommodation' || (bookingType === 'home' && !category.includes('turf') && !category.includes('movie')));
+  const isHotel = !isEntertainment && !isFacility && !isAppointment && !isWellness && !isFitness && !isStudio && !isDining && !isRental && !isPass && !isHomeCall && (category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'pg-hostels' || category === 'camping' || bookingType === 'stay-accommodation' || (bookingType === 'home' && !category.includes('turf') && !category.includes('movie')));
   const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
   const [visitMode, setVisitMode] = useState<'IN_PERSON' | 'LIVE_VIDEO'>('IN_PERSON');
   const [videoPlatform, setVideoPlatform] = useState<'WHATSAPP' | 'GOOGLE_MEET'>('WHATSAPP');
@@ -229,6 +230,18 @@ export default function VenueProfilePage() {
   const [selectedFitnessTimeSlot, setSelectedFitnessTimeSlot] = useState<string>('06:00 AM');
   const [isFitnessCalOpen, setIsFitnessCalOpen] = useState<boolean>(false);
   const [fitnessCalMonth, setFitnessCalMonth] = useState<Date>(() => new Date());
+
+  // ── Dedicated Dining / Table Reservation Flow States ──
+  const [selectedTableId, setSelectedTableId] = useState<string>('tbl-2-cozy');
+  const [diningGuestCount, setDiningGuestCount] = useState<number>(() => Number(searchParams?.get('guests')) || 2);
+  const [diningSession, setDiningSession] = useState<'LUNCH' | 'DINNER' | 'ALL'>('ALL');
+  const [diningZoneTab, setDiningZoneTab] = useState<'ALL' | 'AC_INDOOR' | 'ROOFTOP' | 'GARDEN_PATIO' | 'PRIVATE_DINING'>('ALL');
+  const [selectedDiningTime, setSelectedDiningTime] = useState<string>('07:30 PM');
+  const [diningSpecialRequest, setDiningSpecialRequest] = useState<string>('');
+  const [selectedDiningDealId, setSelectedDiningDealId] = useState<string>('');
+  const [selectedPreOrderItems, setSelectedPreOrderItems] = useState<{ id: string; qty: number }[]>([]);
+  const [isDiningCalOpen, setIsDiningCalOpen] = useState<boolean>(false);
+  const [diningCalMonth, setDiningCalMonth] = useState<Date>(() => new Date());
 
   // ── Archetype 4: AssetRental (Bikes, Cars, Equipment) Flow States ──
   const [rentalStartDate, setRentalStartDate] = useState(() => queryParamDate || todayStr);
@@ -1667,6 +1680,39 @@ export default function VenueProfilePage() {
                   </div>
                 </div>
               </div>
+            ) : isDining ? (
+              /* Dedicated Restaurant Table Reservation Summary Bar */
+              <div className="flex flex-wrap items-center gap-6 text-xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                    <Calendar size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
+                      Dining Date & Time
+                    </span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
+                      {selectedDate || todayStr} • {selectedDiningTime}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="h-8 w-px bg-slate-200 dark:bg-white/10 hidden lg:block" />
+
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                    <Users size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
+                      Party Size & Seating
+                    </span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
+                      {diningGuestCount} Guests • {diningZoneTab === 'ROOFTOP' ? '🌆 Rooftop' : diningZoneTab === 'GARDEN_PATIO' ? '🌿 Garden Patio' : diningZoneTab === 'PRIVATE_DINING' ? '👑 Private Dining' : '🌟 AC Indoor'}
+                    </span>
+                  </div>
+                </div>
+              </div>
             ) : isAppointment || isHomeCall || isWellness || isFitness ? (
               /* Dedicated Appointment / Home Services / Wellness / Fitness Summary Bar */
               <div className="flex flex-wrap items-center gap-6 text-xs">
@@ -1741,13 +1787,13 @@ export default function VenueProfilePage() {
               <button
                 type="button"
                 onClick={() => {
-                  const targetId = isEntertainment ? 'entertainment-booking-section' : isFitness ? 'fitness-booking-section' : isWellness ? 'wellness-booking-section' : isFacility ? 'available-slots-section' : isHomeCall ? 'home-services-booking-section' : 'available-rooms-section';
+                  const targetId = isDining ? 'dining-booking-section' : isEntertainment ? 'entertainment-booking-section' : isFitness ? 'fitness-booking-section' : isWellness ? 'wellness-booking-section' : isFacility ? 'available-slots-section' : isHomeCall ? 'home-services-booking-section' : 'available-rooms-section';
                   const el = document.getElementById(targetId);
                   el?.scrollIntoView({ behavior: 'smooth' });
                 }}
                 className="px-4 py-2 bg-[#ff6325] hover:bg-[#e04e13] active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               >
-                <span>{isFitness ? 'Select Fitness Pass' : isWellness ? 'Select Stylist & Rituals' : isFacility ? (isStudio ? 'Select Studio Bay' : 'Select Court & Slot') : isEntertainment ? 'Select Tickets & Seats' : isRental ? 'Select Gear' : isHomeCall ? 'Book Home Service' : isAppointment ? 'Select Specialist' : 'Select Room'}</span>
+                <span>{isDining ? 'Reserve Table' : isFitness ? 'Select Fitness Pass' : isWellness ? 'Select Stylist & Rituals' : isFacility ? (isStudio ? 'Select Studio Bay' : 'Select Court & Slot') : isEntertainment ? 'Select Tickets & Seats' : isRental ? 'Select Gear' : isHomeCall ? 'Book Home Service' : isAppointment ? 'Select Specialist' : 'Select Room'}</span>
                 <ChevronRight size={14} />
               </button>
             </div>
@@ -2421,6 +2467,98 @@ export default function VenueProfilePage() {
                       </button>
                     </div>
                   </div>
+                ) : isDining ? (
+                  /* ================= Dedicated Dining / Table Reservation Search Editor ================= */
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                      {/* 1. Dining Date */}
+                      <div>
+                        <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">Dining Date</label>
+                        <input
+                          type="date"
+                          value={selectedDate || todayStr}
+                          min={todayStr}
+                          onChange={(e) => setSelectedDate(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white text-xs outline-none"
+                        />
+                      </div>
+
+                      {/* 2. Meal Session & Time */}
+                      <div>
+                        <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">Meal & Time</label>
+                        <select
+                          value={selectedDiningTime}
+                          onChange={(e) => setSelectedDiningTime(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white text-xs outline-none cursor-pointer"
+                        >
+                          <optgroup label="Lunch Slots">
+                            <option value="12:30 PM">12:30 PM (Lunch)</option>
+                            <option value="01:00 PM">01:00 PM (Lunch)</option>
+                            <option value="01:30 PM">01:30 PM (Lunch)</option>
+                            <option value="02:00 PM">02:00 PM (Lunch)</option>
+                          </optgroup>
+                          <optgroup label="Dinner Slots">
+                            <option value="07:00 PM">07:00 PM (Dinner)</option>
+                            <option value="07:30 PM">07:30 PM (Dinner)</option>
+                            <option value="08:00 PM">08:00 PM (Dinner)</option>
+                            <option value="08:30 PM">08:30 PM (Dinner)</option>
+                            <option value="09:00 PM">09:00 PM (Dinner)</option>
+                          </optgroup>
+                        </select>
+                      </div>
+
+                      {/* 3. Number of Guests */}
+                      <div>
+                        <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">Guests / Party Size</label>
+                        <select
+                          value={diningGuestCount}
+                          onChange={(e) => setDiningGuestCount(Number(e.target.value))}
+                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white text-xs outline-none cursor-pointer"
+                        >
+                          {[1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 15].map(cnt => (
+                            <option key={cnt} value={cnt}>{cnt} Guest{cnt > 1 ? 's' : ''}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* 4. Seating Zone */}
+                      <div>
+                        <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">Seating Ambience</label>
+                        <select
+                          value={diningZoneTab}
+                          onChange={(e) => setDiningZoneTab(e.target.value as any)}
+                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white text-xs outline-none cursor-pointer"
+                        >
+                          <option value="ALL">All Seating Zones</option>
+                          <option value="AC_INDOOR">🌟 AC Indoor Dining</option>
+                          <option value="ROOFTOP">🌆 Open-Air Rooftop</option>
+                          <option value="GARDEN_PATIO">🌿 Garden Patio</option>
+                          <option value="PRIVATE_DINING">👑 Private Dining Room</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/10">
+                      <button
+                        type="button"
+                        onClick={() => setIsEditSearchOpen(false)}
+                        className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditSearchOpen(false);
+                          const el = document.getElementById('dining-booking-section');
+                          el?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className="px-6 py-2 bg-[#ff6325] text-white rounded-xl font-black text-xs hover:bg-[#e04e13] active:scale-95 transition-all cursor-pointer shadow-md"
+                      >
+                        Update Table Search
+                      </button>
+                    </div>
+                  </div>
                 ) : isFitness ? (
                   /* ================= Dedicated Gym & Yoga Fitness Editor ================= */
                   <div className="space-y-4">
@@ -3001,10 +3139,10 @@ export default function VenueProfilePage() {
         {/* ============================================================
          * SECTION B: OPTION 1 — 2-SIDES SPLIT HERO (Left: 58% Gallery | Right: 42% Overview & Map)
          * ============================================================ */}
-        <div className="mb-8 w-full">
+        <div className="mb-8 grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
 
           {/* Side 1: Left 58% (lg:col-span-7) — Modern Dynamic Photo Gallery */}
-          <div className="w-full relative rounded-3xl overflow-hidden border border-slate-200/90 dark:border-white/10 shadow-sm bg-slate-100 dark:bg-slate-900 flex flex-col justify-between">
+          <div className="lg:col-span-7 relative rounded-3xl overflow-hidden border border-slate-200/90 dark:border-white/10 shadow-sm bg-slate-100 dark:bg-slate-900 flex flex-col justify-between">
             {/* Desktop Dynamic Bento Layout (370px height for optimal proportion) */}
             <div className="hidden md:block h-[370px] p-2.5">
               <div className="grid grid-cols-3 grid-rows-2 gap-2.5 h-full">
@@ -3091,6 +3229,258 @@ export default function VenueProfilePage() {
             </button>
           </div>
 
+          {/* Side 2: Right 42% (lg:col-span-5) — Agoda-Style Combined Property Highlights & Mini Map Card */}
+          <div className="lg:col-span-5 rounded-3xl p-5 sm:p-6 bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-sm flex flex-col justify-between space-y-4">
+
+            {/* Property Title & Quick Actions Header */}
+            <div>
+              <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100 dark:border-white/10 mb-3">
+                <div className="min-w-0 flex-1">
+                  {isLuxeBlindBooking && (
+                    <div className="mb-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-400/40 text-amber-700 dark:text-amber-300 text-[10px] font-black uppercase tracking-wider">
+                      <Sparkles size={11} className="text-amber-500" />
+                      <span>BokSpot Luxe • Confidential Blind Booking</span>
+                    </div>
+                  )}
+
+                  <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight truncate">
+                    {venueName}
+                  </h1>
+
+                  {/* Clean, horizontally aligned & compact PG badges bar */}
+                  {isPgStay && (
+                    <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-white text-[11px] font-black uppercase tracking-wider shadow-2xs ${
+                        pgGenderType === 'ladies' ? 'bg-pink-600' : pgGenderType === 'gents' ? 'bg-blue-600' : 'bg-purple-600'
+                      }`}>
+                        {pgGenderType === 'ladies' ? '🚺 Ladies PG' : pgGenderType === 'gents' ? '🚹 Gents PG' : '👥 Coliving Stay'}
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/25 text-[#ff6325] text-[11px] font-bold">
+                        <span>🔒</span> {pgGateCurfew}
+                      </span>
+                      {pgFoodIncluded ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold">
+                          <span>🍲</span> 3 Meals Included
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[11px] font-bold">
+                          <span>🍳</span> Self-Cooking
+                        </span>
+                      )}
+                      {pgGenderType === 'ladies' && hasLadyWarden && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-pink-500/10 border border-pink-500/25 text-pink-700 dark:text-pink-300 text-[11px] font-bold">
+                          <span>👩‍💼</span> 24/7 Lady Warden
+                        </span>
+                      )}
+                      {pgGenderType === 'ladies' && hasPackedLunchBox && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold">
+                          <span>🍱</span> Lunch Box Allowed
+                        </span>
+                      )}
+                      {(pgGenderType === 'coliving' || pgGenderType === 'unisex') && hasCoworkingLounge && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/25 text-indigo-700 dark:text-indigo-300 text-[11px] font-bold">
+                          <span>💻</span> Coworking Lounge
+                        </span>
+                      )}
+                      {(pgGenderType === 'coliving' || pgGenderType === 'unisex') && hasFullPowerBackup && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400 text-[11px] font-bold">
+                          <span>⚡</span> 100% Power Backup
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Share & Save Actions */}
+                <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+                  <button
+                    type="button"
+                    onClick={handleShare}
+                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl transition-colors text-xs font-bold border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0f1219] shadow-xs cursor-pointer active:scale-95"
+                    title="Share property"
+                  >
+                    <span>🔗</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsSaved(!isSaved)}
+                    className={`p-2 rounded-xl transition-all text-xs font-bold border shadow-xs cursor-pointer active:scale-95 ${isSaved
+                      ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400'
+                      : 'bg-white dark:bg-[#0f1219] border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                      }`}
+                    title="Save to favorites"
+                  >
+                    <Heart size={14} className={isSaved ? 'fill-rose-500 text-rose-500' : 'text-slate-600 dark:text-slate-400'} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Catchy Bio / Summary Text */}
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-3">
+                {aboutText || `${venueName} features luxury air-conditioned accommodations, outdoor swimming pools, multi-cuisine dining, and 24/7 dedicated guest assistance along the scenic East Coast corridor.`}
+              </p>
+
+              {/* Dedicated High-Trust Card for Women's / Ladies PG Stays */}
+              {isPgStay && pgGenderType === 'ladies' && (
+                <div className="mt-3.5 p-3.5 rounded-2xl bg-gradient-to-br from-[#ff6325]/10 via-[#033266]/5 to-transparent border border-[#ff6325]/25 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-[#ff6325] dark:text-[#ff6325] flex items-center gap-1.5">
+                      <span>🌸</span> Verified Women's Safety & Living Comfort
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#033266] text-white">
+                      100% Safe Stays
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Lady Warden:</strong> {hasLadyWarden ? '24/7 Resident' : 'Available'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Floor Access:</strong> {zeroMaleFloorAccess ? 'Strictly Zero Male Floor Entry' : 'Restricted'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Visitor Area:</strong> {hasReceptionVisitorLobby ? 'Reception Lobby Waiting Desk' : 'Front Gate'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Parents Lounge:</strong> {hasParentsDaytimeLounge ? 'Daytime Family Lounge (10 AM - 7 PM)' : 'Allowed'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Hygiene:</strong> {hasPeriodEmergencyKit ? 'Pad Dispenser & Period Kit' : 'Daily Housekeeping'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Privacy:</strong> {hasPrivateDryingZone ? 'Covered Cloth Drying Zone' : 'Secure Rooms'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Grooming:</strong> {hasVanityMirrorSocket ? 'Full Mirror & Styling Plug' : 'Wardrobes'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Deliveries:</strong> {hasContactlessParcelHub ? 'Gate Drop Desk (No Strangers Inside)' : 'Safe Access'}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Dedicated High-Trust Card for Co-Living & Remote Work Stays */}
+              {isPgStay && (pgGenderType === 'coliving' || pgGenderType === 'unisex') && (
+                <div className="mt-3.5 p-3.5 rounded-2xl bg-gradient-to-br from-indigo-500/10 via-[#033266]/5 to-[#ff6325]/10 border border-indigo-500/25 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-[#033266] dark:text-[#ff6325] flex items-center gap-1.5">
+                      <span>🏢</span> Verified Co-Living Lifestyle & Remote Work Perks
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#ff6325] text-white">
+                      WFH Ready
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Coworking:</strong> {hasCoworkingLounge ? 'Dedicated Lounge & Desks' : 'Work Desks Available'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>High-Speed Wi-Fi:</strong> {hasHighSpeedDualWifi ? 'Dual Line (300+ Mbps)' : 'High Speed Included'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Power Backup:</strong> {hasFullPowerBackup ? '100% Non-Stop Generator (AC/Wi-Fi)' : 'Inverter Backup'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Gaming Lounge:</strong> {hasGamingLounge ? 'PS5 / TT & Recreation' : 'Available'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Rooftop:</strong> {hasRooftopCafe ? 'Cafe Lounge & Open Deck' : 'Hangout Area'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Kitchen:</strong> {hasModularKitchen ? 'Self-Cooking Modular Pantry' : 'Dining Area'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Fitness:</strong> {hasFitnessGym ? 'In-house Gym & Yoga Deck' : 'Wellness Zone'}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                      <span><strong>Commercial Laundry:</strong> {hasCommercialDryerLaundry ? 'Auto Machines & Heat Dryer' : 'Washing Area'}</span>
+                    </div>
+                    {hasEvChargingPoint && (
+                      <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200 col-span-2">
+                        <span className="text-[#ff6325] font-bold shrink-0">✓</span>
+                        <span><strong>EV Charging:</strong> Dedicated 16A points for electric 2-wheelers</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+
+            {/* Middle: Amenities Grid & Check-in Pill */}
+            <div className="space-y-3">
+              <span className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block tracking-wider">
+                {isFacility ? 'Venue Highlights & Amenities' : 'Property Highlights & Inclusions'}
+              </span>
+              <div className="grid grid-cols-2 gap-2.5">
+                {(amenities && amenities.length > 0 ? amenities.slice(0, 6) : ['Free High-Speed Wi-Fi', 'Swimming Pool', 'Air Conditioned', '24/7 Front Desk', 'Private Bath', 'Daily Housekeeping']).map((am: string, idx: number) => (
+                  <div key={idx} className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-white/5 shadow-2xs">
+                    <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0 stroke-[2.5]" />
+                    <span className="truncate text-[11px]">{am}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Timings Bar: Operating Hours for Facility/Turf, Check-in/out for Stays */}
+              {isFacility ? (
+                <div className="px-3.5 py-2.5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40 flex items-center justify-between text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                  <span className="flex items-center gap-1.5">
+                    <span>🕒 Operating Hours:</span>
+                    <strong className="font-extrabold">{firstSvc?.metadata?.operatingHours || firstListing?.metadata?.operatingHours || (finalMerchantObj.operatingHours && !finalMerchantObj.operatingHours.includes('Front Desk') ? finalMerchantObj.operatingHours : '06:00 AM – 11:00 PM')}</strong>
+                  </span>
+                  <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-md bg-emerald-200/60 dark:bg-emerald-800/60 text-emerald-900 dark:text-emerald-100">
+                    Open Daily
+                  </span>
+                </div>
+              ) : (
+                <div className="px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <span className="flex items-center gap-1.5">🕒 Check-in: <strong className="text-slate-800 dark:text-slate-200 font-extrabold">{finalMerchantObj.metadata?.checkInTime || '12:00 PM'}</strong></span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1.5">Check-out: <strong className="text-slate-800 dark:text-slate-200 font-extrabold">{finalMerchantObj.metadata?.checkOutTime || '11:00 AM'}</strong></span>
+                </div>
+              )}
+            </div>
+
+            {/* Bottom Quick-Action: View on Map */}
+            <div className="pt-2 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById('property-location-section');
+                  el?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="text-xs font-extrabold text-[#033266] dark:text-[#ff6325] hover:underline flex items-center gap-1 cursor-pointer py-1"
+              >
+                <span>📍 View Location on Map</span>
+                <span>&darr;</span>
+              </button>
+
+              <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500">
+                {isFacility ? 'Slots & Courts listed below ←“' : 'Rooms listed below ←“'}
+              </span>
+            </div>
+
+        </div>
         </div>
 
         {/* ============================================================
@@ -5503,6 +5893,600 @@ export default function VenueProfilePage() {
         })()}
 
         {/* ============================================================
+         * SECTION D5-D: RESTAURANT & TABLE RESERVATION FLOW
+         * ============================================================ */}
+        {isDining && (() => {
+          const diningCfg = getDiningConfig(cleanMerchantId);
+          let allTables = diningCfg.tableTypes || [];
+          let allSlots = diningCfg.timeSlots || [];
+          let popularMenu = diningCfg.popularMenu || [];
+          let activeDeals = diningCfg.bookingDeals || [];
+          let activeCuisines = diningCfg.cuisines || [];
+          let activeCostForTwo = diningCfg.costForTwo || 800;
+          let customSessionsList: any[] = [];
+
+          if (typeof window !== 'undefined') {
+            try {
+              const busStorageRaw = localStorage.getItem('vendor-portal-storage-v10');
+              if (busStorageRaw) {
+                const busData = JSON.parse(busStorageRaw);
+                const curM = busData.state?.currentMerchant;
+                const storedServices = busData.state?.services || [];
+                const activeBranchId = curM?.activeBranchId;
+
+                // 1. Read Vendor Cuisines, Cost for Two, Deals & Perks from Merchant Profile (Modules 1, 3)
+                if (curM?.metadata?.cuisines && Array.isArray(curM.metadata.cuisines) && curM.metadata.cuisines.length > 0) {
+                  activeCuisines = curM.metadata.cuisines;
+                }
+                if (curM?.metadata?.costForTwo) {
+                  activeCostForTwo = Number(curM.metadata.costForTwo);
+                }
+                if (curM?.metadata?.bookingDeals && Array.isArray(curM.metadata.bookingDeals)) {
+                  activeDeals = curM.metadata.bookingDeals.filter((d: any) => d.active !== false);
+                }
+                if (curM?.metadata?.customSessions && Array.isArray(curM.metadata.customSessions)) {
+                  customSessionsList = curM.metadata.customSessions.filter((cs: any) => cs.enabled);
+                }
+
+                const vendorLunchPerk = curM?.metadata?.lunchPerkText;
+                const vendorDinnerPerk = curM?.metadata?.dinnerPerkText;
+                if (vendorLunchPerk || vendorDinnerPerk) {
+                  allSlots = allSlots.map((s: any) => {
+                    if (s.session === 'LUNCH' && vendorLunchPerk) {
+                      return { ...s, discountOffer: vendorLunchPerk };
+                    }
+                    if (s.session === 'DINNER' && vendorDinnerPerk) {
+                      return { ...s, discountOffer: vendorDinnerPerk };
+                    }
+                    return s;
+                  });
+                }
+
+                // Append custom session slots if vendor configured them (e.g. Breakfast / High Tea)
+                if (customSessionsList.length > 0) {
+                  customSessionsList.forEach((cs: any) => {
+                    const sessionKey = cs.name.toUpperCase().includes('BREAKFAST') ? 'BREAKFAST' : cs.name.toUpperCase().includes('TEA') ? 'HIGH_TEA' : cs.name.toUpperCase();
+                    if (!allSlots.some(s => s.session === sessionKey)) {
+                      allSlots.push({
+                        time: cs.opensAt || '08:00 AM',
+                        session: sessionKey as any,
+                        discountOffer: `${cs.name} Special`,
+                        isFastFilling: false
+                      });
+                    }
+                  });
+                }
+
+                // 2. Read live tables configured in Business Portal (Module 2)
+                const matchedService = storedServices.find((s: any) => {
+                  const sName = (s.name || '').toLowerCase();
+                  const sCat = (s.category || '').toLowerCase();
+                  const matchCat = sCat.includes('dining') || sCat.includes('restaurant') || sName.includes('dining') || s.metadata?.isDining;
+                  const matchBranch = activeBranchId ? (!s.branchId || s.branchId === activeBranchId) : true;
+                  return matchCat && matchBranch;
+                });
+
+                if (matchedService && Array.isArray(matchedService.listings) && matchedService.listings.length > 0) {
+                  allTables = matchedService.listings.map((l: any, idx: number) => {
+                    const zone = l.metadata?.tableZone || l.tableZone || 'AC_INDOOR';
+                    const icon = zone === 'ROOFTOP' ? '🌆' : zone === 'PRIVATE_DINING' ? '👑' : zone === 'GARDEN_PATIO' ? '🌿' : '🛋️';
+                    return {
+                      id: l.id || `table-${idx}`,
+                      name: l.name,
+                      capacity: `${l.minGuests || l.metadata?.minGuests || 1} - ${l.maxGuests || l.metadata?.maxGuests || 4} Guests`,
+                      minGuests: l.minGuests || l.metadata?.minGuests || 1,
+                      maxGuests: l.maxGuests || l.metadata?.maxGuests || 4,
+                      zone: zone,
+                      depositAmount: Number(l.price || l.basePrice || l.metadata?.depositAmount || 0),
+                      badge: l.offerBadge || l.metadata?.highlightBadge || undefined,
+                      icon,
+                      description: l.description || l.metadata?.atmosphereTagline || `Comfortable table setup in ${zone.replace('_', ' ')}.`
+                    };
+                  });
+
+                  // Read add-on dishes
+                  const vendorAddons: any[] = [];
+                  matchedService.listings.forEach((l: any) => {
+                    const isAddonsOn = l.isAddonsEnabled ?? l.metadata?.isAddonsEnabled ?? true;
+                    const items = l.addOns || l.metadata?.addons || [];
+                    if (isAddonsOn && Array.isArray(items)) {
+                      items.forEach((item: any) => {
+                        if (item.name && !vendorAddons.some(v => v.name.toLowerCase() === item.name.toLowerCase())) {
+                          vendorAddons.push({
+                            id: `menu-vendor-${item.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+                            name: item.name,
+                            category: 'MAIN_COURSE',
+                            isVeg: !item.name.toLowerCase().includes('chicken') && !item.name.toLowerCase().includes('mutton') && !item.name.toLowerCase().includes('fish') && !item.name.toLowerCase().includes('meat') && !item.name.toLowerCase().includes('prawn'),
+                            price: Number(item.price || 0),
+                            rating: 4.8,
+                            chefSpecial: true,
+                            description: `Chef special pre-order item freshly prepared for your table.`
+                          });
+                        }
+                      });
+                    }
+                  });
+                  if (vendorAddons.length > 0) {
+                    popularMenu = vendorAddons;
+                  }
+                }
+              }
+            } catch (e) {}
+          }
+
+          // Auto-Match Best Fit Table for user's selected party size
+          const bestFitTable = allTables.find((t: any) => diningGuestCount >= t.minGuests && diningGuestCount <= t.maxGuests);
+          const effectiveSelectedTableId = selectedTableId || (bestFitTable ? bestFitTable.id : (allTables[0]?.id || ''));
+
+          const filteredTables = allTables.filter((tbl: any) => {
+            if (diningZoneTab === 'ALL') return true;
+            return tbl.zone === diningZoneTab;
+          });
+
+          const activeTable = allTables.find((t: any) => t.id === effectiveSelectedTableId) || bestFitTable || allTables[0];
+          const reservationDeposit = activeTable?.depositAmount || 0;
+
+          return (
+            <div id="dining-booking-section" className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
+              {/* Header with Search Context Summary */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>🍽️</span> Restaurant Table Reservation
+                  </h2>
+                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-900/50 text-[#ff6325] text-xs font-black">
+                      <span>📅</span> {selectedDate || todayStr} {selectedDate === todayStr ? '(Today)' : ''}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50 text-[#033266] dark:text-blue-400 text-xs font-black">
+                      <span>👥</span> {diningGuestCount} {diningGuestCount === 1 ? 'Guest' : 'Guests'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditSearchOpen(true)}
+                      className="text-[11px] text-[#ff6325] hover:underline font-bold cursor-pointer ml-1"
+                    >
+                      Change Date / Party Size
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full text-[11px] font-black bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    ✓ Instant Confirmation
+                  </span>
+                </div>
+              </div>
+
+              {/* 2. Seating Zone Ambiance Filter Tabs */}
+              <div>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                  1. Select Seating Ambience & Zone
+                </label>
+                <div className="flex flex-wrap items-center gap-2">
+                  {[
+                    { id: 'ALL', label: 'All Tables', icon: '🍽️' },
+                    { id: 'AC_INDOOR', label: 'AC Indoor Hall', icon: '🌟' },
+                    { id: 'ROOFTOP', label: 'Romantic Rooftop', icon: '🌆' },
+                    { id: 'GARDEN_PATIO', label: 'Garden Patio', icon: '🌿' },
+                    { id: 'PRIVATE_DINING', label: 'Private Dining (PDR)', icon: '👑' }
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setDiningZoneTab(tab.id as any)}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                        diningZoneTab === tab.id
+                          ? 'bg-[#033266] dark:bg-[#ff6325] text-white shadow-sm'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                      }`}
+                    >
+                      <span>{tab.icon}</span>
+                      <span>{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3. Table Types Selection Cards */}
+              <div>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                  2. Choose Table Type & Arrangement
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                  {filteredTables.map((tbl: any) => {
+                    const isSelected = selectedTableId === tbl.id;
+                    const isCapacityFit = diningGuestCount >= tbl.minGuests && diningGuestCount <= tbl.maxGuests;
+
+                    return (
+                      <div
+                        key={tbl.id}
+                        onClick={() => setSelectedTableId(tbl.id)}
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between relative ${
+                          isSelected
+                            ? 'bg-[#ff6325]/5 border-[#ff6325] shadow-md ring-2 ring-[#ff6325]/20'
+                            : 'bg-slate-50/70 dark:bg-slate-800/60 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                        }`}
+                      >
+                        {isCapacityFit && (
+                          <div className="absolute -top-2 right-3">
+                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500 text-white shadow-xs">
+                              Best Fit ({tbl.capacity})
+                            </span>
+                          </div>
+                        )}
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-2xl">{tbl.icon}</span>
+                            {tbl.badge && (
+                              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                                {tbl.badge}
+                              </span>
+                            )}
+                          </div>
+                          <h4 className="text-sm font-black text-slate-900 dark:text-white">{tbl.name}</h4>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                            {tbl.description}
+                          </p>
+                        </div>
+
+                        <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-white/10 flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                            <span>👥</span> {tbl.capacity}
+                          </span>
+                          <span className="text-xs font-black text-[#ff6325]">
+                            {tbl.depositAmount === 0 ? 'Free Reservation' : `₹${tbl.depositAmount} Hold Deposit`}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 4. Time Slots with Session Filters & Discount Chips */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                    3. Preferred Dining Time Slot & Offers
+                  </label>
+                  <div className="flex items-center gap-1.5">
+                    {['ALL', 'LUNCH', 'DINNER'].map((ses) => (
+                      <button
+                        key={ses}
+                        type="button"
+                        onClick={() => setDiningSession(ses as any)}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                          diningSession === ses
+                            ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                        }`}
+                      >
+                        {ses === 'ALL' ? 'All Slots' : ses}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {/* Lunch Sessions */}
+                  {(diningSession === 'ALL' || diningSession === 'LUNCH') && (
+                    <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">
+                        ☀️ Lunch Slots (12:00 PM - 03:30 PM)
+                      </span>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                        {allSlots
+                          .filter((s: any) => s.session === 'LUNCH')
+                          .map((slot: any) => {
+                            const isSelected = selectedDiningTime === slot.time;
+                            return (
+                              <button
+                                key={slot.time}
+                                type="button"
+                                onClick={() => setSelectedDiningTime(slot.time)}
+                                className={`py-3 px-3 rounded-xl text-center border transition-all cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md scale-[1.02]'
+                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 hover:border-slate-300'
+                                }`}
+                              >
+                                <span className="text-xs font-black block">{slot.time}</span>
+                              </button>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Dinner Sessions */}
+                  {(diningSession === 'ALL' || diningSession === 'DINNER') && (
+                    <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">
+                        🌙 Dinner Slots (07:00 PM - 11:00 PM)
+                      </span>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                        {allSlots
+                          .filter((s: any) => s.session === 'DINNER')
+                          .map((slot: any) => {
+                            const isSelected = selectedDiningTime === slot.time;
+                            return (
+                              <button
+                                key={slot.time}
+                                type="button"
+                                onClick={() => setSelectedDiningTime(slot.time)}
+                                className={`py-3 px-3 rounded-xl text-center border transition-all cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md scale-[1.02]'
+                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 hover:border-slate-300'
+                                }`}
+                              >
+                                <span className="text-xs font-black block">{slot.time}</span>
+                              </button>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 5. Special Booking Deals & Coupons (Top App Standards: Dineout / EazyDiner) */}
+              {activeDeals && activeDeals.length > 0 && (
+                <div>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                    4. Applicable Restaurant Deals & Offers
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {activeDeals.map((deal: any) => {
+                      const isApplied = selectedDiningDealId === deal.id;
+                      return (
+                        <div
+                          key={deal.id}
+                          onClick={() => setSelectedDiningDealId(isApplied ? '' : deal.id)}
+                          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                            isApplied
+                              ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 ring-2 ring-emerald-500/20'
+                              : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-xl">🎉</span>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h4 className="text-xs font-black text-slate-900 dark:text-white">{deal.title}</h4>
+                                <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300">
+                                  {deal.code}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                                {deal.description}
+                              </p>
+                            </div>
+                          </div>
+                          <span className={`text-xs font-black px-2.5 py-1 rounded-xl shrink-0 ${
+                            isApplied ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/10'
+                          }`}>
+                            {isApplied ? 'Applied ✓' : 'Apply'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* 6. Optional Chef Special Pre-order Delicacies (Zero Wait Serving) */}
+              {popularMenu && popularMenu.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                      5. Pre-order Signature Dishes (Optional)
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-bold">
+                      {selectedPreOrderItems.length} items added (+₹{selectedPreOrderItems.reduce((acc, itm) => {
+                        const m = popularMenu.find((p: any) => p.id === itm.id);
+                        return acc + (m ? m.price * itm.qty : 0);
+                      }, 0)})
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {popularMenu.slice(0, 6).map((item: any) => {
+                      const sel = selectedPreOrderItems.find((p) => p.id === item.id);
+                      const qty = sel?.qty || 0;
+
+                      return (
+                        <div
+                          key={item.id}
+                          className="p-3.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/80 flex items-center justify-between gap-3 shadow-2xs"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`w-2 h-2 rounded-full shrink-0 ${item.isVeg ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                              <h5 className="text-xs font-black text-slate-900 dark:text-white truncate">{item.name}</h5>
+                            </div>
+                            <span className="text-xs font-black text-[#ff6325] block mt-1">₹{item.price}</span>
+                          </div>
+
+                          {qty === 0 ? (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedPreOrderItems([...selectedPreOrderItems, { id: item.id, qty: 1 }])}
+                              className="px-3 py-1.5 rounded-xl border border-[#ff6325] text-[#ff6325] hover:bg-[#ff6325] hover:text-white text-xs font-black transition-all cursor-pointer"
+                            >
+                              + Add
+                            </button>
+                          ) : (
+                            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-700 rounded-xl px-2 py-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (qty === 1) {
+                                    setSelectedPreOrderItems(selectedPreOrderItems.filter((p) => p.id !== item.id));
+                                  } else {
+                                    setSelectedPreOrderItems(selectedPreOrderItems.map((p) => p.id === item.id ? { ...p, qty: p.qty - 1 } : p));
+                                  }
+                                }}
+                                className="text-xs font-black text-slate-600 hover:text-slate-900 px-1 cursor-pointer"
+                              >
+                                -
+                              </button>
+                              <span className="text-xs font-black text-slate-900 dark:text-white">{qty}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedPreOrderItems(selectedPreOrderItems.map((p) => p.id === item.id ? { ...p, qty: p.qty + 1 } : p));
+                                }}
+                                className="text-xs font-black text-slate-600 hover:text-slate-900 px-1 cursor-pointer"
+                              >
+                                +
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* 7. Special Requests / Occasions */}
+              <div>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
+                  6. Special Requests & Occasions (Optional)
+                </label>
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    {['🎂 Birthday Celebration', '🥂 Anniversary Dinner', '👶 High Chair Required', '🌸 Quiet Corner Table', '🕯️ Candlelight Setup'].map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => {
+                          setDiningSpecialRequest(prev => prev.includes(tag) ? prev.replace(tag, '').trim() : `${prev} ${tag}`.trim());
+                        }}
+                        className={`px-3 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer ${
+                          diningSpecialRequest.includes(tag)
+                            ? 'bg-[#ff6325]/15 border-[#ff6325] text-[#ff6325]'
+                            : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    value={diningSpecialRequest}
+                    onChange={(e) => setDiningSpecialRequest(e.target.value)}
+                    placeholder="Add other requests (e.g., Less spicy, wheelchair access, table near window)..."
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[#ff6325]"
+                  />
+                </div>
+              </div>
+              {/* Bottom Reservation Action Summary */}
+              {(() => {
+                const popularMenu = diningCfg.popularMenu || [];
+                const preOrderTotal = selectedPreOrderItems.reduce((acc, itm) => {
+                  const m = popularMenu.find((p) => p.id === itm.id);
+                  return acc + (m ? m.price * itm.qty : 0);
+                }, 0);
+                const finalPayableAtBooking = reservationDeposit + preOrderTotal;
+                const activeDeal = (diningCfg.bookingDeals || []).find((d) => d.id === selectedDiningDealId);
+
+                return (
+                  <div className="pt-5 border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/80 dark:bg-slate-800/60 p-4 sm:p-5 rounded-3xl">
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-base font-black text-slate-900 dark:text-white">
+                          {activeTable?.name || 'Selected Table'} • {diningGuestCount} Guests
+                        </span>
+                        <span className="text-xs text-slate-500 font-bold">• {selectedDiningTime}</span>
+                        {activeDeal && (
+                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-500 text-white shadow-2xs">
+                            Offer: {activeDeal.code}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
+                          {finalPayableAtBooking === 0
+                            ? '✓ Free Table Reservation • Pay bill at restaurant'
+                            : `Total Booking Payable: ₹${finalPayableAtBooking}${reservationDeposit > 0 ? ` (₹${reservationDeposit} adjustable deposit` : ''}${preOrderTotal > 0 ? ` + ₹${preOrderTotal} pre-order` : ''}${reservationDeposit > 0 ? ')' : ''}`}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const effectiveMerchantId = merchantId || 'R404';
+                        const effectiveMerchantName = venueName || diningCfg.name;
+
+                        setSelectedService({
+                          id: `dining-table-${activeTable?.id || '2-cozy'}`,
+                          name: `${effectiveMerchantName} — ${activeTable?.name || 'Table'} (${diningGuestCount} Guests)`,
+                          price: finalPayableAtBooking,
+                          merchantId: effectiveMerchantId,
+                          merchantName: effectiveMerchantName,
+                          merchant: {
+                            id: effectiveMerchantId,
+                            name: effectiveMerchantName
+                          },
+                          category: 'Restaurant Table Reservation',
+                          metadata: {
+                            isDiningBooking: true,
+                            diningBooking: {
+                              restaurantName: effectiveMerchantName,
+                              tableType: activeTable?.name,
+                              tableId: activeTable?.id,
+                              zone: diningZoneTab,
+                              guests: diningGuestCount,
+                              date: selectedDate || todayStr,
+                              time: selectedDiningTime,
+                              depositAmount: reservationDeposit,
+                              preOrderTotal,
+                              preOrderItems: selectedPreOrderItems.map(p => {
+                                const m = popularMenu.find((item: any) => item.id === p.id);
+                                return {
+                                  id: p.id,
+                                  name: m?.name || 'Dish',
+                                  price: m?.price || 0,
+                                  qty: p.qty,
+                                  isVeg: m?.isVeg ?? true
+                                };
+                              }),
+                              appliedDeal: activeDeal ? {
+                                code: activeDeal.code,
+                                title: activeDeal.title,
+                                description: activeDeal.description
+                              } : null,
+                              specialRequest: diningSpecialRequest,
+                              costForTwo: activeCostForTwo,
+                              cuisines: activeCuisines
+                            }
+                          }
+                        });
+
+                        setSelectedSlot({
+                          id: `table-slot-${Date.now()}`,
+                          timeStr: `${selectedDate || todayStr} at ${selectedDiningTime} (${diningGuestCount} Guests)`,
+                          date: selectedDate || todayStr,
+                          available: true
+                        });
+
+                        router.push('/booking/checkout');
+                      }}
+                      className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#ff6325] to-[#f4511e] hover:from-[#e04e13] hover:to-[#d84315] text-white font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all cursor-pointer w-full sm:w-auto text-center"
+                    >
+                      Confirm Table Reservation &rarr;
+                    </button>
+                  </div>
+                );
+              })()}
+            </div>
+          );
+        })()}
+
+        {/* ============================================================
          * SECTION D6: SELF-DRIVE & VEHICLE RENTALS (ARCHETYPE 4: AssetRental)
          * ============================================================ */}
         {isRental && (
@@ -6007,7 +6991,7 @@ export default function VenueProfilePage() {
                     onClick={() => setCinemaStep('SHOWTIMES')}
                     className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-white px-2 py-1"
                   >
-                    ← Change Time
+                    ← Change Time
                   </button>
                 </div>
 
@@ -6097,7 +7081,7 @@ export default function VenueProfilePage() {
                       onClick={() => setCinemaStep('SEAT_COUNT')}
                       className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-white"
                     >
-                      ← Change Qty ({passCount})
+                      ← Change Qty ({passCount})
                     </button>
                     {/* Legend */}
                     <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
@@ -6348,7 +7332,7 @@ export default function VenueProfilePage() {
                     onClick={() => setCinemaStep('SEAT_LAYOUT')}
                     className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-white"
                   >
-                    ← Change Seats ({selectedCinemaSeats.join(', ')})
+                    ← Change Seats ({selectedCinemaSeats.join(', ')})
                   </button>
                 </div>
 
@@ -6614,257 +7598,7 @@ export default function VenueProfilePage() {
         {/* ============================================================
          * PROPERTY HIGHLIGHTS & OVERVIEW CARD (PLACED BELOW BOOKING OPTIONS)
          * ============================================================ */}
-        <div className="mb-8 p-5 sm:p-6 bg-white dark:bg-[#0f1219] rounded-3xl border border-slate-200/90 dark:border-white/10 shadow-sm space-y-4">
-
-            {/* Property Title & Quick Actions Header */}
-            <div>
-              <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100 dark:border-white/10 mb-3">
-                <div className="min-w-0 flex-1">
-                  {isLuxeBlindBooking && (
-                    <div className="mb-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-400/40 text-amber-700 dark:text-amber-300 text-[10px] font-black uppercase tracking-wider">
-                      <Sparkles size={11} className="text-amber-500" />
-                      <span>BokSpot Luxe • Confidential Blind Booking</span>
-                    </div>
-                  )}
-
-                  <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight truncate">
-                    {venueName}
-                  </h1>
-
-                  {/* Clean, horizontally aligned & compact PG badges bar */}
-                  {isPgStay && (
-                    <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-white text-[11px] font-black uppercase tracking-wider shadow-2xs ${
-                        pgGenderType === 'ladies' ? 'bg-pink-600' : pgGenderType === 'gents' ? 'bg-blue-600' : 'bg-purple-600'
-                      }`}>
-                        {pgGenderType === 'ladies' ? '🚺 Ladies PG' : pgGenderType === 'gents' ? '🚹 Gents PG' : '👥 Coliving Stay'}
-                      </span>
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/25 text-[#ff6325] text-[11px] font-bold">
-                        <span>🔒</span> {pgGateCurfew}
-                      </span>
-                      {pgFoodIncluded ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold">
-                          <span>🍲</span> 3 Meals Included
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[11px] font-bold">
-                          <span>🍳</span> Self-Cooking
-                        </span>
-                      )}
-                      {pgGenderType === 'ladies' && hasLadyWarden && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-pink-500/10 border border-pink-500/25 text-pink-700 dark:text-pink-300 text-[11px] font-bold">
-                          <span>👩‍💼</span> 24/7 Lady Warden
-                        </span>
-                      )}
-                      {pgGenderType === 'ladies' && hasPackedLunchBox && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold">
-                          <span>🍱</span> Lunch Box Allowed
-                        </span>
-                      )}
-                      {(pgGenderType === 'coliving' || pgGenderType === 'unisex') && hasCoworkingLounge && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/25 text-indigo-700 dark:text-indigo-300 text-[11px] font-bold">
-                          <span>💻</span> Coworking Lounge
-                        </span>
-                      )}
-                      {(pgGenderType === 'coliving' || pgGenderType === 'unisex') && hasFullPowerBackup && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400 text-[11px] font-bold">
-                          <span>⚡</span> 100% Power Backup
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Share & Save Actions */}
-                <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
-                  <button
-                    type="button"
-                    onClick={handleShare}
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl transition-colors text-xs font-bold border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0f1219] shadow-xs cursor-pointer active:scale-95"
-                    title="Share property"
-                  >
-                    <span>🔗</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsSaved(!isSaved)}
-                    className={`p-2 rounded-xl transition-all text-xs font-bold border shadow-xs cursor-pointer active:scale-95 ${isSaved
-                      ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400'
-                      : 'bg-white dark:bg-[#0f1219] border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-                      }`}
-                    title="Save to favorites"
-                  >
-                    <Heart size={14} className={isSaved ? 'fill-rose-500 text-rose-500' : 'text-slate-600 dark:text-slate-400'} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Catchy Bio / Summary Text */}
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-3">
-                {aboutText || `${venueName} features luxury air-conditioned accommodations, outdoor swimming pools, multi-cuisine dining, and 24/7 dedicated guest assistance along the scenic East Coast corridor.`}
-              </p>
-
-              {/* Dedicated High-Trust Card for Women's / Ladies PG Stays */}
-              {isPgStay && pgGenderType === 'ladies' && (
-                <div className="mt-3.5 p-3.5 rounded-2xl bg-gradient-to-br from-[#ff6325]/10 via-[#033266]/5 to-transparent border border-[#ff6325]/25 space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-black uppercase tracking-wider text-[#ff6325] dark:text-[#ff6325] flex items-center gap-1.5">
-                      <span>🌸</span> Verified Women's Safety & Living Comfort
-                    </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#033266] text-white">
-                      100% Safe Stays
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-[11px]">
-                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
-                      <span><strong>Lady Warden:</strong> {hasLadyWarden ? '24/7 Resident' : 'Available'}</span>
-                    </div>
-                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
-                      <span><strong>Floor Access:</strong> {zeroMaleFloorAccess ? 'Strictly Zero Male Floor Entry' : 'Restricted'}</span>
-                    </div>
-                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
-                      <span><strong>Visitor Area:</strong> {hasReceptionVisitorLobby ? 'Reception Lobby Waiting Desk' : 'Front Gate'}</span>
-                    </div>
-                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
-                      <span><strong>Parents Lounge:</strong> {hasParentsDaytimeLounge ? 'Daytime Family Lounge (10 AM - 7 PM)' : 'Allowed'}</span>
-                    </div>
-                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
-                      <span><strong>Hygiene:</strong> {hasPeriodEmergencyKit ? 'Pad Dispenser & Period Kit' : 'Daily Housekeeping'}</span>
-                    </div>
-                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
-                      <span><strong>Privacy:</strong> {hasPrivateDryingZone ? 'Covered Cloth Drying Zone' : 'Secure Rooms'}</span>
-                    </div>
-                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
-                      <span><strong>Grooming:</strong> {hasVanityMirrorSocket ? 'Full Mirror & Styling Plug' : 'Wardrobes'}</span>
-                    </div>
-                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
-                      <span><strong>Deliveries:</strong> {hasContactlessParcelHub ? 'Gate Drop Desk (No Strangers Inside)' : 'Safe Access'}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Dedicated High-Trust Card for Co-Living & Remote Work Stays */}
-              {isPgStay && (pgGenderType === 'coliving' || pgGenderType === 'unisex') && (
-                <div className="mt-3.5 p-3.5 rounded-2xl bg-gradient-to-br from-indigo-500/10 via-[#033266]/5 to-[#ff6325]/10 border border-indigo-500/25 space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-black uppercase tracking-wider text-[#033266] dark:text-[#ff6325] flex items-center gap-1.5">
-                      <span>🏢</span> Verified Co-Living Lifestyle & Remote Work Perks
-                    </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#ff6325] text-white">
-                      WFH Ready
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-[11px]">
-                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
-                      <span><strong>Coworking:</strong> {hasCoworkingLounge ? 'Dedicated Lounge & Desks' : 'Work Desks Available'}</span>
-                    </div>
-                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
-                      <span><strong>High-Speed Wi-Fi:</strong> {hasHighSpeedDualWifi ? 'Dual Line (300+ Mbps)' : 'High Speed Included'}</span>
-                    </div>
-                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
-                      <span><strong>Power Backup:</strong> {hasFullPowerBackup ? '100% Non-Stop Generator (AC/Wi-Fi)' : 'Inverter Backup'}</span>
-                    </div>
-                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
-                      <span><strong>Gaming Lounge:</strong> {hasGamingLounge ? 'PS5 / TT & Recreation' : 'Available'}</span>
-                    </div>
-                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
-                      <span><strong>Rooftop:</strong> {hasRooftopCafe ? 'Cafe Lounge & Open Deck' : 'Hangout Area'}</span>
-                    </div>
-                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
-                      <span><strong>Kitchen:</strong> {hasModularKitchen ? 'Self-Cooking Modular Pantry' : 'Dining Area'}</span>
-                    </div>
-                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
-                      <span><strong>Fitness:</strong> {hasFitnessGym ? 'In-house Gym & Yoga Deck' : 'Wellness Zone'}</span>
-                    </div>
-                    <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-[#ff6325] font-bold shrink-0">✓</span>
-                      <span><strong>Commercial Laundry:</strong> {hasCommercialDryerLaundry ? 'Auto Machines & Heat Dryer' : 'Washing Area'}</span>
-                    </div>
-                    {hasEvChargingPoint && (
-                      <div className="flex items-start gap-1.5 text-slate-700 dark:text-slate-200 col-span-2">
-                        <span className="text-[#ff6325] font-bold shrink-0">✓</span>
-                        <span><strong>EV Charging:</strong> Dedicated 16A points for electric 2-wheelers</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-
-            {/* Middle: Amenities Grid & Check-in Pill */}
-            <div className="space-y-3">
-              <span className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block tracking-wider">
-                {isFacility ? 'Venue Highlights & Amenities' : 'Property Highlights & Inclusions'}
-              </span>
-              <div className="grid grid-cols-2 gap-2.5">
-                {(amenities && amenities.length > 0 ? amenities.slice(0, 6) : ['Free High-Speed Wi-Fi', 'Swimming Pool', 'Air Conditioned', '24/7 Front Desk', 'Private Bath', 'Daily Housekeeping']).map((am: string, idx: number) => (
-                  <div key={idx} className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-white/5 shadow-2xs">
-                    <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0 stroke-[2.5]" />
-                    <span className="truncate text-[11px]">{am}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Timings Bar: Operating Hours for Facility/Turf, Check-in/out for Stays */}
-              {isFacility ? (
-                <div className="px-3.5 py-2.5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40 flex items-center justify-between text-xs font-bold text-emerald-800 dark:text-emerald-300">
-                  <span className="flex items-center gap-1.5">
-                    <span>🕒 Operating Hours:</span>
-                    <strong className="font-extrabold">{firstSvc?.metadata?.operatingHours || firstListing?.metadata?.operatingHours || (finalMerchantObj.operatingHours && !finalMerchantObj.operatingHours.includes('Front Desk') ? finalMerchantObj.operatingHours : '06:00 AM – 11:00 PM')}</strong>
-                  </span>
-                  <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-md bg-emerald-200/60 dark:bg-emerald-800/60 text-emerald-900 dark:text-emerald-100">
-                    Open Daily
-                  </span>
-                </div>
-              ) : (
-                <div className="px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
-                  <span className="flex items-center gap-1.5">🕒 Check-in: <strong className="text-slate-800 dark:text-slate-200 font-extrabold">{finalMerchantObj.metadata?.checkInTime || '12:00 PM'}</strong></span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1.5">Check-out: <strong className="text-slate-800 dark:text-slate-200 font-extrabold">{finalMerchantObj.metadata?.checkOutTime || '11:00 AM'}</strong></span>
-                </div>
-              )}
-            </div>
-
-            {/* Bottom Quick-Action: View on Map */}
-            <div className="pt-2 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs">
-              <button
-                type="button"
-                onClick={() => {
-                  const el = document.getElementById('property-location-section');
-                  el?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="text-xs font-extrabold text-[#033266] dark:text-[#ff6325] hover:underline flex items-center gap-1 cursor-pointer py-1"
-              >
-                <span>📍 View Location on Map</span>
-                <span>&darr;</span>
-              </button>
-
-              <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500">
-                {isFacility ? 'Slots & Courts listed below ↓' : 'Rooms listed below ↓'}
-              </span>
-            </div>
-
-        </div>
+        
 
         {/* ============================================================
          * SECTION D1: AGODA-STYLE SUB-NAV & OVERVIEW (AFTER SELECT ROOM)
@@ -7098,7 +7832,7 @@ export default function VenueProfilePage() {
                             onClick={() => setIsAboutExpanded(!isAboutExpanded)}
                             className="mt-2 text-xs font-extrabold text-[#033266] dark:text-[#ff6325] hover:underline cursor-pointer block"
                           >
-                            {isAboutExpanded ? 'Show less ↑' : 'Read more →'}
+                            {isAboutExpanded ? 'Show less ←‘' : 'Read more →'}
                           </button>
                         )}
                       </div>
