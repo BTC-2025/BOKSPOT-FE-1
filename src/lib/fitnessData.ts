@@ -4,11 +4,33 @@
 export interface FitnessTrainer {
   id: string;
   name: string;
-  role: string; // e.g. "Senior Ashtanga Yoga Master", "CrossFit & Strength Coach", "Functional Movement Specialist"
+  role: string; // e.g. "Senior Strength & Conditioning Coach", "CrossFit & Hypertrophy Specialist"
   avatar: string;
   rating: number;
   experienceYears: number;
   specialties: string[];
+}
+
+export interface GymMembershipPlan {
+  id: string;
+  name: string;
+  months: number;
+  price: number;
+  originalPrice: number;
+  pricePerDay: number;
+  popular?: boolean;
+  savingsBadge?: string;
+  description: string;
+  features: string[];
+}
+
+export interface GymPTSessionPackage {
+  id: string;
+  title: string;
+  sessionsCount: number;
+  price: number;
+  description: string;
+  recommendedFor: string;
 }
 
 export interface FitnessPassItem {
@@ -42,6 +64,8 @@ export interface FitnessVenueConfig {
   galleryImages: string[];
   features: string[];
   passes: FitnessPassItem[];
+  membershipPlans: GymMembershipPlan[];
+  ptPackages: GymPTSessionPackage[];
   trainers: FitnessTrainer[];
   timeSlots: {
     time: string;
@@ -50,11 +74,89 @@ export interface FitnessVenueConfig {
   }[];
 }
 
+export const GYM_DEFAULT_MEMBERSHIP_PLANS: GymMembershipPlan[] = [
+  {
+    id: 'gym-plan-1m',
+    name: '1 Month Starter Pass',
+    months: 1,
+    price: 1999,
+    originalPrice: 2499,
+    pricePerDay: 66,
+    popular: false,
+    savingsBadge: 'Save 20%',
+    description: 'Zero lock-in 30 days full gym floor & cardio machines access.',
+    features: ['Unlimited Gym Floor & Free Weights', 'Cardio Deck & Steam Bath Access', 'Free RFID Smart Locker', 'General Floor Coach Guidance']
+  },
+  {
+    id: 'gym-plan-3m',
+    name: '3 Months Transformation',
+    months: 3,
+    price: 4499,
+    originalPrice: 5999,
+    pricePerDay: 49,
+    popular: true,
+    savingsBadge: '🔥 Most Popular (Save 25%)',
+    description: 'Our #1 chosen transformation plan with certified nutritionist diet chart.',
+    features: ['All 1-Month Privileges Included', 'Personalized Macro & Diet Plan', 'Bi-weekly InBody Fat% Analysis', '15-Day Vacation Freeze Option']
+  },
+  {
+    id: 'gym-plan-6m',
+    name: '6 Months Elite Athlete',
+    months: 6,
+    price: 7499,
+    originalPrice: 11999,
+    pricePerDay: 41,
+    popular: false,
+    savingsBadge: 'Save 37%',
+    description: 'Half-yearly commitment for serious hypertrophy & body recomposition.',
+    features: ['Everything in 3-Month Plan', 'Complimentary Gym Shaker & Duffel Bag', '30-Day Flexible Pause / Freeze', 'Monthly Coach Progress Review']
+  },
+  {
+    id: 'gym-plan-12m',
+    name: '12 Months Annual VIP Pro',
+    months: 12,
+    price: 11999,
+    originalPrice: 20999,
+    pricePerDay: 32,
+    popular: false,
+    savingsBadge: '👑 Best Value (Save 43%)',
+    description: '365 days unlimited VIP fitness regime at lowest cost per day.',
+    features: ['365 Days Unrestricted Gym Floor', '2 Free 1-on-1 Personal Trainer Sessions', '45-Day Pause Privilege', 'Dedicated Locker Priority']
+  }
+];
+
+export const GYM_DEFAULT_PT_PACKAGES: GymPTSessionPackage[] = [
+  {
+    id: 'pt-none',
+    title: 'General Floor Trainer',
+    sessionsCount: 0,
+    price: 0,
+    description: 'On-floor coaches assist with posture, spotting, machine ergonomics & basic workout routine.',
+    recommendedFor: 'Independent workouts & regular lifters'
+  },
+  {
+    id: 'pt-12',
+    title: '12 Sessions (1 Month PT)',
+    sessionsCount: 12,
+    price: 3499,
+    description: 'Dedicated 1-on-1 coach, customized workout splits, form correction & weekly weigh-in accountability.',
+    recommendedFor: 'Beginners & fast-track fat loss'
+  },
+  {
+    id: 'pt-24',
+    title: '24 Sessions (2 Months PT)',
+    sessionsCount: 24,
+    price: 5999,
+    description: 'Comprehensive 1-on-1 coaching for advanced muscle building, mobility work and progressive overload.',
+    recommendedFor: 'Complete physique transformation'
+  }
+];
+
 export const MASTER_FITNESS_CONFIG: Record<string, FitnessVenueConfig> = {
   'zenfit-clinic': {
     slug: 'zenfit-clinic',
-    name: 'ZenFit Fitness Club & Himalayan Yoga Shala',
-    category: 'Gym / Yoga Slot Booking',
+    name: 'ZenFit Fitness Club & Gym Floor',
+    category: 'Gym Membership & Fitness Passes',
     rating: 4.9,
     reviewsCount: '540+ reviews',
     city: 'Chennai',
@@ -69,78 +171,18 @@ export const MASTER_FITNESS_CONFIG: Record<string, FitnessVenueConfig> = {
       'https://images.unsplash.com/photo-1575052814086-f385e2e2ad1b?w=800&q=80'
     ],
     features: [
-      'Imported Biomechanical Hammer Strength Equipment',
-      'Bamboo-Floored Sound-Insulated Yoga Shala',
-      'Locker Rooms with Steam & Hot Showers',
+      'Biomechanical Hammer Strength & Rogue Racks',
+      'Rubberized Olympic Lifting Turf Platform',
+      'Luxury Locker Rooms with Steam & Hot Showers',
       'In-House Whey Shake & Cold Brew Bar',
       'Valet Parking & EV Charging Spot'
     ],
+    membershipPlans: GYM_DEFAULT_MEMBERSHIP_PLANS,
+    ptPackages: GYM_DEFAULT_PT_PACKAGES,
     passes: [
-      // ── Long-term Memberships (Primary Choice for 90% Gym / Yoga Users) ──
-      {
-        id: 'plan-quarterly-pro',
-        name: '3 Months Unlimited Pro Membership',
-        formatType: 'MEMBERSHIP',
-        price: 4999,
-        originalPrice: 5999,
-        batchType: 'QUARTERLY_MEMBERSHIP',
-        tenureDuration: '3 Months Access',
-        savingsPct: 17,
-        popularBadge: 'Most Popular',
-        maxCapacity: 100,
-        icon: '⚡',
-        description: 'Complete unrestricted access to Gym floor, Daily Yoga batches, Steam bath & Free 15-day pause freeze.',
-        amenities: ['Gym Floor & Cardio Access', 'All Yoga Batches Included', '15-Day Vacation Pause', 'InBody Scan (2x)', 'Steam & Locker Access']
-      },
-      {
-        id: 'plan-annual-elite',
-        name: '1 Year All-Access Elite Membership',
-        formatType: 'MEMBERSHIP',
-        price: 13999,
-        originalPrice: 23999,
-        batchType: 'ANNUAL_MEMBERSHIP',
-        tenureDuration: '12 Months (1 Year)',
-        savingsPct: 42,
-        popularBadge: 'Best Value',
-        maxCapacity: 100,
-        icon: '👑',
-        description: '365 days VIP access, 2 Complimentary Personal Trainer sessions, dedicated locker & 45-day freeze privilege.',
-        amenities: ['365 Days Unrestricted Access', '2 Free Personal Trainer Sessions', '45-Day Pause/Freeze', 'Monthly Nutritionist Diet Plan', 'Free Member Welcome Kit']
-      },
-      {
-        id: 'plan-monthly-flex',
-        name: '1 Month Flexible Membership',
-        formatType: 'MEMBERSHIP',
-        price: 1999,
-        originalPrice: 2499,
-        batchType: 'MONTHLY_MEMBERSHIP',
-        tenureDuration: '1 Month Access',
-        savingsPct: 20,
-        maxCapacity: 100,
-        icon: '🏋️',
-        description: 'Standard 30-day all-access gym and yoga membership. No long-term lock-in commitment.',
-        amenities: ['Full Gym & Strength Floor', 'Daily Group Yoga Access', 'Lockers & Hot Shower', '1 InBody Composition Scan']
-      },
-      {
-        id: 'plan-half-yearly',
-        name: '6 Months Transformation Pack',
-        formatType: 'MEMBERSHIP',
-        price: 8499,
-        originalPrice: 11999,
-        batchType: 'QUARTERLY_MEMBERSHIP',
-        tenureDuration: '6 Months Access',
-        savingsPct: 29,
-        popularBadge: 'Transformation',
-        maxCapacity: 100,
-        icon: '🔥',
-        description: '180 days structured fitness & yoga regime with bi-weekly progress tracking and nutrition charts.',
-        amenities: ['6 Months Gym & Yoga Access', '30-Day Vacation Freeze', 'Bi-weekly Postural Checks', 'Personal Diet Chart Included']
-      },
-
-      // ── Single Day / Drop-in Passes (Trials & Casual Sessions) ──
       {
         id: 'pass-open-gym',
-        name: '1-Day Experience Pass (Open Gym & Steam)',
+        name: '1-Day Trial & Experience Pass (Open Gym & Steam)',
         formatType: 'OPEN_GYM',
         price: 299,
         durationMinutes: 720,
@@ -152,21 +194,8 @@ export const MASTER_FITNESS_CONFIG: Record<string, FitnessVenueConfig> = {
         amenities: ['Locker with Key', 'Steam Bath Access', 'Shower & Towel']
       },
       {
-        id: 'pass-sunrise-yoga',
-        name: 'Sunrise Traditional Hatha Yoga Batch',
-        formatType: 'YOGA_CLASS',
-        price: 399,
-        durationMinutes: 60,
-        batchType: 'SINGLE_SESSION',
-        tenureDuration: 'Single Class Pass',
-        maxCapacity: 16,
-        icon: '🧘',
-        description: 'Breathing pranayama, surya namaskars, deep flexibility asanas, and guided sound bowl meditation.',
-        amenities: ['Manduka Pro Mat Included', 'Sound Bowl Healing', 'Herbal Detox Tea']
-      },
-      {
         id: 'pass-pt-session',
-        name: '1-on-1 Certified Personal Trainer Session',
+        name: 'Single 1-on-1 Personal Trainer Assessment Session',
         formatType: 'PERSONAL_TRAINING',
         price: 799,
         durationMinutes: 60,
@@ -180,35 +209,41 @@ export const MASTER_FITNESS_CONFIG: Record<string, FitnessVenueConfig> = {
     ],
     trainers: [
       {
-        id: 'trn-ananya',
-        name: 'Acharya Ananya Sharma',
-        role: 'Lead Yoga & Meditation Master',
-        avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80',
-        rating: 4.96,
-        experienceYears: 10,
-        specialties: ['Hatha Yoga', 'Pranayama', 'Sound Bowl Therapy']
-      },
-      {
         id: 'trn-vikram',
         name: 'Vikram Rathore, CSCS',
         role: 'Head Strength & Conditioning Coach',
         avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&q=80',
-        rating: 4.92,
-        experienceYears: 8,
+        rating: 4.95,
+        experienceYears: 9,
         specialties: ['Powerlifting', 'Hypertrophy', 'Fat Loss Conditioning']
+      },
+      {
+        id: 'trn-kavitha',
+        name: 'Kavitha Ramamurthy, K11',
+        role: 'Senior Functional & Calisthenics Coach',
+        avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80',
+        rating: 4.93,
+        experienceYears: 7,
+        specialties: ['Body Recomposition', 'Injury Rehab', 'Mobility & Core']
+      },
+      {
+        id: 'trn-rahul',
+        name: 'Rahul Shenoy, ACE',
+        role: 'Transformation & Athletic Performance Specialist',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80',
+        rating: 4.91,
+        experienceYears: 6,
+        specialties: ['HIIT & Conditioning', 'Olympic Lifting', 'Macro Coaching']
       }
     ],
     timeSlots: [
-      // Morning Batches
-      { time: '06:00 AM', session: 'MORNING', spotsLeft: 8 },
-      { time: '07:15 AM', session: 'MORNING', spotsLeft: 4 },
-      { time: '08:30 AM', session: 'MORNING', spotsLeft: 11 },
-      { time: '09:45 AM', session: 'MORNING', spotsLeft: 15 },
-      // Evening Batches
-      { time: '05:00 PM', session: 'EVENING', spotsLeft: 6 },
-      { time: '06:15 PM', session: 'EVENING', spotsLeft: 3 },
-      { time: '07:30 PM', session: 'EVENING', spotsLeft: 9 },
-      { time: '08:45 PM', session: 'EVENING', spotsLeft: 14 }
+      { time: '05:30 AM', session: 'MORNING', spotsLeft: 12 },
+      { time: '07:00 AM', session: 'MORNING', spotsLeft: 15 },
+      { time: '08:30 AM', session: 'MORNING', spotsLeft: 10 },
+      { time: '10:00 AM', session: 'MORNING', spotsLeft: 18 },
+      { time: '05:00 PM', session: 'EVENING', spotsLeft: 8 },
+      { time: '06:30 PM', session: 'EVENING', spotsLeft: 6 },
+      { time: '08:00 PM', session: 'EVENING', spotsLeft: 14 }
     ]
   }
 };
@@ -221,4 +256,3 @@ export function getFitnessConfig(identifier?: string): FitnessVenueConfig {
   );
   return match || MASTER_FITNESS_CONFIG['zenfit-clinic'];
 }
-

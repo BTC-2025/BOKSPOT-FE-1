@@ -100,8 +100,11 @@ export const SERVICE_SYNONYMS: Record<string, string[]> = {
   'Salon / Spa Appointment': [
     'salon', 'spa', 'haircut', 'massage', 'facial', 'beauty parlour', 'grooming', 'barber'
   ],
-  'Gym / Yoga Slot Booking': [
-    'gym', 'yoga', 'workout', 'fitness', 'crossfit', 'zumba', 'pilates', 'trainer'
+  'Gym Booking': [
+    'gym', 'workout', 'fitness', 'crossfit', 'weights', 'bodybuilding', 'gym membership', 'trainer', 'day pass'
+  ],
+  'Yoga Booking': [
+    'yoga', 'meditation', 'hatha', 'vinyasa', 'ashtanga', 'pranayama', 'sound bowl', 'shala', 'mindfulness'
   ],
   'Doctor Appointment': [
     'doctor', 'clinic', 'hospital', 'dentist', 'physician', 'checkup', 'consultation'
@@ -318,7 +321,8 @@ export const SERVICE_GROUPS = [
         name: 'Beauty & Wellness',
         items: [
           { name: 'Salon / Spa Appointment', emoji: '💇' },
-          { name: 'Gym / Yoga Slot Booking', emoji: '🧘' }
+          { name: 'Gym Booking', emoji: '🏋️' },
+          { name: 'Yoga Booking', emoji: '🧘' }
         ]
       },
       {
@@ -478,7 +482,8 @@ export function getHrefForCategoryItem(groupTitle: string, item: string): string
   // Lifestyle & Local Services
   else if (itemLower.includes('restaurant') || itemLower.includes('dining')) slug = 'dining';
   else if (itemLower.includes('salon') || itemLower.includes('spa')) slug = 'salons';
-  else if (itemLower.includes('gym') || itemLower.includes('yoga')) slug = 'gym-yoga';
+  else if (itemLower.includes('gym')) slug = 'gym';
+  else if (itemLower.includes('yoga')) slug = 'yoga';
   else if (itemLower.includes('doctor')) slug = 'doctor';
   else if (itemLower.includes('electrician')) slug = 'electrician';
   else if (itemLower.includes('plumber')) slug = 'plumber';

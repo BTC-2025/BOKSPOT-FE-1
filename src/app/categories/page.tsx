@@ -78,6 +78,8 @@ const SERVICE_IMAGE_MAP: Record<string, string> = {
   // Lifestyle
   'Restaurant Table Reservation': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&auto=format&fit=crop&q=80',
   'Salon / Spa Appointment': 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=600&auto=format&fit=crop&q=80',
+  'Gym Booking': 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&auto=format&fit=crop&q=80',
+  'Yoga Booking': 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&auto=format&fit=crop&q=80',
   'Gym / Yoga Slot Booking': 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&auto=format&fit=crop&q=80',
   'Doctor Appointment': 'https://images.unsplash.com/photo-1638202993928-7267aad84c31?w=600&auto=format&fit=crop&q=80',
   'Electrician Booking': 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&auto=format&fit=crop&q=80',
@@ -151,7 +153,8 @@ function getServiceIcon(name: string): string {
   if (n.includes('play arena')) return 'toys';
   if (n.includes('restaurant') || n.includes('dining')) return 'restaurant';
   if (n.includes('salon') || n.includes('spa')) return 'spa';
-  if (n.includes('gym') || n.includes('yoga')) return 'fitness_center';
+  if (n.includes('gym')) return 'fitness_center';
+  if (n.includes('yoga')) return 'self_improvement';
   if (n.includes('doctor')) return 'medical_services';
   if (n.includes('electrician')) return 'electrical_services';
   if (n.includes('plumber')) return 'plumbing';
@@ -209,7 +212,8 @@ function getServicePrice(name: string): string {
   if (n.includes('play arena')) return 'From ₹300/entry';
   if (n.includes('dining') || n.includes('restaurant')) return 'Free Reservation';
   if (n.includes('salon') || n.includes('spa')) return 'From ₹299';
-  if (n.includes('gym') || n.includes('yoga')) return 'From ₹150/session';
+  if (n.includes('gym')) return 'From ₹299/day';
+  if (n.includes('yoga')) return 'From ₹399/batch';
   if (n.includes('doctor')) return 'From ₹400/visit';
   if (n.includes('electrician') || n.includes('plumber') || n.includes('cleaning') || n.includes('technician')) return 'From ₹199';
   if (n.includes('studio') || n.includes('podcast')) return 'From ₹500/hr';
@@ -330,7 +334,8 @@ function getServiceSubtitle(name: string): string {
   if (n.includes('play arena') || n.includes('indoor play')) return 'Climbing & adventure park';
   if (n.includes('restaurant') || n.includes('dining')) return 'Table reservation & menus';
   if (n.includes('salon') || n.includes('spa')) return 'Styling, massage & therapies';
-  if (n.includes('gym') || n.includes('yoga')) return 'Fitness trainers & studio';
+  if (n.includes('gym')) return 'Weights floor, cardio & PT';
+  if (n.includes('yoga')) return 'Shala batches & meditation';
   if (n.includes('doctor')) return 'Consult general & specialists';
   if (n.includes('electrician')) return 'House wiring & repairs';
   if (n.includes('plumber')) return 'Leak fixes & installations';
@@ -412,12 +417,12 @@ export default function CategoriesPage() {
 
   // Bento Primary Highlights - ALL 9 Categories + "All" option
   const BENTO_CATEGORIES = [
-    { title: 'All Services', tag: 'ALL', icon: 'apps', emoji: '✨', desc: 'Browse entire directory', border: 'hover:border-[#ff6325]/50', badge: '54 TOTAL' },
+    { title: 'All Services', tag: 'ALL', icon: 'apps', emoji: '✨', desc: 'Browse entire directory', border: 'hover:border-[#ff6325]/50', badge: '55 TOTAL' },
     { title: 'Travel & Cabs', tag: 'Travel', icon: 'directions_car', emoji: '🚕', desc: 'Rides, flights & buses', border: 'hover:border-sky-500/50', badge: '9 SERVICES' },
     { title: 'Stay & Accommodation', tag: 'Stay & Accommodation', icon: 'hotel', emoji: '🏨', desc: 'Resorts, villas & homestays', border: 'hover:border-amber-500/50', badge: '5 TYPES' },
     { title: 'Sports & Turfs', tag: 'Sports', icon: 'sports_soccer', emoji: '⚽', desc: 'Football, cricket & courts', border: 'hover:border-emerald-500/50', badge: '7 ARENAS' },
     { title: 'Entertainment', tag: 'Entertainment', icon: 'movie', emoji: '🎬', desc: 'Cinema, concerts & events', border: 'hover:border-fuchsia-500/50', badge: '7 SHOWS' },
-    { title: 'Lifestyle & Spa', tag: 'Lifestyle Services', icon: 'spa', emoji: '💇', desc: 'Dining, wellness & beauty', border: 'hover:border-rose-500/50', badge: '9 BOOKINGS' },
+    { title: 'Lifestyle & Spa', tag: 'Lifestyle Services', icon: 'spa', emoji: '💇', desc: 'Dining, wellness & beauty', border: 'hover:border-rose-500/50', badge: '10 BOOKINGS' },
     { title: 'Coworking & Office', tag: 'Business', icon: 'laptop_mac', emoji: '💼', desc: 'Desks, meeting & studios', border: 'hover:border-cyan-500/50', badge: '5 WORKSPACES' },
     { title: 'Darshan & Pooja', tag: 'Religious Services', icon: 'account_balance', emoji: '🛕', desc: 'Temple darshan & pilgrimage', border: 'hover:border-orange-500/50', badge: '3 PASSES' },
     { title: 'Equipment Rentals', tag: 'Equipment Rentals', icon: 'shopping_bag', emoji: '🚲', desc: 'Bikes, cameras & audio', border: 'hover:border-yellow-500/50', badge: '5 RENTALS' },
@@ -444,7 +449,7 @@ export default function CategoriesPage() {
               <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[color:var(--color-on-surface)] flex items-center gap-3">
                 <span>Categories</span>
                 <span className="text-xs font-bold text-[color:var(--color-outline)] px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 border border-black/5 dark:border-white/10">
-                  54 Services Listed
+                  55 Services Listed
                 </span>
                 {activeGroup !== 'ALL' && (
                   <span className="text-xs font-bold text-[color:var(--color-primary)] px-2.5 py-0.5 rounded-full bg-[color:var(--color-primary)]/10 border border-[color:var(--color-primary)]/20 flex items-center gap-1.5 shadow-2xs">
@@ -541,7 +546,7 @@ export default function CategoriesPage() {
                 onClick={() => setActiveGroup('ALL')}
                 className="text-[11px] font-bold text-[color:var(--color-primary)] hover:underline cursor-pointer self-start sm:self-auto"
               >
-                Reset Filter (Show All 54 Services) &rarr;
+                Reset Filter (Show All 55 Services) &rarr;
               </button>
             )}
           </div>

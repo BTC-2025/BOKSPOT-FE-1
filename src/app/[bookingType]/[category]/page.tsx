@@ -82,7 +82,11 @@ const CATEGORY_NAMES: Record<string, string> = {
   // Lifestyle & Local Services
   dining: 'Restaurant Table Reservation',
   salons: 'Salon / Spa Appointment',
-  'gym-yoga': 'Gym / Yoga Slot Booking',
+  spa: 'Spa & Wellness Rituals',
+  gym: 'Gym Floor & Membership Booking',
+  'gym-yoga': 'Gym Floor & Membership Booking',
+  yoga: 'Yoga Shala & Meditation Batches',
+  'yoga-meditation': 'Yoga Shala & Meditation Batches',
   doctor: 'Doctor Appointment',
   electrician: 'Electrician Booking',
   plumber: 'Plumber Booking',

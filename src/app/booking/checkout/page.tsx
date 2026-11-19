@@ -595,47 +595,62 @@ export default function CheckoutPage() {
               )}
 
               {/* Salon, Spa & Wellness Appointment Specs Banner */}
-              {(selectedService.metadata?.wellness || selectedService.metadata?.wellnessBooking) && (() => {
-                const wData = selectedService.metadata?.wellnessBooking || selectedService.metadata?.wellness || {};
+              {(selectedService.metadata?.appointmentBooking || selectedService.metadata?.wellness || selectedService.metadata?.wellnessBooking) && (() => {
+                const wData = selectedService.metadata?.appointmentBooking || selectedService.metadata?.wellnessBooking || selectedService.metadata?.wellness || {};
+                const isHomeVisit = wData.serviceMode === 'HOME_VISIT';
+                const treatments = Array.isArray(wData.treatmentDetails) ? wData.treatmentDetails : (Array.isArray(wData.treatments) ? wData.treatments : []);
                 return (
                   <div className="pt-3 border-t border-slate-100 space-y-2">
-                    <div className="p-4 bg-rose-50/70 border border-rose-200/80 rounded-2xl space-y-2.5">
+                    <div className="p-4 bg-orange-50/70 dark:bg-slate-900/50 border border-orange-200/80 rounded-2xl space-y-2.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-black text-rose-600 uppercase tracking-wider flex items-center gap-1.5">
+                        <span className="text-xs font-black text-[#ff6325] uppercase tracking-wider flex items-center gap-1.5">
                           💇 {wData.venueName || wData.salonName || 'Salon & Luxury Spa Appointment'}
                         </span>
-                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-600 text-white uppercase tracking-wider">
-                          Confirmed Chair Slot
+                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                          isHomeVisit ? 'bg-purple-600 text-white' : 'bg-emerald-600 text-white'
+                        }`}>
+                          {isHomeVisit ? '🏠 Doorstep Home Visit' : '🏢 In-Salon Chair'}
                         </span>
                       </div>
 
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <div>
                           <span className="text-[10px] text-slate-400 font-bold uppercase block">Specialist / Stylist</span>
-                          <strong className="text-slate-800">{wData.specialistName || 'Master Stylist'}</strong>
-                          {wData.specialistRole && (
-                            <span className="text-[10px] text-rose-500 block">{wData.specialistRole}</span>
-                          )}
+                          <strong className="text-slate-800 dark:text-slate-200">{wData.practitioner || wData.specialistName || 'Master Stylist'}</strong>
                         </div>
                         <div>
                           <span className="text-[10px] text-slate-400 font-bold uppercase block">Date & Time</span>
-                          <strong className="text-slate-800">{wData.appointmentDate || wData.date} at {wData.appointmentSlot || wData.time}</strong>
-                          {wData.durationMinutes && (
-                            <span className="text-[10px] text-slate-400 block">⏱️ {wData.durationMinutes} mins duration</span>
+                          <strong className="text-slate-800 dark:text-slate-200">{wData.slotDate || wData.appointmentDate || wData.date} at {wData.slotTime || wData.appointmentSlot || wData.time}</strong>
+                          {(wData.totalDuration || wData.durationMinutes) && (
+                            <span className="text-[10px] text-slate-500 block">⏱️ {wData.totalDuration || wData.durationMinutes} mins total duration</span>
                           )}
                         </div>
+
+                        {/* Doorstep address if home visit */}
+                        {isHomeVisit && wData.homeAddress && (
+                          <div className="col-span-2 p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 text-xs">
+                            <span className="font-bold text-purple-700 dark:text-purple-300 uppercase text-[10px] block">Doorstep Address:</span>
+                            <span className="text-slate-800 dark:text-slate-200 font-semibold">{wData.homeAddress}</span>
+                            {wData.homeLandmark && (
+                              <span className="text-slate-500 block text-[11px]">Landmark: {wData.homeLandmark}</span>
+                            )}
+                          </div>
+                        )}
+
                         <div className="col-span-2">
-                          <span className="text-[10px] text-slate-400 font-bold uppercase block">Selected Treatment</span>
+                          <span className="text-[10px] text-slate-400 font-bold uppercase block">Booked Services ({treatments.length || 1})</span>
                           <div className="flex flex-wrap gap-1.5 mt-1">
-                            {wData.treatmentName ? (
-                              <span className="px-2.5 py-1 rounded-md bg-white border border-rose-200 font-bold text-slate-800 text-[11px] shadow-2xs">
-                                ✨ {wData.treatmentName} (₹{wData.treatmentPrice || selectedService.price})
+                            {treatments.length > 0 ? (
+                              treatments.map((t: any, idx: number) => (
+                                <span key={idx} className="px-2.5 py-1 rounded-md bg-white dark:bg-slate-800 border border-orange-200 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-200 text-[11px] shadow-2xs">
+                                  ✨ {typeof t === 'string' ? t : t.name} {t.price ? `(₹${t.price})` : ''}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="px-2.5 py-1 rounded-md bg-white dark:bg-slate-800 border border-orange-200 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-200 text-[11px] shadow-2xs">
+                                ✨ {wData.treatmentName || selectedService.name}
                               </span>
-                            ) : wData.treatments?.map((t: any, idx: number) => (
-                              <span key={idx} className="px-2.5 py-0.5 rounded-md bg-white border border-rose-200 font-bold text-slate-800 text-[11px]">
-                                {t.name} (₹{t.price} • {t.duration}m)
-                              </span>
-                            ))}
+                            )}
                           </div>
                         </div>
 
