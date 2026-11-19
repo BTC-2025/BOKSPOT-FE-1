@@ -68,7 +68,7 @@ export const MASTER_RESTAURANTS_CONFIG: Record<string, RestaurantProfileConfig> 
     slug: 'grand-temple-dine',
     name: 'The Grand Temple Dine & Rooftop Bistro',
     cuisines: ['South Indian Heritage', 'Chettinad Gourmet', 'North Indian', 'Tandoor & Grills'],
-    costForTwo: 950,
+    costForTwo: 800,
     rating: 4.8,
     reviewsCount: '840+ reviews',
     city: 'Chennai',

@@ -16,10 +16,13 @@ export interface WellnessTreatment {
   name: string;
   category: 'HAIR' | 'BEARD' | 'SKIN_FACIAL' | 'SPA_MASSAGE' | 'BRIDAL';
   price: number;
+  originalPrice?: number;
   durationMinutes: number;
   genderTarget: 'MEN' | 'WOMEN' | 'UNISEX';
+  serviceMode: 'IN_SALON' | 'HOME_VISIT' | 'BOTH';
   icon: string;
   description: string;
+  popular?: boolean;
 }
 
 export interface WellnessVenueConfig {
@@ -35,6 +38,12 @@ export interface WellnessVenueConfig {
   heroImage: string;
   galleryImages: string[];
   amenities: string[];
+  homeVisitEnabled: boolean;
+  homeMinOrderValue: number;
+  homeConvenienceFee: number;
+  openTimeStr: string; // e.g. "09:00"
+  closeTimeStr: string; // e.g. "21:00"
+  slotIntervalMinutes: number;
   treatments: WellnessTreatment[];
   specialists: WellnessSpecialist[];
 }
@@ -49,7 +58,13 @@ export const MASTER_WELLNESS_CONFIG: Record<string, WellnessVenueConfig> = {
     city: 'Chennai',
     locality: 'Nungambakkam',
     address: '18 Khader Nawaz Khan Road, Nungambakkam, Chennai 600006',
-    openingHours: '09:30 AM – 09:00 PM (Daily)',
+    openingHours: '09:00 AM – 09:00 PM (Daily)',
+    openTimeStr: '09:00',
+    closeTimeStr: '21:00',
+    slotIntervalMinutes: 30,
+    homeVisitEnabled: true,
+    homeMinOrderValue: 399,
+    homeConvenienceFee: 49,
     heroImage: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200&q=80',
     galleryImages: [
       'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200&q=80',
@@ -69,54 +84,143 @@ export const MASTER_WELLNESS_CONFIG: Record<string, WellnessVenueConfig> = {
         id: 'trt-haircut-men',
         name: 'Signature Precision Haircut & Styling',
         category: 'HAIR',
-        price: 599,
-        durationMinutes: 45,
+        price: 499,
+        originalPrice: 650,
+        durationMinutes: 30,
         genderTarget: 'MEN',
+        serviceMode: 'BOTH',
         icon: '✂️',
-        description: 'Scalp assessment, master scissor cut, refreshing hair wash & blow-dry styling.'
+        description: 'Scalp assessment, master scissor cut, refreshing hair wash & blow-dry styling.',
+        popular: true
       },
       {
         id: 'trt-beard-spa',
         name: 'Royal Beard Sculpting & Hot Towel Treatment',
         category: 'BEARD',
-        price: 399,
-        durationMinutes: 30,
+        price: 349,
+        originalPrice: 450,
+        durationMinutes: 20,
         genderTarget: 'MEN',
+        serviceMode: 'BOTH',
         icon: '🧔',
-        description: 'Razor sharp beard contouring, organic argan oil massage and hot steam towel infusion.'
+        description: 'Razor sharp beard contouring, organic argan oil massage and hot steam towel infusion.',
+        popular: true
       },
       {
         id: 'trt-hair-women',
         name: 'Creative Layered Haircut & Moroccan Blow-Dry',
         category: 'HAIR',
         price: 899,
-        durationMinutes: 60,
+        originalPrice: 1200,
+        durationMinutes: 45,
         genderTarget: 'WOMEN',
+        serviceMode: 'BOTH',
         icon: '💇‍♀️',
-        description: 'Custom face-framing cut, deep conditioning hair wash, and voluminous runway finish.'
+        description: 'Custom face-framing cut, deep conditioning hair wash, and voluminous runway finish.',
+        popular: true
+      },
+      {
+        id: 'trt-hair-spa-keratin',
+        name: 'Intense Keratin Hair Spa & Scalp Detox',
+        category: 'HAIR',
+        price: 1299,
+        originalPrice: 1800,
+        durationMinutes: 60,
+        genderTarget: 'UNISEX',
+        serviceMode: 'BOTH',
+        icon: '💆‍♀️',
+        description: 'Protein infusion serum, 20-min acupressure scalp massage & ozone micro-mist steam.',
+        popular: false
       },
       {
         id: 'trt-gold-facial',
         name: '24K Gold Radiance Facial & De-Tan',
         category: 'SKIN_FACIAL',
         price: 1499,
-        durationMinutes: 75,
+        originalPrice: 2000,
+        durationMinutes: 60,
         genderTarget: 'UNISEX',
+        serviceMode: 'BOTH',
         icon: '✨',
-        description: 'Cellular rejuvenation with 24K gold foil serum, ultrasonic exfoliation & firming mask.'
+        description: 'Cellular rejuvenation with 24K gold foil serum, ultrasonic exfoliation & firming mask.',
+        popular: true
+      },
+      {
+        id: 'trt-detox-cleanup',
+        name: 'Charcoal Deep Pore Cleanup & Blackhead Removal',
+        category: 'SKIN_FACIAL',
+        price: 699,
+        originalPrice: 950,
+        durationMinutes: 30,
+        genderTarget: 'UNISEX',
+        serviceMode: 'BOTH',
+        icon: '🫧',
+        description: 'Deep pore unclogging with activated charcoal peel, vacuum extraction & calming aloe mist.',
+        popular: false
       },
       {
         id: 'trt-aromatherapy',
         name: 'Deep Tissue Swedish Aromatherapy Massage',
         category: 'SPA_MASSAGE',
         price: 1999,
+        originalPrice: 2600,
         durationMinutes: 60,
         genderTarget: 'UNISEX',
+        serviceMode: 'BOTH',
         icon: '💆',
-        description: 'Therapeutic pressure-point massage using heated lavender oils to melt chronic muscle tension.'
+        description: 'Therapeutic pressure-point massage using heated lavender oils to melt chronic muscle tension.',
+        popular: true
+      },
+      {
+        id: 'trt-foot-reflexology',
+        name: 'Thai Foot Reflexology & Herbal Soak',
+        category: 'SPA_MASSAGE',
+        price: 799,
+        originalPrice: 1100,
+        durationMinutes: 30,
+        genderTarget: 'UNISEX',
+        serviceMode: 'BOTH',
+        icon: '🦶',
+        description: 'Warm Epsom salt foot bath followed by acupressure zone therapy for deep stress relief.',
+        popular: false
+      },
+      {
+        id: 'trt-groom-package',
+        name: 'The Royal Groom Makeover Package',
+        category: 'BRIDAL',
+        price: 2999,
+        originalPrice: 4200,
+        durationMinutes: 90,
+        genderTarget: 'MEN',
+        serviceMode: 'IN_SALON',
+        icon: '👑',
+        description: 'Precision haircut, beard styling, gold facial, hair spa & de-tan manicure.',
+        popular: true
+      },
+      {
+        id: 'trt-bridal-package',
+        name: 'Bridal Glow & Skin Rejuvenation Ritual',
+        category: 'BRIDAL',
+        price: 4999,
+        originalPrice: 6500,
+        durationMinutes: 120,
+        genderTarget: 'WOMEN',
+        serviceMode: 'IN_SALON',
+        icon: '👰‍♀️',
+        description: 'Complete pre-bridal ritual: luxury facial, body polishing, hair keratin & nail art.',
+        popular: true
       }
     ],
     specialists: [
+      {
+        id: 'spec-any',
+        name: 'Any Available Professional',
+        role: 'Fastest Slot • Certified Specialist',
+        avatar: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=300&q=80',
+        rating: 4.95,
+        experienceYears: 6,
+        specialties: ['All Services', 'Zero Waiting Time']
+      },
       {
         id: 'spec-arun',
         name: 'Arun Varma',
@@ -149,11 +253,22 @@ export const MASTER_WELLNESS_CONFIG: Record<string, WellnessVenueConfig> = {
 };
 
 export function getWellnessConfig(identifier?: string): WellnessVenueConfig {
-  if (!identifier) return MASTER_WELLNESS_CONFIG['style-studio'];
+  const base = MASTER_WELLNESS_CONFIG['style-studio'];
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem('bokspot_wellness_custom_config');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return { ...base, ...parsed };
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+  if (!identifier) return base;
   const clean = identifier.toLowerCase().trim();
   const match = Object.values(MASTER_WELLNESS_CONFIG).find(w => 
     w.slug.includes(clean) || clean.includes(w.slug) || w.name.toLowerCase().includes(clean)
   );
-  return match || MASTER_WELLNESS_CONFIG['style-studio'];
+  return match || base;
 }
-

@@ -6046,6 +6046,37 @@ export default function ProviderDiscoveryPage() {
                       };
                       const isMysteryOptedIn = checkMysteryOptIn();
                       const isCardSecret = Boolean(isLuxuryMode && isMysteryOptedIn);
+
+                      // Check live vendor-portal-storage for costForTwo if dining
+                      let diningCostForTwo = 800;
+                      if (isDiningCategory) {
+                        if (typeof window !== 'undefined') {
+                          try {
+                            const mId = m?.id || group.merchantId;
+                            const uname = m?.username;
+                            const directStored = localStorage.getItem(`dining_cost_for_two_${mId}`) ||
+                              (uname ? localStorage.getItem(`dining_cost_for_two_${uname}`) : null) ||
+                              localStorage.getItem('dining_cost_for_two_grand-temple-dine') ||
+                              localStorage.getItem('dining_cost_for_two_default');
+                            
+                            const busStoreRaw = localStorage.getItem('vendor-portal-storage-v10');
+                            const busData = busStoreRaw ? JSON.parse(busStoreRaw) : null;
+                            const curM = busData?.state?.currentMerchant;
+
+                            if (directStored) {
+                              diningCostForTwo = Number(directStored);
+                            } else if (curM?.metadata?.costForTwo) {
+                              diningCostForTwo = Number(curM.metadata.costForTwo);
+                            } else if (curM?.costForTwo) {
+                              diningCostForTwo = Number(curM.costForTwo);
+                            } else if (m?.metadata?.costForTwo) {
+                              diningCostForTwo = Number(m.metadata.costForTwo);
+                            } else if (s?.metadata?.costForTwo) {
+                              diningCostForTwo = Number(s.metadata.costForTwo);
+                            }
+                          } catch {}
+                        }
+                      }
                       return (
                         <motion.div
                           key={group.groupKey || `${m.id || 'm'}-${group.branchName || i}-${i}`}
@@ -6137,7 +6168,7 @@ export default function ProviderDiscoveryPage() {
                                       ? 'bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950'
                                       : 'bg-gradient-to-r from-[#ff6325] to-[#e04e13]'
                                     }`}>
-                                    From ₹{group.minPrice}
+                                    {isDiningCategory ? `₹${diningCostForTwo} for 2` : `From ₹${group.minPrice}`}
                                   </div>
                                 )}
                               </div>
@@ -6200,7 +6231,30 @@ export default function ProviderDiscoveryPage() {
                                     )}
                                   </div>
 
-                                  {/* Prominent PG / Hostel Quick Facts Badge Bar */}
+                                  {/* Dining Cuisines Tag Bar */}
+                                  {isDiningCategory && (
+                                    <div className="flex flex-wrap items-center gap-1 mb-2">
+                                      {(() => {
+                                        let cuisineList = m?.metadata?.cuisines || s?.metadata?.cuisines || ['South Indian Heritage', 'Chettinad Gourmet', 'North Indian', 'Tandoor & Grills'];
+                                        if (typeof window !== 'undefined') {
+                                          try {
+                                            const directCfg = localStorage.getItem('dining_config_grand-temple-dine') || localStorage.getItem('dining_config_default');
+                                            if (directCfg) {
+                                              const parsed = JSON.parse(directCfg);
+                                              if (parsed.cuisines && Array.isArray(parsed.cuisines) && parsed.cuisines.length > 0) {
+                                                cuisineList = parsed.cuisines;
+                                              }
+                                            }
+                                          } catch {}
+                                        }
+                                        return cuisineList.slice(0, 3).map((c: string, idx: number) => (
+                                          <span key={idx} className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-orange-500/10 text-[#ff6325] border border-[#ff6325]/20">
+                                            {c}
+                                          </span>
+                                        ));
+                                      })()}
+                                    </div>
+                                  )}
                                   {isItemPgOrHostel && (
                                     <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
                                       <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-2xs ${
@@ -6313,7 +6367,7 @@ export default function ProviderDiscoveryPage() {
                                       <span className="text-[9px] text-[color:var(--color-outline)] font-bold uppercase tracking-wider block leading-tight">
                                         Average Cost
                                       </span>
-                                      <span className="text-sm sm:text-base font-black text-[#ff6325]">₹{group.minPrice || '950'}</span>
+                                      <span className="text-sm sm:text-base font-black text-[#ff6325]">₹{diningCostForTwo}</span>
                                       <span className="text-[9px] text-[color:var(--color-on-surface-variant)] font-medium">
                                         {' '}for two
                                       </span>

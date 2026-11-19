@@ -217,10 +217,18 @@ export default function VenueProfilePage() {
   const [apptCalMonth, setApptCalMonth] = useState<Date>(() => new Date());
 
   // ── Dedicated Salon & Spa / Wellness Appointment Flow States ──
-  const [selectedWellnessStylist, setSelectedWellnessStylist] = useState<string>('Arun Varma (Creative Hair Director)');
+  const [wellnessServiceMode, setWellnessServiceMode] = useState<'IN_SALON' | 'HOME_VISIT'>('IN_SALON');
+  const [wellnessHomeAddress, setWellnessHomeAddress] = useState<string>('');
+  const [wellnessHomeLandmark, setWellnessHomeLandmark] = useState<string>('');
+  const [wellnessHomePhone, setWellnessHomePhone] = useState<string>('');
+  const [selectedWellnessStylist, setSelectedWellnessStylist] = useState<string>('Any Available Professional (Fastest Slot)');
+  const [isCustomStylistExpanded, setIsCustomStylistExpanded] = useState<boolean>(false);
   const [selectedTreatments, setSelectedTreatments] = useState<string[]>(['trt-haircut-men']);
   const [wellnessGenderFilter, setWellnessGenderFilter] = useState<'ALL' | 'MEN' | 'WOMEN'>('ALL');
-  const [wellnessActiveTab, setWellnessActiveTab] = useState<'ALL' | 'HAIR' | 'BEARD' | 'SKIN_FACIAL' | 'SPA_MASSAGE'>('ALL');
+  const [wellnessActiveTab, setWellnessActiveTab] = useState<'ALL' | 'HAIR' | 'BEARD' | 'SKIN_FACIAL' | 'SPA_MASSAGE' | 'BRIDAL'>('ALL');
+  const [wellnessSlotSession, setWellnessSlotSession] = useState<'ALL' | 'MORNING' | 'AFTERNOON' | 'EVENING'>('ALL');
+  const [wellnessAddressError, setWellnessAddressError] = useState<boolean>(false);
+  const [isWellnessSlotModalOpen, setIsWellnessSlotModalOpen] = useState<boolean>(false);
   const [isWellnessCalOpen, setIsWellnessCalOpen] = useState<boolean>(false);
   const [wellnessCalMonth, setWellnessCalMonth] = useState<Date>(() => new Date());
 
@@ -5173,7 +5181,7 @@ export default function VenueProfilePage() {
         )}
 
         {/* ============================================================
-         * SECTION D5-B: LUXURY SALON, SPA & WELLNESS TREATMENTS
+         * SECTION D5-B: LUXURY SALON, SPA & DOORSTEP WELLNESS TREATMENTS
          * ============================================================ */}
         {isWellness && (() => {
           const wellCfg = getWellnessConfig(cleanMerchantId);
@@ -5184,99 +5192,199 @@ export default function VenueProfilePage() {
             ? (liveServices[0].metadata.specialists as any[])
             : wellCfg.specialists;
 
+          const homeVisitAllowed = wellCfg.homeVisitEnabled !== false;
+          const homeMinOrderValue = wellCfg.homeMinOrderValue || 399;
+          const homeConvenienceFee = wellCfg.homeConvenienceFee || 49;
+
+          // Filter by Gender & Category & Service Mode
           const filteredTreatments = allTreatments.filter((t: any) => {
             const matchesGender = wellnessGenderFilter === 'ALL' || t.genderTarget === 'UNISEX' || t.genderTarget === wellnessGenderFilter;
             const matchesCat = wellnessActiveTab === 'ALL' || t.category === wellnessActiveTab;
-            return matchesGender && matchesCat;
+            const matchesMode = wellnessServiceMode === 'IN_SALON' 
+              ? true 
+              : (t.serviceMode === 'BOTH' || t.serviceMode === 'HOME_VISIT');
+            return matchesGender && matchesCat && matchesMode;
           });
 
-          const totalSelectedPrice = allTreatments
-            .filter((t: any) => selectedTreatments.includes(t.id))
+          const selectedTreatmentObjects = allTreatments.filter((t: any) => selectedTreatments.includes(t.id));
+
+          const totalSelectedPrice = selectedTreatmentObjects
             .reduce((sum: number, t: any) => sum + (Number(t.price) || 0), 0);
 
-          const totalSelectedDuration = allTreatments
-            .filter((t: any) => selectedTreatments.includes(t.id))
+          const totalSelectedDuration = selectedTreatmentObjects
             .reduce((sum: number, t: any) => sum + (Number(t.durationMinutes) || 30), 0);
 
+          const isBelowHomeMov = wellnessServiceMode === 'HOME_VISIT' && totalSelectedPrice < homeMinOrderValue;
+          const appliedHomeFee = (wellnessServiceMode === 'HOME_VISIT' && totalSelectedPrice > 0)
+            ? (totalSelectedPrice >= 999 ? 0 : homeConvenienceFee)
+            : 0;
+          const grandTotalPayable = totalSelectedPrice + appliedHomeFee;
+
+          // Smart Slot Calculation with Overrun Protection
+          const startMinutes = 9 * 60; // 09:00 AM
+          const endMinutes = 21 * 60; // 09:00 PM
+          const interval = 30; // 30 min intervals
+          const duration = Math.max(totalSelectedDuration || 30, 20);
+
+          const formatMinutesToTime = (totalMins: number) => {
+            let h = Math.floor(totalMins / 60);
+            const m = totalMins % 60;
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12;
+            if (h === 0) h = 12;
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
+          };
+
+          const dynamicSlots: { startStr: string; endStr: string; label: string; slotValue: string; period: 'MORNING' | 'AFTERNOON' | 'EVENING' }[] = [];
+          for (let m = startMinutes; m <= endMinutes - duration; m += interval) {
+            const sTime = formatMinutesToTime(m);
+            const eTime = formatMinutesToTime(m + duration);
+            const period: 'MORNING' | 'AFTERNOON' | 'EVENING' = m < 12 * 60 ? 'MORNING' : m < 16 * 60 ? 'AFTERNOON' : 'EVENING';
+            dynamicSlots.push({
+              startStr: sTime,
+              endStr: eTime,
+              label: `${sTime} – ${eTime}`,
+              slotValue: sTime,
+              period
+            });
+          }
+
+          const morningSlots = dynamicSlots.filter(s => s.period === 'MORNING');
+          const afternoonSlots = dynamicSlots.filter(s => s.period === 'AFTERNOON');
+          const eveningSlots = dynamicSlots.filter(s => s.period === 'EVENING');
+
+          const displayedSlots = wellnessSlotSession === 'MORNING'
+            ? morningSlots
+            : wellnessSlotSession === 'AFTERNOON'
+            ? afternoonSlots
+            : wellnessSlotSession === 'EVENING'
+            ? eveningSlots
+            : dynamicSlots;
+
           return (
-            <div id="wellness-booking-section" className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
-              {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
+            <div id="wellness-booking-section" className="space-y-6 mt-8 p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
+              {/* Header & Service Mode Dual Switcher */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-white/10 pb-6">
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                    <span>✨</span> Salon & Spa Appointment Booking
-                  </h2>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">✨</span>
+                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                      Salon, Spa & Doorstep Grooming
+                    </h2>
+                  </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Select your beauty, grooming & spa rituals. Certified master stylists & private luxury suites.
+                    Select beauty & spa rituals. Browse catalog below and pick your preferred time slot.
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 text-xs font-bold">
-                  <span>✓ 100% Sanitized Equipment & Single-Use Kits</span>
-                </div>
+                {/* Service Mode Switcher Tabs */}
+                {homeVisitAllowed && (
+                  <div className="inline-flex p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setWellnessServiceMode('IN_SALON')}
+                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 ${
+                        wellnessServiceMode === 'IN_SALON'
+                          ? 'bg-white dark:bg-slate-900 text-[#ff6325] shadow-sm'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <span>🏢 In-Salon Visit</span>
+                      <span className="hidden sm:inline text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-extrabold dark:bg-emerald-950/60 dark:text-emerald-400">Chair</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWellnessServiceMode('HOME_VISIT')}
+                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 ${
+                        wellnessServiceMode === 'HOME_VISIT'
+                          ? 'bg-[#ff6325] text-white shadow-sm'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <span>🏠 Doorstep Home Visit</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-white/20 text-white font-extrabold">Urban Style</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {/* Step 1: Stylist / Therapist Selection */}
+              {/* Mode-Specific Assurance Banner */}
+              {wellnessServiceMode === 'IN_SALON' ? (
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-white/5 text-xs text-slate-700 dark:text-slate-300 font-medium">
+                  <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold">
+                    <CheckCircle2 size={16} /> 100% Sanitized Equipment & Single-Use Capes
+                  </div>
+                  <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-bold">
+                    <CheckCircle2 size={16} /> Guaranteed Zero Waiting Time
+                  </div>
+                  <div className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400 font-bold">
+                    <CheckCircle2 size={16} /> Private AC Luxury Treatment Suites
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-2 font-black text-amber-700 dark:text-amber-300">
+                    <span>🛡️ Urban Doorstep Service Assurance</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-200 font-extrabold">
+                      Min Order: ₹{homeMinOrderValue}
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                    {totalSelectedPrice >= 999 ? '🎉 Free Doorstep Visit (Order > ₹999)' : `Convenience Fee: ₹${homeConvenienceFee}`}
+                  </span>
+                </div>
+              )}
+
+              {/* Step 1: Gender / Audience Segment Selector */}
               <div>
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-2">
                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                    1. Choose Master Stylist / Spa Therapist
+                    1. Choose Category & Target Audience
                   </label>
-                  <span className="text-[11px] font-bold text-[#ff6325]">
-                    ⭐ Highly Rated Practitioners
+                  <span className="text-[11px] font-bold text-slate-500">
+                    Showing: <span className="text-[#ff6325] font-black">{wellnessGenderFilter}</span>
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {allSpecialists.map((spec: any) => {
-                    const isSelected = selectedWellnessStylist.includes(spec.name);
-                    return (
-                      <div
-                        key={spec.id || spec.name}
-                        onClick={() => setSelectedWellnessStylist(`${spec.name} (${spec.role})`)}
-                        className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 ${
-                          isSelected
-                            ? 'bg-[#ff6325]/5 dark:bg-[#ff6325]/10 border-[#ff6325] ring-2 ring-[#ff6325]/30'
-                            : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
-                        }`}
-                      >
-                        <img
-                          src={spec.avatar}
-                          alt={spec.name}
-                          className="w-12 h-12 rounded-full object-cover shrink-0 border border-slate-200 dark:border-white/10"
-                          onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80'; }}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">{spec.name}</h4>
-                            <span className="text-[10px] font-extrabold text-amber-500">★ {spec.rating}</span>
-                          </div>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{spec.role}</p>
-                          <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold block mt-0.5">
-                            {spec.experienceYears}+ yrs experience
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                  {[
+                    { id: 'ALL', label: 'All Services', icon: '✨' },
+                    { id: 'MEN', label: "Men's Grooming", icon: '🧔' },
+                    { id: 'WOMEN', label: "Women's Beauty", icon: '💇‍♀️' }
+                  ].map((g) => (
+                    <button
+                      key={g.id}
+                      type="button"
+                      onClick={() => setWellnessGenderFilter(g.id as any)}
+                      className={`p-3 rounded-2xl border text-center transition-all cursor-pointer flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 ${
+                        wellnessGenderFilter === g.id
+                          ? 'bg-[#ff6325]/10 border-[#ff6325] text-[#ff6325] font-black ring-2 ring-[#ff6325]/20'
+                          : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                      }`}
+                    >
+                      <span className="text-base sm:text-lg">{g.icon}</span>
+                      <span className="text-xs font-extrabold">{g.label}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* Step 2: Treatment Menu & Rituals */}
+              {/* Step 2: Multi-Service Menu Selection */}
               <div className="space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                    2. Select Services & Treatments ({selectedTreatments.length} chosen)
+                    2. Select Treatments & Rituals ({selectedTreatments.length} chosen • {totalSelectedDuration} mins)
                   </label>
 
-                  {/* Category Filter Tabs */}
+                  {/* Sub-Category Filter Tabs */}
                   <div className="flex flex-wrap items-center gap-1.5">
                     {[
-                      { id: 'ALL', label: 'All Services' },
-                      { id: 'HAIR', label: '✂️ Haircut' },
+                      { id: 'ALL', label: 'All' },
+                      { id: 'HAIR', label: '✂️ Hair' },
                       { id: 'BEARD', label: '🧔 Beard' },
-                      { id: 'SKIN_FACIAL', label: '✨ Facial' },
-                      { id: 'SPA_MASSAGE', label: '💆 Spa Massage' }
+                      { id: 'SKIN_FACIAL', label: '✨ Facials' },
+                      { id: 'SPA_MASSAGE', label: '💆 Massage & Spa' },
+                      { id: 'BRIDAL', label: '👑 Packages' }
                     ].map((tab) => (
                       <button
                         key={tab.id}
@@ -5284,7 +5392,7 @@ export default function VenueProfilePage() {
                         onClick={() => setWellnessActiveTab(tab.id as any)}
                         className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                           wellnessActiveTab === tab.id
-                            ? 'bg-[#ff6325] text-white shadow-xs'
+                            ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
                             : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
                         }`}
                       >
@@ -5294,7 +5402,47 @@ export default function VenueProfilePage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Selected Rituals Mini Drawer */}
+                {selectedTreatmentObjects.length > 0 && (
+                  <div className="p-3 rounded-2xl bg-[#ff6325]/10 border border-[#ff6325]/25 flex flex-wrap items-center gap-2 animate-in fade-in duration-200">
+                    <span className="text-[11px] font-black text-[#ff6325] uppercase tracking-wider mr-1">
+                      In Cart ({selectedTreatmentObjects.length}):
+                    </span>
+                    {selectedTreatmentObjects.map(t => (
+                      <span key={t.id} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white dark:bg-slate-900 border border-[#ff6325]/30 text-xs font-black text-slate-900 dark:text-white shadow-xs">
+                        <span>{t.icon || '✨'}</span>
+                        <span className="truncate max-w-[150px]">{t.name}</span>
+                        <span className="text-[10px] text-slate-400 font-bold">({t.durationMinutes}m)</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedTreatments(selectedTreatments.filter(id => id !== t.id));
+                          }}
+                          className="w-4 h-4 rounded-full bg-slate-150 dark:bg-slate-800 text-slate-500 hover:text-red-500 hover:bg-red-50 flex items-center justify-center font-black text-xs cursor-pointer ml-0.5"
+                          title="Remove service"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTreatments([])}
+                      className="text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-red-500 underline ml-auto cursor-pointer"
+                    >
+                      Clear Cart
+                    </button>
+                  </div>
+                )}
+
+                {/* Empty State Prompt if 0 Selected */}
+                {selectedTreatments.length === 0 && (
+                  <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-center text-xs font-bold text-amber-800 dark:text-amber-300">
+                    👉 Please select at least one grooming or spa ritual below to book an appointment slot.
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   {filteredTreatments.map((trt: any) => {
                     const isSelected = selectedTreatments.includes(trt.id);
                     return (
@@ -5302,38 +5450,63 @@ export default function VenueProfilePage() {
                         key={trt.id}
                         onClick={() => {
                           if (isSelected) {
-                            if (selectedTreatments.length > 1) {
-                              setSelectedTreatments(selectedTreatments.filter(id => id !== trt.id));
-                            }
+                            setSelectedTreatments(selectedTreatments.filter(id => id !== trt.id));
                           } else {
                             setSelectedTreatments([...selectedTreatments, trt.id]);
                           }
                         }}
-                        className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start justify-between gap-3 relative overflow-hidden ${
                           isSelected
-                            ? 'bg-[#ff6325]/5 dark:bg-[#ff6325]/10 border-[#ff6325] ring-2 ring-[#ff6325]/20'
-                            : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                            ? 'bg-[#ff6325]/5 dark:bg-[#ff6325]/10 border-[#ff6325] ring-2 ring-[#ff6325]/20 shadow-xs'
+                            : 'bg-slate-50/80 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
                         }`}
                       >
-                        <div className="flex items-start gap-3">
-                          <span className="text-2xl shrink-0 mt-0.5">{trt.icon || '✨'}</span>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h4 className="text-xs font-extrabold text-slate-900 dark:text-white">{trt.name}</h4>
-                              <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-200/80 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
-                                {trt.durationMinutes} min
-                              </span>
+                        {trt.popular && (
+                          <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-500 to-orange-500 text-white text-[9px] font-black px-2.5 py-0.5 rounded-bl-xl tracking-wider uppercase shadow-xs">
+                            🔥 Popular
+                          </div>
+                        )}
+
+                        <div className="flex items-start gap-3 min-w-0 flex-1">
+                          <span className="text-2xl shrink-0 mt-0.5 p-2 rounded-xl bg-white dark:bg-slate-900 shadow-xs border border-slate-200/60 dark:border-white/5">
+                            {trt.icon || '✨'}
+                          </span>
+                          <div className="min-w-0 flex-1 pr-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="text-xs font-black text-slate-900 dark:text-white">{trt.name}</h4>
                             </div>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug line-clamp-2">
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-200/80 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
+                                ⏱️ {trt.durationMinutes} min
+                              </span>
+                              {trt.serviceMode === 'BOTH' && (
+                                <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                                  ✓ Salon & Home
+                                </span>
+                              )}
+                              {trt.serviceMode === 'IN_SALON' && (
+                                <span className="text-[9px] font-bold text-slate-400">
+                                  🏢 In-Salon Only
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 leading-snug line-clamp-2">
                               {trt.description}
                             </p>
                           </div>
                         </div>
 
-                        <div className="text-right shrink-0">
-                          <span className="text-sm font-black text-[#ff6325]">₹{trt.price}</span>
-                          <span className={`block text-[10px] font-bold mt-1 px-2 py-0.5 rounded-lg ${
-                            isSelected ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                        <div className="text-right shrink-0 self-center">
+                          <div className="flex items-baseline justify-end gap-1.5">
+                            {trt.originalPrice && trt.originalPrice > trt.price && (
+                              <span className="text-[11px] text-slate-400 line-through">₹{trt.originalPrice}</span>
+                            )}
+                            <span className="text-sm font-black text-[#ff6325]">₹{trt.price}</span>
+                          </div>
+                          <span className={`block text-[11px] font-black mt-1.5 px-3 py-1 rounded-xl transition-all ${
+                            isSelected 
+                              ? 'bg-[#ff6325] text-white shadow-xs' 
+                              : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300'
                           }`}>
                             {isSelected ? '✓ Added' : '+ Add'}
                           </span>
@@ -5344,201 +5517,387 @@ export default function VenueProfilePage() {
                 </div>
               </div>
 
-              {/* Step 3: Interactive White Calendar & Appointment Date Picker */}
-              <div>
-                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-                  3. Select Appointment Date
-                </label>
-                <div className="relative">
+              {/* Floating Bottom Cart Dock (Appears when items are in cart) */}
+              {selectedTreatmentObjects.length > 0 && (
+                <div className="sticky bottom-6 z-30 w-full bg-slate-900/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/15 rounded-3xl p-4 sm:p-5 shadow-2xl flex items-center justify-between gap-4 animate-in slide-in-from-bottom duration-300">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-11 h-11 rounded-2xl bg-[#ff6325] text-white flex items-center justify-center font-black text-xl shrink-0 shadow-md shadow-[#ff6325]/30">
+                      ✂️
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="text-xs sm:text-sm font-black text-white truncate">
+                        {selectedTreatmentObjects.length} Ritual{selectedTreatmentObjects.length > 1 ? 's' : ''} Selected ({totalSelectedDuration} mins)
+                      </h4>
+                      <p className="text-[11px] text-slate-300 truncate font-semibold">
+                        Total: <strong className="text-[#ff6325]">₹{grandTotalPayable.toLocaleString()}</strong> • {wellnessServiceMode === 'HOME_VISIT' ? 'Doorstep Visit' : 'In-Salon Chair'}
+                      </p>
+                    </div>
+                  </div>
+
                   <button
                     type="button"
-                    onClick={() => {
-                      const d = selectedDate ? new Date(selectedDate) : new Date();
-                      setWellnessCalMonth(isNaN(d.getTime()) ? new Date() : d);
-                      setIsWellnessCalOpen(!isWellnessCalOpen);
-                    }}
-                    className="w-full sm:w-80 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white hover:border-[#ff6325] transition-all cursor-pointer shadow-xs"
+                    onClick={() => setIsWellnessSlotModalOpen(true)}
+                    className="px-6 py-3 rounded-2xl bg-[#ff6325] hover:bg-[#e04e13] text-white font-black text-xs uppercase tracking-wider shrink-0 transition-all shadow-lg shadow-[#ff6325]/30 active:scale-95 cursor-pointer flex items-center gap-2"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl bg-[#ff6325]/10 text-[#ff6325] flex items-center justify-center font-bold shrink-0">
-                        <Calendar size={16} />
-                      </div>
-                      <div className="text-left">
-                        <span className="text-[10px] text-slate-400 uppercase tracking-wider block">SERVICE DATE</span>
-                        <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
-                          {(() => {
-                            try {
-                              const [y, m, d] = (selectedDate || todayStr).split('-');
-                              return `${d}-${m}-${y}`;
-                            } catch {
-                              return selectedDate || todayStr;
-                            }
-                          })()} {selectedDate === todayStr ? '(Today)' : ''}
-                        </span>
-                      </div>
-                    </div>
-                    <ChevronDown size={16} className={`text-slate-400 transition-transform duration-200 ${isWellnessCalOpen ? 'rotate-180' : ''}`} />
+                    <span>Select Date & Slot</span>
+                    <ChevronRight size={16} />
                   </button>
+                </div>
+              )}
 
-                  {/* Clean Interactive White Calendar Popover */}
-                  {isWellnessCalOpen && (
-                    <>
-                      <div className="fixed inset-0 z-40" onClick={() => setIsWellnessCalOpen(false)} />
-                      <div className="absolute top-full left-0 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-white/15 shadow-2xl p-4 z-50 text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
-                        {/* Month Header */}
-                        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-2 mb-3 border border-slate-150/60 dark:border-white/5">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newD = new Date(wellnessCalMonth);
-                              newD.setMonth(newD.getMonth() - 1);
-                              setWellnessCalMonth(newD);
-                            }}
-                            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
-                          >
-                            <ChevronLeft size={16} />
-                          </button>
-                          <span className="font-extrabold text-xs sm:text-sm tracking-tight text-slate-900 dark:text-white">
-                            {wellnessCalMonth.toLocaleString('default', { month: 'long' })} {wellnessCalMonth.getFullYear()}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newD = new Date(wellnessCalMonth);
-                              newD.setMonth(newD.getMonth() + 1);
-                              setWellnessCalMonth(newD);
-                            }}
-                            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
-                          >
-                            <ChevronRight size={16} />
-                          </button>
+              {/* ============================================================
+               * FOCUSED STEP-BY-STEP BOOKING MODAL (ZERO LONG SCROLL!)
+               * ============================================================ */}
+              {isWellnessSlotModalOpen && (
+                <div 
+                  onClick={() => setIsWellnessSlotModalOpen(false)}
+                  className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200"
+                >
+                  <div 
+                    onClick={(e) => e.stopPropagation()}
+                    className="relative w-full max-w-2xl bg-white dark:bg-[#0f1624] border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl p-5 sm:p-7 max-h-[90vh] overflow-y-auto space-y-6 my-auto"
+                  >
+                    {/* Modal Top Bar */}
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-[#ff6325]/10 text-[#ff6325] flex items-center justify-center font-black shrink-0">
+                          <Calendar size={20} />
                         </div>
+                        <div>
+                          <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight">
+                            Select Appointment Date & Slot
+                          </h3>
+                          <p className="text-xs text-slate-400 font-medium">
+                            {selectedTreatmentObjects.length} service{selectedTreatmentObjects.length > 1 ? 's' : ''} • {totalSelectedDuration} mins continuous window
+                          </p>
+                        </div>
+                      </div>
 
-                        {/* Day of Week */}
-                        <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-400 mb-2">
-                          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
-                            <div key={d} className="py-1">{d}</div>
+                      <button
+                        type="button"
+                        onClick={() => setIsWellnessSlotModalOpen(false)}
+                        className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center font-black text-sm cursor-pointer transition-colors shrink-0"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    {/* Step A: Horizontal Quick Date Selector */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2.5">
+                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                          1. Choose Date
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setIsWellnessCalOpen(!isWellnessCalOpen)}
+                          className="text-[11px] font-bold text-[#ff6325] hover:underline cursor-pointer"
+                        >
+                          Pick Custom Date ▾
+                        </button>
+                      </div>
+
+                      {/* Quick 4-Day Horizon Buttons */}
+                      <div className="grid grid-cols-4 gap-2">
+                        {[0, 1, 2, 3].map(offset => {
+                          const d = new Date();
+                          d.setDate(d.getDate() + offset);
+                          const y = d.getFullYear();
+                          const m = String(d.getMonth() + 1).padStart(2, '0');
+                          const dayNum = String(d.getDate()).padStart(2, '0');
+                          const dateKey = `${y}-${m}-${dayNum}`;
+                          const isSelected = dateKey === (selectedDate || todayStr);
+                          const dayName = offset === 0 ? 'Today' : offset === 1 ? 'Tomorrow' : d.toLocaleDateString('default', { weekday: 'short' });
+                          const monthStr = d.toLocaleDateString('default', { month: 'short' });
+
+                          return (
+                            <button
+                              key={dateKey}
+                              type="button"
+                              onClick={() => setSelectedDate(dateKey)}
+                              className={`p-2.5 rounded-2xl border text-center transition-all cursor-pointer ${
+                                isSelected
+                                  ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md font-black'
+                                  : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300 text-slate-700 dark:text-slate-300'
+                              }`}
+                            >
+                              <span className="text-[10px] block opacity-80 uppercase tracking-wider">{dayName}</span>
+                              <span className="text-sm font-black block mt-0.5">{dayNum} {monthStr}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Calendar Popover */}
+                      {isWellnessCalOpen && (
+                        <div className="mt-3 p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-white/10 animate-in fade-in duration-150">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-black text-slate-900 dark:text-white">
+                              {wellnessCalMonth.toLocaleString('default', { month: 'long' })} {wellnessCalMonth.getFullYear()}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newD = new Date(wellnessCalMonth);
+                                  newD.setMonth(newD.getMonth() - 1);
+                                  setWellnessCalMonth(newD);
+                                }}
+                                className="px-2 py-1 rounded-lg bg-white dark:bg-slate-700 text-xs font-bold"
+                              >
+                                ‹
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newD = new Date(wellnessCalMonth);
+                                  newD.setMonth(newD.getMonth() + 1);
+                                  setWellnessCalMonth(newD);
+                                }}
+                                className="px-2 py-1 rounded-lg bg-white dark:bg-slate-700 text-xs font-bold"
+                              >
+                                ›
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 mb-1">
+                            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+                              <div key={d}>{d}</div>
+                            ))}
+                          </div>
+
+                          <div className="grid grid-cols-7 gap-1 text-center">
+                            {(() => {
+                              const year = wellnessCalMonth.getFullYear();
+                              const month = wellnessCalMonth.getMonth();
+                              const firstDay = new Date(year, month, 1).getDay();
+                              const totalDays = new Date(year, month + 1, 0).getDate();
+
+                              const cells = [];
+                              for (let i = 0; i < firstDay; i++) {
+                                cells.push(<div key={`empty-${i}`} className="h-7 w-7" />);
+                              }
+
+                              for (let day = 1; day <= totalDays; day++) {
+                                const mStr = String(month + 1).padStart(2, '0');
+                                const dStr = String(day).padStart(2, '0');
+                                const dateStr = `${year}-${mStr}-${dStr}`;
+                                const isSelected = dateStr === (selectedDate || todayStr);
+                                const isPast = dateStr < todayStr;
+
+                                cells.push(
+                                  <button
+                                    key={`day-${day}`}
+                                    type="button"
+                                    disabled={isPast}
+                                    onClick={() => {
+                                      setSelectedDate(dateStr);
+                                      setIsWellnessCalOpen(false);
+                                    }}
+                                    className={`h-7 w-7 mx-auto rounded-full text-xs font-bold flex items-center justify-center transition-all ${
+                                      isSelected
+                                        ? 'bg-[#ff6325] text-white shadow-xs font-black'
+                                        : isPast
+                                        ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                                        : 'hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200'
+                                    }`}
+                                  >
+                                    {day}
+                                  </button>
+                                );
+                              }
+                              return cells;
+                            })()}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Step B: Time Slot Windows with Session Filter */}
+                    <div>
+                      <div className="space-y-2 mb-3">
+                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                          2. Choose Time Slot ({totalSelectedDuration} mins window)
+                        </label>
+
+                        {/* Session Filter Tabs in clean grid so items never misalign */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                          {[
+                            { id: 'ALL', label: `All (${dynamicSlots.length})` },
+                            { id: 'MORNING', label: `🌅 Morning (${morningSlots.length})` },
+                            { id: 'AFTERNOON', label: `☀️ Afternoon (${afternoonSlots.length})` },
+                            { id: 'EVENING', label: `🌆 Evening (${eveningSlots.length})` }
+                          ].map(tab => (
+                            <button
+                              key={tab.id}
+                              type="button"
+                              onClick={() => setWellnessSlotSession(tab.id as any)}
+                              className={`w-full py-1.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center truncate ${
+                                wellnessSlotSession === tab.id
+                                  ? 'bg-[#ff6325] text-white shadow-xs font-black'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                              }`}
+                            >
+                              {tab.label}
+                            </button>
                           ))}
                         </div>
+                      </div>
 
-                        {/* Day Cells */}
-                        <div className="grid grid-cols-7 gap-1 text-center">
-                          {(() => {
-                            const year = wellnessCalMonth.getFullYear();
-                            const month = wellnessCalMonth.getMonth();
-                            const firstDay = new Date(year, month, 1).getDay();
-                            const totalDays = new Date(year, month + 1, 0).getDate();
+                      {/* Slots Grid */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[220px] overflow-y-auto pr-1">
+                        {displayedSlots.map(slot => {
+                          const isSelected = selectedApptSlot === slot.slotValue;
+                          return (
+                            <button
+                              key={slot.label}
+                              type="button"
+                              onClick={() => setSelectedApptSlot(slot.slotValue)}
+                              className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                                isSelected
+                                  ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md ring-2 ring-[#ff6325]/30'
+                                  : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300 text-slate-900 dark:text-white'
+                              }`}
+                            >
+                              <span className="text-xs font-black block tracking-tight">{slot.label}</span>
+                              <span className={`text-[10px] block mt-0.5 ${isSelected ? 'text-white/90' : 'text-slate-400'}`}>
+                                {wellnessServiceMode === 'HOME_VISIT' ? 'Doorstep Visit' : 'Instant Chair'}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
 
-                            const cells = [];
-                            for (let i = 0; i < firstDay; i++) {
-                              cells.push(<div key={`empty-${i}`} className="h-8 w-8" />);
-                            }
+                      {displayedSlots.length === 0 && (
+                        <p className="text-xs text-slate-400 italic text-center py-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                          No slots available for this session. Please pick another session.
+                        </p>
+                      )}
+                    </div>
 
-                            for (let day = 1; day <= totalDays; day++) {
-                              const mStr = String(month + 1).padStart(2, '0');
-                              const dStr = String(day).padStart(2, '0');
-                              const dateStr = `${year}-${mStr}-${dStr}`;
-                              const isSelected = dateStr === (selectedDate || todayStr);
-                              const isPast = dateStr < todayStr;
+                    {/* Step C: If Home Visit Mode ➔ Doorstep Address Input */}
+                    {wellnessServiceMode === 'HOME_VISIT' && (
+                      <div className={`p-4 rounded-2xl space-y-2.5 transition-all ${wellnessAddressError && !wellnessHomeAddress.trim() ? 'bg-rose-500/10 border-2 border-rose-500' : 'bg-amber-500/10 border border-amber-500/30'}`}>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-black text-amber-800 dark:text-amber-200">
+                            🏠 3. Doorstep Visit Address (Required)
+                          </span>
+                          <span className="text-[11px] font-bold text-slate-500">
+                            Min Order: ₹{homeMinOrderValue}
+                          </span>
+                        </div>
 
-                              cells.push(
-                                <button
-                                  key={`day-${day}`}
-                                  type="button"
-                                  disabled={isPast}
-                                  onClick={() => {
-                                    setSelectedDate(dateStr);
-                                    setIsWellnessCalOpen(false);
-                                  }}
-                                  className={`h-8 w-8 mx-auto rounded-full text-xs font-bold flex items-center justify-center transition-all ${
-                                    isSelected
-                                      ? 'bg-[#ff6325] text-white shadow-sm font-black'
-                                      : isPast
-                                      ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
-                                      : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer'
-                                  }`}
-                                >
-                                  {day}
-                                </button>
-                              );
-                            }
-                            return cells;
-                          })()}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          <input
+                            type="text"
+                            value={wellnessHomeAddress}
+                            onChange={(e) => {
+                              setWellnessHomeAddress(e.target.value);
+                              if (e.target.value.trim()) setWellnessAddressError(false);
+                            }}
+                            placeholder="Flat / House No., Building Name *"
+                            className={`bg-white dark:bg-slate-900 border rounded-xl px-3 py-2 text-xs outline-none ${wellnessAddressError && !wellnessHomeAddress.trim() ? 'border-rose-500 ring-1 ring-rose-500' : 'border-amber-300 dark:border-amber-800/50'}`}
+                          />
+                          <input
+                            type="text"
+                            value={wellnessHomeLandmark}
+                            onChange={(e) => setWellnessHomeLandmark(e.target.value)}
+                            placeholder="Street, Landmark *"
+                            className="bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-800/50 rounded-xl px-3 py-2 text-xs outline-none"
+                          />
+                          <input
+                            type="tel"
+                            value={wellnessHomePhone}
+                            onChange={(e) => setWellnessHomePhone(e.target.value)}
+                            placeholder="Contact Mobile Number *"
+                            className="bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-800/50 rounded-xl px-3 py-2 text-xs outline-none"
+                          />
+                        </div>
+
+                        {wellnessAddressError && !wellnessHomeAddress.trim() && (
+                          <p className="text-[11px] font-bold text-rose-600">
+                            ⚠️ Please enter your House / Flat Address to proceed.
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Step D: Professional Assignment Badge */}
+                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xl">⚡</span>
+                        <div>
+                          <h5 className="text-xs font-black text-slate-900 dark:text-white">
+                            {selectedWellnessStylist}
+                          </h5>
+                          <p className="text-[10px] text-slate-400">
+                            Guaranteed instant slot • Zero waiting time
+                          </p>
                         </div>
                       </div>
-                    </>
-                  )}
-                </div>
-              </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 font-extrabold">
+                        ✓ Assigned
+                      </span>
+                    </div>
 
-              {/* Step 4: Appointment Time Windows */}
-              <div>
-                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-                  4. Available Salon & Spa Time Slots
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
-                  {['10:00 AM', '11:00 AM', '12:30 PM', '02:00 PM', '03:30 PM', '05:00 PM', '06:30 PM', '07:30 PM'].map(slot => {
-                    const isSelected = selectedApptSlot === slot;
-                    return (
+                    {/* Modal Bottom Confirm Button */}
+                    <div className="border-t border-slate-100 dark:border-white/10 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+                      <div>
+                        <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">TOTAL PAYABLE</span>
+                        <span className="text-xl font-black text-[#ff6325]">₹{grandTotalPayable.toLocaleString()}</span>
+                        {appliedHomeFee > 0 && (
+                          <span className="text-[10px] text-slate-400 block font-medium">Includes ₹{appliedHomeFee} doorstep kit fee</span>
+                        )}
+                      </div>
+
                       <button
-                        key={slot}
                         type="button"
-                        onClick={() => setSelectedApptSlot(slot)}
-                        className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-[#ff6325] text-white border-transparent shadow-md font-bold'
-                            : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#ff6325] text-slate-900 dark:text-white font-medium'
-                        }`}
-                      >
-                        <span className="text-xs font-black block">{slot}</span>
-                        <span className="text-[10px] opacity-75 font-semibold mt-0.5 block">Instant Slot</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Confirm Salon & Spa Appointment Card */}
-              {selectedApptSlot && (
-                <div className="p-5 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-transparent border border-[#ff6325]/30 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div>
-                    <span className="text-xs font-black text-slate-900 dark:text-white block">
-                      {selectedWellnessStylist} • {selectedTreatments.length} Service{selectedTreatments.length > 1 ? 's' : ''} ({totalSelectedDuration} mins)
-                    </span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
-                      📅 {selectedDate} at {selectedApptSlot} • Guaranteed Zero Waiting Time
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedService({
-                        id: `wellness-${Date.now()}`,
-                        name: `${venueName} — ${selectedWellnessStylist}`,
-                        price: totalSelectedPrice,
-                        metadata: {
-                          appointmentBooking: {
-                            venueName,
-                            practitioner: selectedWellnessStylist,
-                            slotTime: selectedApptSlot,
-                            slotDate: selectedDate,
-                            treatments: selectedTreatments,
-                            totalDuration: totalSelectedDuration
+                        onClick={() => {
+                          if (wellnessServiceMode === 'HOME_VISIT' && !wellnessHomeAddress.trim()) {
+                            setWellnessAddressError(true);
+                            return;
                           }
-                        }
-                      });
-                      setSelectedSlot({
-                        id: `slot-${selectedApptSlot}`,
-                        timeStr: `${selectedDate} at ${selectedApptSlot} (${totalSelectedDuration} mins)`,
-                        date: selectedDate,
-                        available: true
-                      });
-                      router.push('/booking/checkout');
-                    }}
-                    className="px-6 py-3 rounded-xl bg-[#ff6325] hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer w-full sm:w-auto"
-                  >
-                    Confirm Booking (₹{totalSelectedPrice.toLocaleString()}) &rarr;
-                  </button>
+
+                          const slotToSave = selectedApptSlot || dynamicSlots[0]?.slotValue || '09:00 AM';
+
+                          setSelectedService({
+                            id: `wellness-${Date.now()}`,
+                            name: `${venueName} — ${wellnessServiceMode === 'HOME_VISIT' ? 'Doorstep Home Service' : 'In-Salon Appointment'}`,
+                            price: grandTotalPayable,
+                            metadata: {
+                              appointmentBooking: {
+                                venueName,
+                                serviceMode: wellnessServiceMode,
+                                practitioner: selectedWellnessStylist,
+                                slotTime: slotToSave,
+                                slotDate: selectedDate || todayStr,
+                                treatments: selectedTreatments,
+                                treatmentDetails: selectedTreatmentObjects,
+                                totalDuration: totalSelectedDuration,
+                                convenienceFee: appliedHomeFee,
+                                homeAddress: wellnessHomeAddress,
+                                homeLandmark: wellnessHomeLandmark,
+                                homePhone: wellnessHomePhone
+                              }
+                            }
+                          });
+                          setSelectedSlot({
+                            id: `slot-${slotToSave}`,
+                            timeStr: `${selectedDate || todayStr} at ${slotToSave} (${totalSelectedDuration} mins)`,
+                            date: selectedDate || todayStr,
+                            available: true
+                          });
+                          setIsWellnessSlotModalOpen(false);
+                          router.push('/booking/checkout');
+                        }}
+                        className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-[#ff6325] hover:bg-[#e04e13] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-[#ff6325]/30 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <span>Confirm & Proceed</span>
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
