@@ -1007,36 +1007,44 @@ export default function VenueProfilePage() {
           } else if (finalServices.length === 0 && (cleanCat.includes('gym') || cleanCat.includes('yoga') || cleanMerchantId.includes('f202') || cleanMerchantId.includes('zenfit'))) {
             const fitCfg = getFitnessConfig('zenfit-clinic');
             const targetCity = city || fitCfg.city || 'Chennai';
+            const isYogaCat = isYoga || cleanCat.includes('yoga') || cleanCat.includes('meditation');
+            const venueDisplayName = isYogaCat ? 'Ananda Yoga Shala & Meditation Studio' : fitCfg.name;
+            const venueDisplayCat = isYogaCat ? 'Yoga Shala & Meditation Batches' : fitCfg.category;
+            const categoryPasses = isYogaCat
+              ? fitCfg.passes.filter((p: any) => p.formatType === 'YOGA_CLASS')
+              : fitCfg.passes.filter((p: any) => p.formatType !== 'YOGA_CLASS');
+            const passList = categoryPasses.length > 0 ? categoryPasses : fitCfg.passes;
+
             finalServices = [
               {
                 id: `svc-fitness-${merchantId}`,
-                name: fitCfg.name,
-                category: fitCfg.category,
+                name: venueDisplayName,
+                category: venueDisplayCat,
                 rating: fitCfg.rating,
                 reviewCount: 450,
-                basePrice: String(fitCfg.passes[0]?.price || 299),
-                price: fitCfg.passes[0]?.price || 299,
+                basePrice: String(passList[0]?.price || 299),
+                price: passList[0]?.price || 299,
                 image: fitCfg.heroImage,
                 merchantId: merchantId,
-                merchant: fitCfg.name,
-                branchName: fitCfg.name,
+                merchant: venueDisplayName,
+                branchName: venueDisplayName,
                 address: fitCfg.address,
                 merchantObj: {
                   id: merchantId,
-                  name: fitCfg.name,
+                  name: venueDisplayName,
                   city: targetCity,
                   address: fitCfg.address,
                   rating: fitCfg.rating,
                   username: 'F202',
                   metadata: {
                     isFitness: true,
-                    passes: fitCfg.passes,
+                    passes: passList,
                     trainers: fitCfg.trainers
                   }
                 },
                 metadata: {
                   isFitness: true,
-                  passes: fitCfg.passes,
+                  passes: passList,
                   trainers: fitCfg.trainers
                 }
               }
@@ -1729,7 +1737,7 @@ export default function VenueProfilePage() {
                   </div>
                 </div>
               </div>
-            ) : isAppointment || isHomeCall || isWellness || isFitness ? (
+            ) : isAppointment || isHomeCall || isWellness || isFitness || isYoga ? (
               /* Dedicated Appointment / Home Services / Wellness / Fitness Summary Bar */
               <div className="flex flex-wrap items-center gap-6 text-xs">
                 <div className="flex items-center gap-3">
@@ -1738,10 +1746,10 @@ export default function VenueProfilePage() {
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
-                      {isHomeCall ? 'Service Date & Window' : isFitness ? 'Workout / Pass Date' : isWellness ? 'Salon Appointment Date' : 'Consultation Date'}
+                      {isHomeCall ? 'Service Date & Window' : isYoga ? 'Yoga Batch Date' : isFitness ? 'Gym Workout Date' : isWellness ? 'Salon Appointment Date' : 'Consultation Date'}
                     </span>
                     <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
-                      {selectedDate || todayStr} • {isHomeCall ? (preferredHomeWindow || 'Morning (09:00 AM - 12:00 PM)') : isFitness ? (selectedFitnessTimeSlot || '06:00 AM Batch') : (selectedApptSlot || '10:00 AM Slot')}
+                      {selectedDate || todayStr} • {isHomeCall ? (preferredHomeWindow || 'Morning (09:00 AM - 12:00 PM)') : isYoga ? (selectedFitnessTimeSlot || '06:00 AM Batch') : isFitness ? (selectedFitnessTimeSlot || '06:00 AM Batch') : (selectedApptSlot || '10:00 AM Slot')}
                     </span>
                   </div>
                 </div>
@@ -1803,13 +1811,13 @@ export default function VenueProfilePage() {
               <button
                 type="button"
                 onClick={() => {
-                  const targetId = isDining ? 'dining-booking-section' : isEntertainment ? 'entertainment-booking-section' : isFitness ? 'fitness-booking-section' : isWellness ? 'wellness-booking-section' : isFacility ? 'available-slots-section' : isHomeCall ? 'home-services-booking-section' : 'available-rooms-section';
+                  const targetId = isDining ? 'dining-booking-section' : isEntertainment ? 'entertainment-booking-section' : (isFitness || isYoga) ? 'fitness-booking-section' : isWellness ? 'wellness-booking-section' : isFacility ? 'available-slots-section' : isHomeCall ? 'home-services-booking-section' : 'available-rooms-section';
                   const el = document.getElementById(targetId);
                   el?.scrollIntoView({ behavior: 'smooth' });
                 }}
                 className="px-4 py-2 bg-[#ff6325] hover:bg-[#e04e13] active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               >
-                <span>{isDining ? 'Reserve Table' : isFitness ? 'Select Fitness Pass' : isWellness ? 'Select Stylist & Services' : isFacility ? (isStudio ? 'Select Studio Bay' : 'Select Court & Slot') : isEntertainment ? 'Select Tickets & Seats' : isRental ? 'Select Gear' : isHomeCall ? 'Book Home Service' : isAppointment ? 'Select Specialist' : 'Select Room'}</span>
+                <span>{isDining ? 'Reserve Table' : isYoga ? 'Select Yoga Batch' : isFitness ? 'Select Gym Pass' : isWellness ? 'Select Stylist & Services' : isFacility ? (isStudio ? 'Select Studio Bay' : 'Select Court & Slot') : isEntertainment ? 'Select Tickets & Seats' : isRental ? 'Select Gear' : isHomeCall ? 'Book Home Service' : isAppointment ? 'Select Specialist' : 'Select Room'}</span>
                 <ChevronRight size={14} />
               </button>
             </div>
@@ -2569,83 +2577,97 @@ export default function VenueProfilePage() {
                     </button>
                   </div>
                 </div>
-              ) : isFitness ? (
+              ) : (isFitness || isYoga) ? (
                 /* ================= Dedicated Gym & Yoga Fitness Editor ================= */
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {/* 1. Format / Class Type */}
-                    <div className="relative">
-                      <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
-                        Workout Format
-                      </label>
-                      <select
-                        value={fitnessFormatFilter}
-                        onChange={(e) => setFitnessFormatFilter(e.target.value as any)}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white text-xs outline-none cursor-pointer"
-                      >
-                        <option value="ALL">All Workout Formats</option>
-                        <option value="OPEN_GYM">Open Gym Pass</option>
-                        <option value="YOGA_CLASS">Yoga Group Batch</option>
-                        <option value="PERSONAL_TRAINING">1-on-1 PT Session</option>
-                      </select>
-                    </div>
+                (() => {
+                  const isYogaCategory = isYoga || cleanCat.includes('yoga') || cleanCat.includes('meditation');
+                  return (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {/* 1. Format / Class Type */}
+                        <div className="relative">
+                          <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                            {isYogaCategory ? 'Yoga Batch Format' : 'Gym Workout Format'}
+                          </label>
+                          <select
+                            value={fitnessFormatFilter}
+                            onChange={(e) => setFitnessFormatFilter(e.target.value as any)}
+                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white text-xs outline-none cursor-pointer"
+                          >
+                            {isYogaCategory ? (
+                              <>
+                                <option value="ALL">All Yoga Batches</option>
+                                <option value="YOGA_CLASS">Group Yoga Batch</option>
+                                <option value="PERSONAL_TRAINING">1-on-1 Guru Session</option>
+                              </>
+                            ) : (
+                              <>
+                                <option value="ALL">All Gym Passes</option>
+                                <option value="OPEN_GYM">Open Gym Floor Pass</option>
+                                <option value="PERSONAL_TRAINING">1-on-1 PT Session</option>
+                              </>
+                            )}
+                          </select>
+                        </div>
 
-                    {/* 2. Workout Date */}
-                    <div className="relative">
-                      <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
-                        Workout Date
-                      </label>
-                      <input
-                        type="date"
-                        min={todayStr}
-                        value={selectedDate || todayStr}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 font-bold text-slate-900 dark:text-white text-xs outline-none"
-                      />
-                    </div>
+                        {/* 2. Workout Date */}
+                        <div className="relative">
+                          <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                            {isYogaCategory ? 'Yoga Date' : 'Workout Date'}
+                          </label>
+                          <input
+                            type="date"
+                            min={todayStr}
+                            value={selectedDate || todayStr}
+                            onChange={(e) => setSelectedDate(e.target.value)}
+                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 font-bold text-slate-900 dark:text-white text-xs outline-none"
+                          />
+                        </div>
 
-                    {/* 3. Session Timing */}
-                    <div className="relative">
-                      <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
-                        Batch Timing
-                      </label>
-                      <select
-                        value={selectedFitnessTimeSlot}
-                        onChange={(e) => setSelectedFitnessTimeSlot(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white text-xs outline-none cursor-pointer"
-                      >
-                        {['06:00 AM', '07:15 AM', '08:30 AM', '05:00 PM', '06:15 PM', '07:30 PM', '08:45 PM'].map((s) => (
-                          <option key={s} value={s}>{s}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
+                        {/* 3. Session Timing */}
+                        <div className="relative">
+                          <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                            {isYogaCategory ? 'Yoga Batch Time' : 'Gym Shift / Time'}
+                          </label>
+                          <select
+                            value={selectedFitnessTimeSlot}
+                            onChange={(e) => setSelectedFitnessTimeSlot(e.target.value)}
+                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white text-xs outline-none cursor-pointer"
+                          >
+                            {['06:00 AM', '07:15 AM', '08:30 AM', '05:00 PM', '06:15 PM', '07:30 PM', '08:45 PM'].map((s) => (
+                              <option key={s} value={s}>{s}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
 
-                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/10">
-                    <button
-                      type="button"
-                      onClick={() => setIsEditSearchOpen(false)}
-                      className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl transition-colors cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsEditSearchOpen(false);
-                        const newQuery = new URLSearchParams(window.location.search);
-                        newQuery.set('date', selectedDate);
-                        newQuery.set('slot', selectedFitnessTimeSlot);
-                        window.history.replaceState(null, '', `?${newQuery.toString()}`);
-                        const el = document.getElementById('fitness-booking-section');
-                        el?.scrollIntoView({ behavior: 'smooth' });
-                      }}
-                      className="px-6 py-2 bg-[#ff6325] text-white rounded-xl font-black text-xs hover:bg-[#e04e13] active:scale-95 transition-all cursor-pointer shadow-md"
-                    >
-                      Apply Search
-                    </button>
-                  </div>
-                </div>
+                      <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/10">
+                        <button
+                          type="button"
+                          onClick={() => setIsEditSearchOpen(false)}
+                          className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsEditSearchOpen(false);
+                            const newQuery = new URLSearchParams(window.location.search);
+                            newQuery.set('date', selectedDate);
+                            newQuery.set('slot', selectedFitnessTimeSlot);
+                            window.history.replaceState(null, '', `?${newQuery.toString()}`);
+                            const el = document.getElementById('fitness-booking-section');
+                            el?.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          className="px-6 py-2 bg-[#ff6325] text-white rounded-xl font-black text-xs hover:bg-[#e04e13] active:scale-95 transition-all cursor-pointer shadow-md"
+                        >
+                          Apply Search
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()
               ) : isWellness ? (
                 /* ================= Dedicated Salon & Spa Appointment Editor (Matching Search Dock) ================= */
                 <div className="space-y-4">
@@ -5603,5982 +5625,6025 @@ export default function VenueProfilePage() {
 
               {/* Selected Summary Card / Dock (Clean Light Theme) */}
               {selectedTreatmentObjects.length > 0 && (
-                        <div className="w-full mt-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-orange-50 via-white to-orange-50/50 dark:from-slate-900 dark:via-[#0f1624] dark:to-slate-900 border border-[#ff6325]/30 dark:border-[#ff6325]/20 shadow-md flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 transition-all">
-                          <div className="flex items-center gap-3.5 min-w-0">
-                            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#ff6325] to-[#e04e13] text-white flex items-center justify-center font-black text-xl shrink-0 shadow-md shadow-[#ff6325]/25">
-                              ✂️
-                            </div>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <h4 className="text-sm font-black text-slate-900 dark:text-white truncate">
-                                  {selectedTreatmentObjects.length} Service{selectedTreatmentObjects.length > 1 ? 's' : ''} Selected
-                                </h4>
-                                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                                  ⏱️ {totalSelectedDuration} mins
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2 mt-1 text-xs">
-                                <span className="text-slate-500 dark:text-slate-400 font-medium">Total:</span>
-                                <span className="text-base font-black text-[#ff6325]">
-                                  ₹{grandTotalPayable.toLocaleString()}
-                                </span>
-                                <span className="text-slate-300 dark:text-slate-700">•</span>
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-[#ff6325]/10 text-[#ff6325] border border-[#ff6325]/20">
-                                  {wellnessServiceMode === 'HOME_VISIT' ? '🏠 Doorstep Visit' : '🪑 In-Salon Chair'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                        <button
-                          type="button"
-                          onClick={() => setIsWellnessSlotModalOpen(true)}
-                          className="w-full sm:w-auto px-7 py-3 rounded-2xl bg-gradient-to-r from-[#ff6325] to-[#e04e13] hover:from-[#e04e13] hover:to-[#c83f08] text-white font-black text-xs uppercase tracking-wider shrink-0 transition-all shadow-lg shadow-[#ff6325]/30 active:scale-95 cursor-pointer flex items-center justify-center gap-2"
-                        >
-                          <span>SELECT DATE & SLOT</span>
-                          <ChevronRight size={16} />
-                        </button>
+                <div className="w-full mt-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-orange-50 via-white to-orange-50/50 dark:from-slate-900 dark:via-[#0f1624] dark:to-slate-900 border border-[#ff6325]/30 dark:border-[#ff6325]/20 shadow-md flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 transition-all">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#ff6325] to-[#e04e13] text-white flex items-center justify-center font-black text-xl shrink-0 shadow-md shadow-[#ff6325]/25">
+                      ✂️
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-black text-slate-900 dark:text-white truncate">
+                          {selectedTreatmentObjects.length} Service{selectedTreatmentObjects.length > 1 ? 's' : ''} Selected
+                        </h4>
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                          ⏱️ {totalSelectedDuration} mins
+                        </span>
                       </div>
+                      <div className="flex items-center gap-2 mt-1 text-xs">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">Total:</span>
+                        <span className="text-base font-black text-[#ff6325]">
+                          ₹{grandTotalPayable.toLocaleString()}
+                        </span>
+                        <span className="text-slate-300 dark:text-slate-700">•</span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-[#ff6325]/10 text-[#ff6325] border border-[#ff6325]/20">
+                          {wellnessServiceMode === 'HOME_VISIT' ? '🏠 Doorstep Visit' : '🪑 In-Salon Chair'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsWellnessSlotModalOpen(true)}
+                    className="w-full sm:w-auto px-7 py-3 rounded-2xl bg-gradient-to-r from-[#ff6325] to-[#e04e13] hover:from-[#e04e13] hover:to-[#c83f08] text-white font-black text-xs uppercase tracking-wider shrink-0 transition-all shadow-lg shadow-[#ff6325]/30 active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <span>SELECT DATE & SLOT</span>
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
               )}
 
-                      {/* ============================================================
+              {/* ============================================================
                * FOCUSED STEP-BY-STEP BOOKING MODAL (ZERO LONG SCROLL!)
                * ============================================================ */}
-                      {isWellnessSlotModalOpen && (
-                        <div
-                          onClick={() => setIsWellnessSlotModalOpen(false)}
-                          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200"
+              {isWellnessSlotModalOpen && (
+                <div
+                  onClick={() => setIsWellnessSlotModalOpen(false)}
+                  className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200"
+                >
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="relative w-full max-w-2xl bg-white dark:bg-[#0f1624] border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl p-5 sm:p-7 max-h-[90vh] overflow-y-auto space-y-6 my-auto"
+                  >
+                    {/* Modal Top Bar */}
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-[#ff6325]/10 text-[#ff6325] flex items-center justify-center font-black shrink-0">
+                          <Calendar size={20} />
+                        </div>
+                        <div>
+                          <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight">
+                            Select Appointment Date & Slot
+                          </h3>
+                          <p className="text-xs text-slate-400 font-medium">
+                            {selectedTreatmentObjects.length} service{selectedTreatmentObjects.length > 1 ? 's' : ''} • {totalSelectedDuration} mins continuous window
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsWellnessSlotModalOpen(false)}
+                        className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center font-black text-sm cursor-pointer transition-colors shrink-0"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    {/* Step A: Horizontal Quick Date Selector */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2.5">
+                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                          1. Choose Date
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setIsWellnessCalOpen(!isWellnessCalOpen)}
+                          className="text-[11px] font-bold text-[#ff6325] hover:underline cursor-pointer"
                         >
-                          <div
-                            onClick={(e) => e.stopPropagation()}
-                            className="relative w-full max-w-2xl bg-white dark:bg-[#0f1624] border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl p-5 sm:p-7 max-h-[90vh] overflow-y-auto space-y-6 my-auto"
-                          >
-                            {/* Modal Top Bar */}
-                            <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-4">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-2xl bg-[#ff6325]/10 text-[#ff6325] flex items-center justify-center font-black shrink-0">
-                                  <Calendar size={20} />
-                                </div>
-                                <div>
-                                  <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight">
-                                    Select Appointment Date & Slot
-                                  </h3>
-                                  <p className="text-xs text-slate-400 font-medium">
-                                    {selectedTreatmentObjects.length} service{selectedTreatmentObjects.length > 1 ? 's' : ''} • {totalSelectedDuration} mins continuous window
-                                  </p>
-                                </div>
-                              </div>
+                          Pick Custom Date ▾
+                        </button>
+                      </div>
 
-                              <button
-                                type="button"
-                                onClick={() => setIsWellnessSlotModalOpen(false)}
-                                className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center font-black text-sm cursor-pointer transition-colors shrink-0"
-                              >
-                                ✕
-                              </button>
-                            </div>
+                      {/* Quick 4-Day Horizon Buttons */}
+                      <div className="grid grid-cols-4 gap-2">
+                        {[0, 1, 2, 3].map(offset => {
+                          const d = new Date();
+                          d.setDate(d.getDate() + offset);
+                          const y = d.getFullYear();
+                          const m = String(d.getMonth() + 1).padStart(2, '0');
+                          const dayNum = String(d.getDate()).padStart(2, '0');
+                          const dateKey = `${y}-${m}-${dayNum}`;
+                          const isSelected = dateKey === (selectedDate || todayStr);
+                          const dayName = offset === 0 ? 'Today' : offset === 1 ? 'Tomorrow' : d.toLocaleDateString('default', { weekday: 'short' });
+                          const monthStr = d.toLocaleDateString('default', { month: 'short' });
 
-                            {/* Step A: Horizontal Quick Date Selector */}
-                            <div>
-                              <div className="flex items-center justify-between mb-2.5">
-                                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                                  1. Choose Date
-                                </label>
-                                <button
-                                  type="button"
-                                  onClick={() => setIsWellnessCalOpen(!isWellnessCalOpen)}
-                                  className="text-[11px] font-bold text-[#ff6325] hover:underline cursor-pointer"
-                                >
-                                  Pick Custom Date ▾
-                                </button>
-                              </div>
+                          return (
+                            <button
+                              key={dateKey}
+                              type="button"
+                              onClick={() => setSelectedDate(dateKey)}
+                              className={`p-2.5 rounded-2xl border text-center transition-all cursor-pointer ${isSelected
+                                ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md font-black'
+                                : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300 text-slate-700 dark:text-slate-300'
+                                }`}
+                            >
+                              <span className="text-[10px] block opacity-80 uppercase tracking-wider">{dayName}</span>
+                              <span className="text-sm font-black block mt-0.5">{dayNum} {monthStr}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
 
-                              {/* Quick 4-Day Horizon Buttons */}
-                              <div className="grid grid-cols-4 gap-2">
-                                {[0, 1, 2, 3].map(offset => {
-                                  const d = new Date();
-                                  d.setDate(d.getDate() + offset);
-                                  const y = d.getFullYear();
-                                  const m = String(d.getMonth() + 1).padStart(2, '0');
-                                  const dayNum = String(d.getDate()).padStart(2, '0');
-                                  const dateKey = `${y}-${m}-${dayNum}`;
-                                  const isSelected = dateKey === (selectedDate || todayStr);
-                                  const dayName = offset === 0 ? 'Today' : offset === 1 ? 'Tomorrow' : d.toLocaleDateString('default', { weekday: 'short' });
-                                  const monthStr = d.toLocaleDateString('default', { month: 'short' });
-
-                                  return (
-                                    <button
-                                      key={dateKey}
-                                      type="button"
-                                      onClick={() => setSelectedDate(dateKey)}
-                                      className={`p-2.5 rounded-2xl border text-center transition-all cursor-pointer ${isSelected
-                                        ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md font-black'
-                                        : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300 text-slate-700 dark:text-slate-300'
-                                        }`}
-                                    >
-                                      <span className="text-[10px] block opacity-80 uppercase tracking-wider">{dayName}</span>
-                                      <span className="text-sm font-black block mt-0.5">{dayNum} {monthStr}</span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-
-                              {/* Calendar Popover */}
-                              {isWellnessCalOpen && (
-                                <div className="mt-3 p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-white/10 animate-in fade-in duration-150">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <span className="text-xs font-black text-slate-900 dark:text-white">
-                                      {wellnessCalMonth.toLocaleString('default', { month: 'long' })} {wellnessCalMonth.getFullYear()}
-                                    </span>
-                                    <div className="flex items-center gap-1">
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const newD = new Date(wellnessCalMonth);
-                                          newD.setMonth(newD.getMonth() - 1);
-                                          setWellnessCalMonth(newD);
-                                        }}
-                                        className="px-2 py-1 rounded-lg bg-white dark:bg-slate-700 text-xs font-bold"
-                                      >
-                                        ‹
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const newD = new Date(wellnessCalMonth);
-                                          newD.setMonth(newD.getMonth() + 1);
-                                          setWellnessCalMonth(newD);
-                                        }}
-                                        className="px-2 py-1 rounded-lg bg-white dark:bg-slate-700 text-xs font-bold"
-                                      >
-                                        ›
-                                      </button>
-                                    </div>
-                                  </div>
-
-                                  <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 mb-1">
-                                    {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
-                                      <div key={d}>{d}</div>
-                                    ))}
-                                  </div>
-
-                                  <div className="grid grid-cols-7 gap-1 text-center">
-                                    {(() => {
-                                      const year = wellnessCalMonth.getFullYear();
-                                      const month = wellnessCalMonth.getMonth();
-                                      const firstDay = new Date(year, month, 1).getDay();
-                                      const totalDays = new Date(year, month + 1, 0).getDate();
-
-                                      const cells = [];
-                                      for (let i = 0; i < firstDay; i++) {
-                                        cells.push(<div key={`empty-${i}`} className="h-7 w-7" />);
-                                      }
-
-                                      for (let day = 1; day <= totalDays; day++) {
-                                        const mStr = String(month + 1).padStart(2, '0');
-                                        const dStr = String(day).padStart(2, '0');
-                                        const dateStr = `${year}-${mStr}-${dStr}`;
-                                        const isSelected = dateStr === (selectedDate || todayStr);
-                                        const isPast = dateStr < todayStr;
-
-                                        cells.push(
-                                          <button
-                                            key={`day-${day}`}
-                                            type="button"
-                                            disabled={isPast}
-                                            onClick={() => {
-                                              setSelectedDate(dateStr);
-                                              setIsWellnessCalOpen(false);
-                                            }}
-                                            className={`h-7 w-7 mx-auto rounded-full text-xs font-bold flex items-center justify-center transition-all ${isSelected
-                                              ? 'bg-[#ff6325] text-white shadow-xs font-black'
-                                              : isPast
-                                                ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
-                                                : 'hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200'
-                                              }`}
-                                          >
-                                            {day}
-                                          </button>
-                                        );
-                                      }
-                                      return cells;
-                                    })()}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Step B: Time Slot Windows with Session Filter */}
-                            <div>
-                              <div className="space-y-2 mb-3">
-                                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                                  2. Choose Time Slot ({totalSelectedDuration} mins window)
-                                </label>
-
-                                {/* Session Filter Tabs in clean grid so items never misalign */}
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                                  {[
-                                    { id: 'ALL', label: `All (${dynamicSlots.length})` },
-                                    { id: 'MORNING', label: `🌅 Morning (${morningSlots.length})` },
-                                    { id: 'AFTERNOON', label: `☀️ Afternoon (${afternoonSlots.length})` },
-                                    { id: 'EVENING', label: `🌆 Evening (${eveningSlots.length})` }
-                                  ].map(tab => (
-                                    <button
-                                      key={tab.id}
-                                      type="button"
-                                      onClick={() => setWellnessSlotSession(tab.id as any)}
-                                      className={`w-full py-1.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center truncate ${wellnessSlotSession === tab.id
-                                        ? 'bg-[#ff6325] text-white shadow-xs font-black'
-                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
-                                        }`}
-                                    >
-                                      {tab.label}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Slots Grid */}
-                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[220px] overflow-y-auto pr-1">
-                                {displayedSlots.map(slot => {
-                                  const isSelected = selectedApptSlot === slot.slotValue;
-                                  return (
-                                    <button
-                                      key={slot.label}
-                                      type="button"
-                                      onClick={() => setSelectedApptSlot(slot.slotValue)}
-                                      className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer ${isSelected
-                                        ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md ring-2 ring-[#ff6325]/30'
-                                        : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300 text-slate-900 dark:text-white'
-                                        }`}
-                                    >
-                                      <span className="text-xs font-black block tracking-tight">{slot.label}</span>
-                                      <span className={`text-[10px] block mt-0.5 ${isSelected ? 'text-white/90' : 'text-slate-400'}`}>
-                                        {wellnessServiceMode === 'HOME_VISIT' ? 'Doorstep Visit' : 'Instant Chair'}
-                                      </span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-
-                              {displayedSlots.length === 0 && (
-                                <p className="text-xs text-slate-400 italic text-center py-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
-                                  No slots available for this session. Please pick another session.
-                                </p>
-                              )}
-                            </div>
-
-                            {/* Step C: If Home Visit Mode ➔ Doorstep Address Input */}
-                            {wellnessServiceMode === 'HOME_VISIT' && (
-                              <div className={`p-4 rounded-2xl space-y-2.5 transition-all ${wellnessAddressError && !wellnessHomeAddress.trim() ? 'bg-rose-500/10 border-2 border-rose-500' : 'bg-amber-500/10 border border-amber-500/30'}`}>
-                                <div className="flex items-center justify-between text-xs">
-                                  <span className="font-black text-amber-800 dark:text-amber-200">
-                                    🏠 3. Doorstep Visit Address (Required)
-                                  </span>
-                                  <span className="text-[11px] font-bold text-slate-500">
-                                    Min Order: ₹{homeMinOrderValue}
-                                  </span>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                  <input
-                                    type="text"
-                                    value={wellnessHomeAddress}
-                                    onChange={(e) => {
-                                      setWellnessHomeAddress(e.target.value);
-                                      if (e.target.value.trim()) setWellnessAddressError(false);
-                                    }}
-                                    placeholder="Flat / House No., Building Name *"
-                                    className={`bg-white dark:bg-slate-900 border rounded-xl px-3 py-2 text-xs outline-none ${wellnessAddressError && !wellnessHomeAddress.trim() ? 'border-rose-500 ring-1 ring-rose-500' : 'border-amber-300 dark:border-amber-800/50'}`}
-                                  />
-                                  <input
-                                    type="text"
-                                    value={wellnessHomeLandmark}
-                                    onChange={(e) => setWellnessHomeLandmark(e.target.value)}
-                                    placeholder="Street, Landmark *"
-                                    className="bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-800/50 rounded-xl px-3 py-2 text-xs outline-none"
-                                  />
-                                  <input
-                                    type="tel"
-                                    value={wellnessHomePhone}
-                                    onChange={(e) => setWellnessHomePhone(e.target.value)}
-                                    placeholder="Contact Mobile Number *"
-                                    className="bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-800/50 rounded-xl px-3 py-2 text-xs outline-none"
-                                  />
-                                </div>
-
-                                {wellnessAddressError && !wellnessHomeAddress.trim() && (
-                                  <p className="text-[11px] font-bold text-rose-600">
-                                    ⚠️ Please enter your House / Flat Address to proceed.
-                                  </p>
-                                )}
-                              </div>
-                            )}
-
-                            {/* Step D: Professional Assignment Badge */}
-                            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 flex items-center justify-between">
-                              <div className="flex items-center gap-2.5">
-                                <span className="text-xl">⚡</span>
-                                <div>
-                                  <h5 className="text-xs font-black text-slate-900 dark:text-white">
-                                    {selectedWellnessStylist}
-                                  </h5>
-                                  <p className="text-[10px] text-slate-400">
-                                    Guaranteed instant slot • Zero waiting time
-                                  </p>
-                                </div>
-                              </div>
-                              <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 font-extrabold">
-                                ✓ Assigned
-                              </span>
-                            </div>
-
-                            {/* Modal Bottom Confirm Button */}
-                            <div className="border-t border-slate-100 dark:border-white/10 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-                              <div>
-                                <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">TOTAL PAYABLE</span>
-                                <span className="text-xl font-black text-[#ff6325]">₹{grandTotalPayable.toLocaleString()}</span>
-                                {appliedHomeFee > 0 && (
-                                  <span className="text-[10px] text-slate-400 block font-medium">Includes ₹{appliedHomeFee} doorstep kit fee</span>
-                                )}
-                              </div>
-
+                      {/* Calendar Popover */}
+                      {isWellnessCalOpen && (
+                        <div className="mt-3 p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-white/10 animate-in fade-in duration-150">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-black text-slate-900 dark:text-white">
+                              {wellnessCalMonth.toLocaleString('default', { month: 'long' })} {wellnessCalMonth.getFullYear()}
+                            </span>
+                            <div className="flex items-center gap-1">
                               <button
                                 type="button"
                                 onClick={() => {
-                                  if (wellnessServiceMode === 'HOME_VISIT' && !wellnessHomeAddress.trim()) {
-                                    setWellnessAddressError(true);
-                                    return;
-                                  }
-
-                                  const slotToSave = selectedApptSlot || dynamicSlots[0]?.slotValue || '09:00 AM';
-
-                                  setSelectedService({
-                                    id: `wellness-${Date.now()}`,
-                                    name: `${venueName} — ${wellnessServiceMode === 'HOME_VISIT' ? 'Doorstep Home Service' : 'In-Salon Appointment'}`,
-                                    price: grandTotalPayable,
-                                    metadata: {
-                                      appointmentBooking: {
-                                        venueName,
-                                        serviceMode: wellnessServiceMode,
-                                        practitioner: selectedWellnessStylist,
-                                        slotTime: slotToSave,
-                                        slotDate: selectedDate || todayStr,
-                                        treatments: selectedTreatments,
-                                        treatmentDetails: selectedTreatmentObjects,
-                                        totalDuration: totalSelectedDuration,
-                                        convenienceFee: appliedHomeFee,
-                                        homeAddress: wellnessHomeAddress,
-                                        homeLandmark: wellnessHomeLandmark,
-                                        homePhone: wellnessHomePhone
-                                      }
-                                    }
-                                  });
-                                  setSelectedSlot({
-                                    id: `slot-${slotToSave}`,
-                                    timeStr: `${selectedDate || todayStr} at ${slotToSave} (${totalSelectedDuration} mins)`,
-                                    date: selectedDate || todayStr,
-                                    available: true
-                                  });
-                                  setIsWellnessSlotModalOpen(false);
-                                  router.push('/booking/checkout');
+                                  const newD = new Date(wellnessCalMonth);
+                                  newD.setMonth(newD.getMonth() - 1);
+                                  setWellnessCalMonth(newD);
                                 }}
-                                className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-[#ff6325] hover:bg-[#e04e13] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-[#ff6325]/30 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+                                className="px-2 py-1 rounded-lg bg-white dark:bg-slate-700 text-xs font-bold"
                               >
-                                <span>Confirm & Proceed</span>
-                                <ChevronRight size={16} />
+                                ‹
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newD = new Date(wellnessCalMonth);
+                                  newD.setMonth(newD.getMonth() + 1);
+                                  setWellnessCalMonth(newD);
+                                }}
+                                className="px-2 py-1 rounded-lg bg-white dark:bg-slate-700 text-xs font-bold"
+                              >
+                                ›
                               </button>
                             </div>
+                          </div>
+
+                          <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 mb-1">
+                            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+                              <div key={d}>{d}</div>
+                            ))}
+                          </div>
+
+                          <div className="grid grid-cols-7 gap-1 text-center">
+                            {(() => {
+                              const year = wellnessCalMonth.getFullYear();
+                              const month = wellnessCalMonth.getMonth();
+                              const firstDay = new Date(year, month, 1).getDay();
+                              const totalDays = new Date(year, month + 1, 0).getDate();
+
+                              const cells = [];
+                              for (let i = 0; i < firstDay; i++) {
+                                cells.push(<div key={`empty-${i}`} className="h-7 w-7" />);
+                              }
+
+                              for (let day = 1; day <= totalDays; day++) {
+                                const mStr = String(month + 1).padStart(2, '0');
+                                const dStr = String(day).padStart(2, '0');
+                                const dateStr = `${year}-${mStr}-${dStr}`;
+                                const isSelected = dateStr === (selectedDate || todayStr);
+                                const isPast = dateStr < todayStr;
+
+                                cells.push(
+                                  <button
+                                    key={`day-${day}`}
+                                    type="button"
+                                    disabled={isPast}
+                                    onClick={() => {
+                                      setSelectedDate(dateStr);
+                                      setIsWellnessCalOpen(false);
+                                    }}
+                                    className={`h-7 w-7 mx-auto rounded-full text-xs font-bold flex items-center justify-center transition-all ${isSelected
+                                      ? 'bg-[#ff6325] text-white shadow-xs font-black'
+                                      : isPast
+                                        ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                                        : 'hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200'
+                                      }`}
+                                  >
+                                    {day}
+                                  </button>
+                                );
+                              }
+                              return cells;
+                            })()}
                           </div>
                         </div>
                       )}
                     </div>
-                    );
-        })()}
 
-                    {/* ============================================================
-         * SECTION D5-C: GYM & YOGA FITNESS PASS / BATCH SLOT SELECTION
-         * ============================================================ */}
-                    {isFitness && (() => {
-                      const fitCfg = getFitnessConfig('zenfit-clinic');
-                      const allPasses = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.passes)
-                        ? (liveServices[0].metadata.passes as any[])
-                        : fitCfg.passes;
-                      const allTrainers = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.trainers)
-                        ? (liveServices[0].metadata.trainers as any[])
-                        : fitCfg.trainers;
+                    {/* Step B: Time Slot Windows with Session Filter */}
+                    <div>
+                      <div className="space-y-2 mb-3">
+                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                          2. Choose Time Slot ({totalSelectedDuration} mins window)
+                        </label>
 
-                      const filteredPasses = allPasses.filter((p: any) => {
-                        if (fitnessFormatFilter === 'ALL') return true;
-                        return p.formatType === fitnessFormatFilter;
-                      });
-
-                      const activePass = allPasses.find((p: any) => p.id === selectedFitnessPassId) || allPasses[0];
-
-                      return (
-                        <div id="fitness-booking-section" className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
-                          {/* Header */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
-                            <div>
-                              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                                <span>🏋️</span> Gym Day Pass & Yoga Batch Booking
-                              </h2>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                Book daily workout slots, certified trainer sessions & group yoga batches. Instant barcode entry.
-                              </p>
-                            </div>
-
-                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50 text-xs font-bold">
-                              <span>⚡ Instant QR / NFC Turnstile Pass</span>
-                            </div>
-                          </div>
-
-                          {/* Step 1: Pass & Format Selection */}
-                          <div className="space-y-3">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                                1. Select Workout Session or Class
-                              </label>
-
-                              {/* Format Filter Tabs */}
-                              <div className="flex flex-wrap items-center gap-1.5">
-                                {[
-                                  { id: 'ALL', label: 'All Passes' },
-                                  { id: 'OPEN_GYM', label: '🏋️ Open Gym' },
-                                  { id: 'YOGA_CLASS', label: '🧘 Yoga Classes' },
-                                  { id: 'PERSONAL_TRAINING', label: '💪 1-on-1 PT' }
-                                ].map((tab) => (
-                                  <button
-                                    key={tab.id}
-                                    type="button"
-                                    onClick={() => setFitnessFormatFilter(tab.id as any)}
-                                    className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${fitnessFormatFilter === tab.id
-                                      ? 'bg-[#ff6325] text-white shadow-xs'
-                                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-                                      }`}
-                                  >
-                                    {tab.label}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              {filteredPasses.map((pass: any) => {
-                                const isSelected = selectedFitnessPassId === pass.id;
-                                return (
-                                  <div
-                                    key={pass.id}
-                                    onClick={() => setSelectedFitnessPassId(pass.id)}
-                                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${isSelected
-                                      ? 'bg-[#ff6325]/5 dark:bg-[#ff6325]/10 border-[#ff6325] ring-2 ring-[#ff6325]/20'
-                                      : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
-                                      }`}
-                                  >
-                                    <div className="flex items-start gap-3">
-                                      <span className="text-2xl shrink-0 mt-0.5">{pass.icon || '🏋️'}</span>
-                                      <div>
-                                        <div className="flex items-center gap-2">
-                                          <h4 className="text-xs font-extrabold text-slate-900 dark:text-white">{pass.name}</h4>
-                                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-200/80 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
-                                            {pass.durationMinutes >= 60 ? `${pass.durationMinutes / 60}h Session` : `${pass.durationMinutes}m`}
-                                          </span>
-                                        </div>
-                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug line-clamp-2">
-                                          {pass.description}
-                                        </p>
-                                        {pass.amenities && (
-                                          <div className="flex flex-wrap gap-1 mt-2">
-                                            {pass.amenities.map((am: string, idx: number) => (
-                                              <span key={idx} className="text-[9px] font-bold px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 rounded border border-emerald-200/50">
-                                                ✓ {am}
-                                              </span>
-                                            ))}
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-
-                                    <div className="text-right shrink-0">
-                                      <span className="text-sm font-black text-[#ff6325]">₹{pass.price}</span>
-                                      <span className={`block text-[10px] font-bold mt-1 px-2.5 py-1 rounded-lg ${isSelected ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-                                        }`}>
-                                        {isSelected ? '✓ Selected' : 'Choose'}
-                                      </span>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-
-                          {/* Step 2: Certified Fitness Coaches */}
-                          {allTrainers && allTrainers.length > 0 && (
-                            <div>
-                              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-                                On-Floor Certified Coaches & Yoga Gurus
-                              </label>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {allTrainers.map((tr: any) => (
-                                  <div key={tr.id} className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 flex items-center gap-3">
-                                    <img
-                                      src={tr.avatar}
-                                      alt={tr.name}
-                                      className="w-11 h-11 rounded-full object-cover shrink-0 border border-slate-200 dark:border-white/10"
-                                      onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80'; }}
-                                    />
-                                    <div className="min-w-0 flex-1">
-                                      <div className="flex items-center justify-between">
-                                        <span className="text-xs font-bold text-slate-900 dark:text-white truncate">{tr.name}</span>
-                                        <span className="text-[10px] font-extrabold text-amber-500">★ {tr.rating}</span>
-                                      </div>
-                                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">{tr.role}</span>
-                                      <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold block mt-0.5">
-                                        {tr.experienceYears}+ yrs exp • {tr.specialties?.slice(0, 2).join(', ')}
-                                      </span>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Step 3: Interactive Date Selection */}
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-                              2. Select Workout Date
-                            </label>
-                            <div className="relative">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const d = selectedDate ? new Date(selectedDate) : new Date();
-                                  setFitnessCalMonth(isNaN(d.getTime()) ? new Date() : d);
-                                  setIsFitnessCalOpen(!isFitnessCalOpen);
-                                }}
-                                className="w-full sm:w-80 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white hover:border-[#ff6325] transition-all cursor-pointer shadow-xs"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-xl bg-[#ff6325]/10 text-[#ff6325] flex items-center justify-center font-bold shrink-0">
-                                    <Calendar size={16} />
-                                  </div>
-                                  <div className="text-left">
-                                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">PASS DATE</span>
-                                    <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
-                                      {(() => {
-                                        try {
-                                          const [y, m, d] = (selectedDate || todayStr).split('-');
-                                          return `${d}-${m}-${y}`;
-                                        } catch {
-                                          return selectedDate || todayStr;
-                                        }
-                                      })()} {selectedDate === todayStr ? '(Today)' : ''}
-                                    </span>
-                                  </div>
-                                </div>
-                                <ChevronDown size={16} className={`text-slate-400 transition-transform duration-200 ${isFitnessCalOpen ? 'rotate-180' : ''}`} />
-                              </button>
-
-                              {/* Clean White Popover Calendar for Fitness */}
-                              {isFitnessCalOpen && (
-                                <>
-                                  <div className="fixed inset-0 z-40" onClick={() => setIsFitnessCalOpen(false)} />
-                                  <div className="absolute top-full left-0 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-white/15 shadow-2xl p-4 z-50 text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
-                                    <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-2 mb-3 border border-slate-150/60 dark:border-white/5">
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const newD = new Date(fitnessCalMonth);
-                                          newD.setMonth(newD.getMonth() - 1);
-                                          setFitnessCalMonth(newD);
-                                        }}
-                                        className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
-                                      >
-                                        <ChevronLeft size={16} />
-                                      </button>
-                                      <span className="font-extrabold text-xs sm:text-sm tracking-tight text-slate-900 dark:text-white">
-                                        {fitnessCalMonth.toLocaleString('default', { month: 'long' })} {fitnessCalMonth.getFullYear()}
-                                      </span>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const newD = new Date(fitnessCalMonth);
-                                          newD.setMonth(newD.getMonth() + 1);
-                                          setFitnessCalMonth(newD);
-                                        }}
-                                        className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
-                                      >
-                                        <ChevronRight size={16} />
-                                      </button>
-                                    </div>
-
-                                    <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-400 mb-2">
-                                      {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
-                                        <div key={d} className="py-1">{d}</div>
-                                      ))}
-                                    </div>
-
-                                    <div className="grid grid-cols-7 gap-1 text-center">
-                                      {(() => {
-                                        const year = fitnessCalMonth.getFullYear();
-                                        const month = fitnessCalMonth.getMonth();
-                                        const firstDay = new Date(year, month, 1).getDay();
-                                        const totalDays = new Date(year, month + 1, 0).getDate();
-
-                                        const cells = [];
-                                        for (let i = 0; i < firstDay; i++) {
-                                          cells.push(<div key={`empty-${i}`} className="h-8 w-8" />);
-                                        }
-
-                                        for (let day = 1; day <= totalDays; day++) {
-                                          const mStr = String(month + 1).padStart(2, '0');
-                                          const dStr = String(day).padStart(2, '0');
-                                          const dateStr = `${year}-${mStr}-${dStr}`;
-                                          const isSelected = dateStr === (selectedDate || todayStr);
-                                          const isPast = dateStr < todayStr;
-
-                                          cells.push(
-                                            <button
-                                              key={`day-${day}`}
-                                              type="button"
-                                              disabled={isPast}
-                                              onClick={() => {
-                                                setSelectedDate(dateStr);
-                                                setIsFitnessCalOpen(false);
-                                              }}
-                                              className={`h-8 w-8 mx-auto rounded-full text-xs font-bold flex items-center justify-center transition-all ${isSelected
-                                                ? 'bg-[#ff6325] text-white shadow-sm font-black'
-                                                : isPast
-                                                  ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
-                                                  : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer'
-                                                }`}
-                                            >
-                                              {day}
-                                            </button>
-                                          );
-                                        }
-                                        return cells;
-                                      })()}
-                                    </div>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Step 4: Batch / Entry Time Slot */}
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-                              3. Select Session / Batch Timing
-                            </label>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
-                              {['06:00 AM', '07:15 AM', '08:30 AM', '05:00 PM', '06:15 PM', '07:30 PM', '08:45 PM'].map((slot) => {
-                                const isSelected = selectedFitnessTimeSlot === slot;
-                                return (
-                                  <button
-                                    key={slot}
-                                    type="button"
-                                    onClick={() => setSelectedFitnessTimeSlot(slot)}
-                                    className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${isSelected
-                                      ? 'bg-[#ff6325] text-white border-transparent shadow-md font-bold'
-                                      : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#ff6325] text-slate-900 dark:text-white font-medium'
-                                      }`}
-                                  >
-                                    <span className="text-xs font-black block">{slot}</span>
-                                    <span className="text-[10px] opacity-75 font-semibold mt-0.5 block">Slots Open</span>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-
-                          {/* Confirm Fitness Booking CTA */}
-                          <div className="p-5 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-transparent border border-[#ff6325]/30 flex flex-col sm:flex-row items-center justify-between gap-4">
-                            <div>
-                              <span className="text-xs font-black text-slate-900 dark:text-white block">
-                                {activePass.name} • ₹{activePass.price}
-                              </span>
-                              <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
-                                📅 {selectedDate || todayStr} at {selectedFitnessTimeSlot} • Direct Turnstile QR Pass
-                              </span>
-                            </div>
+                        {/* Session Filter Tabs in clean grid so items never misalign */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                          {[
+                            { id: 'ALL', label: `All (${dynamicSlots.length})` },
+                            { id: 'MORNING', label: `🌅 Morning (${morningSlots.length})` },
+                            { id: 'AFTERNOON', label: `☀️ Afternoon (${afternoonSlots.length})` },
+                            { id: 'EVENING', label: `🌆 Evening (${eveningSlots.length})` }
+                          ].map(tab => (
                             <button
+                              key={tab.id}
                               type="button"
-                              onClick={() => {
-                                setSelectedService({
-                                  id: `fitness-${Date.now()}`,
-                                  name: `${venueName} — ${activePass.name}`,
-                                  price: activePass.price,
-                                  metadata: {
-                                    isFitnessBooking: true,
-                                    fitnessBooking: {
-                                      venueName,
-                                      passName: activePass.name,
-                                      formatType: activePass.formatType,
-                                      slotTime: selectedFitnessTimeSlot,
-                                      slotDate: selectedDate || todayStr,
-                                      durationMinutes: activePass.durationMinutes
-                                    }
-                                  }
-                                });
-                                setSelectedSlot({
-                                  id: `slot-fit-${Date.now()}`,
-                                  timeStr: `${selectedDate || todayStr} at ${selectedFitnessTimeSlot} (${activePass.name})`,
-                                  date: selectedDate || todayStr,
-                                  available: true
-                                });
-                                router.push('/booking/checkout');
-                              }}
-                              className="px-6 py-3 rounded-xl bg-[#ff6325] hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer w-full sm:w-auto"
+                              onClick={() => setWellnessSlotSession(tab.id as any)}
+                              className={`w-full py-1.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center truncate ${wellnessSlotSession === tab.id
+                                ? 'bg-[#ff6325] text-white shadow-xs font-black'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                                }`}
                             >
-                              Book Fitness Pass (₹{activePass.price}) &rarr;
+                              {tab.label}
                             </button>
-                          </div>
-                        </div>
-                      );
-                    })()}
-
-                    {/* ============================================================
-         * SECTION D5-D: RESTAURANT & TABLE RESERVATION FLOW
-         * ============================================================ */}
-                    {isDining && (() => {
-                      const diningCfg = getDiningConfig(cleanMerchantId);
-                      let allTables = diningCfg.tableTypes || [];
-                      let allSlots = diningCfg.timeSlots || [];
-                      let popularMenu = diningCfg.popularMenu || [];
-                      let activeDeals = diningCfg.bookingDeals || [];
-                      let activeCuisines = diningCfg.cuisines || [];
-                      let activeCostForTwo = diningCfg.costForTwo || 800;
-                      let customSessionsList: any[] = [];
-
-                      if (typeof window !== 'undefined') {
-                        try {
-                          const busStorageRaw = localStorage.getItem('vendor-portal-storage-v10');
-                          if (busStorageRaw) {
-                            const busData = JSON.parse(busStorageRaw);
-                            const curM = busData.state?.currentMerchant;
-                            const storedServices = busData.state?.services || [];
-                            const activeBranchId = curM?.activeBranchId;
-
-                            // 1. Read Vendor Cuisines, Cost for Two, Deals & Perks from Merchant Profile (Modules 1, 3)
-                            if (curM?.metadata?.cuisines && Array.isArray(curM.metadata.cuisines) && curM.metadata.cuisines.length > 0) {
-                              activeCuisines = curM.metadata.cuisines;
-                            }
-                            if (curM?.metadata?.costForTwo) {
-                              activeCostForTwo = Number(curM.metadata.costForTwo);
-                            }
-                            if (curM?.metadata?.bookingDeals && Array.isArray(curM.metadata.bookingDeals)) {
-                              activeDeals = curM.metadata.bookingDeals.filter((d: any) => d.active !== false);
-                            }
-                            if (curM?.metadata?.customSessions && Array.isArray(curM.metadata.customSessions)) {
-                              customSessionsList = curM.metadata.customSessions.filter((cs: any) => cs.enabled);
-                            }
-
-                            const vendorLunchPerk = curM?.metadata?.lunchPerkText;
-                            const vendorDinnerPerk = curM?.metadata?.dinnerPerkText;
-                            if (vendorLunchPerk || vendorDinnerPerk) {
-                              allSlots = allSlots.map((s: any) => {
-                                if (s.session === 'LUNCH' && vendorLunchPerk) {
-                                  return { ...s, discountOffer: vendorLunchPerk };
-                                }
-                                if (s.session === 'DINNER' && vendorDinnerPerk) {
-                                  return { ...s, discountOffer: vendorDinnerPerk };
-                                }
-                                return s;
-                              });
-                            }
-
-                            // Append custom session slots if vendor configured them (e.g. Breakfast / High Tea)
-                            if (customSessionsList.length > 0) {
-                              customSessionsList.forEach((cs: any) => {
-                                const sessionKey = cs.name.toUpperCase().includes('BREAKFAST') ? 'BREAKFAST' : cs.name.toUpperCase().includes('TEA') ? 'HIGH_TEA' : cs.name.toUpperCase();
-                                if (!allSlots.some(s => s.session === sessionKey)) {
-                                  allSlots.push({
-                                    time: cs.opensAt || '08:00 AM',
-                                    session: sessionKey as any,
-                                    discountOffer: `${cs.name} Special`,
-                                    isFastFilling: false
-                                  });
-                                }
-                              });
-                            }
-
-                            // 2. Read live tables configured in Business Portal (Module 2)
-                            const matchedService = storedServices.find((s: any) => {
-                              const sName = (s.name || '').toLowerCase();
-                              const sCat = (s.category || '').toLowerCase();
-                              const matchCat = sCat.includes('dining') || sCat.includes('restaurant') || sName.includes('dining') || s.metadata?.isDining;
-                              const matchBranch = activeBranchId ? (!s.branchId || s.branchId === activeBranchId) : true;
-                              return matchCat && matchBranch;
-                            });
-
-                            if (matchedService && Array.isArray(matchedService.listings) && matchedService.listings.length > 0) {
-                              allTables = matchedService.listings.map((l: any, idx: number) => {
-                                const zone = l.metadata?.tableZone || l.tableZone || 'AC_INDOOR';
-                                const icon = zone === 'ROOFTOP' ? '🌆' : zone === 'PRIVATE_DINING' ? '👑' : zone === 'GARDEN_PATIO' ? '🌿' : '🛋️';
-                                return {
-                                  id: l.id || `table-${idx}`,
-                                  name: l.name,
-                                  capacity: `${l.minGuests || l.metadata?.minGuests || 1} - ${l.maxGuests || l.metadata?.maxGuests || 4} Guests`,
-                                  minGuests: l.minGuests || l.metadata?.minGuests || 1,
-                                  maxGuests: l.maxGuests || l.metadata?.maxGuests || 4,
-                                  zone: zone,
-                                  depositAmount: Number(l.price || l.basePrice || l.metadata?.depositAmount || 0),
-                                  badge: l.offerBadge || l.metadata?.highlightBadge || undefined,
-                                  icon,
-                                  description: l.description || l.metadata?.atmosphereTagline || `Comfortable table setup in ${zone.replace('_', ' ')}.`
-                                };
-                              });
-
-                              // Read add-on dishes
-                              const vendorAddons: any[] = [];
-                              matchedService.listings.forEach((l: any) => {
-                                const isAddonsOn = l.isAddonsEnabled ?? l.metadata?.isAddonsEnabled ?? true;
-                                const items = l.addOns || l.metadata?.addons || [];
-                                if (isAddonsOn && Array.isArray(items)) {
-                                  items.forEach((item: any) => {
-                                    if (item.name && !vendorAddons.some(v => v.name.toLowerCase() === item.name.toLowerCase())) {
-                                      vendorAddons.push({
-                                        id: `menu-vendor-${item.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
-                                        name: item.name,
-                                        category: 'MAIN_COURSE',
-                                        isVeg: !item.name.toLowerCase().includes('chicken') && !item.name.toLowerCase().includes('mutton') && !item.name.toLowerCase().includes('fish') && !item.name.toLowerCase().includes('meat') && !item.name.toLowerCase().includes('prawn'),
-                                        price: Number(item.price || 0),
-                                        rating: 4.8,
-                                        chefSpecial: true,
-                                        description: `Chef special pre-order item freshly prepared for your table.`
-                                      });
-                                    }
-                                  });
-                                }
-                              });
-                              if (vendorAddons.length > 0) {
-                                popularMenu = vendorAddons;
-                              }
-                            }
-                          }
-                        } catch (e) { }
-                      }
-
-                      // Auto-Match Best Fit Table for user's selected party size
-                      const bestFitTable = allTables.find((t: any) => diningGuestCount >= t.minGuests && diningGuestCount <= t.maxGuests);
-                      const effectiveSelectedTableId = selectedTableId || (bestFitTable ? bestFitTable.id : (allTables[0]?.id || ''));
-
-                      const filteredTables = allTables.filter((tbl: any) => {
-                        if (diningZoneTab === 'ALL') return true;
-                        return tbl.zone === diningZoneTab;
-                      });
-
-                      const activeTable = allTables.find((t: any) => t.id === effectiveSelectedTableId) || bestFitTable || allTables[0];
-                      const reservationDeposit = activeTable?.depositAmount || 0;
-
-                      return (
-                        <div id="dining-booking-section" className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
-                          {/* Header with Search Context Summary */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
-                            <div>
-                              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                                <span>🍽️</span> Restaurant Table Reservation
-                              </h2>
-                              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-900/50 text-[#ff6325] text-xs font-black">
-                                  <span>📅</span> {selectedDate || todayStr} {selectedDate === todayStr ? '(Today)' : ''}
-                                </span>
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50 text-[#033266] dark:text-blue-400 text-xs font-black">
-                                  <span>👥</span> {diningGuestCount} {diningGuestCount === 1 ? 'Guest' : 'Guests'}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => setIsEditSearchOpen(true)}
-                                  className="text-[11px] text-[#ff6325] hover:underline font-bold cursor-pointer ml-1"
-                                >
-                                  Change Date / Party Size
-                                </button>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="px-3 py-1 rounded-full text-[11px] font-black bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                                ✓ Instant Confirmation
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* 2. Seating Zone Ambiance Filter Tabs */}
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-                              1. Select Seating Ambience & Zone
-                            </label>
-                            <div className="flex flex-wrap items-center gap-2">
-                              {[
-                                { id: 'ALL', label: 'All Tables', icon: '🍽️' },
-                                { id: 'AC_INDOOR', label: 'AC Indoor Hall', icon: '🌟' },
-                                { id: 'ROOFTOP', label: 'Romantic Rooftop', icon: '🌆' },
-                                { id: 'GARDEN_PATIO', label: 'Garden Patio', icon: '🌿' },
-                                { id: 'PRIVATE_DINING', label: 'Private Dining (PDR)', icon: '👑' }
-                              ].map(tab => (
-                                <button
-                                  key={tab.id}
-                                  type="button"
-                                  onClick={() => setDiningZoneTab(tab.id as any)}
-                                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${diningZoneTab === tab.id
-                                    ? 'bg-[#033266] dark:bg-[#ff6325] text-white shadow-sm'
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                                    }`}
-                                >
-                                  <span>{tab.icon}</span>
-                                  <span>{tab.label}</span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* 3. Table Types Selection Cards */}
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-                              2. Choose Table Type & Arrangement
-                            </label>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-                              {filteredTables.map((tbl: any) => {
-                                const isSelected = selectedTableId === tbl.id;
-                                const isCapacityFit = diningGuestCount >= tbl.minGuests && diningGuestCount <= tbl.maxGuests;
-
-                                return (
-                                  <div
-                                    key={tbl.id}
-                                    onClick={() => setSelectedTableId(tbl.id)}
-                                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between relative ${isSelected
-                                      ? 'bg-[#ff6325]/5 border-[#ff6325] shadow-md ring-2 ring-[#ff6325]/20'
-                                      : 'bg-slate-50/70 dark:bg-slate-800/60 border-slate-200 dark:border-white/10 hover:border-slate-300'
-                                      }`}
-                                  >
-                                    {isCapacityFit && (
-                                      <div className="absolute -top-2 right-3">
-                                        <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500 text-white shadow-xs">
-                                          Best Fit ({tbl.capacity})
-                                        </span>
-                                      </div>
-                                    )}
-                                    <div>
-                                      <div className="flex items-center justify-between mb-2">
-                                        <span className="text-2xl">{tbl.icon}</span>
-                                        {tbl.badge && (
-                                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                                            {tbl.badge}
-                                          </span>
-                                        )}
-                                      </div>
-                                      <h4 className="text-sm font-black text-slate-900 dark:text-white">{tbl.name}</h4>
-                                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
-                                        {tbl.description}
-                                      </p>
-                                    </div>
-
-                                    <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-white/10 flex items-center justify-between">
-                                      <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                                        <span>👥</span> {tbl.capacity}
-                                      </span>
-                                      <span className="text-xs font-black text-[#ff6325]">
-                                        {tbl.depositAmount === 0 ? 'Free Reservation' : `₹${tbl.depositAmount} Hold Deposit`}
-                                      </span>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-
-                          {/* 4. Time Slots with Session Filters & Discount Chips */}
-                          <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                                3. Preferred Dining Time Slot & Offers
-                              </label>
-                              <div className="flex items-center gap-1.5">
-                                {['ALL', 'LUNCH', 'DINNER'].map((ses) => (
-                                  <button
-                                    key={ses}
-                                    type="button"
-                                    onClick={() => setDiningSession(ses as any)}
-                                    className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${diningSession === ses
-                                      ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
-                                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                                      }`}
-                                  >
-                                    {ses === 'ALL' ? 'All Slots' : ses}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-
-                            <div className="space-y-3">
-                              {/* Lunch Sessions */}
-                              {(diningSession === 'ALL' || diningSession === 'LUNCH') && (
-                                <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5">
-                                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">
-                                    ☀️ Lunch Slots (12:00 PM - 03:30 PM)
-                                  </span>
-                                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                                    {allSlots
-                                      .filter((s: any) => s.session === 'LUNCH')
-                                      .map((slot: any) => {
-                                        const isSelected = selectedDiningTime === slot.time;
-                                        return (
-                                          <button
-                                            key={slot.time}
-                                            type="button"
-                                            onClick={() => setSelectedDiningTime(slot.time)}
-                                            className={`py-3 px-3 rounded-xl text-center border transition-all cursor-pointer ${isSelected
-                                              ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md scale-[1.02]'
-                                              : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 hover:border-slate-300'
-                                              }`}
-                                          >
-                                            <span className="text-xs font-black block">{slot.time}</span>
-                                          </button>
-                                        );
-                                      })}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Dinner Sessions */}
-                              {(diningSession === 'ALL' || diningSession === 'DINNER') && (
-                                <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5">
-                                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">
-                                    🌙 Dinner Slots (07:00 PM - 11:00 PM)
-                                  </span>
-                                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                                    {allSlots
-                                      .filter((s: any) => s.session === 'DINNER')
-                                      .map((slot: any) => {
-                                        const isSelected = selectedDiningTime === slot.time;
-                                        return (
-                                          <button
-                                            key={slot.time}
-                                            type="button"
-                                            onClick={() => setSelectedDiningTime(slot.time)}
-                                            className={`py-3 px-3 rounded-xl text-center border transition-all cursor-pointer ${isSelected
-                                              ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md scale-[1.02]'
-                                              : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 hover:border-slate-300'
-                                              }`}
-                                          >
-                                            <span className="text-xs font-black block">{slot.time}</span>
-                                          </button>
-                                        );
-                                      })}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* 5. Special Booking Deals & Coupons (Top App Standards: Dineout / EazyDiner) */}
-                          {activeDeals && activeDeals.length > 0 && (
-                            <div>
-                              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-                                4. Applicable Restaurant Deals & Offers
-                              </label>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {activeDeals.map((deal: any) => {
-                                  const isApplied = selectedDiningDealId === deal.id;
-                                  return (
-                                    <div
-                                      key={deal.id}
-                                      onClick={() => setSelectedDiningDealId(isApplied ? '' : deal.id)}
-                                      className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${isApplied
-                                        ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 ring-2 ring-emerald-500/20'
-                                        : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
-                                        }`}
-                                    >
-                                      <div className="flex items-center gap-3">
-                                        <span className="text-xl">🎉</span>
-                                        <div>
-                                          <div className="flex items-center gap-2">
-                                            <h4 className="text-xs font-black text-slate-900 dark:text-white">{deal.title}</h4>
-                                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300">
-                                              {deal.code}
-                                            </span>
-                                          </div>
-                                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
-                                            {deal.description}
-                                          </p>
-                                        </div>
-                                      </div>
-                                      <span className={`text-xs font-black px-2.5 py-1 rounded-xl shrink-0 ${isApplied ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/10'
-                                        }`}>
-                                        {isApplied ? 'Applied ✓' : 'Apply'}
-                                      </span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* 6. Optional Chef Special Pre-order Delicacies (Zero Wait Serving) */}
-                          {popularMenu && popularMenu.length > 0 && (
-                            <div>
-                              <div className="flex items-center justify-between mb-2">
-                                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                                  5. Pre-order Signature Dishes (Optional)
-                                </label>
-                                <span className="text-[10px] text-slate-400 font-bold">
-                                  {selectedPreOrderItems.length} items added (+₹{selectedPreOrderItems.reduce((acc, itm) => {
-                                    const m = popularMenu.find((p: any) => p.id === itm.id);
-                                    return acc + (m ? m.price * itm.qty : 0);
-                                  }, 0)})
-                                </span>
-                              </div>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                {popularMenu.slice(0, 6).map((item: any) => {
-                                  const sel = selectedPreOrderItems.find((p) => p.id === item.id);
-                                  const qty = sel?.qty || 0;
-
-                                  return (
-                                    <div
-                                      key={item.id}
-                                      className="p-3.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/80 flex items-center justify-between gap-3 shadow-2xs"
-                                    >
-                                      <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-1.5">
-                                          <span className={`w-2 h-2 rounded-full shrink-0 ${item.isVeg ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                                          <h5 className="text-xs font-black text-slate-900 dark:text-white truncate">{item.name}</h5>
-                                        </div>
-                                        <span className="text-xs font-black text-[#ff6325] block mt-1">₹{item.price}</span>
-                                      </div>
-
-                                      {qty === 0 ? (
-                                        <button
-                                          type="button"
-                                          onClick={() => setSelectedPreOrderItems([...selectedPreOrderItems, { id: item.id, qty: 1 }])}
-                                          className="px-3 py-1.5 rounded-xl border border-[#ff6325] text-[#ff6325] hover:bg-[#ff6325] hover:text-white text-xs font-black transition-all cursor-pointer"
-                                        >
-                                          + Add
-                                        </button>
-                                      ) : (
-                                        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-700 rounded-xl px-2 py-1">
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              if (qty === 1) {
-                                                setSelectedPreOrderItems(selectedPreOrderItems.filter((p) => p.id !== item.id));
-                                              } else {
-                                                setSelectedPreOrderItems(selectedPreOrderItems.map((p) => p.id === item.id ? { ...p, qty: p.qty - 1 } : p));
-                                              }
-                                            }}
-                                            className="text-xs font-black text-slate-600 hover:text-slate-900 px-1 cursor-pointer"
-                                          >
-                                            -
-                                          </button>
-                                          <span className="text-xs font-black text-slate-900 dark:text-white">{qty}</span>
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setSelectedPreOrderItems(selectedPreOrderItems.map((p) => p.id === item.id ? { ...p, qty: p.qty + 1 } : p));
-                                            }}
-                                            className="text-xs font-black text-slate-600 hover:text-slate-900 px-1 cursor-pointer"
-                                          >
-                                            +
-                                          </button>
-                                        </div>
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* 7. Special Requests / Occasions */}
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
-                              6. Special Requests & Occasions (Optional)
-                            </label>
-                            <div className="space-y-2">
-                              <div className="flex flex-wrap gap-2">
-                                {['🎂 Birthday Celebration', '🥂 Anniversary Dinner', '👶 High Chair Required', '🌸 Quiet Corner Table', '🕯️ Candlelight Setup'].map((tag) => (
-                                  <button
-                                    key={tag}
-                                    type="button"
-                                    onClick={() => {
-                                      setDiningSpecialRequest(prev => prev.includes(tag) ? prev.replace(tag, '').trim() : `${prev} ${tag}`.trim());
-                                    }}
-                                    className={`px-3 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer ${diningSpecialRequest.includes(tag)
-                                      ? 'bg-[#ff6325]/15 border-[#ff6325] text-[#ff6325]'
-                                      : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400'
-                                      }`}
-                                  >
-                                    {tag}
-                                  </button>
-                                ))}
-                              </div>
-                              <input
-                                type="text"
-                                value={diningSpecialRequest}
-                                onChange={(e) => setDiningSpecialRequest(e.target.value)}
-                                placeholder="Add other requests (e.g., Less spicy, wheelchair access, table near window)..."
-                                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[#ff6325]"
-                              />
-                            </div>
-                          </div>
-                          {/* Bottom Reservation Action Summary */}
-                          {(() => {
-                            const popularMenu = diningCfg.popularMenu || [];
-                            const preOrderTotal = selectedPreOrderItems.reduce((acc, itm) => {
-                              const m = popularMenu.find((p) => p.id === itm.id);
-                              return acc + (m ? m.price * itm.qty : 0);
-                            }, 0);
-                            const finalPayableAtBooking = reservationDeposit + preOrderTotal;
-                            const activeDeal = (diningCfg.bookingDeals || []).find((d) => d.id === selectedDiningDealId);
-
-                            return (
-                              <div className="pt-5 border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/80 dark:bg-slate-800/60 p-4 sm:p-5 rounded-3xl">
-                                <div>
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-base font-black text-slate-900 dark:text-white">
-                                      {activeTable?.name || 'Selected Table'} • {diningGuestCount} Guests
-                                    </span>
-                                    <span className="text-xs text-slate-500 font-bold">• {selectedDiningTime}</span>
-                                    {activeDeal && (
-                                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-500 text-white shadow-2xs">
-                                        Offer: {activeDeal.code}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
-                                      {finalPayableAtBooking === 0
-                                        ? '✓ Free Table Reservation • Pay bill at restaurant'
-                                        : `Total Booking Payable: ₹${finalPayableAtBooking}${reservationDeposit > 0 ? ` (₹${reservationDeposit} adjustable deposit` : ''}${preOrderTotal > 0 ? ` + ₹${preOrderTotal} pre-order` : ''}${reservationDeposit > 0 ? ')' : ''}`}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const effectiveMerchantId = merchantId || 'R404';
-                                    const effectiveMerchantName = venueName || diningCfg.name;
-
-                                    setSelectedService({
-                                      id: `dining-table-${activeTable?.id || '2-cozy'}`,
-                                      name: `${effectiveMerchantName} — ${activeTable?.name || 'Table'} (${diningGuestCount} Guests)`,
-                                      price: finalPayableAtBooking,
-                                      merchantId: effectiveMerchantId,
-                                      merchantName: effectiveMerchantName,
-                                      merchant: {
-                                        id: effectiveMerchantId,
-                                        name: effectiveMerchantName
-                                      },
-                                      category: 'Restaurant Table Reservation',
-                                      metadata: {
-                                        isDiningBooking: true,
-                                        diningBooking: {
-                                          restaurantName: effectiveMerchantName,
-                                          tableType: activeTable?.name,
-                                          tableId: activeTable?.id,
-                                          zone: diningZoneTab,
-                                          guests: diningGuestCount,
-                                          date: selectedDate || todayStr,
-                                          time: selectedDiningTime,
-                                          depositAmount: reservationDeposit,
-                                          preOrderTotal,
-                                          preOrderItems: selectedPreOrderItems.map(p => {
-                                            const m = popularMenu.find((item: any) => item.id === p.id);
-                                            return {
-                                              id: p.id,
-                                              name: m?.name || 'Dish',
-                                              price: m?.price || 0,
-                                              qty: p.qty,
-                                              isVeg: m?.isVeg ?? true
-                                            };
-                                          }),
-                                          appliedDeal: activeDeal ? {
-                                            code: activeDeal.code,
-                                            title: activeDeal.title,
-                                            description: activeDeal.description
-                                          } : null,
-                                          specialRequest: diningSpecialRequest,
-                                          costForTwo: activeCostForTwo,
-                                          cuisines: activeCuisines
-                                        }
-                                      }
-                                    });
-
-                                    setSelectedSlot({
-                                      id: `table-slot-${Date.now()}`,
-                                      timeStr: `${selectedDate || todayStr} at ${selectedDiningTime} (${diningGuestCount} Guests)`,
-                                      date: selectedDate || todayStr,
-                                      available: true
-                                    });
-
-                                    router.push('/booking/checkout');
-                                  }}
-                                  className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#ff6325] to-[#f4511e] hover:from-[#e04e13] hover:to-[#d84315] text-white font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all cursor-pointer w-full sm:w-auto text-center"
-                                >
-                                  Confirm Table Reservation &rarr;
-                                </button>
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      );
-                    })()}
-
-                    {/* ============================================================
-         * SECTION D6: SELF-DRIVE & VEHICLE RENTALS (ARCHETYPE 4: AssetRental)
-         * ============================================================ */}
-                    {isRental && (
-                      <div className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
-                          <div>
-                            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                              <span>🚗</span> Vehicle / Equipment Rental Selection
-                            </h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                              100% Tax-Exempt Security Deposit refunded immediately upon safe return.
-                            </p>
-                          </div>
-
-                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 text-xs font-bold">
-                            <span>🛡️ Zero Deposit Deductions Guarantee</span>
-                          </div>
-                        </div>
-
-                        {/* Rental Duration Pickers */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
-                              Pick-up Date
-                            </label>
-                            <input
-                              type="date"
-                              value={rentalStartDate}
-                              onChange={(e) => setRentalStartDate(e.target.value)}
-                              className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
-                              Return Date
-                            </label>
-                            <input
-                              type="date"
-                              value={rentalEndDate}
-                              onChange={(e) => setRentalEndDate(e.target.value)}
-                              className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
-                              Total Rental Days
-                            </label>
-                            <select
-                              value={rentalDays}
-                              onChange={(e) => setRentalDays(Number(e.target.value))}
-                              className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none"
-                            >
-                              {[1, 2, 3, 5, 7, 14, 30].map(d => (
-                                <option key={d} value={d}>{d} Day{d > 1 ? 's' : ''}</option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
-
-                        {/* Mandatory DL / ID Verification Notice */}
-                        <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex flex-col sm:flex-row items-center justify-between gap-3">
-                          <div className="flex items-center gap-3">
-                            <span className="text-2xl">🪪</span>
-                            <div>
-                              <h4 className="text-xs font-extrabold text-amber-900 dark:text-amber-200">
-                                Mandatory Driving License / Govt ID Check
-                              </h4>
-                              <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80">
-                                Required at handover for vehicle insurance coverage.
-                              </p>
-                            </div>
-                          </div>
-                          <label className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold cursor-pointer transition-all shadow-xs shrink-0">
-                            <span>{uploadedDlName ? `✓ ${uploadedDlName}` : 'Upload DL / ID Document'}</span>
-                            <input
-                              type="file"
-                              accept="image/*,.pdf"
-                              className="hidden"
-                              onChange={(e) => {
-                                if (e.target.files?.[0]) setUploadedDlName(e.target.files[0].name);
-                              }}
-                            />
-                          </label>
-                        </div>
-
-                        {/* Rental Breakdown Summary */}
-                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-                          <div>
-                            <span className="text-xs font-black text-slate-900 dark:text-white block">
-                              {liveServices[0]?.name || 'Standard Vehicle Rental'}
-                            </span>
-                            <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
-                              ₹1,500/day × {rentalDays} days (₹{1500 * rentalDays}) + ₹2,000 Refundable Security Deposit
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                            <div className="text-right">
-                              <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Payable</span>
-                              <span className="text-xl font-black text-[#033266] dark:text-[#ff6325]">
-                                ₹{(1500 * rentalDays + 2000).toLocaleString()}
-                              </span>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const baseDaily = 1500;
-                                const deposit = 2000;
-                                const total = baseDaily * rentalDays + deposit;
-                                setSelectedService({
-                                  id: `rental-${Date.now()}`,
-                                  name: `${venueName} — Rental`,
-                                  price: total,
-                                  metadata: {
-                                    rentalBooking: {
-                                      venueName,
-                                      rentalDays,
-                                      rentalStartDate,
-                                      rentalEndDate,
-                                      securityDeposit: deposit,
-                                      uploadedDoc: uploadedDlName || 'Verified at Counter'
-                                    }
-                                  }
-                                });
-                                setSelectedSlot({
-                                  id: `rental-slot-${Date.now()}`,
-                                  timeStr: `${rentalStartDate} to ${rentalEndDate} (${rentalDays} Days)`,
-                                  date: rentalStartDate,
-                                  available: true
-                                });
-                                router.push('/booking/checkout');
-                              }}
-                              className="px-6 py-3 rounded-xl bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
-                            >
-                              Reserve Vehicle &rarr;
-                            </button>
-                          </div>
+                          ))}
                         </div>
                       </div>
-                    )}
 
-                    {/* ============================================================
-         * SECTION D7: BOOKMYSHOW & DISTRICT MULTI-STEP CINEMA TICKETING WIZARD
-         * ============================================================ */}
-                    {isPass && (() => {
-                      // Dynamic binding to live service metadata created by business partner
-                      const activeEntSvc = liveServices.find(s => s.metadata?.isEntertainment || s.category?.toLowerCase().includes('movie') || s.category?.toLowerCase().includes('cinema')) || liveServices[0];
-                      const dynamicFormats: Array<{ id: string; label: string; sub: string; icon: string }> = (activeEntSvc?.metadata?.formats && Array.isArray(activeEntSvc.metadata.formats))
-                        ? activeEntSvc.metadata.formats.map((fmt: any) => {
-                          if (typeof fmt === 'string') {
-                            const icon = fmt.includes('IMAX') ? '🎥' : fmt.includes('Atmos') ? '🔊' : fmt.includes('4DX') ? '⚡' : '👓';
-                            const sub = fmt.includes('IMAX') ? 'Next-Gen 4K Laser Projection' : fmt.includes('Atmos') ? 'Immersive 64-Channel Spatial Audio' : fmt.includes('4DX') ? 'Synchronised Motion Seats' : 'Crystal Clear Digital Laser';
-                            return { id: fmt, label: fmt, sub, icon };
-                          }
-                          return { id: fmt.id || fmt.name, label: fmt.label || fmt.name, sub: fmt.sub || 'Cinema Standard', icon: fmt.icon || '🎥' };
-                        })
-                        : [
-                          { id: 'IMAX Laser 3D', label: 'IMAX Laser 3D', sub: 'Next-Gen 4K Laser Projection', icon: '🎥' },
-                          { id: 'Dolby Atmos 7.1', label: 'Dolby Atmos 7.1', sub: 'Immersive 64-Channel Spatial Audio', icon: '🔊' },
-                          { id: '4DX Motion', label: '4DX Motion & Scent', sub: 'Synchronised Motion Seats', icon: '⚡' },
-                          { id: 'RealD 3D / 2D', label: 'RealD 3D / 2D Standard', sub: 'Crystal Clear Digital Laser', icon: '👓' }
-                        ];
-
-                      const dynamicShowtimes: Array<{ time: string; status: string; audi: string }> = (activeEntSvc?.metadata?.showtimes && Array.isArray(activeEntSvc.metadata.showtimes))
-                        ? activeEntSvc.metadata.showtimes.map((st: any) => ({
-                          time: st.time || '10:30 AM',
-                          status: st.status || (st.fillingFast ? 'Fast Filling' : 'Available'),
-                          audi: st.screen || st.audi || 'Audi 1'
-                        }))
-                        : [
-                          { time: '10:30 AM', status: 'Almost Full', audi: 'Audi 1 (IMAX)' },
-                          { time: '02:15 PM', status: 'Available', audi: 'Audi 1 (IMAX)' },
-                          { time: '06:45 PM', status: 'Fast Filling', audi: 'Audi 2 (Dolby Atmos)' },
-                          { time: '10:00 PM', status: 'Available', audi: 'Audi 2 (Dolby Atmos)' }
-                        ];
-
-                      const dynamicSeatTiers: Array<{ id: string; name: string; price: number; icon: string; desc: string }> = (activeEntSvc?.metadata?.seatTiers && Array.isArray(activeEntSvc.metadata.seatTiers))
-                        ? activeEntSvc.metadata.seatTiers.map((tier: any) => ({
-                          id: tier.id || tier.name,
-                          name: tier.name || 'Standard Tier',
-                          price: Number(tier.price) || 190,
-                          icon: tier.icon || '🎟️',
-                          desc: tier.desc || 'Standard cinema seat'
-                        }))
-                        : [
-                          { id: 'recliner', name: 'Royal Recliner (Lounge)', price: 380, icon: '👑', desc: 'Motorized lounger + Butler dining' },
-                          { id: 'prime', name: 'Prime Circle', price: 250, icon: '🌟', desc: 'Optimum center rows + Extra legroom' },
-                          { id: 'classic', name: 'Classic Executive', price: 190, icon: '🎟️', desc: 'Standard cushioned cinema seat' }
-                        ];
-
-                      const dynamicSnacks: Array<{ id: string; name: string; price: number; icon: string; desc: string }> = (activeEntSvc?.metadata?.snackAddons && Array.isArray(activeEntSvc.metadata.snackAddons))
-                        ? activeEntSvc.metadata.snackAddons.map((snk: any) => ({
-                          id: snk.id || snk.name,
-                          name: snk.name,
-                          price: Number(snk.price) || 150,
-                          icon: snk.icon || '🍿',
-                          desc: snk.desc || 'Fresh cinema concession'
-                        }))
-                        : [
-                          { id: 'popcorn', name: 'Tub Popcorn + Coke Combo', price: 240, icon: '🍿', desc: 'Large Salted & Caramel popcorn tub with 500ml chilled Coke' },
-                          { id: 'nachos', name: 'Warm Cheesy Nachos', price: 180, icon: '🌮', desc: 'Crisp tortilla chips served with warm melted jalapeno salsa dip' },
-                          { id: 'coffee', name: 'Cold Coffee / Iced Tea', price: 120, icon: '🥤', desc: 'Chilled refreshing brew delivered directly to your cinema lounger' }
-                        ];
-
-                      const reclinerTier = dynamicSeatTiers.find(t => t.name.toLowerCase().includes('recliner') || t.id.toLowerCase().includes('recliner')) || dynamicSeatTiers[0];
-                      const primeTier = dynamicSeatTiers.find(t => t.name.toLowerCase().includes('prime') || t.id.toLowerCase().includes('prime')) || dynamicSeatTiers[1] || dynamicSeatTiers[0];
-                      const classicTier = dynamicSeatTiers.find(t => t.name.toLowerCase().includes('classic') || t.id.toLowerCase().includes('classic') || t.id.toLowerCase().includes('executive')) || dynamicSeatTiers[dynamicSeatTiers.length - 1];
-
-                      return (
-                        <div id="entertainment-booking-section" className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
-
-                          {/* Quick Movie Selector Strip (Allows instant switching between now-showing movies in this theatre) */}
-                          <div className="space-y-2 pb-4 border-b border-slate-200/80 dark:border-white/10">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                                <span>🎬</span> Now Showing At This Multiplex ({NOW_SHOWING_MOVIES.length} Movies)
+                      {/* Slots Grid */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[220px] overflow-y-auto pr-1">
+                        {displayedSlots.map(slot => {
+                          const isSelected = selectedApptSlot === slot.slotValue;
+                          return (
+                            <button
+                              key={slot.label}
+                              type="button"
+                              onClick={() => setSelectedApptSlot(slot.slotValue)}
+                              className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer ${isSelected
+                                ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md ring-2 ring-[#ff6325]/30'
+                                : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300 text-slate-900 dark:text-white'
+                                }`}
+                            >
+                              <span className="text-xs font-black block tracking-tight">{slot.label}</span>
+                              <span className={`text-[10px] block mt-0.5 ${isSelected ? 'text-white/90' : 'text-slate-400'}`}>
+                                {wellnessServiceMode === 'HOME_VISIT' ? 'Doorstep Visit' : 'Instant Chair'}
                               </span>
-                              <span className="text-[10px] font-bold text-[#ff6325]">Click any poster to switch show</span>
-                            </div>
+                            </button>
+                          );
+                        })}
+                      </div>
 
-                            <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none">
-                              {NOW_SHOWING_MOVIES.map((mov) => {
-                                const isCur = activeMovie.id === mov.id || activeMovie.slug === mov.slug;
-                                return (
-                                  <button
-                                    key={mov.id}
-                                    type="button"
-                                    onClick={() => {
-                                      setActiveMovie(mov);
-                                      router.replace(`/${bookingType}/${category}/${merchantId}?movie=${mov.slug}`, { scroll: false });
-                                    }}
-                                    className={`flex items-center gap-2.5 p-1.5 pr-3 rounded-2xl border text-left transition-all cursor-pointer shrink-0 ${isCur
-                                      ? 'border-[#ff6325] bg-[#ff6325]/10 shadow-sm shadow-[#ff6325]/20 ring-1 ring-[#ff6325]'
-                                      : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 hover:border-slate-300 dark:hover:border-white/20'
-                                      }`}
-                                  >
-                                    <div className="w-10 h-14 rounded-xl overflow-hidden bg-slate-900 shrink-0 relative">
-                                      <img src={mov.posterUrl} alt={mov.title} className="w-full h-full object-cover" />
-                                      <span className="absolute bottom-0 inset-x-0 bg-black/80 text-[8px] font-black text-amber-400 text-center py-0.5">
-                                        ★{mov.rating}
-                                      </span>
-                                    </div>
-                                    <div className="min-w-0 max-w-[130px]">
-                                      <h4 className={`text-xs font-black truncate ${isCur ? 'text-[#ff6325]' : 'text-slate-800 dark:text-white'}`}>
-                                        {mov.title}
-                                      </h4>
-                                      <span className="text-[10px] text-slate-400 font-medium block truncate">
-                                        {mov.certificate} • {mov.runtime}
-                                      </span>
-                                      <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 truncate block">
-                                        {mov.formats[0]}
-                                      </span>
-                                    </div>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
+                      {displayedSlots.length === 0 && (
+                        <p className="text-xs text-slate-400 italic text-center py-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                          No slots available for this session. Please pick another session.
+                        </p>
+                      )}
+                    </div>
 
-                          {/* Header Specs Banner - Displays Currently Active Selected Movie Details */}
-                          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 border-b border-slate-200 dark:border-white/10 pb-5">
-                            <div className="flex items-start gap-4">
-                              <div className="relative w-20 h-28 sm:w-24 sm:h-32 rounded-2xl overflow-hidden shadow-lg border border-white/15 shrink-0 bg-slate-900">
-                                <img
-                                  src={activeMovie.posterUrl}
-                                  alt={activeMovie.title}
-                                  className="w-full h-full object-cover"
-                                />
-                                <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-md text-amber-400 font-black text-[9px]">
-                                  ★ {activeMovie.rating}
-                                </span>
-                              </div>
-
-                              <div className="space-y-1.5">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 font-black text-[10px] tracking-wide border border-amber-500/30">
-                                    {activeMovie.certificate}
-                                  </span>
-                                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[10px]">
-                                    {activeMovie.genres.join(' / ')}
-                                  </span>
-                                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[10px]">
-                                    ⏱️ {activeMovie.runtime}
-                                  </span>
-                                  <span className="px-2 py-0.5 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 font-bold text-[10px]">
-                                    {activeMovie.languages.join(', ')}
-                                  </span>
-                                </div>
-
-                                <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                                  <span>🎬</span> {activeMovie.title}
-                                </h2>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xl line-clamp-2">
-                                  {activeMovie.synopsis}
-                                </p>
-
-                                <div className="flex items-center gap-2 pt-1">
-                                  <span className="text-[11px] font-bold text-slate-400">At Theatre:</span>
-                                  <span className="text-xs font-black text-[#ff6325]">{venueName}</span>
-                                  <span className="text-slate-400 text-xs">•</span>
-                                  <span className="text-xs text-slate-400 font-medium">{address || 'Chennai Location'}</span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-900/50 text-xs font-bold shrink-0 shadow-xs">
-                              <span>📱 Contactless Turnstile M-Ticket</span>
-                            </div>
-                          </div>
-
-                          {/* STEP PROGRESS BAR (BookMyShow standard 4 steps + Live 8-Min Seat Lock Timer) */}
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between px-2 sm:px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 text-xs font-bold">
-                              <div className={`flex items-center gap-1.5 ${cinemaStep === 'SHOWTIMES' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
-                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'SHOWTIMES' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>1</span>
-                                <span>Date & Show</span>
-                              </div>
-                              <span className="text-slate-300 dark:text-slate-600 font-normal">→</span>
-                              <div className={`flex items-center gap-1.5 ${cinemaStep === 'SEAT_COUNT' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
-                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'SEAT_COUNT' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>2</span>
-                                <span>Seats Qty</span>
-                              </div>
-                              <span className="text-slate-300 dark:text-slate-600 font-normal">→</span>
-                              <div className={`flex items-center gap-1.5 ${cinemaStep === 'SEAT_LAYOUT' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
-                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'SEAT_LAYOUT' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>3</span>
-                                <span>Seat Layout</span>
-                              </div>
-                              <span className="text-slate-300 dark:text-slate-600 font-normal">→</span>
-                              <div className={`flex items-center gap-1.5 ${cinemaStep === 'FNB_DRAWER' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
-                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'FNB_DRAWER' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>4</span>
-                                <span>Grab a Bite</span>
-                              </div>
-                            </div>
-
-                            {/* BookMyShow Live Seat Lock Indicator Banner (Runs in Stages 3 & 4) */}
-                            {(cinemaStep === 'SEAT_LAYOUT' || cinemaStep === 'FNB_DRAWER') && (
-                              <div className={`px-4 py-2 rounded-2xl flex items-center justify-between border transition-all ${seatLockExpired
-                                ? 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
-                                : 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300'
-                                }`}>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm">{seatLockExpired ? '⚠️' : '⏱️'}</span>
-                                  <span className="text-xs font-bold">
-                                    {seatLockExpired
-                                      ? 'Seats Lock Expired! Another user may book these seats.'
-                                      : `Seats are locked for you in ${selectedAudiScreen}:`}
-                                  </span>
-                                  {!seatLockExpired && (
-                                    <span className="text-xs font-black text-slate-900 dark:text-white">
-                                      {selectedCinemaSeats.join(', ') || `${passCount} Seats`}
-                                    </span>
-                                  )}
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                  {!seatLockExpired ? (
-                                    <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 px-3 py-1 rounded-xl border border-amber-500/30">
-                                      <span className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-400">Lock Expires In:</span>
-                                      <span className="font-mono text-xs font-black text-[#ff6325]">
-                                        {Math.floor(seatLockSecondsRemaining / 60).toString().padStart(2, '0')}:{(seatLockSecondsRemaining % 60).toString().padStart(2, '0')}
-                                      </span>
-                                    </div>
-                                  ) : (
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setSeatLockSecondsRemaining(480);
-                                        setSeatLockExpired(false);
-                                        setIsSeatLockActive(true);
-                                      }}
-                                      className="px-3 py-1 rounded-xl bg-rose-600 text-white font-black text-[10px] uppercase cursor-pointer hover:bg-rose-700 shadow-sm"
-                                    >
-                                      Renew Lock (8 Mins)
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* ============================================================
-             * STAGE 1: SHOWTIMES, DATE & MULTIPLEX AUDI SCHEDULE
-             * ============================================================ */}
-                          {cinemaStep === 'SHOWTIMES' && (
-                            <div className="space-y-6 animate-fade-in">
-                              {/* 1. Show Date Quick Selector */}
-                              <div>
-                                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-                                  Select Show Date
-                                </label>
-                                <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                                  {[0, 1, 2, 3, 4].map(offset => {
-                                    const d = new Date();
-                                    d.setDate(d.getDate() + offset);
-                                    const dStr = d.toISOString().split('T')[0];
-                                    const dayName = offset === 0 ? 'Today' : offset === 1 ? 'Tomorrow' : d.toLocaleDateString('en-US', { weekday: 'short' });
-                                    const dateLabel = d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
-                                    const isSelected = selectedShowDate === dStr;
-
-                                    return (
-                                      <button
-                                        key={dStr}
-                                        type="button"
-                                        onClick={() => setSelectedShowDate(dStr)}
-                                        className={`px-4 py-2.5 rounded-2xl border text-center transition-all cursor-pointer shrink-0 ${isSelected
-                                          ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md shadow-orange-500/20 font-black'
-                                          : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:border-slate-300'
-                                          }`}
-                                      >
-                                        <span className="text-[10px] uppercase font-bold block opacity-80">{dayName}</span>
-                                        <span className="text-xs font-extrabold block mt-0.5">{dateLabel}</span>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-
-                              {/* 2. Format & Audio Standard */}
-                              <div>
-                                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-                                  Experience Format & Audio Quality
-                                </label>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                                  {dynamicFormats.map(fmt => {
-                                    const isSelected = selectedScreenFormat === fmt.id;
-                                    return (
-                                      <button
-                                        key={fmt.id}
-                                        type="button"
-                                        onClick={() => setSelectedScreenFormat(fmt.id)}
-                                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${isSelected
-                                          ? 'bg-[#ff6325]/10 border-[#ff6325] text-[#ff6325] shadow-xs ring-2 ring-[#ff6325]/20'
-                                          : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300'
-                                          }`}
-                                      >
-                                        <div className="flex items-center gap-1.5 font-bold text-xs">
-                                          <span>{fmt.icon}</span>
-                                          <span className="truncate">{fmt.label}</span>
-                                        </div>
-                                        <span className="text-[10px] text-slate-400 block mt-1 truncate">{fmt.sub}</span>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-
-                              {/* 3. Showtime Bands (Audi Screenings) */}
-                              <div>
-                                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-                                  Available Showtimes (Click timing to pick seats)
-                                </label>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                  {dynamicShowtimes.map(show => (
-                                    <button
-                                      key={show.time}
-                                      type="button"
-                                      onClick={() => {
-                                        setSelectedShowTime(show.time);
-                                        setSelectedAudiScreen(show.audi);
-                                        setCinemaStep('SEAT_COUNT');
-                                      }}
-                                      className="p-3.5 rounded-2xl border text-center transition-all cursor-pointer bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#ff6325] hover:bg-orange-50/30 text-slate-900 dark:text-white group hover:shadow-md"
-                                    >
-                                      <span className="text-base font-black block group-hover:text-[#ff6325]">{show.time}</span>
-                                      <span className="text-[11px] opacity-80 block mt-0.5">{show.audi}</span>
-                                      <span className={`inline-block text-[9px] font-bold px-1.5 py-0.5 rounded mt-2 ${show.status.includes('Full') ? 'bg-rose-500/15 text-rose-500' :
-                                        show.status.includes('Fast') ? 'bg-amber-500/15 text-amber-500' :
-                                          'bg-emerald-500/15 text-emerald-500'
-                                        }`}>
-                                        {show.status}
-                                      </span>
-                                      <span className="text-[10px] text-[#ff6325] font-extrabold block mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">Select Seats &rarr;</span>
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* ============================================================
-             * STAGE 2: HOW MANY SEATS? (BOOKMYSHOW VEHICLE/AVATAR MODAL)
-             * ============================================================ */}
-                          {cinemaStep === 'SEAT_COUNT' && (
-                            <div className="space-y-6 animate-fade-in py-2">
-                              <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
-                                <div>
-                                  <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-                                    <span>🎟️</span> How Many Seats?
-                                  </h3>
-                                  <p className="text-xs text-slate-500">{selectedAudiScreen} • {selectedShowDate} • {selectedShowTime}</p>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => setCinemaStep('SHOWTIMES')}
-                                  className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-white px-2 py-1"
-                                >
-                                  ← Change Time
-                                </button>
-                              </div>
-
-                              {/* BMS Style Vehicles and Numbers Selector */}
-                              <div className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap py-4">
-                                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => {
-                                  const icon = n === 1 ? '🚲' : n === 2 ? '🛵' : n === 3 ? '🛺' : n <= 5 ? '🚗' : '🚌';
-                                  const isSelected = passCount === n;
-                                  return (
-                                    <button
-                                      key={n}
-                                      type="button"
-                                      onClick={() => setPassCount(n)}
-                                      className={`w-12 h-14 sm:w-14 sm:h-16 rounded-2xl flex flex-col items-center justify-center transition-all cursor-pointer border ${isSelected
-                                        ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-lg shadow-orange-500/30 scale-105 font-black'
-                                        : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:border-[#ff6325]'
-                                        }`}
-                                    >
-                                      <span className="text-base sm:text-lg mb-0.5">{icon}</span>
-                                      <span className="text-xs sm:text-sm font-black">{n}</span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-
-                              {/* Available Price Tiers Preview */}
-                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                                {dynamicSeatTiers.map(tier => (
-                                  <div
-                                    key={tier.name}
-                                    onClick={() => setSelectedSeatZone(tier.name)}
-                                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${selectedSeatZone === tier.name
-                                      ? 'bg-[#ff6325]/10 border-[#ff6325] ring-2 ring-[#ff6325]/20'
-                                      : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10'
-                                      }`}
-                                  >
-                                    <div>
-                                      <h4 className="text-xs font-black text-slate-900 dark:text-white">{tier.icon} {tier.name}</h4>
-                                      <p className="text-[10px] text-slate-400 mt-0.5">{tier.desc}</p>
-                                    </div>
-                                    <span className="text-sm font-black text-[#ff6325] shrink-0 ml-2">₹{tier.price}</span>
-                                  </div>
-                                ))}
-                              </div>
-
-                              {/* Proceed to Seat Layout */}
-                              <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-white/10">
-                                <span className="text-xs font-bold text-slate-500">
-                                  Booking <span className="text-slate-900 dark:text-white font-extrabold">{passCount} seat{passCount > 1 ? 's' : ''}</span> under <span className="text-[#ff6325] font-extrabold">{selectedSeatZone}</span>
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    // Pre-populate adjacent seats matching count
-                                    const autoSeats = Array.from({ length: passCount }, (_, i) => `C${7 + i}`);
-                                    setSelectedCinemaSeats(autoSeats);
-                                    setSeatLockSecondsRemaining(480);
-                                    setSeatLockExpired(false);
-                                    setIsSeatLockActive(true);
-                                    setCinemaStep('SEAT_LAYOUT');
-                                  }}
-                                  className="px-6 py-3 rounded-xl bg-[#ff6325] hover:bg-[#e04e13] text-white font-black text-xs uppercase tracking-wider shadow-md transition-all cursor-pointer"
-                                >
-                                  Select Seats on Layout &rarr;
-                                </button>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* ============================================================
-             * STAGE 3: IMMERSIVE FULL THEATRE SEAT LAYOUT
-             * ============================================================ */}
-                          {cinemaStep === 'SEAT_LAYOUT' && (
-                            <div className="space-y-4 animate-fade-in">
-                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-white/10 pb-3">
-                                <div>
-                                  <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-                                    <span>💺</span> {selectedAudiScreen} — Seat Layout
-                                  </h3>
-                                  <p className="text-xs text-slate-500">Click any seat to select or unselect. Target: {passCount} Seat{passCount > 1 ? 's' : ''}</p>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  <button
-                                    type="button"
-                                    onClick={() => setCinemaStep('SEAT_COUNT')}
-                                    className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-white"
-                                  >
-                                    ← Change Qty ({passCount})
-                                  </button>
-                                  {/* Legend */}
-                                  <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
-                                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/20 inline-block" /> Free</span>
-                                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-[#ff6325] inline-block shadow-xs" /> Selected</span>
-                                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-500/40 border border-amber-500 inline-block" /> Held by Other</span>
-                                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-slate-300 dark:bg-slate-700 opacity-60 inline-block" /> Taken</span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Curved Screen Bar */}
-                              <div className="p-6 rounded-2xl bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 text-center">
-                                <div className="w-3/4 mx-auto mb-6">
-                                  <div className="h-2.5 rounded-t-full bg-gradient-to-r from-transparent via-[#ff6325] to-transparent shadow-md shadow-orange-500/30" />
-                                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-2">
-                                    ⬇ SCREEN THIS WAY ⬇
-                                  </p>
-                                </div>
-
-                                {/* Seat Grid Rows */}
-                                <div className="space-y-4 max-w-xl mx-auto overflow-x-auto pb-2">
-                                  {/* Row A: Recliner */}
-                                  <div>
-                                    <div className="flex items-center justify-between text-[11px] font-extrabold text-amber-600 dark:text-amber-400 mb-1.5 px-2">
-                                      <span>{reclinerTier.icon} {reclinerTier.name}</span>
-                                      <span>₹{reclinerTier.price} / seat</span>
-                                    </div>
-                                    <div className="flex items-center justify-center gap-2">
-                                      <span className="text-[10px] font-bold text-slate-400 w-3 text-center">A</span>
-                                      <div className="flex items-center gap-1.5">
-                                        {['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8'].map(seatId => {
-                                          const isBooked = ['A3', 'A4'].includes(seatId);
-                                          const isHeldByOther = remoteLockedSeats.includes(seatId);
-                                          const isSelected = selectedCinemaSeats.includes(seatId);
-                                          return (
-                                            <button
-                                              key={seatId}
-                                              type="button"
-                                              disabled={isBooked || isHeldByOther}
-                                              title={isHeldByOther ? `${seatId} is temporarily held by another customer` : seatId}
-                                              onClick={() => {
-                                                if (isSelected) {
-                                                  setSelectedCinemaSeats(selectedCinemaSeats.filter(s => s !== seatId));
-                                                } else {
-                                                  if (selectedCinemaSeats.length >= passCount) {
-                                                    // replace oldest
-                                                    setSelectedCinemaSeats([...selectedCinemaSeats.slice(1), seatId]);
-                                                  } else {
-                                                    setSelectedCinemaSeats([...selectedCinemaSeats, seatId]);
-                                                  }
-                                                }
-                                              }}
-                                              className={`w-7 h-7 rounded-lg text-[9px] font-black transition-all cursor-pointer flex items-center justify-center ${isBooked
-                                                ? 'bg-slate-300 dark:bg-slate-700/60 text-slate-400 cursor-not-allowed opacity-50'
-                                                : isHeldByOther
-                                                  ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40 cursor-not-allowed'
-                                                  : isSelected
-                                                    ? 'bg-[#ff6325] text-white shadow-md shadow-orange-500/30 scale-105'
-                                                    : 'bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/15 text-slate-700 dark:text-slate-300 hover:border-[#ff6325]'
-                                                }`}
-                                            >
-                                              {seatId.slice(1)}
-                                            </button>
-                                          );
-                                        })}
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {/* Rows B, C, D: Prime */}
-                                  <div className="pt-2 border-t border-slate-200/60 dark:border-white/5">
-                                    <div className="flex items-center justify-between text-[11px] font-extrabold text-blue-600 dark:text-blue-400 mb-1.5 px-2">
-                                      <span>{primeTier.icon} {primeTier.name}</span>
-                                      <span>₹{primeTier.price} / seat</span>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                      {['B', 'C', 'D'].map(row => (
-                                        <div key={row} className="flex items-center justify-center gap-2">
-                                          <span className="text-[10px] font-bold text-slate-400 w-3 text-center">{row}</span>
-                                          <div className="flex items-center gap-1.5">
-                                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => {
-                                              const seatId = `${row}${num}`;
-                                              const isBooked = (row === 'B' && [2, 3].includes(num)) || (row === 'C' && [4, 5].includes(num));
-                                              const isHeldByOther = remoteLockedSeats.includes(seatId);
-                                              const isSelected = selectedCinemaSeats.includes(seatId);
-                                              return (
-                                                <button
-                                                  key={seatId}
-                                                  type="button"
-                                                  disabled={isBooked || isHeldByOther}
-                                                  title={isHeldByOther ? `${seatId} is temporarily held by another customer` : seatId}
-                                                  onClick={() => {
-                                                    if (isSelected) {
-                                                      setSelectedCinemaSeats(selectedCinemaSeats.filter(s => s !== seatId));
-                                                    } else {
-                                                      if (selectedCinemaSeats.length >= passCount) {
-                                                        setSelectedCinemaSeats([...selectedCinemaSeats.slice(1), seatId]);
-                                                      } else {
-                                                        setSelectedCinemaSeats([...selectedCinemaSeats, seatId]);
-                                                      }
-                                                    }
-                                                  }}
-                                                  className={`w-6 h-6 rounded-md text-[9px] font-black transition-all cursor-pointer flex items-center justify-center ${isBooked
-                                                    ? 'bg-slate-300 dark:bg-slate-700/60 text-slate-400 cursor-not-allowed opacity-50'
-                                                    : isHeldByOther
-                                                      ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40 cursor-not-allowed'
-                                                      : isSelected
-                                                        ? 'bg-[#ff6325] text-white shadow-md shadow-orange-500/30 scale-105'
-                                                        : 'bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/15 text-slate-700 dark:text-slate-300 hover:border-[#ff6325]'
-                                                    }`}
-                                                >
-                                                  {num}
-                                                </button>
-                                              );
-                                            })}
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-
-                                  {/* Rows E, F: Classic */}
-                                  <div className="pt-2 border-t border-slate-200/60 dark:border-white/5">
-                                    <div className="flex items-center justify-between text-[11px] font-extrabold text-slate-600 dark:text-slate-400 mb-1.5 px-2">
-                                      <span>{classicTier.icon} {classicTier.name}</span>
-                                      <span>₹{classicTier.price} / seat</span>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                      {['E', 'F'].map(row => (
-                                        <div key={row} className="flex items-center justify-center gap-2">
-                                          <span className="text-[10px] font-bold text-slate-400 w-3 text-center">{row}</span>
-                                          <div className="flex items-center gap-1.5">
-                                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => {
-                                              const seatId = `${row}${num}`;
-                                              const isBooked = (row === 'E' && [7, 8].includes(num));
-                                              const isHeldByOther = remoteLockedSeats.includes(seatId);
-                                              const isSelected = selectedCinemaSeats.includes(seatId);
-                                              return (
-                                                <button
-                                                  key={seatId}
-                                                  type="button"
-                                                  disabled={isBooked || isHeldByOther}
-                                                  title={isHeldByOther ? `${seatId} is temporarily held by another customer` : seatId}
-                                                  onClick={() => {
-                                                    if (isSelected) {
-                                                      setSelectedCinemaSeats(selectedCinemaSeats.filter(s => s !== seatId));
-                                                    } else {
-                                                      if (selectedCinemaSeats.length >= passCount) {
-                                                        setSelectedCinemaSeats([...selectedCinemaSeats.slice(1), seatId]);
-                                                      } else {
-                                                        setSelectedCinemaSeats([...selectedCinemaSeats, seatId]);
-                                                      }
-                                                    }
-                                                  }}
-                                                  className={`w-6 h-6 rounded-md text-[9px] font-black transition-all cursor-pointer flex items-center justify-center ${isBooked
-                                                    ? 'bg-slate-300 dark:bg-slate-700/60 text-slate-400 cursor-not-allowed opacity-50'
-                                                    : isHeldByOther
-                                                      ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40 cursor-not-allowed'
-                                                      : isSelected
-                                                        ? 'bg-[#ff6325] text-white shadow-md shadow-orange-500/30 scale-105'
-                                                        : 'bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/15 text-slate-700 dark:text-slate-300 hover:border-[#ff6325]'
-                                                    }`}
-                                                >
-                                                  {num}
-                                                </button>
-                                              );
-                                            })}
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Seat Status Indicator */}
-                                <div className="mt-4 pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-xs px-2">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-extrabold text-slate-700 dark:text-slate-200">Selected Seats:</span>
-                                    <div className="flex items-center gap-1 flex-wrap">
-                                      {selectedCinemaSeats.length > 0 ? (
-                                        selectedCinemaSeats.map(s => (
-                                          <span key={s} className="px-2 py-0.5 rounded-md bg-[#ff6325] text-white font-black text-[10px]">
-                                            {s}
-                                          </span>
-                                        ))
-                                      ) : (
-                                        <span className="text-slate-400 italic">No seats clicked</span>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <span className="text-slate-500 font-bold">
-                                    {selectedCinemaSeats.length} / {passCount} Seats Selected
-                                  </span>
-                                </div>
-                              </div>
-
-                              {/* Seat Layout Bottom Action Bar */}
-                              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10">
-                                <div>
-                                  {(() => {
-                                    let ticketPrice = 0;
-                                    selectedCinemaSeats.forEach(seat => {
-                                      if (seat.startsWith('A')) ticketPrice += reclinerTier.price;
-                                      else if (['B', 'C', 'D'].includes(seat[0])) ticketPrice += primeTier.price;
-                                      else ticketPrice += classicTier.price;
-                                    });
-                                    if (selectedCinemaSeats.length === 0) ticketPrice = primeTier.price * passCount;
-                                    return (
-                                      <div>
-                                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Ticket Total</span>
-                                        <span className="text-xl font-black text-[#ff6325]">₹{ticketPrice.toLocaleString()}</span>
-                                      </div>
-                                    );
-                                  })()}
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => setCinemaStep('FNB_DRAWER')}
-                                    className="px-6 py-3 rounded-xl bg-[#ff6325] hover:bg-[#e04e13] text-white font-black text-xs uppercase tracking-wider shadow-md transition-all cursor-pointer"
-                                  >
-                                    Proceed to Grab a Bite &rarr;
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* ============================================================
-             * STAGE 4: GRAB A BITE (BOOKMYSHOW GOURMET CONCESSIONS DRAWER)
-             * ============================================================ */}
-                          {cinemaStep === 'FNB_DRAWER' && (
-                            <div className="space-y-6 animate-fade-in py-2">
-                              <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
-                                <div>
-                                  <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-                                    <span>🍿</span> Grab a Bite! (Pre-order & Save 20%)
-                                  </h3>
-                                  <p className="text-xs text-slate-500">Delicious cinema popcorn, warm nachos, and beverages delivered right to your seat</p>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => setCinemaStep('SEAT_LAYOUT')}
-                                  className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-white"
-                                >
-                                  ← Change Seats ({selectedCinemaSeats.join(', ')})
-                                </button>
-                              </div>
-
-                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                {dynamicSnacks.map((snk, idx) => {
-                                  const isAdded = idx === 0 ? popcornComboAddon : idx === 1 ? snackNachosAddon : snackBeverageAddon;
-                                  const toggleFn = idx === 0 ? () => setPopcornComboAddon(!popcornComboAddon) : idx === 1 ? () => setSnackNachosAddon(!snackNachosAddon) : () => setSnackBeverageAddon(!snackBeverageAddon);
-                                  return (
-                                    <div
-                                      key={snk.id || snk.name}
-                                      onClick={toggleFn}
-                                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${isAdded
-                                        ? 'bg-amber-500/10 border-amber-500 ring-2 ring-amber-500/20'
-                                        : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
-                                        }`}
-                                    >
-                                      <div className="flex items-start gap-3">
-                                        <span className="text-3xl">{snk.icon}</span>
-                                        <div>
-                                          <h4 className="text-xs font-black text-slate-900 dark:text-white">{snk.name}</h4>
-                                          <p className="text-[10px] text-slate-400 mt-0.5">{snk.desc}</p>
-                                        </div>
-                                      </div>
-                                      <div className="flex items-center justify-between mt-4 pt-2 border-t border-slate-200/60 dark:border-white/10">
-                                        <span className="text-sm font-black text-amber-600 dark:text-amber-400">+₹{snk.price}</span>
-                                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${isAdded ? 'bg-amber-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>
-                                          {isAdded ? '✓ Added' : '+ Add'}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-
-                              {/* Final Order Summary & Handover to Checkout */}
-                              {(() => {
-                                const count = Math.max(1, selectedCinemaSeats.length);
-                                let ticketPrice = 0;
-                                selectedCinemaSeats.forEach(seat => {
-                                  if (seat.startsWith('A')) ticketPrice += reclinerTier.price;
-                                  else if (['B', 'C', 'D'].includes(seat[0])) ticketPrice += primeTier.price;
-                                  else ticketPrice += classicTier.price;
-                                });
-                                if (selectedCinemaSeats.length === 0) ticketPrice = primeTier.price * count;
-
-                                const s0Price = dynamicSnacks[0]?.price || 240;
-                                const s1Price = dynamicSnacks[1]?.price || 180;
-                                const s2Price = dynamicSnacks[2]?.price || 120;
-                                const fnbCost = (popcornComboAddon ? s0Price : 0) + (snackNachosAddon ? s1Price : 0) + (snackBeverageAddon ? s2Price : 0);
-                                const subtotal = ticketPrice + fnbCost;
-
-                                return (
-                                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
-                                    <div>
-                                      <span className="text-xs font-black text-slate-900 dark:text-white block">
-                                        {venueName} • {selectedAudiScreen} ({count} Ticket{count > 1 ? 's' : ''})
-                                      </span>
-                                      <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
-                                        {selectedShowDate} • {selectedShowTime} • {selectedScreenFormat} • Seats: {selectedCinemaSeats.join(', ') || 'Auto-assigned'}
-                                        {fnbCost > 0 ? ` • +₹${fnbCost} Concessions` : ' • No F&B added'}
-                                      </span>
-                                    </div>
-
-                                    <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                                      <div className="text-right">
-                                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Payable</span>
-                                        <span className="text-xl font-black text-[#ff6325]">
-                                          ₹{subtotal.toLocaleString()}
-                                        </span>
-                                      </div>
-
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setSelectedService({
-                                            id: `ent-pass-${Date.now()}`,
-                                            name: `${activeMovie.title} — ${selectedScreenFormat}`,
-                                            price: subtotal,
-                                            imageUrl: activeMovie.posterUrl,
-                                            metadata: {
-                                              isEntertainmentBooking: true,
-                                              movieTitle: activeMovie.title,
-                                              moviePoster: activeMovie.posterUrl,
-                                              certificate: activeMovie.certificate,
-                                              runtime: activeMovie.runtime,
-                                              entertainmentBooking: {
-                                                movieTitle: activeMovie.title,
-                                                moviePoster: activeMovie.posterUrl,
-                                                venueName,
-                                                category,
-                                                showDate: selectedShowDate,
-                                                showTime: selectedShowTime,
-                                                format: selectedScreenFormat,
-                                                audiScreen: selectedAudiScreen,
-                                                seatZone: selectedSeatZone,
-                                                seats: selectedCinemaSeats,
-                                                ticketsCount: count,
-                                                fnbAddons: {
-                                                  popcorn: popcornComboAddon,
-                                                  nachos: snackNachosAddon,
-                                                  beverage: snackBeverageAddon
-                                                },
-                                                totalPayable: subtotal
-                                              }
-                                            }
-                                          });
-                                          setSelectedSlot({
-                                            id: `ent-slot-${Date.now()}`,
-                                            timeStr: `${activeMovie.title} • ${selectedShowDate} at ${selectedShowTime} (${selectedScreenFormat})`,
-                                            date: selectedShowDate,
-                                            available: true
-                                          });
-                                          router.push('/booking/checkout');
-                                        }}
-                                        className="px-6 py-3 rounded-xl bg-[#ff6325] hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
-                                      >
-                                        Book M-Ticket &rarr;
-                                      </button>
-                                    </div>
-                                  </div>
-                                );
-                              })()}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()}
-
-                    {/* ============================================================
-         * SECTION D8: HOME REPAIR & CLEANING VISITS (ARCHETYPE 6: HomeCall)
-         * ============================================================ */}
-                    {isHomeCall && (
-                      <div id="home-services-booking-section" className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
-                          <div>
-                            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                              <span>🛠️</span> Doorstep Home Visit & Inspection
-                            </h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                              Pay only ₹199 inspection fee upfront. Spare parts and extra labor quoted after physical check.
-                            </p>
-                          </div>
-
-                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-900/50 text-xs font-bold">
-                            <span>🛡️ BOKSPOT 30-Day Service Guarantee</span>
-                          </div>
+                    {/* Step C: If Home Visit Mode ➔ Doorstep Address Input */}
+                    {wellnessServiceMode === 'HOME_VISIT' && (
+                      <div className={`p-4 rounded-2xl space-y-2.5 transition-all ${wellnessAddressError && !wellnessHomeAddress.trim() ? 'bg-rose-500/10 border-2 border-rose-500' : 'bg-amber-500/10 border border-amber-500/30'}`}>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-black text-amber-800 dark:text-amber-200">
+                            🏠 3. Doorstep Visit Address (Required)
+                          </span>
+                          <span className="text-[11px] font-bold text-slate-500">
+                            Min Order: ₹{homeMinOrderValue}
+                          </span>
                         </div>
 
-                        {/* Service Category */}
-                        <div>
-                          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-                            Type of Issue / Service Needed
-                          </label>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            {['Inspection & Diagnosis', 'Major Repair / Wiring', 'Periodic Maintenance'].map(cat => (
-                              <div
-                                key={cat}
-                                onClick={() => setHomeIssueCategory(cat)}
-                                className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${homeIssueCategory === cat
-                                  ? 'bg-[#033266]/5 dark:bg-[#ff6325]/10 border-[#033266] dark:border-[#ff6325]'
-                                  : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
-                                  }`}
-                              >
-                                <span className="text-xs font-bold text-slate-900 dark:text-white">{cat}</span>
-                                <span className="text-xs font-black text-[#033266] dark:text-[#ff6325]">₹199</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Preferred Visit Time Slot */}
-                        <div>
-                          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-                            Select Technician Arrival Window
-                          </label>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            {[
-                              'Morning (09:00 AM - 12:00 PM)',
-                              'Afternoon (01:00 PM - 04:00 PM)',
-                              'Evening (04:30 PM - 07:30 PM)'
-                            ].map(win => (
-                              <button
-                                key={win}
-                                type="button"
-                                onClick={() => setPreferredHomeWindow(win)}
-                                className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${preferredHomeWindow === win
-                                  ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md'
-                                  : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#033266] dark:hover:border-[#ff6325] text-slate-900 dark:text-white'
-                                  }`}
-                              >
-                                <span className="text-xs font-black block">{win}</span>
-                                <span className="text-[10px] opacity-75 font-semibold mt-0.5 block">Verified Professional</span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Service Address Input */}
-                        <div>
-                          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
-                            Doorstep Service Address
-                          </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                           <input
                             type="text"
-                            value={homeAddressLine}
-                            onChange={(e) => setHomeAddressLine(e.target.value)}
-                            placeholder="Door / Flat No., Street Name, Apartment Landmark..."
-                            className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-[#033266] dark:focus:border-[#ff6325]"
+                            value={wellnessHomeAddress}
+                            onChange={(e) => {
+                              setWellnessHomeAddress(e.target.value);
+                              if (e.target.value.trim()) setWellnessAddressError(false);
+                            }}
+                            placeholder="Flat / House No., Building Name *"
+                            className={`bg-white dark:bg-slate-900 border rounded-xl px-3 py-2 text-xs outline-none ${wellnessAddressError && !wellnessHomeAddress.trim() ? 'border-rose-500 ring-1 ring-rose-500' : 'border-amber-300 dark:border-amber-800/50'}`}
+                          />
+                          <input
+                            type="text"
+                            value={wellnessHomeLandmark}
+                            onChange={(e) => setWellnessHomeLandmark(e.target.value)}
+                            placeholder="Street, Landmark *"
+                            className="bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-800/50 rounded-xl px-3 py-2 text-xs outline-none"
+                          />
+                          <input
+                            type="tel"
+                            value={wellnessHomePhone}
+                            onChange={(e) => setWellnessHomePhone(e.target.value)}
+                            placeholder="Contact Mobile Number *"
+                            className="bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-800/50 rounded-xl px-3 py-2 text-xs outline-none"
                           />
                         </div>
 
-                        {/* Booking Action Card */}
-                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-                          <div>
-                            <span className="text-xs font-black text-slate-900 dark:text-white block">
-                              {homeIssueCategory}
-                            </span>
-                            <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
-                              Arrival: {preferredHomeWindow} • ₹199 Inspection Fee
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                            <div className="text-right">
-                              <span className="text-[10px] uppercase font-bold text-slate-400 block">Upfront Visiting Fee</span>
-                              <span className="text-xl font-black text-[#033266] dark:text-[#ff6325]">₹199</span>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedService({
-                                  id: `homecall-${Date.now()}`,
-                                  name: `${venueName} — ${homeIssueCategory}`,
-                                  price: 199,
-                                  metadata: {
-                                    homeCallBooking: {
-                                      venueName,
-                                      issueCategory: homeIssueCategory,
-                                      arrivalWindow: preferredHomeWindow,
-                                      serviceAddress: homeAddressLine || address,
-                                      upfrontVisitingFee: 199
-                                    }
-                                  }
-                                });
-                                setSelectedSlot({
-                                  id: `home-slot-${Date.now()}`,
-                                  timeStr: `${preferredHomeWindow} (Doorstep Visit)`,
-                                  date: selectedDate,
-                                  available: true
-                                });
-                                router.push('/booking/checkout');
-                              }}
-                              className="px-6 py-3 rounded-xl bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
-                            >
-                              Book Doorstep Visit &rarr;
-                            </button>
-                          </div>
-                        </div>
+                        {wellnessAddressError && !wellnessHomeAddress.trim() && (
+                          <p className="text-[11px] font-bold text-rose-600">
+                            ⚠️ Please enter your House / Flat Address to proceed.
+                          </p>
+                        )}
                       </div>
                     )}
 
-                    {/* ============================================================
+                    {/* Step D: Professional Assignment Badge */}
+                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xl">⚡</span>
+                        <div>
+                          <h5 className="text-xs font-black text-slate-900 dark:text-white">
+                            {selectedWellnessStylist}
+                          </h5>
+                          <p className="text-[10px] text-slate-400">
+                            Guaranteed instant slot • Zero waiting time
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 font-extrabold">
+                        ✓ Assigned
+                      </span>
+                    </div>
+
+                    {/* Modal Bottom Confirm Button */}
+                    <div className="border-t border-slate-100 dark:border-white/10 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+                      <div>
+                        <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">TOTAL PAYABLE</span>
+                        <span className="text-xl font-black text-[#ff6325]">₹{grandTotalPayable.toLocaleString()}</span>
+                        {appliedHomeFee > 0 && (
+                          <span className="text-[10px] text-slate-400 block font-medium">Includes ₹{appliedHomeFee} doorstep kit fee</span>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (wellnessServiceMode === 'HOME_VISIT' && !wellnessHomeAddress.trim()) {
+                            setWellnessAddressError(true);
+                            return;
+                          }
+
+                          const slotToSave = selectedApptSlot || dynamicSlots[0]?.slotValue || '09:00 AM';
+
+                          setSelectedService({
+                            id: `wellness-${Date.now()}`,
+                            name: `${venueName} — ${wellnessServiceMode === 'HOME_VISIT' ? 'Doorstep Home Service' : 'In-Salon Appointment'}`,
+                            price: grandTotalPayable,
+                            metadata: {
+                              appointmentBooking: {
+                                venueName,
+                                serviceMode: wellnessServiceMode,
+                                practitioner: selectedWellnessStylist,
+                                slotTime: slotToSave,
+                                slotDate: selectedDate || todayStr,
+                                treatments: selectedTreatments,
+                                treatmentDetails: selectedTreatmentObjects,
+                                totalDuration: totalSelectedDuration,
+                                convenienceFee: appliedHomeFee,
+                                homeAddress: wellnessHomeAddress,
+                                homeLandmark: wellnessHomeLandmark,
+                                homePhone: wellnessHomePhone
+                              }
+                            }
+                          });
+                          setSelectedSlot({
+                            id: `slot-${slotToSave}`,
+                            timeStr: `${selectedDate || todayStr} at ${slotToSave} (${totalSelectedDuration} mins)`,
+                            date: selectedDate || todayStr,
+                            available: true
+                          });
+                          setIsWellnessSlotModalOpen(false);
+                          router.push('/booking/checkout');
+                        }}
+                        className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-[#ff6325] hover:bg-[#e04e13] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-[#ff6325]/30 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <span>Confirm & Proceed</span>
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ============================================================
+         * SECTION D5-C: GYM & YOGA FITNESS PASS / BATCH SLOT SELECTION
+         * ============================================================ */}
+        {(isFitness || isYoga) && (() => {
+          const isYogaCategory = isYoga || cleanCat.includes('yoga') || cleanCat.includes('meditation');
+          const fitCfg = getFitnessConfig('zenfit-clinic');
+          const allPasses = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.passes)
+            ? (liveServices[0].metadata.passes as any[])
+            : fitCfg.passes;
+          const allTrainers = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.trainers)
+            ? (liveServices[0].metadata.trainers as any[])
+            : fitCfg.trainers;
+
+          // Dynamically isolate passes based on pure Gym vs pure Yoga category
+          const categoryPasses = allPasses.filter((p: any) => {
+            if (isYogaCategory) {
+              return p.formatType === 'YOGA_CLASS';
+            } else {
+              // Pure Gym - filter out yoga
+              return p.formatType !== 'YOGA_CLASS';
+            }
+          });
+
+          const filteredPasses = categoryPasses.filter((p: any) => {
+            if (fitnessFormatFilter === 'ALL') return true;
+            return p.formatType === fitnessFormatFilter;
+          });
+
+          const activePass = filteredPasses.find((p: any) => p.id === selectedFitnessPassId) || filteredPasses[0] || allPasses[0];
+
+          // Dynamic filter tabs
+          const formatFilterTabs = isYogaCategory
+            ? [
+              { id: 'ALL', label: 'All Batches' },
+              { id: 'YOGA_CLASS', label: '🧘 Group Yoga Batches' },
+              { id: 'PERSONAL_TRAINING', label: '🕉️ 1-on-1 Guru Session' }
+            ]
+            : [
+              { id: 'ALL', label: 'All Passes' },
+              { id: 'OPEN_GYM', label: '🏋️ Open Gym Floor' },
+              { id: 'PERSONAL_TRAINING', label: '💪 1-on-1 PT' }
+            ];
+
+          return (
+            <div id="fitness-booking-section" className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>{isYogaCategory ? '🧘' : '🏋️'}</span> {isYogaCategory ? 'Yoga Shala Mat & Batch Booking' : 'Gym Floor & Membership Pass Booking'}
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    {isYogaCategory
+                      ? 'Book daily yoga sessions, pranayama workshops & certified guru batches. Direct shala check-in.'
+                      : 'Book daily workout slots, strength training floors & certified coach sessions. Instant barcode entry.'}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50 text-xs font-bold">
+                  <span>⚡ Instant QR / NFC Turnstile Pass</span>
+                </div>
+              </div>
+
+              {/* Step 1: Pass & Format Selection */}
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                    {isYogaCategory ? '1. Select Yoga Batch or Session' : '1. Select Workout Session or Gym Pass'}
+                  </label>
+
+                  {/* Format Filter Tabs */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {formatFilterTabs.map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setFitnessFormatFilter(tab.id as any)}
+                        className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${fitnessFormatFilter === tab.id
+                          ? 'bg-[#ff6325] text-white shadow-xs'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                          }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {filteredPasses.map((pass: any) => {
+                    const isSelected = (selectedFitnessPassId === pass.id) || (activePass?.id === pass.id);
+                    return (
+                      <div
+                        key={pass.id}
+                        onClick={() => setSelectedFitnessPassId(pass.id)}
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${isSelected
+                          ? 'bg-[#ff6325]/5 dark:bg-[#ff6325]/10 border-[#ff6325] ring-2 ring-[#ff6325]/20'
+                          : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                          }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="text-2xl shrink-0 mt-0.5">{pass.icon || (isYogaCategory ? '🧘' : '🏋️')}</span>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-xs font-extrabold text-slate-900 dark:text-white">{pass.name}</h4>
+                              <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-200/80 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
+                                {pass.durationMinutes >= 60 ? `${pass.durationMinutes / 60}h Session` : `${pass.durationMinutes}m`}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug line-clamp-2">
+                              {pass.description}
+                            </p>
+                            {pass.amenities && (
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {pass.amenities.map((am: string, idx: number) => (
+                                  <span key={idx} className="text-[9px] font-bold px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 rounded border border-emerald-200/50">
+                                    ✓ {am}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <span className="text-sm font-black text-[#ff6325]">₹{pass.price}</span>
+                          <span className={`block text-[10px] font-bold mt-1 px-2.5 py-1 rounded-lg ${isSelected ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                            }`}>
+                            {isSelected ? '✓ Selected' : 'Choose'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Step 2: Certified Fitness Coaches */}
+              {allTrainers && allTrainers.length > 0 && (
+                <div>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                    {isYogaCategory ? 'Certified Yoga Gurus & Meditation Masters' : 'On-Floor Certified Strength Coaches & Personal Trainers'}
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {allTrainers.map((tr: any) => (
+                      <div key={tr.id} className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 flex items-center gap-3">
+                        <img
+                          src={tr.avatar}
+                          alt={tr.name}
+                          className="w-11 h-11 rounded-full object-cover shrink-0 border border-slate-200 dark:border-white/10"
+                          onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80'; }}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-900 dark:text-white truncate">{tr.name}</span>
+                            <span className="text-[10px] font-extrabold text-amber-500">★ {tr.rating}</span>
+                          </div>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">{tr.role}</span>
+                          <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold block mt-0.5">
+                            {tr.experienceYears}+ yrs exp • {tr.specialties?.slice(0, 2).join(', ')}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+      {/* Step 3: Interactive Date Selection */}
+      <div>
+        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+          2. Select Workout Date
+        </label>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => {
+              const d = selectedDate ? new Date(selectedDate) : new Date();
+              setFitnessCalMonth(isNaN(d.getTime()) ? new Date() : d);
+              setIsFitnessCalOpen(!isFitnessCalOpen);
+            }}
+            className="w-full sm:w-80 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white hover:border-[#ff6325] transition-all cursor-pointer shadow-xs"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-[#ff6325]/10 text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                <Calendar size={16} />
+              </div>
+              <div className="text-left">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">PASS DATE</span>
+                <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
+                  {(() => {
+                    try {
+                      const [y, m, d] = (selectedDate || todayStr).split('-');
+                      return `${d}-${m}-${y}`;
+                    } catch {
+                      return selectedDate || todayStr;
+                    }
+                  })()} {selectedDate === todayStr ? '(Today)' : ''}
+                </span>
+              </div>
+            </div>
+            <ChevronDown size={16} className={`text-slate-400 transition-transform duration-200 ${isFitnessCalOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {/* Clean White Popover Calendar for Fitness */}
+          {isFitnessCalOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setIsFitnessCalOpen(false)} />
+              <div className="absolute top-full left-0 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-white/15 shadow-2xl p-4 z-50 text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
+                <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-2 mb-3 border border-slate-150/60 dark:border-white/5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newD = new Date(fitnessCalMonth);
+                      newD.setMonth(newD.getMonth() - 1);
+                      setFitnessCalMonth(newD);
+                    }}
+                    className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <span className="font-extrabold text-xs sm:text-sm tracking-tight text-slate-900 dark:text-white">
+                    {fitnessCalMonth.toLocaleString('default', { month: 'long' })} {fitnessCalMonth.getFullYear()}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newD = new Date(fitnessCalMonth);
+                      newD.setMonth(newD.getMonth() + 1);
+                      setFitnessCalMonth(newD);
+                    }}
+                    className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-400 mb-2">
+                  {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+                    <div key={d} className="py-1">{d}</div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-7 gap-1 text-center">
+                  {(() => {
+                    const year = fitnessCalMonth.getFullYear();
+                    const month = fitnessCalMonth.getMonth();
+                    const firstDay = new Date(year, month, 1).getDay();
+                    const totalDays = new Date(year, month + 1, 0).getDate();
+
+                    const cells = [];
+                    for (let i = 0; i < firstDay; i++) {
+                      cells.push(<div key={`empty-${i}`} className="h-8 w-8" />);
+                    }
+
+                    for (let day = 1; day <= totalDays; day++) {
+                      const mStr = String(month + 1).padStart(2, '0');
+                      const dStr = String(day).padStart(2, '0');
+                      const dateStr = `${year}-${mStr}-${dStr}`;
+                      const isSelected = dateStr === (selectedDate || todayStr);
+                      const isPast = dateStr < todayStr;
+
+                      cells.push(
+                        <button
+                          key={`day-${day}`}
+                          type="button"
+                          disabled={isPast}
+                          onClick={() => {
+                            setSelectedDate(dateStr);
+                            setIsFitnessCalOpen(false);
+                          }}
+                          className={`h-8 w-8 mx-auto rounded-full text-xs font-bold flex items-center justify-center transition-all ${isSelected
+                            ? 'bg-[#ff6325] text-white shadow-sm font-black'
+                            : isPast
+                              ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                              : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer'
+                            }`}
+                        >
+                          {day}
+                        </button>
+                      );
+                    }
+                    return cells;
+                  })()}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Step 4: Batch / Entry Time Slot */}
+      <div>
+        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+          3. Select Session / Batch Timing
+        </label>
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
+          {['06:00 AM', '07:15 AM', '08:30 AM', '05:00 PM', '06:15 PM', '07:30 PM', '08:45 PM'].map((slot) => {
+            const isSelected = selectedFitnessTimeSlot === slot;
+            return (
+              <button
+                key={slot}
+                type="button"
+                onClick={() => setSelectedFitnessTimeSlot(slot)}
+                className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${isSelected
+                  ? 'bg-[#ff6325] text-white border-transparent shadow-md font-bold'
+                  : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#ff6325] text-slate-900 dark:text-white font-medium'
+                  }`}
+              >
+                <span className="text-xs font-black block">{slot}</span>
+                <span className="text-[10px] opacity-75 font-semibold mt-0.5 block">Slots Open</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Confirm Fitness Booking CTA */}
+      <div className="p-5 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-transparent border border-[#ff6325]/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <span className="text-xs font-black text-slate-900 dark:text-white block">
+            {activePass.name} • ₹{activePass.price}
+          </span>
+          <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
+            📅 {selectedDate || todayStr} at {selectedFitnessTimeSlot} • Direct Turnstile QR Pass
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedService({
+              id: `fitness-${Date.now()}`,
+              name: `${venueName} — ${activePass.name}`,
+              price: activePass.price,
+              metadata: {
+                isFitnessBooking: true,
+                fitnessBooking: {
+                  venueName,
+                  passName: activePass.name,
+                  formatType: activePass.formatType,
+                  slotTime: selectedFitnessTimeSlot,
+                  slotDate: selectedDate || todayStr,
+                  durationMinutes: activePass.durationMinutes
+                }
+              }
+            });
+            setSelectedSlot({
+              id: `slot-fit-${Date.now()}`,
+              timeStr: `${selectedDate || todayStr} at ${selectedFitnessTimeSlot} (${activePass.name})`,
+              date: selectedDate || todayStr,
+              available: true
+            });
+            router.push('/booking/checkout');
+          }}
+          className="px-6 py-3 rounded-xl bg-[#ff6325] hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer w-full sm:w-auto"
+        >
+          {isYogaCategory ? `Book Yoga Batch (₹${activePass.price}) →` : `Book Gym Pass (₹${activePass.price}) →`}
+        </button>
+      </div>
+    </div>
+  );
+}) ()}
+
+{/* ============================================================
+         * SECTION D5-D: RESTAURANT & TABLE RESERVATION FLOW
+         * ============================================================ */}
+{
+  isDining && (() => {
+    const diningCfg = getDiningConfig(cleanMerchantId);
+    let allTables = diningCfg.tableTypes || [];
+    let allSlots = diningCfg.timeSlots || [];
+    let popularMenu = diningCfg.popularMenu || [];
+    let activeDeals = diningCfg.bookingDeals || [];
+    let activeCuisines = diningCfg.cuisines || [];
+    let activeCostForTwo = diningCfg.costForTwo || 800;
+    let customSessionsList: any[] = [];
+
+    if (typeof window !== 'undefined') {
+      try {
+        const busStorageRaw = localStorage.getItem('vendor-portal-storage-v10');
+        if (busStorageRaw) {
+          const busData = JSON.parse(busStorageRaw);
+          const curM = busData.state?.currentMerchant;
+          const storedServices = busData.state?.services || [];
+          const activeBranchId = curM?.activeBranchId;
+
+          // 1. Read Vendor Cuisines, Cost for Two, Deals & Perks from Merchant Profile (Modules 1, 3)
+          if (curM?.metadata?.cuisines && Array.isArray(curM.metadata.cuisines) && curM.metadata.cuisines.length > 0) {
+            activeCuisines = curM.metadata.cuisines;
+          }
+          if (curM?.metadata?.costForTwo) {
+            activeCostForTwo = Number(curM.metadata.costForTwo);
+          }
+          if (curM?.metadata?.bookingDeals && Array.isArray(curM.metadata.bookingDeals)) {
+            activeDeals = curM.metadata.bookingDeals.filter((d: any) => d.active !== false);
+          }
+          if (curM?.metadata?.customSessions && Array.isArray(curM.metadata.customSessions)) {
+            customSessionsList = curM.metadata.customSessions.filter((cs: any) => cs.enabled);
+          }
+
+          const vendorLunchPerk = curM?.metadata?.lunchPerkText;
+          const vendorDinnerPerk = curM?.metadata?.dinnerPerkText;
+          if (vendorLunchPerk || vendorDinnerPerk) {
+            allSlots = allSlots.map((s: any) => {
+              if (s.session === 'LUNCH' && vendorLunchPerk) {
+                return { ...s, discountOffer: vendorLunchPerk };
+              }
+              if (s.session === 'DINNER' && vendorDinnerPerk) {
+                return { ...s, discountOffer: vendorDinnerPerk };
+              }
+              return s;
+            });
+          }
+
+          // Append custom session slots if vendor configured them (e.g. Breakfast / High Tea)
+          if (customSessionsList.length > 0) {
+            customSessionsList.forEach((cs: any) => {
+              const sessionKey = cs.name.toUpperCase().includes('BREAKFAST') ? 'BREAKFAST' : cs.name.toUpperCase().includes('TEA') ? 'HIGH_TEA' : cs.name.toUpperCase();
+              if (!allSlots.some(s => s.session === sessionKey)) {
+                allSlots.push({
+                  time: cs.opensAt || '08:00 AM',
+                  session: sessionKey as any,
+                  discountOffer: `${cs.name} Special`,
+                  isFastFilling: false
+                });
+              }
+            });
+          }
+
+          // 2. Read live tables configured in Business Portal (Module 2)
+          const matchedService = storedServices.find((s: any) => {
+            const sName = (s.name || '').toLowerCase();
+            const sCat = (s.category || '').toLowerCase();
+            const matchCat = sCat.includes('dining') || sCat.includes('restaurant') || sName.includes('dining') || s.metadata?.isDining;
+            const matchBranch = activeBranchId ? (!s.branchId || s.branchId === activeBranchId) : true;
+            return matchCat && matchBranch;
+          });
+
+          if (matchedService && Array.isArray(matchedService.listings) && matchedService.listings.length > 0) {
+            allTables = matchedService.listings.map((l: any, idx: number) => {
+              const zone = l.metadata?.tableZone || l.tableZone || 'AC_INDOOR';
+              const icon = zone === 'ROOFTOP' ? '🌆' : zone === 'PRIVATE_DINING' ? '👑' : zone === 'GARDEN_PATIO' ? '🌿' : '🛋️';
+              return {
+                id: l.id || `table-${idx}`,
+                name: l.name,
+                capacity: `${l.minGuests || l.metadata?.minGuests || 1} - ${l.maxGuests || l.metadata?.maxGuests || 4} Guests`,
+                minGuests: l.minGuests || l.metadata?.minGuests || 1,
+                maxGuests: l.maxGuests || l.metadata?.maxGuests || 4,
+                zone: zone,
+                depositAmount: Number(l.price || l.basePrice || l.metadata?.depositAmount || 0),
+                badge: l.offerBadge || l.metadata?.highlightBadge || undefined,
+                icon,
+                description: l.description || l.metadata?.atmosphereTagline || `Comfortable table setup in ${zone.replace('_', ' ')}.`
+              };
+            });
+
+            // Read add-on dishes
+            const vendorAddons: any[] = [];
+            matchedService.listings.forEach((l: any) => {
+              const isAddonsOn = l.isAddonsEnabled ?? l.metadata?.isAddonsEnabled ?? true;
+              const items = l.addOns || l.metadata?.addons || [];
+              if (isAddonsOn && Array.isArray(items)) {
+                items.forEach((item: any) => {
+                  if (item.name && !vendorAddons.some(v => v.name.toLowerCase() === item.name.toLowerCase())) {
+                    vendorAddons.push({
+                      id: `menu-vendor-${item.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+                      name: item.name,
+                      category: 'MAIN_COURSE',
+                      isVeg: !item.name.toLowerCase().includes('chicken') && !item.name.toLowerCase().includes('mutton') && !item.name.toLowerCase().includes('fish') && !item.name.toLowerCase().includes('meat') && !item.name.toLowerCase().includes('prawn'),
+                      price: Number(item.price || 0),
+                      rating: 4.8,
+                      chefSpecial: true,
+                      description: `Chef special pre-order item freshly prepared for your table.`
+                    });
+                  }
+                });
+              }
+            });
+            if (vendorAddons.length > 0) {
+              popularMenu = vendorAddons;
+            }
+          }
+        }
+      } catch (e) { }
+    }
+
+    // Auto-Match Best Fit Table for user's selected party size
+    const bestFitTable = allTables.find((t: any) => diningGuestCount >= t.minGuests && diningGuestCount <= t.maxGuests);
+    const effectiveSelectedTableId = selectedTableId || (bestFitTable ? bestFitTable.id : (allTables[0]?.id || ''));
+
+    const filteredTables = allTables.filter((tbl: any) => {
+      if (diningZoneTab === 'ALL') return true;
+      return tbl.zone === diningZoneTab;
+    });
+
+    const activeTable = allTables.find((t: any) => t.id === effectiveSelectedTableId) || bestFitTable || allTables[0];
+    const reservationDeposit = activeTable?.depositAmount || 0;
+
+    return (
+      <div id="dining-booking-section" className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
+        {/* Header with Search Context Summary */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <span>🍽️</span> Restaurant Table Reservation
+            </h2>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-900/50 text-[#ff6325] text-xs font-black">
+                <span>📅</span> {selectedDate || todayStr} {selectedDate === todayStr ? '(Today)' : ''}
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50 text-[#033266] dark:text-blue-400 text-xs font-black">
+                <span>👥</span> {diningGuestCount} {diningGuestCount === 1 ? 'Guest' : 'Guests'}
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsEditSearchOpen(true)}
+                className="text-[11px] text-[#ff6325] hover:underline font-bold cursor-pointer ml-1"
+              >
+                Change Date / Party Size
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1 rounded-full text-[11px] font-black bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              ✓ Instant Confirmation
+            </span>
+          </div>
+        </div>
+
+        {/* 2. Seating Zone Ambiance Filter Tabs */}
+        <div>
+          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+            1. Select Seating Ambience & Zone
+          </label>
+          <div className="flex flex-wrap items-center gap-2">
+            {[
+              { id: 'ALL', label: 'All Tables', icon: '🍽️' },
+              { id: 'AC_INDOOR', label: 'AC Indoor Hall', icon: '🌟' },
+              { id: 'ROOFTOP', label: 'Romantic Rooftop', icon: '🌆' },
+              { id: 'GARDEN_PATIO', label: 'Garden Patio', icon: '🌿' },
+              { id: 'PRIVATE_DINING', label: 'Private Dining (PDR)', icon: '👑' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setDiningZoneTab(tab.id as any)}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${diningZoneTab === tab.id
+                  ? 'bg-[#033266] dark:bg-[#ff6325] text-white shadow-sm'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  }`}
+              >
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 3. Table Types Selection Cards */}
+        <div>
+          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+            2. Choose Table Type & Arrangement
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {filteredTables.map((tbl: any) => {
+              const isSelected = selectedTableId === tbl.id;
+              const isCapacityFit = diningGuestCount >= tbl.minGuests && diningGuestCount <= tbl.maxGuests;
+
+              return (
+                <div
+                  key={tbl.id}
+                  onClick={() => setSelectedTableId(tbl.id)}
+                  className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between relative ${isSelected
+                    ? 'bg-[#ff6325]/5 border-[#ff6325] shadow-md ring-2 ring-[#ff6325]/20'
+                    : 'bg-slate-50/70 dark:bg-slate-800/60 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                    }`}
+                >
+                  {isCapacityFit && (
+                    <div className="absolute -top-2 right-3">
+                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500 text-white shadow-xs">
+                        Best Fit ({tbl.capacity})
+                      </span>
+                    </div>
+                  )}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-2xl">{tbl.icon}</span>
+                      {tbl.badge && (
+                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                          {tbl.badge}
+                        </span>
+                      )}
+                    </div>
+                    <h4 className="text-sm font-black text-slate-900 dark:text-white">{tbl.name}</h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                      {tbl.description}
+                    </p>
+                  </div>
+
+                  <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-white/10 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                      <span>👥</span> {tbl.capacity}
+                    </span>
+                    <span className="text-xs font-black text-[#ff6325]">
+                      {tbl.depositAmount === 0 ? 'Free Reservation' : `₹${tbl.depositAmount} Hold Deposit`}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 4. Time Slots with Session Filters & Discount Chips */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+              3. Preferred Dining Time Slot & Offers
+            </label>
+            <div className="flex items-center gap-1.5">
+              {['ALL', 'LUNCH', 'DINNER'].map((ses) => (
+                <button
+                  key={ses}
+                  type="button"
+                  onClick={() => setDiningSession(ses as any)}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${diningSession === ses
+                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                    }`}
+                >
+                  {ses === 'ALL' ? 'All Slots' : ses}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {/* Lunch Sessions */}
+            {(diningSession === 'ALL' || diningSession === 'LUNCH') && (
+              <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">
+                  ☀️ Lunch Slots (12:00 PM - 03:30 PM)
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                  {allSlots
+                    .filter((s: any) => s.session === 'LUNCH')
+                    .map((slot: any) => {
+                      const isSelected = selectedDiningTime === slot.time;
+                      return (
+                        <button
+                          key={slot.time}
+                          type="button"
+                          onClick={() => setSelectedDiningTime(slot.time)}
+                          className={`py-3 px-3 rounded-xl text-center border transition-all cursor-pointer ${isSelected
+                            ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md scale-[1.02]'
+                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 hover:border-slate-300'
+                            }`}
+                        >
+                          <span className="text-xs font-black block">{slot.time}</span>
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+
+            {/* Dinner Sessions */}
+            {(diningSession === 'ALL' || diningSession === 'DINNER') && (
+              <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">
+                  🌙 Dinner Slots (07:00 PM - 11:00 PM)
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                  {allSlots
+                    .filter((s: any) => s.session === 'DINNER')
+                    .map((slot: any) => {
+                      const isSelected = selectedDiningTime === slot.time;
+                      return (
+                        <button
+                          key={slot.time}
+                          type="button"
+                          onClick={() => setSelectedDiningTime(slot.time)}
+                          className={`py-3 px-3 rounded-xl text-center border transition-all cursor-pointer ${isSelected
+                            ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md scale-[1.02]'
+                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 hover:border-slate-300'
+                            }`}
+                        >
+                          <span className="text-xs font-black block">{slot.time}</span>
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 5. Special Booking Deals & Coupons (Top App Standards: Dineout / EazyDiner) */}
+        {activeDeals && activeDeals.length > 0 && (
+          <div>
+            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+              4. Applicable Restaurant Deals & Offers
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {activeDeals.map((deal: any) => {
+                const isApplied = selectedDiningDealId === deal.id;
+                return (
+                  <div
+                    key={deal.id}
+                    onClick={() => setSelectedDiningDealId(isApplied ? '' : deal.id)}
+                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${isApplied
+                      ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 ring-2 ring-emerald-500/20'
+                      : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                      }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">🎉</span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs font-black text-slate-900 dark:text-white">{deal.title}</h4>
+                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300">
+                            {deal.code}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                          {deal.description}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={`text-xs font-black px-2.5 py-1 rounded-xl shrink-0 ${isApplied ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/10'
+                      }`}>
+                      {isApplied ? 'Applied ✓' : 'Apply'}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 6. Optional Chef Special Pre-order Delicacies (Zero Wait Serving) */}
+        {popularMenu && popularMenu.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                5. Pre-order Signature Dishes (Optional)
+              </label>
+              <span className="text-[10px] text-slate-400 font-bold">
+                {selectedPreOrderItems.length} items added (+₹{selectedPreOrderItems.reduce((acc, itm) => {
+                  const m = popularMenu.find((p: any) => p.id === itm.id);
+                  return acc + (m ? m.price * itm.qty : 0);
+                }, 0)})
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {popularMenu.slice(0, 6).map((item: any) => {
+                const sel = selectedPreOrderItems.find((p) => p.id === item.id);
+                const qty = sel?.qty || 0;
+
+                return (
+                  <div
+                    key={item.id}
+                    className="p-3.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/80 flex items-center justify-between gap-3 shadow-2xs"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${item.isVeg ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                        <h5 className="text-xs font-black text-slate-900 dark:text-white truncate">{item.name}</h5>
+                      </div>
+                      <span className="text-xs font-black text-[#ff6325] block mt-1">₹{item.price}</span>
+                    </div>
+
+                    {qty === 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedPreOrderItems([...selectedPreOrderItems, { id: item.id, qty: 1 }])}
+                        className="px-3 py-1.5 rounded-xl border border-[#ff6325] text-[#ff6325] hover:bg-[#ff6325] hover:text-white text-xs font-black transition-all cursor-pointer"
+                      >
+                        + Add
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-700 rounded-xl px-2 py-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (qty === 1) {
+                              setSelectedPreOrderItems(selectedPreOrderItems.filter((p) => p.id !== item.id));
+                            } else {
+                              setSelectedPreOrderItems(selectedPreOrderItems.map((p) => p.id === item.id ? { ...p, qty: p.qty - 1 } : p));
+                            }
+                          }}
+                          className="text-xs font-black text-slate-600 hover:text-slate-900 px-1 cursor-pointer"
+                        >
+                          -
+                        </button>
+                        <span className="text-xs font-black text-slate-900 dark:text-white">{qty}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedPreOrderItems(selectedPreOrderItems.map((p) => p.id === item.id ? { ...p, qty: p.qty + 1 } : p));
+                          }}
+                          className="text-xs font-black text-slate-600 hover:text-slate-900 px-1 cursor-pointer"
+                        >
+                          +
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 7. Special Requests / Occasions */}
+        <div>
+          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
+            6. Special Requests & Occasions (Optional)
+          </label>
+          <div className="space-y-2">
+            <div className="flex flex-wrap gap-2">
+              {['🎂 Birthday Celebration', '🥂 Anniversary Dinner', '👶 High Chair Required', '🌸 Quiet Corner Table', '🕯️ Candlelight Setup'].map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => {
+                    setDiningSpecialRequest(prev => prev.includes(tag) ? prev.replace(tag, '').trim() : `${prev} ${tag}`.trim());
+                  }}
+                  className={`px-3 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer ${diningSpecialRequest.includes(tag)
+                    ? 'bg-[#ff6325]/15 border-[#ff6325] text-[#ff6325]'
+                    : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400'
+                    }`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+            <input
+              type="text"
+              value={diningSpecialRequest}
+              onChange={(e) => setDiningSpecialRequest(e.target.value)}
+              placeholder="Add other requests (e.g., Less spicy, wheelchair access, table near window)..."
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[#ff6325]"
+            />
+          </div>
+        </div>
+        {/* Bottom Reservation Action Summary */}
+        {(() => {
+          const popularMenu = diningCfg.popularMenu || [];
+          const preOrderTotal = selectedPreOrderItems.reduce((acc, itm) => {
+            const m = popularMenu.find((p) => p.id === itm.id);
+            return acc + (m ? m.price * itm.qty : 0);
+          }, 0);
+          const finalPayableAtBooking = reservationDeposit + preOrderTotal;
+          const activeDeal = (diningCfg.bookingDeals || []).find((d) => d.id === selectedDiningDealId);
+
+          return (
+            <div className="pt-5 border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/80 dark:bg-slate-800/60 p-4 sm:p-5 rounded-3xl">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-base font-black text-slate-900 dark:text-white">
+                    {activeTable?.name || 'Selected Table'} • {diningGuestCount} Guests
+                  </span>
+                  <span className="text-xs text-slate-500 font-bold">• {selectedDiningTime}</span>
+                  {activeDeal && (
+                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-500 text-white shadow-2xs">
+                      Offer: {activeDeal.code}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
+                    {finalPayableAtBooking === 0
+                      ? '✓ Free Table Reservation • Pay bill at restaurant'
+                      : `Total Booking Payable: ₹${finalPayableAtBooking}${reservationDeposit > 0 ? ` (₹${reservationDeposit} adjustable deposit` : ''}${preOrderTotal > 0 ? ` + ₹${preOrderTotal} pre-order` : ''}${reservationDeposit > 0 ? ')' : ''}`}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const effectiveMerchantId = merchantId || 'R404';
+                  const effectiveMerchantName = venueName || diningCfg.name;
+
+                  setSelectedService({
+                    id: `dining-table-${activeTable?.id || '2-cozy'}`,
+                    name: `${effectiveMerchantName} — ${activeTable?.name || 'Table'} (${diningGuestCount} Guests)`,
+                    price: finalPayableAtBooking,
+                    merchantId: effectiveMerchantId,
+                    merchantName: effectiveMerchantName,
+                    merchant: {
+                      id: effectiveMerchantId,
+                      name: effectiveMerchantName
+                    },
+                    category: 'Restaurant Table Reservation',
+                    metadata: {
+                      isDiningBooking: true,
+                      diningBooking: {
+                        restaurantName: effectiveMerchantName,
+                        tableType: activeTable?.name,
+                        tableId: activeTable?.id,
+                        zone: diningZoneTab,
+                        guests: diningGuestCount,
+                        date: selectedDate || todayStr,
+                        time: selectedDiningTime,
+                        depositAmount: reservationDeposit,
+                        preOrderTotal,
+                        preOrderItems: selectedPreOrderItems.map(p => {
+                          const m = popularMenu.find((item: any) => item.id === p.id);
+                          return {
+                            id: p.id,
+                            name: m?.name || 'Dish',
+                            price: m?.price || 0,
+                            qty: p.qty,
+                            isVeg: m?.isVeg ?? true
+                          };
+                        }),
+                        appliedDeal: activeDeal ? {
+                          code: activeDeal.code,
+                          title: activeDeal.title,
+                          description: activeDeal.description
+                        } : null,
+                        specialRequest: diningSpecialRequest,
+                        costForTwo: activeCostForTwo,
+                        cuisines: activeCuisines
+                      }
+                    }
+                  });
+
+                  setSelectedSlot({
+                    id: `table-slot-${Date.now()}`,
+                    timeStr: `${selectedDate || todayStr} at ${selectedDiningTime} (${diningGuestCount} Guests)`,
+                    date: selectedDate || todayStr,
+                    available: true
+                  });
+
+                  router.push('/booking/checkout');
+                }}
+                className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#ff6325] to-[#f4511e] hover:from-[#e04e13] hover:to-[#d84315] text-white font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all cursor-pointer w-full sm:w-auto text-center"
+              >
+                Confirm Table Reservation &rarr;
+              </button>
+            </div>
+          );
+        })()}
+      </div>
+    );
+  })()
+}
+
+{/* ============================================================
+         * SECTION D6: SELF-DRIVE & VEHICLE RENTALS (ARCHETYPE 4: AssetRental)
+         * ============================================================ */}
+{
+  isRental && (
+    <div className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🚗</span> Vehicle / Equipment Rental Selection
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            100% Tax-Exempt Security Deposit refunded immediately upon safe return.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 text-xs font-bold">
+          <span>🛡️ Zero Deposit Deductions Guarantee</span>
+        </div>
+      </div>
+
+      {/* Rental Duration Pickers */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
+            Pick-up Date
+          </label>
+          <input
+            type="date"
+            value={rentalStartDate}
+            onChange={(e) => setRentalStartDate(e.target.value)}
+            className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
+            Return Date
+          </label>
+          <input
+            type="date"
+            value={rentalEndDate}
+            onChange={(e) => setRentalEndDate(e.target.value)}
+            className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
+            Total Rental Days
+          </label>
+          <select
+            value={rentalDays}
+            onChange={(e) => setRentalDays(Number(e.target.value))}
+            className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none"
+          >
+            {[1, 2, 3, 5, 7, 14, 30].map(d => (
+              <option key={d} value={d}>{d} Day{d > 1 ? 's' : ''}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Mandatory DL / ID Verification Notice */}
+      <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">🪪</span>
+          <div>
+            <h4 className="text-xs font-extrabold text-amber-900 dark:text-amber-200">
+              Mandatory Driving License / Govt ID Check
+            </h4>
+            <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80">
+              Required at handover for vehicle insurance coverage.
+            </p>
+          </div>
+        </div>
+        <label className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold cursor-pointer transition-all shadow-xs shrink-0">
+          <span>{uploadedDlName ? `✓ ${uploadedDlName}` : 'Upload DL / ID Document'}</span>
+          <input
+            type="file"
+            accept="image/*,.pdf"
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files?.[0]) setUploadedDlName(e.target.files[0].name);
+            }}
+          />
+        </label>
+      </div>
+
+      {/* Rental Breakdown Summary */}
+      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <span className="text-xs font-black text-slate-900 dark:text-white block">
+            {liveServices[0]?.name || 'Standard Vehicle Rental'}
+          </span>
+          <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
+            ₹1,500/day × {rentalDays} days (₹{1500 * rentalDays}) + ₹2,000 Refundable Security Deposit
+          </span>
+        </div>
+
+        <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+          <div className="text-right">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Payable</span>
+            <span className="text-xl font-black text-[#033266] dark:text-[#ff6325]">
+              ₹{(1500 * rentalDays + 2000).toLocaleString()}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              const baseDaily = 1500;
+              const deposit = 2000;
+              const total = baseDaily * rentalDays + deposit;
+              setSelectedService({
+                id: `rental-${Date.now()}`,
+                name: `${venueName} — Rental`,
+                price: total,
+                metadata: {
+                  rentalBooking: {
+                    venueName,
+                    rentalDays,
+                    rentalStartDate,
+                    rentalEndDate,
+                    securityDeposit: deposit,
+                    uploadedDoc: uploadedDlName || 'Verified at Counter'
+                  }
+                }
+              });
+              setSelectedSlot({
+                id: `rental-slot-${Date.now()}`,
+                timeStr: `${rentalStartDate} to ${rentalEndDate} (${rentalDays} Days)`,
+                date: rentalStartDate,
+                available: true
+              });
+              router.push('/booking/checkout');
+            }}
+            className="px-6 py-3 rounded-xl bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+          >
+            Reserve Vehicle &rarr;
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+{/* ============================================================
+         * SECTION D7: BOOKMYSHOW & DISTRICT MULTI-STEP CINEMA TICKETING WIZARD
+         * ============================================================ */}
+{
+  isPass && (() => {
+    // Dynamic binding to live service metadata created by business partner
+    const activeEntSvc = liveServices.find(s => s.metadata?.isEntertainment || s.category?.toLowerCase().includes('movie') || s.category?.toLowerCase().includes('cinema')) || liveServices[0];
+    const dynamicFormats: Array<{ id: string; label: string; sub: string; icon: string }> = (activeEntSvc?.metadata?.formats && Array.isArray(activeEntSvc.metadata.formats))
+      ? activeEntSvc.metadata.formats.map((fmt: any) => {
+        if (typeof fmt === 'string') {
+          const icon = fmt.includes('IMAX') ? '🎥' : fmt.includes('Atmos') ? '🔊' : fmt.includes('4DX') ? '⚡' : '👓';
+          const sub = fmt.includes('IMAX') ? 'Next-Gen 4K Laser Projection' : fmt.includes('Atmos') ? 'Immersive 64-Channel Spatial Audio' : fmt.includes('4DX') ? 'Synchronised Motion Seats' : 'Crystal Clear Digital Laser';
+          return { id: fmt, label: fmt, sub, icon };
+        }
+        return { id: fmt.id || fmt.name, label: fmt.label || fmt.name, sub: fmt.sub || 'Cinema Standard', icon: fmt.icon || '🎥' };
+      })
+      : [
+        { id: 'IMAX Laser 3D', label: 'IMAX Laser 3D', sub: 'Next-Gen 4K Laser Projection', icon: '🎥' },
+        { id: 'Dolby Atmos 7.1', label: 'Dolby Atmos 7.1', sub: 'Immersive 64-Channel Spatial Audio', icon: '🔊' },
+        { id: '4DX Motion', label: '4DX Motion & Scent', sub: 'Synchronised Motion Seats', icon: '⚡' },
+        { id: 'RealD 3D / 2D', label: 'RealD 3D / 2D Standard', sub: 'Crystal Clear Digital Laser', icon: '👓' }
+      ];
+
+    const dynamicShowtimes: Array<{ time: string; status: string; audi: string }> = (activeEntSvc?.metadata?.showtimes && Array.isArray(activeEntSvc.metadata.showtimes))
+      ? activeEntSvc.metadata.showtimes.map((st: any) => ({
+        time: st.time || '10:30 AM',
+        status: st.status || (st.fillingFast ? 'Fast Filling' : 'Available'),
+        audi: st.screen || st.audi || 'Audi 1'
+      }))
+      : [
+        { time: '10:30 AM', status: 'Almost Full', audi: 'Audi 1 (IMAX)' },
+        { time: '02:15 PM', status: 'Available', audi: 'Audi 1 (IMAX)' },
+        { time: '06:45 PM', status: 'Fast Filling', audi: 'Audi 2 (Dolby Atmos)' },
+        { time: '10:00 PM', status: 'Available', audi: 'Audi 2 (Dolby Atmos)' }
+      ];
+
+    const dynamicSeatTiers: Array<{ id: string; name: string; price: number; icon: string; desc: string }> = (activeEntSvc?.metadata?.seatTiers && Array.isArray(activeEntSvc.metadata.seatTiers))
+      ? activeEntSvc.metadata.seatTiers.map((tier: any) => ({
+        id: tier.id || tier.name,
+        name: tier.name || 'Standard Tier',
+        price: Number(tier.price) || 190,
+        icon: tier.icon || '🎟️',
+        desc: tier.desc || 'Standard cinema seat'
+      }))
+      : [
+        { id: 'recliner', name: 'Royal Recliner (Lounge)', price: 380, icon: '👑', desc: 'Motorized lounger + Butler dining' },
+        { id: 'prime', name: 'Prime Circle', price: 250, icon: '🌟', desc: 'Optimum center rows + Extra legroom' },
+        { id: 'classic', name: 'Classic Executive', price: 190, icon: '🎟️', desc: 'Standard cushioned cinema seat' }
+      ];
+
+    const dynamicSnacks: Array<{ id: string; name: string; price: number; icon: string; desc: string }> = (activeEntSvc?.metadata?.snackAddons && Array.isArray(activeEntSvc.metadata.snackAddons))
+      ? activeEntSvc.metadata.snackAddons.map((snk: any) => ({
+        id: snk.id || snk.name,
+        name: snk.name,
+        price: Number(snk.price) || 150,
+        icon: snk.icon || '🍿',
+        desc: snk.desc || 'Fresh cinema concession'
+      }))
+      : [
+        { id: 'popcorn', name: 'Tub Popcorn + Coke Combo', price: 240, icon: '🍿', desc: 'Large Salted & Caramel popcorn tub with 500ml chilled Coke' },
+        { id: 'nachos', name: 'Warm Cheesy Nachos', price: 180, icon: '🌮', desc: 'Crisp tortilla chips served with warm melted jalapeno salsa dip' },
+        { id: 'coffee', name: 'Cold Coffee / Iced Tea', price: 120, icon: '🥤', desc: 'Chilled refreshing brew delivered directly to your cinema lounger' }
+      ];
+
+    const reclinerTier = dynamicSeatTiers.find(t => t.name.toLowerCase().includes('recliner') || t.id.toLowerCase().includes('recliner')) || dynamicSeatTiers[0];
+    const primeTier = dynamicSeatTiers.find(t => t.name.toLowerCase().includes('prime') || t.id.toLowerCase().includes('prime')) || dynamicSeatTiers[1] || dynamicSeatTiers[0];
+    const classicTier = dynamicSeatTiers.find(t => t.name.toLowerCase().includes('classic') || t.id.toLowerCase().includes('classic') || t.id.toLowerCase().includes('executive')) || dynamicSeatTiers[dynamicSeatTiers.length - 1];
+
+    return (
+      <div id="entertainment-booking-section" className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
+
+        {/* Quick Movie Selector Strip (Allows instant switching between now-showing movies in this theatre) */}
+        <div className="space-y-2 pb-4 border-b border-slate-200/80 dark:border-white/10">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <span>🎬</span> Now Showing At This Multiplex ({NOW_SHOWING_MOVIES.length} Movies)
+            </span>
+            <span className="text-[10px] font-bold text-[#ff6325]">Click any poster to switch show</span>
+          </div>
+
+          <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none">
+            {NOW_SHOWING_MOVIES.map((mov) => {
+              const isCur = activeMovie.id === mov.id || activeMovie.slug === mov.slug;
+              return (
+                <button
+                  key={mov.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveMovie(mov);
+                    router.replace(`/${bookingType}/${category}/${merchantId}?movie=${mov.slug}`, { scroll: false });
+                  }}
+                  className={`flex items-center gap-2.5 p-1.5 pr-3 rounded-2xl border text-left transition-all cursor-pointer shrink-0 ${isCur
+                    ? 'border-[#ff6325] bg-[#ff6325]/10 shadow-sm shadow-[#ff6325]/20 ring-1 ring-[#ff6325]'
+                    : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 hover:border-slate-300 dark:hover:border-white/20'
+                    }`}
+                >
+                  <div className="w-10 h-14 rounded-xl overflow-hidden bg-slate-900 shrink-0 relative">
+                    <img src={mov.posterUrl} alt={mov.title} className="w-full h-full object-cover" />
+                    <span className="absolute bottom-0 inset-x-0 bg-black/80 text-[8px] font-black text-amber-400 text-center py-0.5">
+                      ★{mov.rating}
+                    </span>
+                  </div>
+                  <div className="min-w-0 max-w-[130px]">
+                    <h4 className={`text-xs font-black truncate ${isCur ? 'text-[#ff6325]' : 'text-slate-800 dark:text-white'}`}>
+                      {mov.title}
+                    </h4>
+                    <span className="text-[10px] text-slate-400 font-medium block truncate">
+                      {mov.certificate} • {mov.runtime}
+                    </span>
+                    <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 truncate block">
+                      {mov.formats[0]}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Header Specs Banner - Displays Currently Active Selected Movie Details */}
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 border-b border-slate-200 dark:border-white/10 pb-5">
+          <div className="flex items-start gap-4">
+            <div className="relative w-20 h-28 sm:w-24 sm:h-32 rounded-2xl overflow-hidden shadow-lg border border-white/15 shrink-0 bg-slate-900">
+              <img
+                src={activeMovie.posterUrl}
+                alt={activeMovie.title}
+                className="w-full h-full object-cover"
+              />
+              <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-md text-amber-400 font-black text-[9px]">
+                ★ {activeMovie.rating}
+              </span>
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 font-black text-[10px] tracking-wide border border-amber-500/30">
+                  {activeMovie.certificate}
+                </span>
+                <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[10px]">
+                  {activeMovie.genres.join(' / ')}
+                </span>
+                <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[10px]">
+                  ⏱️ {activeMovie.runtime}
+                </span>
+                <span className="px-2 py-0.5 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 font-bold text-[10px]">
+                  {activeMovie.languages.join(', ')}
+                </span>
+              </div>
+
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <span>🎬</span> {activeMovie.title}
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xl line-clamp-2">
+                {activeMovie.synopsis}
+              </p>
+
+              <div className="flex items-center gap-2 pt-1">
+                <span className="text-[11px] font-bold text-slate-400">At Theatre:</span>
+                <span className="text-xs font-black text-[#ff6325]">{venueName}</span>
+                <span className="text-slate-400 text-xs">•</span>
+                <span className="text-xs text-slate-400 font-medium">{address || 'Chennai Location'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-900/50 text-xs font-bold shrink-0 shadow-xs">
+            <span>📱 Contactless Turnstile M-Ticket</span>
+          </div>
+        </div>
+
+        {/* STEP PROGRESS BAR (BookMyShow standard 4 steps + Live 8-Min Seat Lock Timer) */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between px-2 sm:px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 text-xs font-bold">
+            <div className={`flex items-center gap-1.5 ${cinemaStep === 'SHOWTIMES' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'SHOWTIMES' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>1</span>
+              <span>Date & Show</span>
+            </div>
+            <span className="text-slate-300 dark:text-slate-600 font-normal">→</span>
+            <div className={`flex items-center gap-1.5 ${cinemaStep === 'SEAT_COUNT' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'SEAT_COUNT' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>2</span>
+              <span>Seats Qty</span>
+            </div>
+            <span className="text-slate-300 dark:text-slate-600 font-normal">→</span>
+            <div className={`flex items-center gap-1.5 ${cinemaStep === 'SEAT_LAYOUT' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'SEAT_LAYOUT' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>3</span>
+              <span>Seat Layout</span>
+            </div>
+            <span className="text-slate-300 dark:text-slate-600 font-normal">→</span>
+            <div className={`flex items-center gap-1.5 ${cinemaStep === 'FNB_DRAWER' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'FNB_DRAWER' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>4</span>
+              <span>Grab a Bite</span>
+            </div>
+          </div>
+
+          {/* BookMyShow Live Seat Lock Indicator Banner (Runs in Stages 3 & 4) */}
+          {(cinemaStep === 'SEAT_LAYOUT' || cinemaStep === 'FNB_DRAWER') && (
+            <div className={`px-4 py-2 rounded-2xl flex items-center justify-between border transition-all ${seatLockExpired
+              ? 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
+              : 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300'
+              }`}>
+              <div className="flex items-center gap-2">
+                <span className="text-sm">{seatLockExpired ? '⚠️' : '⏱️'}</span>
+                <span className="text-xs font-bold">
+                  {seatLockExpired
+                    ? 'Seats Lock Expired! Another user may book these seats.'
+                    : `Seats are locked for you in ${selectedAudiScreen}:`}
+                </span>
+                {!seatLockExpired && (
+                  <span className="text-xs font-black text-slate-900 dark:text-white">
+                    {selectedCinemaSeats.join(', ') || `${passCount} Seats`}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                {!seatLockExpired ? (
+                  <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 px-3 py-1 rounded-xl border border-amber-500/30">
+                    <span className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-400">Lock Expires In:</span>
+                    <span className="font-mono text-xs font-black text-[#ff6325]">
+                      {Math.floor(seatLockSecondsRemaining / 60).toString().padStart(2, '0')}:{(seatLockSecondsRemaining % 60).toString().padStart(2, '0')}
+                    </span>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSeatLockSecondsRemaining(480);
+                      setSeatLockExpired(false);
+                      setIsSeatLockActive(true);
+                    }}
+                    className="px-3 py-1 rounded-xl bg-rose-600 text-white font-black text-[10px] uppercase cursor-pointer hover:bg-rose-700 shadow-sm"
+                  >
+                    Renew Lock (8 Mins)
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ============================================================
+             * STAGE 1: SHOWTIMES, DATE & MULTIPLEX AUDI SCHEDULE
+             * ============================================================ */}
+        {cinemaStep === 'SHOWTIMES' && (
+          <div className="space-y-6 animate-fade-in">
+            {/* 1. Show Date Quick Selector */}
+            <div>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                Select Show Date
+              </label>
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                {[0, 1, 2, 3, 4].map(offset => {
+                  const d = new Date();
+                  d.setDate(d.getDate() + offset);
+                  const dStr = d.toISOString().split('T')[0];
+                  const dayName = offset === 0 ? 'Today' : offset === 1 ? 'Tomorrow' : d.toLocaleDateString('en-US', { weekday: 'short' });
+                  const dateLabel = d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+                  const isSelected = selectedShowDate === dStr;
+
+                  return (
+                    <button
+                      key={dStr}
+                      type="button"
+                      onClick={() => setSelectedShowDate(dStr)}
+                      className={`px-4 py-2.5 rounded-2xl border text-center transition-all cursor-pointer shrink-0 ${isSelected
+                        ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md shadow-orange-500/20 font-black'
+                        : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:border-slate-300'
+                        }`}
+                    >
+                      <span className="text-[10px] uppercase font-bold block opacity-80">{dayName}</span>
+                      <span className="text-xs font-extrabold block mt-0.5">{dateLabel}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 2. Format & Audio Standard */}
+            <div>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                Experience Format & Audio Quality
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {dynamicFormats.map(fmt => {
+                  const isSelected = selectedScreenFormat === fmt.id;
+                  return (
+                    <button
+                      key={fmt.id}
+                      type="button"
+                      onClick={() => setSelectedScreenFormat(fmt.id)}
+                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${isSelected
+                        ? 'bg-[#ff6325]/10 border-[#ff6325] text-[#ff6325] shadow-xs ring-2 ring-[#ff6325]/20'
+                        : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                        }`}
+                    >
+                      <div className="flex items-center gap-1.5 font-bold text-xs">
+                        <span>{fmt.icon}</span>
+                        <span className="truncate">{fmt.label}</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 block mt-1 truncate">{fmt.sub}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 3. Showtime Bands (Audi Screenings) */}
+            <div>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                Available Showtimes (Click timing to pick seats)
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {dynamicShowtimes.map(show => (
+                  <button
+                    key={show.time}
+                    type="button"
+                    onClick={() => {
+                      setSelectedShowTime(show.time);
+                      setSelectedAudiScreen(show.audi);
+                      setCinemaStep('SEAT_COUNT');
+                    }}
+                    className="p-3.5 rounded-2xl border text-center transition-all cursor-pointer bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#ff6325] hover:bg-orange-50/30 text-slate-900 dark:text-white group hover:shadow-md"
+                  >
+                    <span className="text-base font-black block group-hover:text-[#ff6325]">{show.time}</span>
+                    <span className="text-[11px] opacity-80 block mt-0.5">{show.audi}</span>
+                    <span className={`inline-block text-[9px] font-bold px-1.5 py-0.5 rounded mt-2 ${show.status.includes('Full') ? 'bg-rose-500/15 text-rose-500' :
+                      show.status.includes('Fast') ? 'bg-amber-500/15 text-amber-500' :
+                        'bg-emerald-500/15 text-emerald-500'
+                      }`}>
+                      {show.status}
+                    </span>
+                    <span className="text-[10px] text-[#ff6325] font-extrabold block mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">Select Seats &rarr;</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================
+             * STAGE 2: HOW MANY SEATS? (BOOKMYSHOW VEHICLE/AVATAR MODAL)
+             * ============================================================ */}
+        {cinemaStep === 'SEAT_COUNT' && (
+          <div className="space-y-6 animate-fade-in py-2">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
+              <div>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>🎟️</span> How Many Seats?
+                </h3>
+                <p className="text-xs text-slate-500">{selectedAudiScreen} • {selectedShowDate} • {selectedShowTime}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCinemaStep('SHOWTIMES')}
+                className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-white px-2 py-1"
+              >
+                ← Change Time
+              </button>
+            </div>
+
+            {/* BMS Style Vehicles and Numbers Selector */}
+            <div className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap py-4">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => {
+                const icon = n === 1 ? '🚲' : n === 2 ? '🛵' : n === 3 ? '🛺' : n <= 5 ? '🚗' : '🚌';
+                const isSelected = passCount === n;
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setPassCount(n)}
+                    className={`w-12 h-14 sm:w-14 sm:h-16 rounded-2xl flex flex-col items-center justify-center transition-all cursor-pointer border ${isSelected
+                      ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-lg shadow-orange-500/30 scale-105 font-black'
+                      : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:border-[#ff6325]'
+                      }`}
+                  >
+                    <span className="text-base sm:text-lg mb-0.5">{icon}</span>
+                    <span className="text-xs sm:text-sm font-black">{n}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Available Price Tiers Preview */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+              {dynamicSeatTiers.map(tier => (
+                <div
+                  key={tier.name}
+                  onClick={() => setSelectedSeatZone(tier.name)}
+                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${selectedSeatZone === tier.name
+                    ? 'bg-[#ff6325]/10 border-[#ff6325] ring-2 ring-[#ff6325]/20'
+                    : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10'
+                    }`}
+                >
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900 dark:text-white">{tier.icon} {tier.name}</h4>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{tier.desc}</p>
+                  </div>
+                  <span className="text-sm font-black text-[#ff6325] shrink-0 ml-2">₹{tier.price}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Proceed to Seat Layout */}
+            <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-white/10">
+              <span className="text-xs font-bold text-slate-500">
+                Booking <span className="text-slate-900 dark:text-white font-extrabold">{passCount} seat{passCount > 1 ? 's' : ''}</span> under <span className="text-[#ff6325] font-extrabold">{selectedSeatZone}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  // Pre-populate adjacent seats matching count
+                  const autoSeats = Array.from({ length: passCount }, (_, i) => `C${7 + i}`);
+                  setSelectedCinemaSeats(autoSeats);
+                  setSeatLockSecondsRemaining(480);
+                  setSeatLockExpired(false);
+                  setIsSeatLockActive(true);
+                  setCinemaStep('SEAT_LAYOUT');
+                }}
+                className="px-6 py-3 rounded-xl bg-[#ff6325] hover:bg-[#e04e13] text-white font-black text-xs uppercase tracking-wider shadow-md transition-all cursor-pointer"
+              >
+                Select Seats on Layout &rarr;
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================
+             * STAGE 3: IMMERSIVE FULL THEATRE SEAT LAYOUT
+             * ============================================================ */}
+        {cinemaStep === 'SEAT_LAYOUT' && (
+          <div className="space-y-4 animate-fade-in">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-white/10 pb-3">
+              <div>
+                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>💺</span> {selectedAudiScreen} — Seat Layout
+                </h3>
+                <p className="text-xs text-slate-500">Click any seat to select or unselect. Target: {passCount} Seat{passCount > 1 ? 's' : ''}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setCinemaStep('SEAT_COUNT')}
+                  className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                >
+                  ← Change Qty ({passCount})
+                </button>
+                {/* Legend */}
+                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/20 inline-block" /> Free</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-[#ff6325] inline-block shadow-xs" /> Selected</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-500/40 border border-amber-500 inline-block" /> Held by Other</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-slate-300 dark:bg-slate-700 opacity-60 inline-block" /> Taken</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Curved Screen Bar */}
+            <div className="p-6 rounded-2xl bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 text-center">
+              <div className="w-3/4 mx-auto mb-6">
+                <div className="h-2.5 rounded-t-full bg-gradient-to-r from-transparent via-[#ff6325] to-transparent shadow-md shadow-orange-500/30" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-2">
+                  ⬇ SCREEN THIS WAY ⬇
+                </p>
+              </div>
+
+              {/* Seat Grid Rows */}
+              <div className="space-y-4 max-w-xl mx-auto overflow-x-auto pb-2">
+                {/* Row A: Recliner */}
+                <div>
+                  <div className="flex items-center justify-between text-[11px] font-extrabold text-amber-600 dark:text-amber-400 mb-1.5 px-2">
+                    <span>{reclinerTier.icon} {reclinerTier.name}</span>
+                    <span>₹{reclinerTier.price} / seat</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-[10px] font-bold text-slate-400 w-3 text-center">A</span>
+                    <div className="flex items-center gap-1.5">
+                      {['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8'].map(seatId => {
+                        const isBooked = ['A3', 'A4'].includes(seatId);
+                        const isHeldByOther = remoteLockedSeats.includes(seatId);
+                        const isSelected = selectedCinemaSeats.includes(seatId);
+                        return (
+                          <button
+                            key={seatId}
+                            type="button"
+                            disabled={isBooked || isHeldByOther}
+                            title={isHeldByOther ? `${seatId} is temporarily held by another customer` : seatId}
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedCinemaSeats(selectedCinemaSeats.filter(s => s !== seatId));
+                              } else {
+                                if (selectedCinemaSeats.length >= passCount) {
+                                  // replace oldest
+                                  setSelectedCinemaSeats([...selectedCinemaSeats.slice(1), seatId]);
+                                } else {
+                                  setSelectedCinemaSeats([...selectedCinemaSeats, seatId]);
+                                }
+                              }
+                            }}
+                            className={`w-7 h-7 rounded-lg text-[9px] font-black transition-all cursor-pointer flex items-center justify-center ${isBooked
+                              ? 'bg-slate-300 dark:bg-slate-700/60 text-slate-400 cursor-not-allowed opacity-50'
+                              : isHeldByOther
+                                ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40 cursor-not-allowed'
+                                : isSelected
+                                  ? 'bg-[#ff6325] text-white shadow-md shadow-orange-500/30 scale-105'
+                                  : 'bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/15 text-slate-700 dark:text-slate-300 hover:border-[#ff6325]'
+                              }`}
+                          >
+                            {seatId.slice(1)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Rows B, C, D: Prime */}
+                <div className="pt-2 border-t border-slate-200/60 dark:border-white/5">
+                  <div className="flex items-center justify-between text-[11px] font-extrabold text-blue-600 dark:text-blue-400 mb-1.5 px-2">
+                    <span>{primeTier.icon} {primeTier.name}</span>
+                    <span>₹{primeTier.price} / seat</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {['B', 'C', 'D'].map(row => (
+                      <div key={row} className="flex items-center justify-center gap-2">
+                        <span className="text-[10px] font-bold text-slate-400 w-3 text-center">{row}</span>
+                        <div className="flex items-center gap-1.5">
+                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => {
+                            const seatId = `${row}${num}`;
+                            const isBooked = (row === 'B' && [2, 3].includes(num)) || (row === 'C' && [4, 5].includes(num));
+                            const isHeldByOther = remoteLockedSeats.includes(seatId);
+                            const isSelected = selectedCinemaSeats.includes(seatId);
+                            return (
+                              <button
+                                key={seatId}
+                                type="button"
+                                disabled={isBooked || isHeldByOther}
+                                title={isHeldByOther ? `${seatId} is temporarily held by another customer` : seatId}
+                                onClick={() => {
+                                  if (isSelected) {
+                                    setSelectedCinemaSeats(selectedCinemaSeats.filter(s => s !== seatId));
+                                  } else {
+                                    if (selectedCinemaSeats.length >= passCount) {
+                                      setSelectedCinemaSeats([...selectedCinemaSeats.slice(1), seatId]);
+                                    } else {
+                                      setSelectedCinemaSeats([...selectedCinemaSeats, seatId]);
+                                    }
+                                  }
+                                }}
+                                className={`w-6 h-6 rounded-md text-[9px] font-black transition-all cursor-pointer flex items-center justify-center ${isBooked
+                                  ? 'bg-slate-300 dark:bg-slate-700/60 text-slate-400 cursor-not-allowed opacity-50'
+                                  : isHeldByOther
+                                    ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40 cursor-not-allowed'
+                                    : isSelected
+                                      ? 'bg-[#ff6325] text-white shadow-md shadow-orange-500/30 scale-105'
+                                      : 'bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/15 text-slate-700 dark:text-slate-300 hover:border-[#ff6325]'
+                                  }`}
+                              >
+                                {num}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Rows E, F: Classic */}
+                <div className="pt-2 border-t border-slate-200/60 dark:border-white/5">
+                  <div className="flex items-center justify-between text-[11px] font-extrabold text-slate-600 dark:text-slate-400 mb-1.5 px-2">
+                    <span>{classicTier.icon} {classicTier.name}</span>
+                    <span>₹{classicTier.price} / seat</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {['E', 'F'].map(row => (
+                      <div key={row} className="flex items-center justify-center gap-2">
+                        <span className="text-[10px] font-bold text-slate-400 w-3 text-center">{row}</span>
+                        <div className="flex items-center gap-1.5">
+                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => {
+                            const seatId = `${row}${num}`;
+                            const isBooked = (row === 'E' && [7, 8].includes(num));
+                            const isHeldByOther = remoteLockedSeats.includes(seatId);
+                            const isSelected = selectedCinemaSeats.includes(seatId);
+                            return (
+                              <button
+                                key={seatId}
+                                type="button"
+                                disabled={isBooked || isHeldByOther}
+                                title={isHeldByOther ? `${seatId} is temporarily held by another customer` : seatId}
+                                onClick={() => {
+                                  if (isSelected) {
+                                    setSelectedCinemaSeats(selectedCinemaSeats.filter(s => s !== seatId));
+                                  } else {
+                                    if (selectedCinemaSeats.length >= passCount) {
+                                      setSelectedCinemaSeats([...selectedCinemaSeats.slice(1), seatId]);
+                                    } else {
+                                      setSelectedCinemaSeats([...selectedCinemaSeats, seatId]);
+                                    }
+                                  }
+                                }}
+                                className={`w-6 h-6 rounded-md text-[9px] font-black transition-all cursor-pointer flex items-center justify-center ${isBooked
+                                  ? 'bg-slate-300 dark:bg-slate-700/60 text-slate-400 cursor-not-allowed opacity-50'
+                                  : isHeldByOther
+                                    ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40 cursor-not-allowed'
+                                    : isSelected
+                                      ? 'bg-[#ff6325] text-white shadow-md shadow-orange-500/30 scale-105'
+                                      : 'bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/15 text-slate-700 dark:text-slate-300 hover:border-[#ff6325]'
+                                  }`}
+                              >
+                                {num}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Seat Status Indicator */}
+              <div className="mt-4 pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-xs px-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-extrabold text-slate-700 dark:text-slate-200">Selected Seats:</span>
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {selectedCinemaSeats.length > 0 ? (
+                      selectedCinemaSeats.map(s => (
+                        <span key={s} className="px-2 py-0.5 rounded-md bg-[#ff6325] text-white font-black text-[10px]">
+                          {s}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-slate-400 italic">No seats clicked</span>
+                    )}
+                  </div>
+                </div>
+                <span className="text-slate-500 font-bold">
+                  {selectedCinemaSeats.length} / {passCount} Seats Selected
+                </span>
+              </div>
+            </div>
+
+            {/* Seat Layout Bottom Action Bar */}
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10">
+              <div>
+                {(() => {
+                  let ticketPrice = 0;
+                  selectedCinemaSeats.forEach(seat => {
+                    if (seat.startsWith('A')) ticketPrice += reclinerTier.price;
+                    else if (['B', 'C', 'D'].includes(seat[0])) ticketPrice += primeTier.price;
+                    else ticketPrice += classicTier.price;
+                  });
+                  if (selectedCinemaSeats.length === 0) ticketPrice = primeTier.price * passCount;
+                  return (
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Ticket Total</span>
+                      <span className="text-xl font-black text-[#ff6325]">₹{ticketPrice.toLocaleString()}</span>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCinemaStep('FNB_DRAWER')}
+                  className="px-6 py-3 rounded-xl bg-[#ff6325] hover:bg-[#e04e13] text-white font-black text-xs uppercase tracking-wider shadow-md transition-all cursor-pointer"
+                >
+                  Proceed to Grab a Bite &rarr;
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================
+             * STAGE 4: GRAB A BITE (BOOKMYSHOW GOURMET CONCESSIONS DRAWER)
+             * ============================================================ */}
+        {cinemaStep === 'FNB_DRAWER' && (
+          <div className="space-y-6 animate-fade-in py-2">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
+              <div>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>🍿</span> Grab a Bite! (Pre-order & Save 20%)
+                </h3>
+                <p className="text-xs text-slate-500">Delicious cinema popcorn, warm nachos, and beverages delivered right to your seat</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCinemaStep('SEAT_LAYOUT')}
+                className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-white"
+              >
+                ← Change Seats ({selectedCinemaSeats.join(', ')})
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {dynamicSnacks.map((snk, idx) => {
+                const isAdded = idx === 0 ? popcornComboAddon : idx === 1 ? snackNachosAddon : snackBeverageAddon;
+                const toggleFn = idx === 0 ? () => setPopcornComboAddon(!popcornComboAddon) : idx === 1 ? () => setSnackNachosAddon(!snackNachosAddon) : () => setSnackBeverageAddon(!snackBeverageAddon);
+                return (
+                  <div
+                    key={snk.id || snk.name}
+                    onClick={toggleFn}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${isAdded
+                      ? 'bg-amber-500/10 border-amber-500 ring-2 ring-amber-500/20'
+                      : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                      }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-3xl">{snk.icon}</span>
+                      <div>
+                        <h4 className="text-xs font-black text-slate-900 dark:text-white">{snk.name}</h4>
+                        <p className="text-[10px] text-slate-400 mt-0.5">{snk.desc}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between mt-4 pt-2 border-t border-slate-200/60 dark:border-white/10">
+                      <span className="text-sm font-black text-amber-600 dark:text-amber-400">+₹{snk.price}</span>
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${isAdded ? 'bg-amber-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>
+                        {isAdded ? '✓ Added' : '+ Add'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Final Order Summary & Handover to Checkout */}
+            {(() => {
+              const count = Math.max(1, selectedCinemaSeats.length);
+              let ticketPrice = 0;
+              selectedCinemaSeats.forEach(seat => {
+                if (seat.startsWith('A')) ticketPrice += reclinerTier.price;
+                else if (['B', 'C', 'D'].includes(seat[0])) ticketPrice += primeTier.price;
+                else ticketPrice += classicTier.price;
+              });
+              if (selectedCinemaSeats.length === 0) ticketPrice = primeTier.price * count;
+
+              const s0Price = dynamicSnacks[0]?.price || 240;
+              const s1Price = dynamicSnacks[1]?.price || 180;
+              const s2Price = dynamicSnacks[2]?.price || 120;
+              const fnbCost = (popcornComboAddon ? s0Price : 0) + (snackNachosAddon ? s1Price : 0) + (snackBeverageAddon ? s2Price : 0);
+              const subtotal = ticketPrice + fnbCost;
+
+              return (
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
+                  <div>
+                    <span className="text-xs font-black text-slate-900 dark:text-white block">
+                      {venueName} • {selectedAudiScreen} ({count} Ticket{count > 1 ? 's' : ''})
+                    </span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
+                      {selectedShowDate} • {selectedShowTime} • {selectedScreenFormat} • Seats: {selectedCinemaSeats.join(', ') || 'Auto-assigned'}
+                      {fnbCost > 0 ? ` • +₹${fnbCost} Concessions` : ' • No F&B added'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                    <div className="text-right">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Payable</span>
+                      <span className="text-xl font-black text-[#ff6325]">
+                        ₹{subtotal.toLocaleString()}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedService({
+                          id: `ent-pass-${Date.now()}`,
+                          name: `${activeMovie.title} — ${selectedScreenFormat}`,
+                          price: subtotal,
+                          imageUrl: activeMovie.posterUrl,
+                          metadata: {
+                            isEntertainmentBooking: true,
+                            movieTitle: activeMovie.title,
+                            moviePoster: activeMovie.posterUrl,
+                            certificate: activeMovie.certificate,
+                            runtime: activeMovie.runtime,
+                            entertainmentBooking: {
+                              movieTitle: activeMovie.title,
+                              moviePoster: activeMovie.posterUrl,
+                              venueName,
+                              category,
+                              showDate: selectedShowDate,
+                              showTime: selectedShowTime,
+                              format: selectedScreenFormat,
+                              audiScreen: selectedAudiScreen,
+                              seatZone: selectedSeatZone,
+                              seats: selectedCinemaSeats,
+                              ticketsCount: count,
+                              fnbAddons: {
+                                popcorn: popcornComboAddon,
+                                nachos: snackNachosAddon,
+                                beverage: snackBeverageAddon
+                              },
+                              totalPayable: subtotal
+                            }
+                          }
+                        });
+                        setSelectedSlot({
+                          id: `ent-slot-${Date.now()}`,
+                          timeStr: `${activeMovie.title} • ${selectedShowDate} at ${selectedShowTime} (${selectedScreenFormat})`,
+                          date: selectedShowDate,
+                          available: true
+                        });
+                        router.push('/booking/checkout');
+                      }}
+                      className="px-6 py-3 rounded-xl bg-[#ff6325] hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+                    >
+                      Book M-Ticket &rarr;
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+      </div>
+    );
+  })()
+}
+
+{/* ============================================================
+         * SECTION D8: HOME REPAIR & CLEANING VISITS (ARCHETYPE 6: HomeCall)
+         * ============================================================ */}
+{
+  isHomeCall && (
+    <div id="home-services-booking-section" className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🛠️</span> Doorstep Home Visit & Inspection
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Pay only ₹199 inspection fee upfront. Spare parts and extra labor quoted after physical check.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-900/50 text-xs font-bold">
+          <span>🛡️ BOKSPOT 30-Day Service Guarantee</span>
+        </div>
+      </div>
+
+      {/* Service Category */}
+      <div>
+        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+          Type of Issue / Service Needed
+        </label>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {['Inspection & Diagnosis', 'Major Repair / Wiring', 'Periodic Maintenance'].map(cat => (
+            <div
+              key={cat}
+              onClick={() => setHomeIssueCategory(cat)}
+              className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${homeIssueCategory === cat
+                ? 'bg-[#033266]/5 dark:bg-[#ff6325]/10 border-[#033266] dark:border-[#ff6325]'
+                : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                }`}
+            >
+              <span className="text-xs font-bold text-slate-900 dark:text-white">{cat}</span>
+              <span className="text-xs font-black text-[#033266] dark:text-[#ff6325]">₹199</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Preferred Visit Time Slot */}
+      <div>
+        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+          Select Technician Arrival Window
+        </label>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[
+            'Morning (09:00 AM - 12:00 PM)',
+            'Afternoon (01:00 PM - 04:00 PM)',
+            'Evening (04:30 PM - 07:30 PM)'
+          ].map(win => (
+            <button
+              key={win}
+              type="button"
+              onClick={() => setPreferredHomeWindow(win)}
+              className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${preferredHomeWindow === win
+                ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md'
+                : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#033266] dark:hover:border-[#ff6325] text-slate-900 dark:text-white'
+                }`}
+            >
+              <span className="text-xs font-black block">{win}</span>
+              <span className="text-[10px] opacity-75 font-semibold mt-0.5 block">Verified Professional</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Service Address Input */}
+      <div>
+        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
+          Doorstep Service Address
+        </label>
+        <input
+          type="text"
+          value={homeAddressLine}
+          onChange={(e) => setHomeAddressLine(e.target.value)}
+          placeholder="Door / Flat No., Street Name, Apartment Landmark..."
+          className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-[#033266] dark:focus:border-[#ff6325]"
+        />
+      </div>
+
+      {/* Booking Action Card */}
+      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <span className="text-xs font-black text-slate-900 dark:text-white block">
+            {homeIssueCategory}
+          </span>
+          <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
+            Arrival: {preferredHomeWindow} • ₹199 Inspection Fee
+          </span>
+        </div>
+
+        <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+          <div className="text-right">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block">Upfront Visiting Fee</span>
+            <span className="text-xl font-black text-[#033266] dark:text-[#ff6325]">₹199</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedService({
+                id: `homecall-${Date.now()}`,
+                name: `${venueName} — ${homeIssueCategory}`,
+                price: 199,
+                metadata: {
+                  homeCallBooking: {
+                    venueName,
+                    issueCategory: homeIssueCategory,
+                    arrivalWindow: preferredHomeWindow,
+                    serviceAddress: homeAddressLine || address,
+                    upfrontVisitingFee: 199
+                  }
+                }
+              });
+              setSelectedSlot({
+                id: `home-slot-${Date.now()}`,
+                timeStr: `${preferredHomeWindow} (Doorstep Visit)`,
+                date: selectedDate,
+                available: true
+              });
+              router.push('/booking/checkout');
+            }}
+            className="px-6 py-3 rounded-xl bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+          >
+            Book Doorstep Visit &rarr;
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+{/* ============================================================
          * PROPERTY HIGHLIGHTS & OVERVIEW CARD (PLACED BELOW BOOKING OPTIONS)
          * ============================================================ */}
 
 
-                    {/* ============================================================
+{/* ============================================================
          * SECTION D1: AGODA-STYLE SUB-NAV & OVERVIEW (AFTER SELECT ROOM)
          * ============================================================ */}
-                    <div className="space-y-6 mb-10">
-                      {/* 1. Agoda Sub-Navigation Bar (Removed Rooms button, Dynamic Tab Switching) */}
-                      <div className="bg-white dark:bg-[#0f1219] rounded-2xl border border-slate-200/90 dark:border-white/10 p-2 sm:px-4 shadow-2xs flex items-center justify-start overflow-x-auto custom-scrollbar">
-                        <div className="flex items-center gap-1 sm:gap-2 text-xs font-bold text-slate-600 dark:text-slate-300">
-                          <button
-                            type="button"
-                            onClick={() => setActiveSubNavTab('overview')}
-                            className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all ${activeSubNavTab === 'overview'
-                              ? 'bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border-b-2 border-[#033266] dark:border-[#ff6325] font-black'
-                              : 'hover:bg-slate-100 dark:hover:bg-slate-800'
-                              }`}
-                          >
-                            Overview
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setActiveSubNavTab('facilities')}
-                            className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all ${activeSubNavTab === 'facilities'
-                              ? 'bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border-b-2 border-[#033266] dark:border-[#ff6325] font-black'
-                              : 'hover:bg-slate-100 dark:hover:bg-slate-800'
-                              }`}
-                          >
-                            Facilities
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setActiveSubNavTab('location')}
-                            className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all ${activeSubNavTab === 'location'
-                              ? 'bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border-b-2 border-[#033266] dark:border-[#ff6325] font-black'
-                              : 'hover:bg-slate-100 dark:hover:bg-slate-800'
-                              }`}
-                          >
-                            Location
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setActiveSubNavTab('policies')}
-                            className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all ${activeSubNavTab === 'policies'
-                              ? 'bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border-b-2 border-[#033266] dark:border-[#ff6325] font-black'
-                              : 'hover:bg-slate-100 dark:hover:bg-slate-800'
-                              }`}
-                          >
-                            Policies
-                          </button>
-                          {/* Mini Space (Bag Locker) Tab: Controlled dynamically by Business toggle across all 54 categories */}
-                          {isHotelLuggageEnabled && (
-                            <button
-                              type="button"
-                              onClick={() => setActiveSubNavTab('mini-space')}
-                              className={`px-3 py-1.5 rounded-full whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 border ${activeSubNavTab === 'mini-space'
-                                ? 'bg-amber-500 text-slate-950 border-amber-500 font-black shadow-xs'
-                                : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/30'
-                                }`}
-                            >
-                              <span>🧳</span>
-                              <span className="font-bold">Mini Space (Bag Locker)</span>
-                              <span className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider ${activeSubNavTab === 'mini-space' ? 'bg-black text-amber-300' : 'bg-amber-500 text-white'
-                                }`}>
-                                Hourly
-                              </span>
-                            </button>
-                          )}
+<div className="space-y-6 mb-10">
+  {/* 1. Agoda Sub-Navigation Bar (Removed Rooms button, Dynamic Tab Switching) */}
+  <div className="bg-white dark:bg-[#0f1219] rounded-2xl border border-slate-200/90 dark:border-white/10 p-2 sm:px-4 shadow-2xs flex items-center justify-start overflow-x-auto custom-scrollbar">
+    <div className="flex items-center gap-1 sm:gap-2 text-xs font-bold text-slate-600 dark:text-slate-300">
+      <button
+        type="button"
+        onClick={() => setActiveSubNavTab('overview')}
+        className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all ${activeSubNavTab === 'overview'
+          ? 'bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border-b-2 border-[#033266] dark:border-[#ff6325] font-black'
+          : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+          }`}
+      >
+        Overview
+      </button>
+      <button
+        type="button"
+        onClick={() => setActiveSubNavTab('facilities')}
+        className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all ${activeSubNavTab === 'facilities'
+          ? 'bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border-b-2 border-[#033266] dark:border-[#ff6325] font-black'
+          : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+          }`}
+      >
+        Facilities
+      </button>
+      <button
+        type="button"
+        onClick={() => setActiveSubNavTab('location')}
+        className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all ${activeSubNavTab === 'location'
+          ? 'bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border-b-2 border-[#033266] dark:border-[#ff6325] font-black'
+          : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+          }`}
+      >
+        Location
+      </button>
+      <button
+        type="button"
+        onClick={() => setActiveSubNavTab('policies')}
+        className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-all ${activeSubNavTab === 'policies'
+          ? 'bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border-b-2 border-[#033266] dark:border-[#ff6325] font-black'
+          : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+          }`}
+      >
+        Policies
+      </button>
+      {/* Mini Space (Bag Locker) Tab: Controlled dynamically by Business toggle across all 54 categories */}
+      {isHotelLuggageEnabled && (
+        <button
+          type="button"
+          onClick={() => setActiveSubNavTab('mini-space')}
+          className={`px-3 py-1.5 rounded-full whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 border ${activeSubNavTab === 'mini-space'
+            ? 'bg-amber-500 text-slate-950 border-amber-500 font-black shadow-xs'
+            : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/30'
+            }`}
+        >
+          <span>🧳</span>
+          <span className="font-bold">Mini Space (Bag Locker)</span>
+          <span className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider ${activeSubNavTab === 'mini-space' ? 'bg-black text-amber-300' : 'bg-amber-500 text-white'
+            }`}>
+            Hourly
+          </span>
+        </button>
+      )}
+    </div>
+  </div>
+
+  {/* 2. Main Agoda Content — Header stays in place, content below switches dynamically */}
+  <div id="agoda-overview-section" className="space-y-6">
+
+    {/* TAB CONTENT: OVERVIEW (Name Card + Highlights + Staycation + About + Mini Map sidebar) */}
+    {activeSubNavTab === 'overview' && (
+      <div className="space-y-6">
+        {/* Property Identity & Address (Only in Overview) */}
+        <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-2.5">
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-md bg-rose-600 text-white text-[10px] font-black uppercase tracking-wider">
+              {finalMerchantObj.metadata?.offerBadge || 'Best Seller'}
+            </span>
+            <span className="text-xs text-amber-500 font-bold flex items-center gap-1">
+              <span>★ ★ ★ ★</span>
+              <span className="text-[10px] text-slate-400 font-semibold ml-1">BokSpot Preferred</span>
+            </span>
+          </div>
+
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+              {venueName}
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium flex items-center flex-wrap gap-1.5">
+              <span>{address || `${city || 'Chennai'}, Tamil Nadu`}</span>
+              <span>•</span>
+              <button
+                type="button"
+                onClick={() => setActiveSubNavTab('location')}
+                className="text-[#033266] dark:text-[#ff6325] font-extrabold hover:underline uppercase text-[11px] cursor-pointer"
+              >
+                SEE MAP
+              </button>
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+          {/* Left Column (8 cols) */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* Highlights */}
+            <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-4">
+              <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                Highlights
+              </h3>
+              <div className="space-y-3.5">
+                {(() => {
+                  const defaultStayHighlights = [
+                    {
+                      icon: '🍳',
+                      title: 'Great breakfast & inclusions',
+                      description: finalMerchantObj.metadata?.breakfastDetails || 'Breakfast buffet gets strong praise for its wide spread, varied choices, and fresh multi-cuisine preparations.'
+                    },
+                    {
+                      icon: '🍽️',
+                      title: 'Great food & dining',
+                      description: 'In-house multi-cuisine dining options with seafood specialties and room service options praised by guests.'
+                    },
+                    {
+                      icon: '🛎️',
+                      title: 'Professional guest services',
+                      description: 'Dedicated 24/7 front desk, warm concierge, express check-in, and personalized butler assistance.'
+                    },
+                    {
+                      icon: '✨',
+                      title: 'Sparkling clean & hygienic',
+                      description: 'Rooms are regularly sanitized and described as clean, neat, and well kept with spotless linen.'
+                    },
+                    {
+                      icon: '🏊',
+                      title: 'Top property leisure facilities',
+                      description: 'Private swimming pool, lawn garden, sun deck, and entertainment conveniences designed for staycations.'
+                    }
+                  ];
+
+                  const defaultFacilityHighlights = [
+                    {
+                      icon: '⚽',
+                      title: 'FIFA Standard Astro Turf',
+                      description: 'High-density 50mm monofilament synthetic grass with shock-absorbing rubber infill engineered for all-weather play.'
+                    },
+                    {
+                      icon: '💡',
+                      title: 'High-Mast LED Floodlights',
+                      description: 'Stadium-grade anti-glare illumination across all pitch zones ensuring seamless evening and late-night matches.'
+                    },
+                    {
+                      icon: '🚿',
+                      title: 'Player Changing Rooms & Showers',
+                      description: 'Hygienic private dressing rooms, lockers, and clean showers ready for teams before and after games.'
+                    },
+                    {
+                      icon: '🪑',
+                      title: 'Covered Team Dugouts & Spectator Seating',
+                      description: 'Weather-protected substitutes benches, scoring tables, and viewing spaces for fans and guests.'
+                    },
+                    {
+                      icon: '🚗',
+                      title: 'Dedicated Parking & Amenities',
+                      description: 'Spacious on-site two-wheeler and car parking, RO drinking water dispenser, and first-aid support.'
+                    }
+                  ];
+
+                  const activeHighlights = isFacility
+                    ? ((Array.isArray(firstSvc?.metadata?.highlights) && firstSvc.metadata.highlights.length > 0)
+                      ? firstSvc.metadata.highlights
+                      : defaultFacilityHighlights)
+                    : ((Array.isArray(finalMerchantObj.metadata?.highlights) && finalMerchantObj.metadata.highlights.length > 0)
+                      ? finalMerchantObj.metadata.highlights
+                      : defaultStayHighlights);
+
+                  return activeHighlights.map((hl: any, idx: number) => {
+                    const iconBgColors = [
+                      'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+                      'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+                      'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+                      'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400',
+                      'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
+                      'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                    ];
+                    const colorClass = iconBgColors[idx % iconBgColors.length];
+
+                    return (
+                      <div key={idx} className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg shrink-0 ${colorClass}`}>
+                          {hl.icon || '⭐'}
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="text-xs font-black text-slate-900 dark:text-white">
+                            {hl.title}
+                          </h4>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                            {hl.description}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+
+
+            {/* About Us */}
+            <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-3">
+              <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                About us
+              </h3>
+              <div className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
+                <p>
+                  {aboutText
+                    ? (isAboutExpanded || aboutText.length <= 260 ? aboutText : `${aboutText.slice(0, 260)}...`)
+                    : isFacility
+                      ? `Welcome to ${venueName}, the premier sports arena in ${city || 'Chennai'}. Featuring FIFA certified AstroTurf, floodlights, team dugouts, clean amenities, and equipment support for non-stop action.`
+                      : `Indulge in a luxurious stay at ${venueName} situated on the scenic ${city || 'Chennai'} corridor. Immerse yourself in the vibrant culture while exploring nearby beaches, entertainment hubs, and serene gardens. Experience signature hospitality, private pools, and bespoke concierge care.`}
+                </p>
+                {aboutText && aboutText.length > 260 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsAboutExpanded(!isAboutExpanded)}
+                    className="mt-2 text-xs font-extrabold text-[#033266] dark:text-[#ff6325] hover:underline cursor-pointer block"
+                  >
+                    {isAboutExpanded ? 'Show less ←‘' : 'Read more →'}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column (4 cols) Map Sidebar */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-4">
+              {/* Map Preview */}
+              {(() => {
+                const lat = finalMerchantObj.latitude || liveServices[0]?.merchantObj?.latitude;
+                const lng = finalMerchantObj.longitude || liveServices[0]?.merchantObj?.longitude;
+                const mapQuery = (lat && lng) ? `${lat},${lng}` : encodeURIComponent(address || venueName || 'Chennai');
+
+                return (
+                  <div className="relative rounded-2xl overflow-hidden border border-slate-200/90 dark:border-white/10 bg-slate-100 dark:bg-slate-800 group shadow-sm">
+                    <div className="h-40 w-full relative">
+                      <iframe
+                        title="Property Location Map"
+                        width="100%"
+                        height="100%"
+                        frameBorder="0"
+                        style={{ border: 0 }}
+                        src={`https://maps.google.com/maps?q=${mapQuery}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                        loading="lazy"
+                        allowFullScreen
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveSubNavTab('location')}
+                      className="absolute inset-0 bg-black/30 hover:bg-black/40 flex items-center justify-center transition-colors group cursor-pointer"
+                    >
+                      <span className="px-3.5 py-1.5 rounded-xl bg-white text-slate-900 font-black text-xs shadow-md group-hover:scale-105 transition-transform">
+                        SEE MAP
+                      </span>
+                    </button>
+                  </div>
+                );
+              })()}
+
+              {/* Location Score Pill */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-black text-slate-900 dark:text-white">
+                    8.2 Excellent
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/40">
+                    Top Rated Area
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                  Excellent location — situated conveniently near beaches and transport routes in {city || 'Chennai'}.
+                </p>
+              </div>
+
+              {/* Parking Tag */}
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                <span className="flex items-center gap-1.5">🅿️ Parking</span>
+                <span className="text-emerald-600 dark:text-emerald-400 uppercase font-black text-[11px]">FREE</span>
+              </div>
+
+              {/* What's Nearby Distances */}
+              {Array.isArray(finalMerchantObj.metadata?.aroundProperty) && finalMerchantObj.metadata.aroundProperty.length > 0 && (
+                <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-white/10">
+                  <span className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block tracking-wider">
+                    See nearby places
+                  </span>
+                  <div className="space-y-2">
+                    {finalMerchantObj.metadata.aroundProperty.slice(0, 4).map((item: any, idx: number) => (
+                      <div key={idx} className="flex items-center justify-between text-xs">
+                        <span className="text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[180px]">
+                          📍 {item.name || item.title}
+                        </span>
+                        <span className="text-slate-500 dark:text-slate-400 font-bold text-[11px] shrink-0">
+                          {item.distance || ''}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* TAB CONTENT: FACILITIES (Full Grid) */}
+    {activeSubNavTab === 'facilities' && (
+      <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-4">
+          <div>
+            <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+              Property Facilities & Inclusions
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Verified amenities provided directly for guests staying at {venueName}
+            </p>
+          </div>
+          <span className="px-3 py-1 rounded-full bg-[#033266]/5 dark:bg-[#ff6325]/10 text-[#033266] dark:text-[#ff6325] font-black text-xs">
+            {amenities.length} Verified Facilities
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 text-xs font-bold text-slate-700 dark:text-slate-200">
+          ... [truncated for diff preview]
+          {(amenities.length > 0 ? amenities : ['Free Wi-Fi', 'Swimming pool', 'Free parking', 'Spa & Jacuzzi', 'Front desk [24-hour]', 'Fitness center', 'Restaurants', 'Bar & Lounge', 'Air Conditioned', 'Daily Housekeeping', 'Butler Service', 'Power Backup']).map((item: string, idx: number) => (
+            <div key={idx} className="flex items-center gap-2.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 shadow-2xs">
+              <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <span className="truncate text-xs">{item}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {/* TAB CONTENT: LOCATION (Full interactive map + Directions + Places) */}
+    {activeSubNavTab === 'location' && (
+      <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-4">
+          <div>
+            <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+              Location & Nearby Landmarks
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {address || `${city || 'Chennai'}, Tamil Nadu`}
+            </p>
+          </div>
+          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/40">
+            8.2 Top Rated Location
+          </span>
+        </div>
+
+        {(() => {
+          const lat = finalMerchantObj.latitude || liveServices[0]?.merchantObj?.latitude;
+          const lng = finalMerchantObj.longitude || liveServices[0]?.merchantObj?.longitude;
+          const mapQuery = (lat && lng) ? `${lat},${lng}` : encodeURIComponent(address || venueName || 'Chennai');
+
+          return (
+            <div className="space-y-4">
+              <div className="h-64 sm:h-80 w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm relative">
+                <iframe
+                  title="Property Location Detailed Map"
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                  style={{ border: 0 }}
+                  src={`https://maps.google.com/maps?q=${mapQuery}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                  loading="lazy"
+                  allowFullScreen
+                />
+              </div>
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5">
+                <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                  Need driving navigation directly in Google Maps?
+                </span>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-[#033266] dark:bg-[#ff6325] text-white rounded-xl text-xs font-black shadow-sm hover:opacity-95 transition-opacity"
+                >
+                  Open in Google Maps →
+                </a>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Nearby Places */}
+        {Array.isArray(finalMerchantObj.metadata?.aroundProperty) && finalMerchantObj.metadata.aroundProperty.length > 0 && (
+          <div className="pt-2 space-y-3">
+            <h4 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+              Walking & Driving Distances
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {finalMerchantObj.metadata.aroundProperty.map((item: any, idx: number) => (
+                <div key={idx} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                    📍 {item.name || item.title}
+                  </span>
+                  <span className="text-xs font-extrabold text-[#033266] dark:text-[#ff6325] px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 shadow-2xs">
+                    {item.distance || ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    )}
+
+    {/* TAB CONTENT: POLICIES (Full detailed list) */}
+    {activeSubNavTab === 'policies' && (
+      <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-5">
+        <div className="border-b border-slate-100 dark:border-white/10 pb-4">
+          <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📋</span> Property Policies & Stay Rules
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Important rules and check-in guidelines for guests staying at {venueName}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700 dark:text-slate-300 font-medium">
+          {isPgStay && (
+            <>
+              <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-orange-50 dark:bg-orange-950/20 border border-orange-200/60 dark:border-orange-900/40">
+                <span className="text-[#ff6325] font-black text-sm mt-0.5">🚪</span>
+                <div>
+                  <strong className="block text-slate-900 dark:text-white">Gate Curfew & Access Timings</strong>
+                  <span>{pgGateCurfew}</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40">
+                <span className="text-blue-600 font-black text-sm mt-0.5">👥</span>
+                <div>
+                  <strong className="block text-slate-900 dark:text-white">Stay Exclusivity</strong>
+                  <span>{pgGenderType === 'ladies' ? 'Ladies Only PG (Strictly Female Guests)' : pgGenderType === 'gents' ? 'Gents Only PG (Strictly Male Guests)' : 'Unisex / Coliving Community'}</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40">
+                <span className="text-emerald-600 font-black text-sm mt-0.5">🍲</span>
+                <div>
+                  <strong className="block text-slate-900 dark:text-white">Food / Mess Policy</strong>
+                  <span>{pgFoodIncluded ? '3 Daily Meals Included with optional food exclusion discount' : 'Self-Cooking & external food allowed'}</span>
+                </div>
+              </div>
+            </>
+          )}
+          {(Array.isArray(finalMerchantObj.metadata?.policies) && finalMerchantObj.metadata.policies.length > 0
+            ? finalMerchantObj.metadata.policies
+            : [
+              'Valid Government ID required for all guests at check-in (Aadhaar / Passport / DL)',
+              `Standard Check-in is ${finalMerchantObj.metadata?.checkInTime || '12:00 PM'} and Check-out is ${finalMerchantObj.metadata?.checkOutTime || '11:00 AM'}`,
+              'Couples and families are warmly welcome',
+              'Smoking strictly prohibited in air-conditioned suites and indoor areas',
+              'Pets permitted in designated private villa lawns with prior intimation',
+              'Quiet hours observed after 10:30 PM for guest relaxation'
+            ]
+          ).map((policy: string, idx: number) => (
+            <div key={idx} className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5">
+              <span className="text-[#033266] dark:text-[#ff6325] font-black text-sm mt-0.5">•</span>
+              <span className="leading-relaxed">{policy}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {/* TAB CONTENT: MINI SPACE (Luggage & Cloakroom Temporary Drop) */}
+    {isHotelLuggageEnabled && activeSubNavTab === 'mini-space' && (
+      <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-white/10 pb-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                BokSpot Cloakroom Network
+              </span>
+              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                <CheckCircle2 size={13} /> CCTV Monitored & Insured
+              </span>
+            </div>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <span>🧳</span> Mini Space — Luggage & Item Drop (Bag Locker)
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xl">
+              Traveling or waiting for your train/flight? Safely store your luggage, backpacks, and personal baggage at {venueName} frontdesk and collect anytime with your instant QR gate pass.
+            </p>
+          </div>
+
+          <div className="text-right shrink-0 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 p-3 rounded-2xl">
+            <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider block">Storage Tariff</span>
+            <div className="flex items-baseline justify-end gap-1">
+              <span className="text-[11px] font-bold text-slate-500">From</span>
+              <span className="text-xl font-black text-amber-600 dark:text-amber-400">₹{getCategoryRate('handbag', 0.5)}</span>
+              <span className="text-xs text-slate-500 font-semibold">/hr</span>
+            </div>
+            <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-extrabold block mt-0.5">
+              Full-Day Cap @ ₹{hotelLuggageDayPassRate}/24h
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
+          {/* Left: Input Selection */}
+          <div className="md:col-span-2 space-y-4">
+            {/* Multi-Item Luggage Selection (Mix and match Handbags, Backpacks, Trolleys, Boxes, Bulky items) */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 block tracking-wider">
+                  Select Your Bags & Luggage (Mixed Items Allowed)
+                </label>
+                <span className="text-[11px] font-extrabold text-amber-600 dark:text-amber-400">
+                  Total: {miniSpaceItemCounts.handbag + miniSpaceItemCounts.backpack + miniSpaceItemCounts.standard + miniSpaceItemCounts.box + miniSpaceItemCounts.bulky} Items
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { id: 'handbag' as const, label: 'Handbag', sub: 'Pouch, sleeves', icon: '👛', multiplier: 0.5, weight: 'Upto 3 kg', slotWeight: 0.5 },
+                  { id: 'backpack' as const, label: 'Backpack', sub: 'Laptop & kit bags', icon: '🎒', multiplier: 0.8, weight: '5-8 kg', slotWeight: 1 },
+                  { id: 'standard' as const, label: 'Trolley Bag', sub: 'Cabin or check-in', icon: '🧳', multiplier: 1.0, weight: '10-20 kg', slotWeight: 1 },
+                  { id: 'box' as const, label: 'Carton Box', sub: 'Parcels, goods', icon: '📦', multiplier: 1.2, weight: '15-30 kg', slotWeight: 2 },
+                  { id: 'bulky' as const, label: 'Bulky Gear', sub: 'Bike gear, sports', icon: '🚲', multiplier: 1.5, weight: '30+ kg', slotWeight: 3 },
+                ].map((item) => {
+                  const count = miniSpaceItemCounts[item.id];
+                  const itemRate = getCategoryRate(item.id, item.multiplier);
+                  const isAdded = count > 0;
+
+                  return (
+                    <div
+                      key={item.id}
+                      className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 ${isAdded
+                        ? 'bg-amber-500/10 border-amber-500/80 shadow-xs ring-1 ring-amber-500/30'
+                        : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-white/10'
+                        }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="text-2xl shrink-0">{item.icon}</span>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-black text-slate-900 dark:text-white whitespace-nowrap">{item.label}</span>
+                            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded shrink-0">
+                              ₹{itemRate}/h
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block whitespace-nowrap">
+                            {item.weight} • {item.sub}
+                          </span>
                         </div>
                       </div>
 
-                      {/* 2. Main Agoda Content — Header stays in place, content below switches dynamically */}
-                      <div id="agoda-overview-section" className="space-y-6">
-
-                        {/* TAB CONTENT: OVERVIEW (Name Card + Highlights + Staycation + About + Mini Map sidebar) */}
-                        {activeSubNavTab === 'overview' && (
-                          <div className="space-y-6">
-                            {/* Property Identity & Address (Only in Overview) */}
-                            <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-2.5">
-                              <div className="flex items-center gap-2">
-                                <span className="px-2.5 py-0.5 rounded-md bg-rose-600 text-white text-[10px] font-black uppercase tracking-wider">
-                                  {finalMerchantObj.metadata?.offerBadge || 'Best Seller'}
-                                </span>
-                                <span className="text-xs text-amber-500 font-bold flex items-center gap-1">
-                                  <span>★ ★ ★ ★</span>
-                                  <span className="text-[10px] text-slate-400 font-semibold ml-1">BokSpot Preferred</span>
-                                </span>
-                              </div>
-
-                              <div>
-                                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                                  {venueName}
-                                </h2>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium flex items-center flex-wrap gap-1.5">
-                                  <span>{address || `${city || 'Chennai'}, Tamil Nadu`}</span>
-                                  <span>•</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => setActiveSubNavTab('location')}
-                                    className="text-[#033266] dark:text-[#ff6325] font-extrabold hover:underline uppercase text-[11px] cursor-pointer"
-                                  >
-                                    SEE MAP
-                                  </button>
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-
-                              {/* Left Column (8 cols) */}
-                              <div className="lg:col-span-8 space-y-6">
-                                {/* Highlights */}
-                                <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-4">
-                                  <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
-                                    Highlights
-                                  </h3>
-                                  <div className="space-y-3.5">
-                                    {(() => {
-                                      const defaultStayHighlights = [
-                                        {
-                                          icon: '🍳',
-                                          title: 'Great breakfast & inclusions',
-                                          description: finalMerchantObj.metadata?.breakfastDetails || 'Breakfast buffet gets strong praise for its wide spread, varied choices, and fresh multi-cuisine preparations.'
-                                        },
-                                        {
-                                          icon: '🍽️',
-                                          title: 'Great food & dining',
-                                          description: 'In-house multi-cuisine dining options with seafood specialties and room service options praised by guests.'
-                                        },
-                                        {
-                                          icon: '🛎️',
-                                          title: 'Professional guest services',
-                                          description: 'Dedicated 24/7 front desk, warm concierge, express check-in, and personalized butler assistance.'
-                                        },
-                                        {
-                                          icon: '✨',
-                                          title: 'Sparkling clean & hygienic',
-                                          description: 'Rooms are regularly sanitized and described as clean, neat, and well kept with spotless linen.'
-                                        },
-                                        {
-                                          icon: '🏊',
-                                          title: 'Top property leisure facilities',
-                                          description: 'Private swimming pool, lawn garden, sun deck, and entertainment conveniences designed for staycations.'
-                                        }
-                                      ];
-
-                                      const defaultFacilityHighlights = [
-                                        {
-                                          icon: '⚽',
-                                          title: 'FIFA Standard Astro Turf',
-                                          description: 'High-density 50mm monofilament synthetic grass with shock-absorbing rubber infill engineered for all-weather play.'
-                                        },
-                                        {
-                                          icon: '💡',
-                                          title: 'High-Mast LED Floodlights',
-                                          description: 'Stadium-grade anti-glare illumination across all pitch zones ensuring seamless evening and late-night matches.'
-                                        },
-                                        {
-                                          icon: '🚿',
-                                          title: 'Player Changing Rooms & Showers',
-                                          description: 'Hygienic private dressing rooms, lockers, and clean showers ready for teams before and after games.'
-                                        },
-                                        {
-                                          icon: '🪑',
-                                          title: 'Covered Team Dugouts & Spectator Seating',
-                                          description: 'Weather-protected substitutes benches, scoring tables, and viewing spaces for fans and guests.'
-                                        },
-                                        {
-                                          icon: '🚗',
-                                          title: 'Dedicated Parking & Amenities',
-                                          description: 'Spacious on-site two-wheeler and car parking, RO drinking water dispenser, and first-aid support.'
-                                        }
-                                      ];
-
-                                      const activeHighlights = isFacility
-                                        ? ((Array.isArray(firstSvc?.metadata?.highlights) && firstSvc.metadata.highlights.length > 0)
-                                          ? firstSvc.metadata.highlights
-                                          : defaultFacilityHighlights)
-                                        : ((Array.isArray(finalMerchantObj.metadata?.highlights) && finalMerchantObj.metadata.highlights.length > 0)
-                                          ? finalMerchantObj.metadata.highlights
-                                          : defaultStayHighlights);
-
-                                      return activeHighlights.map((hl: any, idx: number) => {
-                                        const iconBgColors = [
-                                          'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-                                          'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-                                          'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-                                          'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400',
-                                          'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
-                                          'bg-rose-500/10 text-rose-600 dark:text-rose-400'
-                                        ];
-                                        const colorClass = iconBgColors[idx % iconBgColors.length];
-
-                                        return (
-                                          <div key={idx} className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5">
-                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg shrink-0 ${colorClass}`}>
-                                              {hl.icon || '⭐'}
-                                            </div>
-                                            <div className="min-w-0">
-                                              <h4 className="text-xs font-black text-slate-900 dark:text-white">
-                                                {hl.title}
-                                              </h4>
-                                              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                                                {hl.description}
-                                              </p>
-                                            </div>
-                                          </div>
-                                        );
-                                      });
-                                    })()}
-                                  </div>
-                                </div>
-
-
-                                {/* About Us */}
-                                <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-3">
-                                  <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                                    About us
-                                  </h3>
-                                  <div className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
-                                    <p>
-                                      {aboutText
-                                        ? (isAboutExpanded || aboutText.length <= 260 ? aboutText : `${aboutText.slice(0, 260)}...`)
-                                        : isFacility
-                                          ? `Welcome to ${venueName}, the premier sports arena in ${city || 'Chennai'}. Featuring FIFA certified AstroTurf, floodlights, team dugouts, clean amenities, and equipment support for non-stop action.`
-                                          : `Indulge in a luxurious stay at ${venueName} situated on the scenic ${city || 'Chennai'} corridor. Immerse yourself in the vibrant culture while exploring nearby beaches, entertainment hubs, and serene gardens. Experience signature hospitality, private pools, and bespoke concierge care.`}
-                                    </p>
-                                    {aboutText && aboutText.length > 260 && (
-                                      <button
-                                        type="button"
-                                        onClick={() => setIsAboutExpanded(!isAboutExpanded)}
-                                        className="mt-2 text-xs font-extrabold text-[#033266] dark:text-[#ff6325] hover:underline cursor-pointer block"
-                                      >
-                                        {isAboutExpanded ? 'Show less ←‘' : 'Read more →'}
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Right Column (4 cols) Map Sidebar */}
-                              <div className="lg:col-span-4 space-y-6">
-                                <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-4">
-                                  {/* Map Preview */}
-                                  {(() => {
-                                    const lat = finalMerchantObj.latitude || liveServices[0]?.merchantObj?.latitude;
-                                    const lng = finalMerchantObj.longitude || liveServices[0]?.merchantObj?.longitude;
-                                    const mapQuery = (lat && lng) ? `${lat},${lng}` : encodeURIComponent(address || venueName || 'Chennai');
-
-                                    return (
-                                      <div className="relative rounded-2xl overflow-hidden border border-slate-200/90 dark:border-white/10 bg-slate-100 dark:bg-slate-800 group shadow-sm">
-                                        <div className="h-40 w-full relative">
-                                          <iframe
-                                            title="Property Location Map"
-                                            width="100%"
-                                            height="100%"
-                                            frameBorder="0"
-                                            style={{ border: 0 }}
-                                            src={`https://maps.google.com/maps?q=${mapQuery}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
-                                            loading="lazy"
-                                            allowFullScreen
-                                          />
-                                        </div>
-                                        <button
-                                          type="button"
-                                          onClick={() => setActiveSubNavTab('location')}
-                                          className="absolute inset-0 bg-black/30 hover:bg-black/40 flex items-center justify-center transition-colors group cursor-pointer"
-                                        >
-                                          <span className="px-3.5 py-1.5 rounded-xl bg-white text-slate-900 font-black text-xs shadow-md group-hover:scale-105 transition-transform">
-                                            SEE MAP
-                                          </span>
-                                        </button>
-                                      </div>
-                                    );
-                                  })()}
-
-                                  {/* Location Score Pill */}
-                                  <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-sm font-black text-slate-900 dark:text-white">
-                                        8.2 Excellent
-                                      </span>
-                                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/40">
-                                        Top Rated Area
-                                      </span>
-                                    </div>
-                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                                      Excellent location — situated conveniently near beaches and transport routes in {city || 'Chennai'}.
-                                    </p>
-                                  </div>
-
-                                  {/* Parking Tag */}
-                                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
-                                    <span className="flex items-center gap-1.5">🅿️ Parking</span>
-                                    <span className="text-emerald-600 dark:text-emerald-400 uppercase font-black text-[11px]">FREE</span>
-                                  </div>
-
-                                  {/* What's Nearby Distances */}
-                                  {Array.isArray(finalMerchantObj.metadata?.aroundProperty) && finalMerchantObj.metadata.aroundProperty.length > 0 && (
-                                    <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-white/10">
-                                      <span className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block tracking-wider">
-                                        See nearby places
-                                      </span>
-                                      <div className="space-y-2">
-                                        {finalMerchantObj.metadata.aroundProperty.slice(0, 4).map((item: any, idx: number) => (
-                                          <div key={idx} className="flex items-center justify-between text-xs">
-                                            <span className="text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[180px]">
-                                              📍 {item.name || item.title}
-                                            </span>
-                                            <span className="text-slate-500 dark:text-slate-400 font-bold text-[11px] shrink-0">
-                                              {item.distance || ''}
-                                            </span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* TAB CONTENT: FACILITIES (Full Grid) */}
-                        {activeSubNavTab === 'facilities' && (
-                          <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-6">
-                            <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-4">
-                              <div>
-                                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
-                                  Property Facilities & Inclusions
-                                </h3>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                  Verified amenities provided directly for guests staying at {venueName}
-                                </p>
-                              </div>
-                              <span className="px-3 py-1 rounded-full bg-[#033266]/5 dark:bg-[#ff6325]/10 text-[#033266] dark:text-[#ff6325] font-black text-xs">
-                                {amenities.length} Verified Facilities
-                              </span>
-                            </div>
-
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 text-xs font-bold text-slate-700 dark:text-slate-200">
-                              ... [truncated for diff preview]
-                              {(amenities.length > 0 ? amenities : ['Free Wi-Fi', 'Swimming pool', 'Free parking', 'Spa & Jacuzzi', 'Front desk [24-hour]', 'Fitness center', 'Restaurants', 'Bar & Lounge', 'Air Conditioned', 'Daily Housekeeping', 'Butler Service', 'Power Backup']).map((item: string, idx: number) => (
-                                <div key={idx} className="flex items-center gap-2.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 shadow-2xs">
-                                  <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                                  <span className="truncate text-xs">{item}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* TAB CONTENT: LOCATION (Full interactive map + Directions + Places) */}
-                        {activeSubNavTab === 'location' && (
-                          <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-6">
-                            <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-4">
-                              <div>
-                                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
-                                  Location & Nearby Landmarks
-                                </h3>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                  {address || `${city || 'Chennai'}, Tamil Nadu`}
-                                </p>
-                              </div>
-                              <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/40">
-                                8.2 Top Rated Location
-                              </span>
-                            </div>
-
-                            {(() => {
-                              const lat = finalMerchantObj.latitude || liveServices[0]?.merchantObj?.latitude;
-                              const lng = finalMerchantObj.longitude || liveServices[0]?.merchantObj?.longitude;
-                              const mapQuery = (lat && lng) ? `${lat},${lng}` : encodeURIComponent(address || venueName || 'Chennai');
-
-                              return (
-                                <div className="space-y-4">
-                                  <div className="h-64 sm:h-80 w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm relative">
-                                    <iframe
-                                      title="Property Location Detailed Map"
-                                      width="100%"
-                                      height="100%"
-                                      frameBorder="0"
-                                      style={{ border: 0 }}
-                                      src={`https://maps.google.com/maps?q=${mapQuery}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
-                                      loading="lazy"
-                                      allowFullScreen
-                                    />
-                                  </div>
-                                  <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5">
-                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
-                                      Need driving navigation directly in Google Maps?
-                                    </span>
-                                    <a
-                                      href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="px-4 py-2 bg-[#033266] dark:bg-[#ff6325] text-white rounded-xl text-xs font-black shadow-sm hover:opacity-95 transition-opacity"
-                                    >
-                                      Open in Google Maps →
-                                    </a>
-                                  </div>
-                                </div>
-                              );
-                            })()}
-
-                            {/* Nearby Places */}
-                            {Array.isArray(finalMerchantObj.metadata?.aroundProperty) && finalMerchantObj.metadata.aroundProperty.length > 0 && (
-                              <div className="pt-2 space-y-3">
-                                <h4 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">
-                                  Walking & Driving Distances
-                                </h4>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                  {finalMerchantObj.metadata.aroundProperty.map((item: any, idx: number) => (
-                                    <div key={idx} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5">
-                                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
-                                        📍 {item.name || item.title}
-                                      </span>
-                                      <span className="text-xs font-extrabold text-[#033266] dark:text-[#ff6325] px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 shadow-2xs">
-                                        {item.distance || ''}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* TAB CONTENT: POLICIES (Full detailed list) */}
-                        {activeSubNavTab === 'policies' && (
-                          <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-5">
-                            <div className="border-b border-slate-100 dark:border-white/10 pb-4">
-                              <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-                                <span>📋</span> Property Policies & Stay Rules
-                              </h3>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                Important rules and check-in guidelines for guests staying at {venueName}
-                              </p>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700 dark:text-slate-300 font-medium">
-                              {isPgStay && (
-                                <>
-                                  <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-orange-50 dark:bg-orange-950/20 border border-orange-200/60 dark:border-orange-900/40">
-                                    <span className="text-[#ff6325] font-black text-sm mt-0.5">🚪</span>
-                                    <div>
-                                      <strong className="block text-slate-900 dark:text-white">Gate Curfew & Access Timings</strong>
-                                      <span>{pgGateCurfew}</span>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40">
-                                    <span className="text-blue-600 font-black text-sm mt-0.5">👥</span>
-                                    <div>
-                                      <strong className="block text-slate-900 dark:text-white">Stay Exclusivity</strong>
-                                      <span>{pgGenderType === 'ladies' ? 'Ladies Only PG (Strictly Female Guests)' : pgGenderType === 'gents' ? 'Gents Only PG (Strictly Male Guests)' : 'Unisex / Coliving Community'}</span>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40">
-                                    <span className="text-emerald-600 font-black text-sm mt-0.5">🍲</span>
-                                    <div>
-                                      <strong className="block text-slate-900 dark:text-white">Food / Mess Policy</strong>
-                                      <span>{pgFoodIncluded ? '3 Daily Meals Included with optional food exclusion discount' : 'Self-Cooking & external food allowed'}</span>
-                                    </div>
-                                  </div>
-                                </>
-                              )}
-                              {(Array.isArray(finalMerchantObj.metadata?.policies) && finalMerchantObj.metadata.policies.length > 0
-                                ? finalMerchantObj.metadata.policies
-                                : [
-                                  'Valid Government ID required for all guests at check-in (Aadhaar / Passport / DL)',
-                                  `Standard Check-in is ${finalMerchantObj.metadata?.checkInTime || '12:00 PM'} and Check-out is ${finalMerchantObj.metadata?.checkOutTime || '11:00 AM'}`,
-                                  'Couples and families are warmly welcome',
-                                  'Smoking strictly prohibited in air-conditioned suites and indoor areas',
-                                  'Pets permitted in designated private villa lawns with prior intimation',
-                                  'Quiet hours observed after 10:30 PM for guest relaxation'
-                                ]
-                              ).map((policy: string, idx: number) => (
-                                <div key={idx} className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5">
-                                  <span className="text-[#033266] dark:text-[#ff6325] font-black text-sm mt-0.5">•</span>
-                                  <span className="leading-relaxed">{policy}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* TAB CONTENT: MINI SPACE (Luggage & Cloakroom Temporary Drop) */}
-                        {isHotelLuggageEnabled && activeSubNavTab === 'mini-space' && (
-                          <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs space-y-6">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-white/10 pb-4">
-                              <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                                    BokSpot Cloakroom Network
-                                  </span>
-                                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-                                    <CheckCircle2 size={13} /> CCTV Monitored & Insured
-                                  </span>
-                                </div>
-                                <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                                  <span>🧳</span> Mini Space — Luggage & Item Drop (Bag Locker)
-                                </h3>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xl">
-                                  Traveling or waiting for your train/flight? Safely store your luggage, backpacks, and personal baggage at {venueName} frontdesk and collect anytime with your instant QR gate pass.
-                                </p>
-                              </div>
-
-                              <div className="text-right shrink-0 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 p-3 rounded-2xl">
-                                <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider block">Storage Tariff</span>
-                                <div className="flex items-baseline justify-end gap-1">
-                                  <span className="text-[11px] font-bold text-slate-500">From</span>
-                                  <span className="text-xl font-black text-amber-600 dark:text-amber-400">₹{getCategoryRate('handbag', 0.5)}</span>
-                                  <span className="text-xs text-slate-500 font-semibold">/hr</span>
-                                </div>
-                                <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-extrabold block mt-0.5">
-                                  Full-Day Cap @ ₹{hotelLuggageDayPassRate}/24h
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
-                              {/* Left: Input Selection */}
-                              <div className="md:col-span-2 space-y-4">
-                                {/* Multi-Item Luggage Selection (Mix and match Handbags, Backpacks, Trolleys, Boxes, Bulky items) */}
-                                <div>
-                                  <div className="flex items-center justify-between mb-2">
-                                    <label className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 block tracking-wider">
-                                      Select Your Bags & Luggage (Mixed Items Allowed)
-                                    </label>
-                                    <span className="text-[11px] font-extrabold text-amber-600 dark:text-amber-400">
-                                      Total: {miniSpaceItemCounts.handbag + miniSpaceItemCounts.backpack + miniSpaceItemCounts.standard + miniSpaceItemCounts.box + miniSpaceItemCounts.bulky} Items
-                                    </span>
-                                  </div>
-
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    {[
-                                      { id: 'handbag' as const, label: 'Handbag', sub: 'Pouch, sleeves', icon: '👛', multiplier: 0.5, weight: 'Upto 3 kg', slotWeight: 0.5 },
-                                      { id: 'backpack' as const, label: 'Backpack', sub: 'Laptop & kit bags', icon: '🎒', multiplier: 0.8, weight: '5-8 kg', slotWeight: 1 },
-                                      { id: 'standard' as const, label: 'Trolley Bag', sub: 'Cabin or check-in', icon: '🧳', multiplier: 1.0, weight: '10-20 kg', slotWeight: 1 },
-                                      { id: 'box' as const, label: 'Carton Box', sub: 'Parcels, goods', icon: '📦', multiplier: 1.2, weight: '15-30 kg', slotWeight: 2 },
-                                      { id: 'bulky' as const, label: 'Bulky Gear', sub: 'Bike gear, sports', icon: '🚲', multiplier: 1.5, weight: '30+ kg', slotWeight: 3 },
-                                    ].map((item) => {
-                                      const count = miniSpaceItemCounts[item.id];
-                                      const itemRate = getCategoryRate(item.id, item.multiplier);
-                                      const isAdded = count > 0;
-
-                                      return (
-                                        <div
-                                          key={item.id}
-                                          className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 ${isAdded
-                                            ? 'bg-amber-500/10 border-amber-500/80 shadow-xs ring-1 ring-amber-500/30'
-                                            : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-white/10'
-                                            }`}
-                                        >
-                                          <div className="flex items-center gap-2.5 min-w-0">
-                                            <span className="text-2xl shrink-0">{item.icon}</span>
-                                            <div className="min-w-0">
-                                              <div className="flex items-center gap-1.5 flex-wrap">
-                                                <span className="text-xs font-black text-slate-900 dark:text-white whitespace-nowrap">{item.label}</span>
-                                                <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded shrink-0">
-                                                  ₹{itemRate}/h
-                                                </span>
-                                              </div>
-                                              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block whitespace-nowrap">
-                                                {item.weight} • {item.sub}
-                                              </span>
-                                            </div>
-                                          </div>
-
-                                          {/* Stepper for this specific item type */}
-                                          <div className="flex items-center gap-1 shrink-0 bg-white dark:bg-slate-700/80 p-1 rounded-xl border border-slate-200 dark:border-white/10 shadow-2xs">
-                                            <button
-                                              type="button"
-                                              disabled={count <= 0}
-                                              onClick={() => setMiniSpaceItemCounts(prev => ({ ...prev, [item.id]: Math.max(0, prev[item.id] - 1) }))}
-                                              className="w-6 h-6 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center font-black text-xs disabled:opacity-30 cursor-pointer"
-                                            >
-                                              -
-                                            </button>
-                                            <span className="w-4 text-center font-black text-xs text-slate-900 dark:text-white">
-                                              {count}
-                                            </span>
-                                            <button
-                                              type="button"
-                                              disabled={count >= 10}
-                                              onClick={() => setMiniSpaceItemCounts(prev => ({ ...prev, [item.id]: Math.min(10, prev[item.id] + 1) }))}
-                                              className="w-6 h-6 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center font-black text-xs cursor-pointer"
-                                            >
-                                              +
-                                            </button>
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                  {/* Storage Duration Stepper with total hourly rate */}
-                                  {(() => {
-                                    const handbagRate = getCategoryRate('handbag', 0.5);
-                                    const backpackRate = getCategoryRate('backpack', 0.8);
-                                    const standardRate = getCategoryRate('standard', 1.0);
-                                    const boxRate = getCategoryRate('box', 1.2);
-                                    const bulkyRate = getCategoryRate('bulky', 1.5);
-
-                                    const totalHourly =
-                                      (miniSpaceItemCounts.handbag * handbagRate) +
-                                      (miniSpaceItemCounts.backpack * backpackRate) +
-                                      (miniSpaceItemCounts.standard * standardRate) +
-                                      (miniSpaceItemCounts.box * boxRate) +
-                                      (miniSpaceItemCounts.bulky * bulkyRate);
-
-                                    return (
-                                      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 space-y-2">
-                                        <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-200/50 dark:border-white/5">
-                                          <label className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 block tracking-wider">
-                                            Storage Duration
-                                          </label>
-                                          <span className="text-[10px] text-amber-600 dark:text-amber-400 font-extrabold whitespace-nowrap bg-amber-500/10 px-2 py-0.5 rounded-md">
-                                            Combined Rate: ₹{totalHourly}/hr
-                                          </span>
-                                        </div>
-                                        <div className="flex items-center justify-between pt-1">
-                                          <div>
-                                            <span className="text-sm font-black text-slate-900 dark:text-white block">
-                                              {miniSpaceHours} {miniSpaceHours > 1 ? 'Hours' : 'Hour'}
-                                            </span>
-                                            <span className="text-[10px] text-slate-400 font-semibold block">
-                                              Flexible Hourly Slot (1 - 24 hrs)
-                                            </span>
-                                          </div>
-                                          <div className="flex items-center gap-2">
-                                            <button
-                                              type="button"
-                                              disabled={miniSpaceHours <= 1}
-                                              onClick={() => setMiniSpaceHours(Math.max(1, miniSpaceHours - 1))}
-                                              className="w-8 h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-700 hover:bg-slate-100 flex items-center justify-center font-black disabled:opacity-30 cursor-pointer"
-                                            >
-                                              -
-                                            </button>
-                                            <span className="w-8 text-center font-black text-sm">{miniSpaceHours}h</span>
-                                            <button
-                                              type="button"
-                                              disabled={miniSpaceHours >= 24}
-                                              onClick={() => setMiniSpaceHours(Math.min(24, miniSpaceHours + 1))}
-                                              className="w-8 h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-700 hover:bg-slate-100 flex items-center justify-center font-black cursor-pointer"
-                                            >
-                                              +
-                                            </button>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    );
-                                  })()}
-
-                                  {/* Luggage Security & Facility Note */}
-                                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center text-lg font-black shrink-0">
-                                      🛡️
-                                    </div>
-                                    <div>
-                                      <span className="text-xs font-black text-slate-900 dark:text-white block">CCTV & Tamper Sealed</span>
-                                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5 leading-snug">
-                                        Each bag receives an individual tamper-proof numerical barcode tag & 24/7 bell desk guard protection.
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Drop-off Date & Handover Time Selector Card */}
-                                <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 space-y-4">
-                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/80 dark:border-white/10 pb-3">
-                                    <div>
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-base">📅</span>
-                                        <span className="text-xs uppercase font-black text-slate-900 dark:text-white tracking-wider">
-                                          Luggage Handover Date & Time
-                                        </span>
-                                      </div>
-                                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                        Frontdesk bell desk operates 24x7. Select the exact date & time you will arrive to drop your bags.
-                                      </p>
-                                    </div>
-
-                                    {/* Live Auto Pick-up calculation badge */}
-                                    {(() => {
-                                      const h = parseInt(miniSpaceDropHour, 10);
-                                      const m = parseInt(miniSpaceDropMinute, 10);
-                                      let h24 = miniSpaceDropPeriod === 'PM' ? (h === 12 ? 12 : h + 12) : (h === 12 ? 0 : h);
-                                      const totalH = (h24 + miniSpaceHours) % 24;
-                                      const pickPeriod = totalH >= 12 ? 'PM' : 'AM';
-                                      const displayH = totalH % 12 || 12;
-                                      const formattedPick = `${displayH}:${m < 10 ? '0' : ''}${m} ${pickPeriod}`;
-                                      return (
-                                        <div className="px-3.5 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-950 dark:text-amber-300 font-bold text-xs flex items-center justify-center gap-2 shrink-0 self-start sm:self-auto shadow-2xs">
-                                          <span className="text-[10px] text-amber-700 dark:text-amber-400 uppercase font-black tracking-wider">Est. Collection:</span>
-                                          <span className="font-black font-mono text-xs">{formattedPick}</span>
-                                        </div>
-                                      );
-                                    })()}
-                                  </div>
-
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {/* 1) Drop-off Date - Custom BokSpot Calendar */}
-                                    <div className="space-y-1.5 relative">
-                                      <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block tracking-wider">
-                                        Handover / Drop Date
-                                      </label>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const d = miniSpaceDropDate ? new Date(miniSpaceDropDate) : new Date();
-                                          setMiniSpaceCalMonth(isNaN(d.getTime()) ? new Date() : d);
-                                          setIsMiniSpaceCalOpen(!isMiniSpaceCalOpen);
-                                        }}
-                                        className="w-full bg-white dark:bg-slate-700/80 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-white flex items-center justify-between outline-none cursor-pointer transition-colors focus:border-amber-500 shadow-xs"
-                                      >
-                                        <span className="flex items-center gap-2">
-                                          <Calendar size={14} className="text-[#ff6325] shrink-0" />
-                                          <span>
-                                            {(() => {
-                                              try {
-                                                const parsed = new Date(miniSpaceDropDate);
-                                                if (isNaN(parsed.getTime())) return miniSpaceDropDate;
-                                                return parsed.toLocaleDateString('en-GB', {
-                                                  weekday: 'short',
-                                                  day: 'numeric',
-                                                  month: 'short',
-                                                  year: 'numeric'
-                                                });
-                                              } catch {
-                                                return miniSpaceDropDate;
-                                              }
-                                            })()}
-                                          </span>
-                                        </span>
-                                        <span className="flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:text-amber-700">
-                                          <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${isMiniSpaceCalOpen ? 'rotate-180 text-amber-600' : ''}`} />
-                                        </span>
-                                      </button>
-
-                                      {/* Custom Popover Calendar */}
-                                      <AnimatePresence>
-                                        {isMiniSpaceCalOpen && (
-                                          <>
-                                            <div
-                                              className="fixed inset-0 z-40"
-                                              onClick={() => setIsMiniSpaceCalOpen(false)}
-                                            />
-                                            <motion.div
-                                              initial={{ opacity: 0, y: 8, scale: 0.96 }}
-                                              animate={{ opacity: 1, y: 0, scale: 1 }}
-                                              exit={{ opacity: 0, y: 8, scale: 0.96 }}
-                                              transition={{ duration: 0.16 }}
-                                              className="absolute top-full left-0 mt-2 z-50 w-72 sm:w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-3.5 space-y-3"
-                                            >
-                                              {/* Month & Navigation Header */}
-                                              <div className="flex items-center justify-between">
-                                                <div className="font-black text-xs text-slate-800 dark:text-white">
-                                                  {miniSpaceCalMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                  <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      setMiniSpaceCalMonth(new Date(miniSpaceCalMonth.getFullYear(), miniSpaceCalMonth.getMonth() - 1, 1));
-                                                    }}
-                                                    className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 flex items-center justify-center cursor-pointer transition-colors"
-                                                  >
-                                                    <ChevronLeft size={14} />
-                                                  </button>
-                                                  <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      setMiniSpaceCalMonth(new Date(miniSpaceCalMonth.getFullYear(), miniSpaceCalMonth.getMonth() + 1, 1));
-                                                    }}
-                                                    className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 flex items-center justify-center cursor-pointer transition-colors"
-                                                  >
-                                                    <ChevronRight size={14} />
-                                                  </button>
-                                                </div>
-                                              </div>
-
-                                              {/* Days Header */}
-                                              <div className="grid grid-cols-7 text-center text-[10px] font-black text-slate-400 uppercase">
-                                                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
-                                                  <div key={day} className="py-1">{day}</div>
-                                                ))}
-                                              </div>
-
-                                              {/* Calendar Grid */}
-                                              <div className="grid grid-cols-7 gap-1 text-center text-xs">
-                                                {(() => {
-                                                  const year = miniSpaceCalMonth.getFullYear();
-                                                  const month = miniSpaceCalMonth.getMonth();
-                                                  const firstDay = new Date(year, month, 1).getDay();
-                                                  const daysInMonth = new Date(year, month + 1, 0).getDate();
-                                                  const cells = [];
-                                                  const todayObj = new Date();
-                                                  todayObj.setHours(0, 0, 0, 0);
-
-                                                  for (let i = 0; i < firstDay; i++) {
-                                                    cells.push(<div key={`empty-${i}`} className="h-8" />);
-                                                  }
-
-                                                  for (let d = 1; d <= daysInMonth; d++) {
-                                                    const cellDate = new Date(year, month, d);
-                                                    cellDate.setHours(0, 0, 0, 0);
-                                                    const isPast = cellDate < todayObj;
-                                                    const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                                                    const isSelected = miniSpaceDropDate === dStr;
-                                                    const isToday = cellDate.getTime() === todayObj.getTime();
-
-                                                    cells.push(
-                                                      <div key={d} className="flex items-center justify-center">
-                                                        <button
-                                                          type="button"
-                                                          disabled={isPast}
-                                                          onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setMiniSpaceDropDate(dStr);
-                                                            setIsMiniSpaceCalOpen(false);
-                                                          }}
-                                                          className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs transition-all ${isSelected
-                                                            ? 'bg-[#ff6325] text-white shadow-md shadow-orange-500/30 font-black'
-                                                            : isToday
-                                                              ? 'border-2 border-[#ff6325] text-[#ff6325] font-black'
-                                                              : isPast
-                                                                ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
-                                                                : 'text-slate-700 dark:text-slate-200 hover:bg-amber-500/15 hover:text-[#ff6325] cursor-pointer'
-                                                            }`}
-                                                        >
-                                                          {d}
-                                                        </button>
-                                                      </div>
-                                                    );
-                                                  }
-                                                  return cells;
-                                                })()}
-                                              </div>
-
-                                              {/* Quick Jump: Today & Close */}
-                                              <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[11px]">
-                                                <button
-                                                  type="button"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    const todayStr = new Date().toISOString().split('T')[0];
-                                                    setMiniSpaceDropDate(todayStr);
-                                                    setMiniSpaceCalMonth(new Date());
-                                                    setIsMiniSpaceCalOpen(false);
-                                                  }}
-                                                  className="font-bold text-[#ff6325] hover:underline cursor-pointer"
-                                                >
-                                                  Today
-                                                </button>
-                                                <button
-                                                  type="button"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setIsMiniSpaceCalOpen(false);
-                                                  }}
-                                                  className="font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
-                                                >
-                                                  Done
-                                                </button>
-                                              </div>
-                                            </motion.div>
-                                          </>
-                                        )}
-                                      </AnimatePresence>
-                                    </div>
-
-                                    {/* 2) Drop-off Time Custom Pickers (Hour, Minute, AM/PM) */}
-                                    <div className="space-y-1.5">
-                                      <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block tracking-wider">
-                                        Handover Time (Hour : Min : AM/PM)
-                                      </label>
-                                      <div className="flex items-center gap-2">
-                                        {/* Hour Select */}
-                                        <select
-                                          value={miniSpaceDropHour}
-                                          onChange={(e) => setMiniSpaceDropHour(e.target.value)}
-                                          className="w-1/3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-xl px-2.5 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer focus:border-amber-500 text-center"
-                                        >
-                                          {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map(hr => (
-                                            <option key={hr} value={hr}>{hr}</option>
-                                          ))}
-                                        </select>
-
-                                        <span className="font-black text-slate-400">:</span>
-
-                                        {/* Minute Select */}
-                                        <select
-                                          value={miniSpaceDropMinute}
-                                          onChange={(e) => setMiniSpaceDropMinute(e.target.value)}
-                                          className="w-1/3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-xl px-2.5 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer focus:border-amber-500 text-center"
-                                        >
-                                          {['00', '15', '30', '45'].map(min => (
-                                            <option key={min} value={min}>{min}</option>
-                                          ))}
-                                        </select>
-
-                                        {/* AM/PM Switch Buttons */}
-                                        <div className="flex rounded-xl bg-slate-200/80 dark:bg-slate-800 p-0.5 border border-slate-200 dark:border-white/10 shrink-0">
-                                          <button
-                                            type="button"
-                                            onClick={() => setMiniSpaceDropPeriod('AM')}
-                                            className={`px-2.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${miniSpaceDropPeriod === 'AM'
-                                              ? 'bg-amber-500 text-slate-950 shadow-xs'
-                                              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                                              }`}
-                                          >
-                                            AM
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() => setMiniSpaceDropPeriod('PM')}
-                                            className={`px-2.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${miniSpaceDropPeriod === 'PM'
-                                              ? 'bg-amber-500 text-slate-950 shadow-xs'
-                                              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                                              }`}
-                                          >
-                                            PM
-                                          </button>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Guest Luggage Details */}
-                                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 space-y-3">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 tracking-wider">
-                                      Luggage Details & Special Instructions
-                                    </span>
-                                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
-                                      Tagging & Luggage Protection
-                                    </span>
-                                  </div>
-
-                                  <div className="space-y-1">
-                                    <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Bag Description (Colors / Brands / Items)</label>
-                                    <input
-                                      type="text"
-                                      placeholder="e.g. 1 Blue American Tourister Trolley + 1 Black Laptop Bag"
-                                      value={miniSpaceBagDesc}
-                                      onChange={(e) => setMiniSpaceBagDesc(e.target.value)}
-                                      className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-amber-500"
-                                    />
-                                  </div>
-                                </div>
-
-                                {/* Security Guarantees */}
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-[11px] font-bold text-slate-600 dark:text-slate-300">
-                                  <div className="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40">
-                                    <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
-                                    <span>Tamper-proof seal tags</span>
-                                  </div>
-                                  <div className="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40">
-                                    <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
-                                    <span>₹10,000 Bag Guarantee</span>
-                                  </div>
-                                  <div className="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40">
-                                    <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
-                                    <span>Instant QR Pass upon checkout</span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Right: Price Summary & Book Drop Button */}
-                              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 space-y-4">
-                                <h4 className="text-xs font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider">
-                                  Cloakroom Summary
-                                </h4>
-
-                                {(() => {
-                                  const totalBags =
-                                    miniSpaceItemCounts.handbag +
-                                    miniSpaceItemCounts.backpack +
-                                    miniSpaceItemCounts.standard +
-                                    miniSpaceItemCounts.box +
-                                    miniSpaceItemCounts.bulky;
-
-                                  // Slot weights: Handbag=0.5, Backpack=1, Trolley=1.5, Box=2, Bulky=3
-                                  const requestedSlots =
-                                    (miniSpaceItemCounts.handbag * 0.5) +
-                                    (miniSpaceItemCounts.backpack * 1) +
-                                    (miniSpaceItemCounts.standard * 1.5) +
-                                    (miniSpaceItemCounts.box * 2) +
-                                    (miniSpaceItemCounts.bulky * 3);
-
-                                  // Rates configured directly by Business Owner
-                                  const handbagRate = getCategoryRate('handbag', 0.5);
-                                  const backpackRate = getCategoryRate('backpack', 0.8);
-                                  const standardRate = getCategoryRate('standard', 1.0);
-                                  const boxRate = getCategoryRate('box', 1.2);
-                                  const bulkyRate = getCategoryRate('bulky', 1.5);
-
-                                  const totalHourlyRate =
-                                    (miniSpaceItemCounts.handbag * handbagRate) +
-                                    (miniSpaceItemCounts.backpack * backpackRate) +
-                                    (miniSpaceItemCounts.standard * standardRate) +
-                                    (miniSpaceItemCounts.box * boxRate) +
-                                    (miniSpaceItemCounts.bulky * bulkyRate);
-
-                                  // Radical / Bounce Hybrid: 24-hr daily capped pricing pass per item
-                                  const maxDailyCapTotal = totalBags * hotelLuggageDayPassRate;
-                                  const standardHoursTotal = totalHourlyRate * miniSpaceHours;
-                                  // If customer stores for full day or hourly total exceeds daily cap, apply daily cap
-                                  const isDailyCapApplied = miniSpaceHours >= 6 && standardHoursTotal > maxDailyCapTotal;
-                                  const totalAmount = isDailyCapApplied ? maxDailyCapTotal : standardHoursTotal;
-
-                                  // Breakdown string for UI
-                                  const breakdownItems: string[] = [];
-                                  if (miniSpaceItemCounts.handbag > 0) breakdownItems.push(`${miniSpaceItemCounts.handbag}x Handbag`);
-                                  if (miniSpaceItemCounts.backpack > 0) breakdownItems.push(`${miniSpaceItemCounts.backpack}x Backpack`);
-                                  if (miniSpaceItemCounts.standard > 0) breakdownItems.push(`${miniSpaceItemCounts.standard}x Trolley`);
-                                  if (miniSpaceItemCounts.box > 0) breakdownItems.push(`${miniSpaceItemCounts.box}x Box`);
-                                  if (miniSpaceItemCounts.bulky > 0) breakdownItems.push(`${miniSpaceItemCounts.bulky}x Bulky`);
-
-                                  // Real-time capacity check using live bookings
-                                  const activeMerchantBookings = (bookings || []).filter((b: any) => {
-                                    const isMatch = (b.merchantId === merchantId) || (b.metadata?.miniSpace && b.merchantName === venueName);
-                                    const isConfirmed = b.status === 'CONFIRMED' || b.status === 'ACTIVE';
-                                    const isSameDate = b.date === (miniSpaceDropDate || new Date().toISOString().split('T')[0]);
-                                    return isMatch && isConfirmed && isSameDate && Boolean(b.metadata?.miniSpace);
-                                  });
-
-                                  const currentlyOccupied = activeMerchantBookings.reduce((sum: number, b: any) => {
-                                    const ms = b.metadata?.miniSpace;
-                                    if (!ms) return sum;
-                                    if (ms.requestedSlots) return sum + ms.requestedSlots;
-                                    if (ms.itemBreakdown) {
-                                      const ib = ms.itemBreakdown;
-                                      return sum +
-                                        ((ib.handbag || 0) * 0.5) +
-                                        ((ib.backpack || 0) * 1) +
-                                        ((ib.standard || 0) * 1.5) +
-                                        ((ib.box || 0) * 2) +
-                                        ((ib.bulky || 0) * 3);
-                                    }
-                                    const count = ms.bagCount || 1;
-                                    return sum + count;
-                                  }, 0);
-
-                                  const availableCapacity = Math.max(0, hotelLuggageMaxCapacity - currentlyOccupied);
-                                  const isBookingFilled = availableCapacity <= 0 || requestedSlots > availableCapacity || totalBags === 0;
-
-                                  return (
-                                    <>
-                                      <div className="space-y-2 text-xs border-b border-slate-200 dark:border-white/10 pb-3">
-                                        <div className="flex justify-between">
-                                          <span className="text-slate-500">Storage Unit</span>
-                                          <span className="font-bold text-slate-800 dark:text-slate-200">
-                                            {totalBags > 0 ? `${totalBags} Items (${breakdownItems.join(', ')})` : '0 Items Selected'} × {miniSpaceHours} hrs
-                                          </span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                          <span className="text-slate-500">Item Type</span>
-                                          <span className="font-bold text-slate-800 dark:text-slate-200 capitalize">
-                                            {totalBags > 0 ? breakdownItems.join(' + ') : 'None'}
-                                          </span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                          <span className="text-slate-500">Facility Location</span>
-                                          <span className="font-bold text-slate-800 dark:text-slate-200">Frontdesk Bell Desk</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                          <span className="text-slate-500">Capacity Status</span>
-                                          {availableCapacity <= 0 || requestedSlots > availableCapacity ? (
-                                            <span className="font-black text-rose-500">FILLED / FULL ({availableCapacity} left)</span>
-                                          ) : availableCapacity <= 3 ? (
-                                            <span className="font-black text-amber-500">Fast Filling ({availableCapacity} slots left)</span>
-                                          ) : (
-                                            <span className="font-bold text-emerald-600 dark:text-emerald-400">{availableCapacity} of {hotelLuggageMaxCapacity} Slots Available</span>
-                                          )}
-                                        </div>
-                                        <div className="flex justify-between">
-                                          <span className="text-slate-500">Security Tag Fee</span>
-                                          <span className="font-bold text-emerald-600 dark:text-emerald-400">FREE</span>
-                                        </div>
-                                      </div>
-
-                                      <div className="flex items-baseline justify-between">
-                                        <div>
-                                          <div className="flex items-center gap-1.5">
-                                            <span className="text-sm font-black text-slate-900 dark:text-white block">Total Amount</span>
-                                            {isDailyCapApplied && (
-                                              <span className="px-1.5 py-0.2 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-extrabold text-[9px] uppercase tracking-wider">
-                                                Full Day Cap Applied
-                                              </span>
-                                            )}
-                                          </div>
-                                          <span className="text-[10px] text-slate-400 font-semibold">
-                                            {isDailyCapApplied
-                                              ? `${totalBags} Items capped at ₹${hotelLuggageDayPassRate}/bag full day pass`
-                                              : `${totalBags} ${totalBags > 1 ? 'Items' : 'Item'} × ${miniSpaceHours}h @ combined ₹${totalHourlyRate}/hr`
-                                            }
-                                          </span>
-                                        </div>
-                                        <span className="text-2xl font-black text-amber-600 dark:text-amber-400">₹{totalAmount}</span>
-                                      </div>
-
-                                      {totalBags === 0 ? (
-                                        <button
-                                          type="button"
-                                          disabled
-                                          className="w-full py-3.5 rounded-xl bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-black text-xs uppercase tracking-wider cursor-not-allowed flex items-center justify-center gap-2"
-                                        >
-                                          <span>SELECT AT LEAST 1 ITEM</span>
-                                        </button>
-                                      ) : isBookingFilled ? (
-                                        <div className="space-y-2">
-                                          <button
-                                            type="button"
-                                            disabled
-                                            className="w-full py-3.5 rounded-xl bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-black text-xs uppercase tracking-wider cursor-not-allowed flex items-center justify-center gap-2 shadow-none"
-                                          >
-                                            <span>🔒 BOOKING FILLED (NO SPACE LEFT)</span>
-                                          </button>
-                                          <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 text-[11px] font-bold text-rose-600 dark:text-rose-400 text-center leading-snug">
-                                            Cloakroom is full for this time slot (Only {availableCapacity} slots left, your selection requires {requestedSlots} slots). Please reduce items or choose another date.
-                                          </div>
-                                        </div>
-                                      ) : (
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            const formattedDropTime = `${miniSpaceDropHour}:${miniSpaceDropMinute} ${miniSpaceDropPeriod}`;
-                                            const slotDate = miniSpaceDropDate || new Date().toISOString().split('T')[0];
-
-                                            setSelectedService({
-                                              id: `svc-minispace-${merchantId || 'business'}`,
-                                              name: `${venueName} — Mini Space Cloakroom`,
-                                              merchant: venueName || 'BokSpot Partner',
-                                              merchantId: merchantId || liveServices[0]?.merchantId || (merchantData as any)?.id || '',
-                                              merchantObj: merchantData || liveServices[0]?.merchantObj || { id: merchantId, name: venueName },
-                                              price: totalAmount,
-                                              basePrice: totalAmount,
-                                              currency: 'INR',
-                                              city: city || 'Chennai',
-                                              category: rawCategory || 'hotels',
-                                              duration: miniSpaceHours * 60,
-                                              metadata: {
-                                                facilityName: `${venueName} Frontdesk Cloakroom`,
-                                                merchantId: merchantId || liveServices[0]?.merchantId || (merchantData as any)?.id || '',
-                                                returnHotelUrl: `/${bookingType}/${rawCategory}/${merchantId}`,
-                                                miniSpace: {
-                                                  itemBreakdown: miniSpaceItemCounts,
-                                                  breakdownSummary: breakdownItems.join(', '),
-                                                  bagCount: totalBags,
-                                                  requestedSlots,
-                                                  durationHours: miniSpaceHours,
-                                                  hourlyRate: hotelLuggageHourlyRate,
-                                                  dropDate: slotDate,
-                                                  dropTime: formattedDropTime,
-                                                  bagDesc: miniSpaceBagDesc || breakdownItems.join(', '),
-                                                  totalAmount,
-                                                  hotelName: venueName,
-                                                  returnHotelUrl: `/${bookingType}/${rawCategory}/${merchantId}`
-                                                }
-                                              }
-                                            });
-
-                                            setSelectedSlot({
-                                              id: `slot-minispace-${Date.now()}`,
-                                              date: slotDate,
-                                              timeStr: `${formattedDropTime} (${miniSpaceHours} Hours)`,
-                                              available: true
-                                            });
-
-                                            router.push('/booking/checkout');
-                                          }}
-                                          className="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 active:scale-95 text-slate-950 font-black text-xs uppercase tracking-wider shadow-md shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer group"
-                                        >
-                                          <span>PROCEED TO CHECKOUT</span>
-                                          <span className="transition-transform group-hover:translate-x-1 text-sm font-bold">&rarr;</span>
-                                        </button>
-                                      )}
-                                      <p className="text-[10px] text-slate-500 dark:text-slate-400 text-center font-medium">
-                                        Select guest details & payment method on checkout page. Digital QR Pass generated upon confirmation.
-                                      </p>
-                                    </>
-                                  );
-                                })()}
-                              </div>
-                            </div>
-
-                            {/* 4 Easy Steps — How It Works Banner (Bounce / Stasher Style) */}
-                            <div className="mt-6 pt-6 border-t border-slate-200/80 dark:border-white/10">
-                              <div className="flex items-center gap-2 mb-3">
-                                <span className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                                  How It Works (Easy 4-Step Drop & Pick-Up)
-                                </span>
-                                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                                  ✓ Instant QR Pass
-                                </span>
-                              </div>
-
-                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                {/* Step 1 */}
-                                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-white/10 flex items-start gap-3">
-                                  <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 font-black text-sm flex items-center justify-center shrink-0">
-                                    1
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-black text-slate-900 dark:text-white block">
-                                      Show your booking
-                                    </span>
-                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                                      Present your instant digital QR code at the frontdesk counter upon arrival.
-                                    </p>
-                                  </div>
-                                </div>
-
-                                {/* Step 2 */}
-                                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-white/10 flex items-start gap-3">
-                                  <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 font-black text-sm flex items-center justify-center shrink-0">
-                                    2
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-black text-slate-900 dark:text-white block">
-                                      Bag registration
-                                    </span>
-                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                                      Staff seals & tags your bags with physical barcode seals linked to your booking.
-                                    </p>
-                                  </div>
-                                </div>
-
-                                {/* Step 3 */}
-                                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-white/10 flex items-start gap-3">
-                                  <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 font-black text-sm flex items-center justify-center shrink-0">
-                                    3
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-black text-slate-900 dark:text-white block">
-                                      Secure storage
-                                    </span>
-                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                                      Your luggage is placed in a 24/7 CCTV guarded, staff-only cloakroom vault.
-                                    </p>
-                                  </div>
-                                </div>
-
-                                {/* Step 4 */}
-                                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-white/10 flex items-start gap-3">
-                                  <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-black text-sm flex items-center justify-center shrink-0">
-                                    4
-                                  </div>
-                                  <div>
-                                    <span className="text-xs font-black text-slate-900 dark:text-white block">
-                                      Easy pick-up
-                                    </span>
-                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                                      Show your booking QR again when returning; staff verifies and returns your bags.
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
+                      {/* Stepper for this specific item type */}
+                      <div className="flex items-center gap-1 shrink-0 bg-white dark:bg-slate-700/80 p-1 rounded-xl border border-slate-200 dark:border-white/10 shadow-2xs">
+                        <button
+                          type="button"
+                          disabled={count <= 0}
+                          onClick={() => setMiniSpaceItemCounts(prev => ({ ...prev, [item.id]: Math.max(0, prev[item.id] - 1) }))}
+                          className="w-6 h-6 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center font-black text-xs disabled:opacity-30 cursor-pointer"
+                        >
+                          -
+                        </button>
+                        <span className="w-4 text-center font-black text-xs text-slate-900 dark:text-white">
+                          {count}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={count >= 10}
+                          onClick={() => setMiniSpaceItemCounts(prev => ({ ...prev, [item.id]: Math.min(10, prev[item.id] + 1) }))}
+                          className="w-6 h-6 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center font-black text-xs cursor-pointer"
+                        >
+                          +
+                        </button>
                       </div>
                     </div>
+                  );
+                })}
+              </div>
+            </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Storage Duration Stepper with total hourly rate */}
+              {(() => {
+                const handbagRate = getCategoryRate('handbag', 0.5);
+                const backpackRate = getCategoryRate('backpack', 0.8);
+                const standardRate = getCategoryRate('standard', 1.0);
+                const boxRate = getCategoryRate('box', 1.2);
+                const bulkyRate = getCategoryRate('bulky', 1.5);
 
+                const totalHourly =
+                  (miniSpaceItemCounts.handbag * handbagRate) +
+                  (miniSpaceItemCounts.backpack * backpackRate) +
+                  (miniSpaceItemCounts.standard * standardRate) +
+                  (miniSpaceItemCounts.box * boxRate) +
+                  (miniSpaceItemCounts.bulky * bulkyRate);
 
-
-
-                    {/* ============================================================
-         * SECTION E: HOUSE RULES & PROPERTY POLICIES
-         * ============================================================ */}
-                    {finalMerchantObj.metadata?.policies && finalMerchantObj.metadata.policies.length > 0 && (
-                      <div className="mt-10 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
-                        <h3 className="text-base font-extrabold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-                          <span>📋</span> House Rules & Stay Policies
-                        </h3>
-                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300 font-medium">
-                          {finalMerchantObj.metadata.policies.map((policy: string, idx: number) => (
-                            <li key={idx} className="flex items-start gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-white/5">
-                              <span className="text-[#033266] dark:text-[#ff6325] font-bold">•</span>
-                              <span>{policy}</span>
-                            </li>
-                          ))}
-                        </ul>
+                return (
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 space-y-2">
+                    <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-200/50 dark:border-white/5">
+                      <label className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 block tracking-wider">
+                        Storage Duration
+                      </label>
+                      <span className="text-[10px] text-amber-600 dark:text-amber-400 font-extrabold whitespace-nowrap bg-amber-500/10 px-2 py-0.5 rounded-md">
+                        Combined Rate: ₹{totalHourly}/hr
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between pt-1">
+                      <div>
+                        <span className="text-sm font-black text-slate-900 dark:text-white block">
+                          {miniSpaceHours} {miniSpaceHours > 1 ? 'Hours' : 'Hour'}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-semibold block">
+                          Flexible Hourly Slot (1 - 24 hrs)
+                        </span>
                       </div>
-                    )}
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={miniSpaceHours <= 1}
+                          onClick={() => setMiniSpaceHours(Math.max(1, miniSpaceHours - 1))}
+                          className="w-8 h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-700 hover:bg-slate-100 flex items-center justify-center font-black disabled:opacity-30 cursor-pointer"
+                        >
+                          -
+                        </button>
+                        <span className="w-8 text-center font-black text-sm">{miniSpaceHours}h</span>
+                        <button
+                          type="button"
+                          disabled={miniSpaceHours >= 24}
+                          onClick={() => setMiniSpaceHours(Math.min(24, miniSpaceHours + 1))}
+                          className="w-8 h-8 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-700 hover:bg-slate-100 flex items-center justify-center font-black cursor-pointer"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
                   </div>
+                );
+              })()}
 
-                  {/* Category Selection Modal */}
+              {/* Luggage Security & Facility Note */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center text-lg font-black shrink-0">
+                  🛡️
+                </div>
+                <div>
+                  <span className="text-xs font-black text-slate-900 dark:text-white block">CCTV & Tamper Sealed</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5 leading-snug">
+                    Each bag receives an individual tamper-proof numerical barcode tag & 24/7 bell desk guard protection.
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Drop-off Date & Handover Time Selector Card */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/80 dark:border-white/10 pb-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">📅</span>
+                    <span className="text-xs uppercase font-black text-slate-900 dark:text-white tracking-wider">
+                      Luggage Handover Date & Time
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Frontdesk bell desk operates 24x7. Select the exact date & time you will arrive to drop your bags.
+                  </p>
+                </div>
+
+                {/* Live Auto Pick-up calculation badge */}
+                {(() => {
+                  const h = parseInt(miniSpaceDropHour, 10);
+                  const m = parseInt(miniSpaceDropMinute, 10);
+                  let h24 = miniSpaceDropPeriod === 'PM' ? (h === 12 ? 12 : h + 12) : (h === 12 ? 0 : h);
+                  const totalH = (h24 + miniSpaceHours) % 24;
+                  const pickPeriod = totalH >= 12 ? 'PM' : 'AM';
+                  const displayH = totalH % 12 || 12;
+                  const formattedPick = `${displayH}:${m < 10 ? '0' : ''}${m} ${pickPeriod}`;
+                  return (
+                    <div className="px-3.5 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-950 dark:text-amber-300 font-bold text-xs flex items-center justify-center gap-2 shrink-0 self-start sm:self-auto shadow-2xs">
+                      <span className="text-[10px] text-amber-700 dark:text-amber-400 uppercase font-black tracking-wider">Est. Collection:</span>
+                      <span className="font-black font-mono text-xs">{formattedPick}</span>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* 1) Drop-off Date - Custom BokSpot Calendar */}
+                <div className="space-y-1.5 relative">
+                  <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block tracking-wider">
+                    Handover / Drop Date
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const d = miniSpaceDropDate ? new Date(miniSpaceDropDate) : new Date();
+                      setMiniSpaceCalMonth(isNaN(d.getTime()) ? new Date() : d);
+                      setIsMiniSpaceCalOpen(!isMiniSpaceCalOpen);
+                    }}
+                    className="w-full bg-white dark:bg-slate-700/80 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-white flex items-center justify-between outline-none cursor-pointer transition-colors focus:border-amber-500 shadow-xs"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Calendar size={14} className="text-[#ff6325] shrink-0" />
+                      <span>
+                        {(() => {
+                          try {
+                            const parsed = new Date(miniSpaceDropDate);
+                            if (isNaN(parsed.getTime())) return miniSpaceDropDate;
+                            return parsed.toLocaleDateString('en-GB', {
+                              weekday: 'short',
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric'
+                            });
+                          } catch {
+                            return miniSpaceDropDate;
+                          }
+                        })()}
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:text-amber-700">
+                      <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${isMiniSpaceCalOpen ? 'rotate-180 text-amber-600' : ''}`} />
+                    </span>
+                  </button>
+
+                  {/* Custom Popover Calendar */}
                   <AnimatePresence>
-                    {isModalOpen && (
+                    {isMiniSpaceCalOpen && (
                       <>
-                        <motion.div
-                          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                          onClick={() => setIsModalOpen(false)}
-                          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99999]"
+                        <div
+                          className="fixed inset-0 z-40"
+                          onClick={() => setIsMiniSpaceCalOpen(false)}
                         />
                         <motion.div
-                          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-[color:var(--color-surface)] rounded-3xl shadow-2xl z-[99999] overflow-hidden flex flex-col max-h-[85vh]"
+                          initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                          transition={{ duration: 0.16 }}
+                          className="absolute top-full left-0 mt-2 z-50 w-72 sm:w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-3.5 space-y-3"
                         >
-                          <div className="flex items-center justify-between p-6 border-b border-[color:var(--color-outline-variant)]/20">
-                            <h2 className="text-2xl font-extrabold">Select Category</h2>
-                            <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-[color:var(--color-surface-variant)] rounded-full transition-colors">
-                              <X size={24} />
-                            </button>
+                          {/* Month & Navigation Header */}
+                          <div className="flex items-center justify-between">
+                            <div className="font-black text-xs text-slate-800 dark:text-white">
+                              {miniSpaceCalMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setMiniSpaceCalMonth(new Date(miniSpaceCalMonth.getFullYear(), miniSpaceCalMonth.getMonth() - 1, 1));
+                                }}
+                                className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 flex items-center justify-center cursor-pointer transition-colors"
+                              >
+                                <ChevronLeft size={14} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setMiniSpaceCalMonth(new Date(miniSpaceCalMonth.getFullYear(), miniSpaceCalMonth.getMonth() + 1, 1));
+                                }}
+                                className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 flex items-center justify-center cursor-pointer transition-colors"
+                              >
+                                <ChevronRight size={14} />
+                              </button>
+                            </div>
                           </div>
 
-                          <div className="p-6 overflow-y-auto">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              {liveServices.filter((svc: any) => svc.name !== '__BOKSPOT_GROUP__').map(svc => {
-                                const numOptions = svc.rawConfig?.metadata?.listings ? svc.rawConfig.metadata.listings.length : 1;
-                                return (
-                                  <button
-                                    key={svc.id}
-                                    onClick={() => router.push(`/service/${svc.id}`)}
-                                    className="flex flex-col text-left p-6 rounded-2xl border border-[color:var(--color-outline-variant)]/30 hover:border-[color:var(--color-primary)] hover:bg-[color:var(--color-primary)]/5 transition-all group"
-                                  >
-                                    <h3 className="text-lg font-bold mb-2 group-hover:text-[color:var(--color-primary)] transition-colors">
-                                      {svc.name}
-                                    </h3>
-                                    <p className="text-sm text-[color:var(--color-on-surface-variant)] font-medium">{numOptions} option{numOptions !== 1 ? 's' : ''}</p>
-                                  </button>
+                          {/* Days Header */}
+                          <div className="grid grid-cols-7 text-center text-[10px] font-black text-slate-400 uppercase">
+                            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                              <div key={day} className="py-1">{day}</div>
+                            ))}
+                          </div>
+
+                          {/* Calendar Grid */}
+                          <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                            {(() => {
+                              const year = miniSpaceCalMonth.getFullYear();
+                              const month = miniSpaceCalMonth.getMonth();
+                              const firstDay = new Date(year, month, 1).getDay();
+                              const daysInMonth = new Date(year, month + 1, 0).getDate();
+                              const cells = [];
+                              const todayObj = new Date();
+                              todayObj.setHours(0, 0, 0, 0);
+
+                              for (let i = 0; i < firstDay; i++) {
+                                cells.push(<div key={`empty-${i}`} className="h-8" />);
+                              }
+
+                              for (let d = 1; d <= daysInMonth; d++) {
+                                const cellDate = new Date(year, month, d);
+                                cellDate.setHours(0, 0, 0, 0);
+                                const isPast = cellDate < todayObj;
+                                const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                                const isSelected = miniSpaceDropDate === dStr;
+                                const isToday = cellDate.getTime() === todayObj.getTime();
+
+                                cells.push(
+                                  <div key={d} className="flex items-center justify-center">
+                                    <button
+                                      type="button"
+                                      disabled={isPast}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setMiniSpaceDropDate(dStr);
+                                        setIsMiniSpaceCalOpen(false);
+                                      }}
+                                      className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs transition-all ${isSelected
+                                        ? 'bg-[#ff6325] text-white shadow-md shadow-orange-500/30 font-black'
+                                        : isToday
+                                          ? 'border-2 border-[#ff6325] text-[#ff6325] font-black'
+                                          : isPast
+                                            ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                                            : 'text-slate-700 dark:text-slate-200 hover:bg-amber-500/15 hover:text-[#ff6325] cursor-pointer'
+                                        }`}
+                                    >
+                                      {d}
+                                    </button>
+                                  </div>
                                 );
-                              })}
-                              {liveServices.filter((svc: any) => svc.name !== '__BOKSPOT_GROUP__').length === 0 && (
-                                <p className="text-sm text-[color:var(--color-on-surface-variant)] italic p-4 col-span-2 text-center">No specific categories have been added by the business yet.</p>
-                              )}
-                            </div>
+                              }
+                              return cells;
+                            })()}
+                          </div>
+
+                          {/* Quick Jump: Today & Close */}
+                          <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[11px]">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const todayStr = new Date().toISOString().split('T')[0];
+                                setMiniSpaceDropDate(todayStr);
+                                setMiniSpaceCalMonth(new Date());
+                                setIsMiniSpaceCalOpen(false);
+                              }}
+                              className="font-bold text-[#ff6325] hover:underline cursor-pointer"
+                            >
+                              Today
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsMiniSpaceCalOpen(false);
+                              }}
+                              className="font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
+                            >
+                              Done
+                            </button>
                           </div>
                         </motion.div>
                       </>
                     )}
                   </AnimatePresence>
+                </div>
 
-                  {/* Fullscreen Image Gallery Modal */}
-                  <AnimatePresence>
-                    {isGalleryOpen && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-xl flex flex-col"
+                {/* 2) Drop-off Time Custom Pickers (Hour, Minute, AM/PM) */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block tracking-wider">
+                    Handover Time (Hour : Min : AM/PM)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    {/* Hour Select */}
+                    <select
+                      value={miniSpaceDropHour}
+                      onChange={(e) => setMiniSpaceDropHour(e.target.value)}
+                      className="w-1/3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-xl px-2.5 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer focus:border-amber-500 text-center"
+                    >
+                      {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map(hr => (
+                        <option key={hr} value={hr}>{hr}</option>
+                      ))}
+                    </select>
+
+                    <span className="font-black text-slate-400">:</span>
+
+                    {/* Minute Select */}
+                    <select
+                      value={miniSpaceDropMinute}
+                      onChange={(e) => setMiniSpaceDropMinute(e.target.value)}
+                      className="w-1/3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-xl px-2.5 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer focus:border-amber-500 text-center"
+                    >
+                      {['00', '15', '30', '45'].map(min => (
+                        <option key={min} value={min}>{min}</option>
+                      ))}
+                    </select>
+
+                    {/* AM/PM Switch Buttons */}
+                    <div className="flex rounded-xl bg-slate-200/80 dark:bg-slate-800 p-0.5 border border-slate-200 dark:border-white/10 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setMiniSpaceDropPeriod('AM')}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${miniSpaceDropPeriod === 'AM'
+                          ? 'bg-amber-500 text-slate-950 shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                          }`}
                       >
-                        {/* Gallery Header */}
-                        <div className="flex items-center justify-between p-4 md:p-6 text-white absolute top-0 left-0 right-0 z-10">
-                          <div className="flex items-center gap-4">
-                            <button onClick={() => setIsGalleryOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                              <ArrowLeft size={24} />
-                            </button>
-                            <div>
-                              <h3 className="font-bold">{venueName}</h3>
-                              <p className="text-xs text-white/60">{currentImageIdx + 1} / {galleryImages.length}</p>
-                            </div>
-                          </div>
-                          <button onClick={() => setIsGalleryOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                            <X size={24} />
-                          </button>
-                        </div>
+                        AM
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMiniSpaceDropPeriod('PM')}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${miniSpaceDropPeriod === 'PM'
+                          ? 'bg-amber-500 text-slate-950 shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                          }`}
+                      >
+                        PM
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-                        {/* Main Image Viewer */}
-                        <div className="flex-1 flex items-center justify-center relative px-4 md:px-12 mt-16 md:mt-0">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setCurrentImageIdx(prev => prev === 0 ? galleryImages.length - 1 : prev - 1); }}
-                            className="absolute left-2 md:left-6 p-3 bg-black/50 hover:bg-black/80 text-white rounded-full transition-colors border border-white/10 z-10"
-                          >
-                            <ChevronLeft size={24} />
-                          </button>
+            {/* Guest Luggage Details */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 tracking-wider">
+                  Luggage Details & Special Instructions
+                </span>
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
+                  Tagging & Luggage Protection
+                </span>
+              </div>
 
-                          <div className="w-full max-w-5xl max-h-[70vh] flex items-center justify-center">
-                            <motion.img
-                              key={currentImageIdx}
-                              initial={{ opacity: 0, scale: 0.95 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              transition={{ duration: 0.2 }}
-                              src={galleryImages[currentImageIdx]}
-                              alt="Gallery image"
-                              className="max-w-full max-h-[70vh] object-contain rounded-xl shadow-2xl"
-                              onError={(e) => { e.currentTarget.src = defaultHotelPhotos[currentImageIdx % defaultHotelPhotos.length]; }}
-                            />
-                          </div>
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Bag Description (Colors / Brands / Items)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 1 Blue American Tourister Trolley + 1 Black Laptop Bag"
+                  value={miniSpaceBagDesc}
+                  onChange={(e) => setMiniSpaceBagDesc(e.target.value)}
+                  className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-amber-500"
+                />
+              </div>
+            </div>
 
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setCurrentImageIdx(prev => prev === galleryImages.length - 1 ? 0 : prev + 1); }}
-                            className="absolute right-2 md:right-6 p-3 bg-black/50 hover:bg-black/80 text-white rounded-full transition-colors border border-white/10 z-10"
-                          >
-                            <ChevronRight size={24} />
-                          </button>
-                        </div>
+            {/* Security Guarantees */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-[11px] font-bold text-slate-600 dark:text-slate-300">
+              <div className="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40">
+                <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                <span>Tamper-proof seal tags</span>
+              </div>
+              <div className="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40">
+                <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                <span>₹10,000 Bag Guarantee</span>
+              </div>
+              <div className="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40">
+                <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                <span>Instant QR Pass upon checkout</span>
+              </div>
+            </div>
+          </div>
 
-                        {/* Thumbnails */}
-                        <div className="p-4 md:p-6 bg-black/50 border-t border-white/10 overflow-x-auto">
-                          <div className="flex items-center gap-3 w-max mx-auto px-4">
-                            {galleryImages.map((img: string, idx: number) => (
-                              <button
-                                key={idx}
-                                onClick={() => setCurrentImageIdx(idx)}
-                                className={`relative w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden flex-shrink-0 transition-all ${currentImageIdx === idx ? 'ring-2 ring-white scale-105 opacity-100' : 'opacity-50 hover:opacity-100'}`}
-                              >
-                                <img
-                                  src={img}
-                                  alt={`Thumbnail ${idx + 1}`}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => { e.currentTarget.src = defaultHotelPhotos[idx % defaultHotelPhotos.length]; }}
-                                />
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+          {/* Right: Price Summary & Book Drop Button */}
+          <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 space-y-4">
+            <h4 className="text-xs font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider">
+              Cloakroom Summary
+            </h4>
 
-                  {/* ── INTERACTIVE TURF MATCH ADD-ONS WORKFLOW MODAL (Resort-Style) ── */}
-                  <AnimatePresence>
-                    {isTurfAddonModalOpen && selectedHourSlot && pricingResult && (() => {
-                      const baseSlotCost = Number(pricingResult.finalPayable) || 1350;
-                      const activeListingObj = selectedTurfService?.rawListing || liveServices[0]?.metadata?.listings?.[0] || {};
-                      const activeMetaObj = activeListingObj.metadata || {};
-                      const sportFallbackCfg = getSportCategoryConfig(category);
-                      const defaultAddonsList = sportFallbackCfg?.addons || [
-                        { id: 'referee', name: 'Certified Match Referee', price: 300, icon: '👨‍⚖️', desc: 'Official qualified referee for 60 mins match management & fair play.' },
-                        { id: 'video', name: 'High-Res Match Video Recording', price: 500, icon: '📹', desc: 'Full match recording delivered via HD cloud link within 24 hours.' },
-                        { id: 'drinks', name: 'Chilled Energy Drinks (Pack of 6)', price: 250, icon: '🧴', desc: 'Ice-chilled electrolyte sports beverages ready at bench.' }
-                      ];
+            {(() => {
+              const totalBags =
+                miniSpaceItemCounts.handbag +
+                miniSpaceItemCounts.backpack +
+                miniSpaceItemCounts.standard +
+                miniSpaceItemCounts.box +
+                miniSpaceItemCounts.bulky;
 
-                      const availableAddons = (Array.isArray(activeMetaObj.addons) && activeMetaObj.addons.length > 0)
-                        ? activeMetaObj.addons.map((a: any, i: number) => ({
-                          id: a.id || a.name || `addon-${i}`,
-                          name: a.name || 'Custom Add-on',
-                          price: Number(a.price) || 0,
-                          icon: a.icon || '⭐',
-                          desc: a.desc || a.description || 'Enhance your session experience.'
-                        }))
-                        : defaultAddonsList;
+              // Slot weights: Handbag=0.5, Backpack=1, Trolley=1.5, Box=2, Bulky=3
+              const requestedSlots =
+                (miniSpaceItemCounts.handbag * 0.5) +
+                (miniSpaceItemCounts.backpack * 1) +
+                (miniSpaceItemCounts.standard * 1.5) +
+                (miniSpaceItemCounts.box * 2) +
+                (miniSpaceItemCounts.bulky * 3);
 
-                      const addonsTotal = selectedTurfAddons.reduce((sum, addName) => {
-                        const found = availableAddons.find((a: any) => a.name === addName);
-                        return sum + (found ? Number(found.price) : 0);
-                      }, 0);
+              // Rates configured directly by Business Owner
+              const handbagRate = getCategoryRate('handbag', 0.5);
+              const backpackRate = getCategoryRate('backpack', 0.8);
+              const standardRate = getCategoryRate('standard', 1.0);
+              const boxRate = getCategoryRate('box', 1.2);
+              const bulkyRate = getCategoryRate('bulky', 1.5);
 
-                      const grandTotal = baseSlotCost + addonsTotal;
+              const totalHourlyRate =
+                (miniSpaceItemCounts.handbag * handbagRate) +
+                (miniSpaceItemCounts.backpack * backpackRate) +
+                (miniSpaceItemCounts.standard * standardRate) +
+                (miniSpaceItemCounts.box * boxRate) +
+                (miniSpaceItemCounts.bulky * bulkyRate);
 
-                      const executeTurfBooking = (finalAddons: string[], finalCost: number) => {
-                        const totalToPay = baseSlotCost + finalCost;
-                        const fullSelectedAddons = finalAddons.map(name => {
-                          const matched = availableAddons.find((a: any) => a.name === name);
-                          return {
-                            id: matched?.id || name,
-                            name: matched?.name || name,
-                            price: Number(matched?.price) || 0,
-                            icon: matched?.icon || '⭐',
-                            desc: matched?.desc || ''
-                          };
-                        });
+              // Radical / Bounce Hybrid: 24-hr daily capped pricing pass per item
+              const maxDailyCapTotal = totalBags * hotelLuggageDayPassRate;
+              const standardHoursTotal = totalHourlyRate * miniSpaceHours;
+              // If customer stores for full day or hourly total exceeds daily cap, apply daily cap
+              const isDailyCapApplied = miniSpaceHours >= 6 && standardHoursTotal > maxDailyCapTotal;
+              const totalAmount = isDailyCapApplied ? maxDailyCapTotal : standardHoursTotal;
+
+              // Breakdown string for UI
+              const breakdownItems: string[] = [];
+              if (miniSpaceItemCounts.handbag > 0) breakdownItems.push(`${miniSpaceItemCounts.handbag}x Handbag`);
+              if (miniSpaceItemCounts.backpack > 0) breakdownItems.push(`${miniSpaceItemCounts.backpack}x Backpack`);
+              if (miniSpaceItemCounts.standard > 0) breakdownItems.push(`${miniSpaceItemCounts.standard}x Trolley`);
+              if (miniSpaceItemCounts.box > 0) breakdownItems.push(`${miniSpaceItemCounts.box}x Box`);
+              if (miniSpaceItemCounts.bulky > 0) breakdownItems.push(`${miniSpaceItemCounts.bulky}x Bulky`);
+
+              // Real-time capacity check using live bookings
+              const activeMerchantBookings = (bookings || []).filter((b: any) => {
+                const isMatch = (b.merchantId === merchantId) || (b.metadata?.miniSpace && b.merchantName === venueName);
+                const isConfirmed = b.status === 'CONFIRMED' || b.status === 'ACTIVE';
+                const isSameDate = b.date === (miniSpaceDropDate || new Date().toISOString().split('T')[0]);
+                return isMatch && isConfirmed && isSameDate && Boolean(b.metadata?.miniSpace);
+              });
+
+              const currentlyOccupied = activeMerchantBookings.reduce((sum: number, b: any) => {
+                const ms = b.metadata?.miniSpace;
+                if (!ms) return sum;
+                if (ms.requestedSlots) return sum + ms.requestedSlots;
+                if (ms.itemBreakdown) {
+                  const ib = ms.itemBreakdown;
+                  return sum +
+                    ((ib.handbag || 0) * 0.5) +
+                    ((ib.backpack || 0) * 1) +
+                    ((ib.standard || 0) * 1.5) +
+                    ((ib.box || 0) * 2) +
+                    ((ib.bulky || 0) * 3);
+                }
+                const count = ms.bagCount || 1;
+                return sum + count;
+              }, 0);
+
+              const availableCapacity = Math.max(0, hotelLuggageMaxCapacity - currentlyOccupied);
+              const isBookingFilled = availableCapacity <= 0 || requestedSlots > availableCapacity || totalBags === 0;
+
+              return (
+                <>
+                  <div className="space-y-2 text-xs border-b border-slate-200 dark:border-white/10 pb-3">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Storage Unit</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200">
+                        {totalBags > 0 ? `${totalBags} Items (${breakdownItems.join(', ')})` : '0 Items Selected'} × {miniSpaceHours} hrs
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Item Type</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200 capitalize">
+                        {totalBags > 0 ? breakdownItems.join(' + ') : 'None'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Facility Location</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200">Frontdesk Bell Desk</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Capacity Status</span>
+                      {availableCapacity <= 0 || requestedSlots > availableCapacity ? (
+                        <span className="font-black text-rose-500">FILLED / FULL ({availableCapacity} left)</span>
+                      ) : availableCapacity <= 3 ? (
+                        <span className="font-black text-amber-500">Fast Filling ({availableCapacity} slots left)</span>
+                      ) : (
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400">{availableCapacity} of {hotelLuggageMaxCapacity} Slots Available</span>
+                      )}
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Security Tag Fee</span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">FREE</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-baseline justify-between">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-black text-slate-900 dark:text-white block">Total Amount</span>
+                        {isDailyCapApplied && (
+                          <span className="px-1.5 py-0.2 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-extrabold text-[9px] uppercase tracking-wider">
+                            Full Day Cap Applied
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-semibold">
+                        {isDailyCapApplied
+                          ? `${totalBags} Items capped at ₹${hotelLuggageDayPassRate}/bag full day pass`
+                          : `${totalBags} ${totalBags > 1 ? 'Items' : 'Item'} × ${miniSpaceHours}h @ combined ₹${totalHourlyRate}/hr`
+                        }
+                      </span>
+                    </div>
+                    <span className="text-2xl font-black text-amber-600 dark:text-amber-400">₹{totalAmount}</span>
+                  </div>
+
+                  {totalBags === 0 ? (
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full py-3.5 rounded-xl bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-black text-xs uppercase tracking-wider cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      <span>SELECT AT LEAST 1 ITEM</span>
+                    </button>
+                  ) : isBookingFilled ? (
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        disabled
+                        className="w-full py-3.5 rounded-xl bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-black text-xs uppercase tracking-wider cursor-not-allowed flex items-center justify-center gap-2 shadow-none"
+                      >
+                        <span>🔒 BOOKING FILLED (NO SPACE LEFT)</span>
+                      </button>
+                      <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 text-[11px] font-bold text-rose-600 dark:text-rose-400 text-center leading-snug">
+                        Cloakroom is full for this time slot (Only {availableCapacity} slots left, your selection requires {requestedSlots} slots). Please reduce items or choose another date.
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const formattedDropTime = `${miniSpaceDropHour}:${miniSpaceDropMinute} ${miniSpaceDropPeriod}`;
+                        const slotDate = miniSpaceDropDate || new Date().toISOString().split('T')[0];
 
                         setSelectedService({
-                          ...selectedTurfService,
-                          price: baseSlotCost, // Keep pure base slot tariff distinct from add-ons
-                          category: category === 'badminton' ? 'Badminton Court Booking' :
-                            category === 'tennis' ? 'Tennis Court Booking' :
-                              category === 'cricket-ground' ? 'Cricket Ground Booking' :
-                                category === 'basketball' ? 'Basketball Court Booking' :
-                                  category === 'swimming' ? 'Swimming Pool Booking' :
-                                    category === 'play-arena' ? 'Play Arena Pass Booking' :
-                                      'Sports Turf Booking',
-                          selectedListing: {
-                            ...(activeListingObj || {}),
-                            name: selectedTurfService?.name || activeListingObj?.name || 'Court Listing',
-                            price: baseSlotCost,
-                            addons: availableAddons
-                          },
-                          name: `${venueName} — ${selectedTurfService?.name || 'Session Slot'}`,
+                          id: `svc-minispace-${merchantId || 'business'}`,
+                          name: `${venueName} — Mini Space Cloakroom`,
+                          merchant: venueName || 'BokSpot Partner',
+                          merchantId: merchantId || liveServices[0]?.merchantId || (merchantData as any)?.id || '',
+                          merchantObj: merchantData || liveServices[0]?.merchantObj || { id: merchantId, name: venueName },
+                          price: totalAmount,
+                          basePrice: totalAmount,
+                          currency: 'INR',
+                          city: city || 'Chennai',
+                          category: rawCategory || 'hotels',
+                          duration: miniSpaceHours * 60,
                           metadata: {
-                            ...(selectedTurfService?.metadata || {}),
-                            addons: availableAddons,
-                            selectedAddons: fullSelectedAddons,
-                            addonsCost: finalCost,
-                            turfBooking: {
-                              venueName,
-                              address,
-                              slotDate: selectedDate,
-                              slotTime: selectedHourSlot,
-                              selectedAddons: fullSelectedAddons,
-                              addonsCost: finalCost,
-                              baseSlotCost,
-                              priceBreakdown: {
-                                ...pricingResult,
-                                finalPayable: totalToPay
-                              }
+                            facilityName: `${venueName} Frontdesk Cloakroom`,
+                            merchantId: merchantId || liveServices[0]?.merchantId || (merchantData as any)?.id || '',
+                            returnHotelUrl: `/${bookingType}/${rawCategory}/${merchantId}`,
+                            miniSpace: {
+                              itemBreakdown: miniSpaceItemCounts,
+                              breakdownSummary: breakdownItems.join(', '),
+                              bagCount: totalBags,
+                              requestedSlots,
+                              durationHours: miniSpaceHours,
+                              hourlyRate: hotelLuggageHourlyRate,
+                              dropDate: slotDate,
+                              dropTime: formattedDropTime,
+                              bagDesc: miniSpaceBagDesc || breakdownItems.join(', '),
+                              totalAmount,
+                              hotelName: venueName,
+                              returnHotelUrl: `/${bookingType}/${rawCategory}/${merchantId}`
                             }
                           }
                         });
 
                         setSelectedSlot({
-                          id: `turf-slot-${Date.now()}`,
-                          timeStr: `${selectedDate} at ${selectedHourSlot} (1 Hour)`,
-                          date: selectedDate,
+                          id: `slot-minispace-${Date.now()}`,
+                          date: slotDate,
+                          timeStr: `${formattedDropTime} (${miniSpaceHours} Hours)`,
                           available: true
                         });
 
-                        setIsTurfAddonModalOpen(false);
                         router.push('/booking/checkout');
+                      }}
+                      className="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 active:scale-95 text-slate-950 font-black text-xs uppercase tracking-wider shadow-md shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer group"
+                    >
+                      <span>PROCEED TO CHECKOUT</span>
+                      <span className="transition-transform group-hover:translate-x-1 text-sm font-bold">&rarr;</span>
+                    </button>
+                  )}
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 text-center font-medium">
+                    Select guest details & payment method on checkout page. Digital QR Pass generated upon confirmation.
+                  </p>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+
+        {/* 4 Easy Steps — How It Works Banner (Bounce / Stasher Style) */}
+        <div className="mt-6 pt-6 border-t border-slate-200/80 dark:border-white/10">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
+              How It Works (Easy 4-Step Drop & Pick-Up)
+            </span>
+            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+              ✓ Instant QR Pass
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* Step 1 */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-white/10 flex items-start gap-3">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 font-black text-sm flex items-center justify-center shrink-0">
+                1
+              </div>
+              <div>
+                <span className="text-xs font-black text-slate-900 dark:text-white block">
+                  Show your booking
+                </span>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                  Present your instant digital QR code at the frontdesk counter upon arrival.
+                </p>
+              </div>
+            </div>
+
+            {/* Step 2 */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-white/10 flex items-start gap-3">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 font-black text-sm flex items-center justify-center shrink-0">
+                2
+              </div>
+              <div>
+                <span className="text-xs font-black text-slate-900 dark:text-white block">
+                  Bag registration
+                </span>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                  Staff seals & tags your bags with physical barcode seals linked to your booking.
+                </p>
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-white/10 flex items-start gap-3">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 font-black text-sm flex items-center justify-center shrink-0">
+                3
+              </div>
+              <div>
+                <span className="text-xs font-black text-slate-900 dark:text-white block">
+                  Secure storage
+                </span>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                  Your luggage is placed in a 24/7 CCTV guarded, staff-only cloakroom vault.
+                </p>
+              </div>
+            </div>
+
+            {/* Step 4 */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-white/10 flex items-start gap-3">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-black text-sm flex items-center justify-center shrink-0">
+                4
+              </div>
+              <div>
+                <span className="text-xs font-black text-slate-900 dark:text-white block">
+                  Easy pick-up
+                </span>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                  Show your booking QR again when returning; staff verifies and returns your bags.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
+  </div>
+</div>
+
+
+
+
+
+{/* ============================================================
+         * SECTION E: HOUSE RULES & PROPERTY POLICIES
+         * ============================================================ */}
+{
+  finalMerchantObj.metadata?.policies && finalMerchantObj.metadata.policies.length > 0 && (
+    <div className="mt-10 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
+      <h3 className="text-base font-extrabold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+        <span>📋</span> House Rules & Stay Policies
+      </h3>
+      <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300 font-medium">
+        {finalMerchantObj.metadata.policies.map((policy: string, idx: number) => (
+          <li key={idx} className="flex items-start gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-white/5">
+            <span className="text-[#033266] dark:text-[#ff6325] font-bold">•</span>
+            <span>{policy}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+                  </div >
+
+  {/* Category Selection Modal */ }
+  <AnimatePresence>
+{
+  isModalOpen && (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={() => setIsModalOpen(false)}
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99999]"
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-[color:var(--color-surface)] rounded-3xl shadow-2xl z-[99999] overflow-hidden flex flex-col max-h-[85vh]"
+      >
+        <div className="flex items-center justify-between p-6 border-b border-[color:var(--color-outline-variant)]/20">
+          <h2 className="text-2xl font-extrabold">Select Category</h2>
+          <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-[color:var(--color-surface-variant)] rounded-full transition-colors">
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className="p-6 overflow-y-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {liveServices.filter((svc: any) => svc.name !== '__BOKSPOT_GROUP__').map(svc => {
+              const numOptions = svc.rawConfig?.metadata?.listings ? svc.rawConfig.metadata.listings.length : 1;
+              return (
+                <button
+                  key={svc.id}
+                  onClick={() => router.push(`/service/${svc.id}`)}
+                  className="flex flex-col text-left p-6 rounded-2xl border border-[color:var(--color-outline-variant)]/30 hover:border-[color:var(--color-primary)] hover:bg-[color:var(--color-primary)]/5 transition-all group"
+                >
+                  <h3 className="text-lg font-bold mb-2 group-hover:text-[color:var(--color-primary)] transition-colors">
+                    {svc.name}
+                  </h3>
+                  <p className="text-sm text-[color:var(--color-on-surface-variant)] font-medium">{numOptions} option{numOptions !== 1 ? 's' : ''}</p>
+                </button>
+              );
+            })}
+            {liveServices.filter((svc: any) => svc.name !== '__BOKSPOT_GROUP__').length === 0 && (
+              <p className="text-sm text-[color:var(--color-on-surface-variant)] italic p-4 col-span-2 text-center">No specific categories have been added by the business yet.</p>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    </>
+  )
+}
+                  </AnimatePresence >
+
+  {/* Fullscreen Image Gallery Modal */ }
+  <AnimatePresence>
+{
+  isGalleryOpen && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-xl flex flex-col"
+    >
+      {/* Gallery Header */}
+      <div className="flex items-center justify-between p-4 md:p-6 text-white absolute top-0 left-0 right-0 z-10">
+        <div className="flex items-center gap-4">
+          <button onClick={() => setIsGalleryOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+            <ArrowLeft size={24} />
+          </button>
+          <div>
+            <h3 className="font-bold">{venueName}</h3>
+            <p className="text-xs text-white/60">{currentImageIdx + 1} / {galleryImages.length}</p>
+          </div>
+        </div>
+        <button onClick={() => setIsGalleryOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+          <X size={24} />
+        </button>
+      </div>
+
+      {/* Main Image Viewer */}
+      <div className="flex-1 flex items-center justify-center relative px-4 md:px-12 mt-16 md:mt-0">
+        <button
+          onClick={(e) => { e.stopPropagation(); setCurrentImageIdx(prev => prev === 0 ? galleryImages.length - 1 : prev - 1); }}
+          className="absolute left-2 md:left-6 p-3 bg-black/50 hover:bg-black/80 text-white rounded-full transition-colors border border-white/10 z-10"
+        >
+          <ChevronLeft size={24} />
+        </button>
+
+        <div className="w-full max-w-5xl max-h-[70vh] flex items-center justify-center">
+          <motion.img
+            key={currentImageIdx}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.2 }}
+            src={galleryImages[currentImageIdx]}
+            alt="Gallery image"
+            className="max-w-full max-h-[70vh] object-contain rounded-xl shadow-2xl"
+            onError={(e) => { e.currentTarget.src = defaultHotelPhotos[currentImageIdx % defaultHotelPhotos.length]; }}
+          />
+        </div>
+
+        <button
+          onClick={(e) => { e.stopPropagation(); setCurrentImageIdx(prev => prev === galleryImages.length - 1 ? 0 : prev + 1); }}
+          className="absolute right-2 md:right-6 p-3 bg-black/50 hover:bg-black/80 text-white rounded-full transition-colors border border-white/10 z-10"
+        >
+          <ChevronRight size={24} />
+        </button>
+      </div>
+
+      {/* Thumbnails */}
+      <div className="p-4 md:p-6 bg-black/50 border-t border-white/10 overflow-x-auto">
+        <div className="flex items-center gap-3 w-max mx-auto px-4">
+          {galleryImages.map((img: string, idx: number) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentImageIdx(idx)}
+              className={`relative w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden flex-shrink-0 transition-all ${currentImageIdx === idx ? 'ring-2 ring-white scale-105 opacity-100' : 'opacity-50 hover:opacity-100'}`}
+            >
+              <img
+                src={img}
+                alt={`Thumbnail ${idx + 1}`}
+                className="w-full h-full object-cover"
+                onError={(e) => { e.currentTarget.src = defaultHotelPhotos[idx % defaultHotelPhotos.length]; }}
+              />
+            </button>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+                  </AnimatePresence >
+
+  {/* ── INTERACTIVE TURF MATCH ADD-ONS WORKFLOW MODAL (Resort-Style) ── */ }
+  <AnimatePresence>
+{
+  isTurfAddonModalOpen && selectedHourSlot && pricingResult && (() => {
+    const baseSlotCost = Number(pricingResult.finalPayable) || 1350;
+    const activeListingObj = selectedTurfService?.rawListing || liveServices[0]?.metadata?.listings?.[0] || {};
+    const activeMetaObj = activeListingObj.metadata || {};
+    const sportFallbackCfg = getSportCategoryConfig(category);
+    const defaultAddonsList = sportFallbackCfg?.addons || [
+      { id: 'referee', name: 'Certified Match Referee', price: 300, icon: '👨‍⚖️', desc: 'Official qualified referee for 60 mins match management & fair play.' },
+      { id: 'video', name: 'High-Res Match Video Recording', price: 500, icon: '📹', desc: 'Full match recording delivered via HD cloud link within 24 hours.' },
+      { id: 'drinks', name: 'Chilled Energy Drinks (Pack of 6)', price: 250, icon: '🧴', desc: 'Ice-chilled electrolyte sports beverages ready at bench.' }
+    ];
+
+    const availableAddons = (Array.isArray(activeMetaObj.addons) && activeMetaObj.addons.length > 0)
+      ? activeMetaObj.addons.map((a: any, i: number) => ({
+        id: a.id || a.name || `addon-${i}`,
+        name: a.name || 'Custom Add-on',
+        price: Number(a.price) || 0,
+        icon: a.icon || '⭐',
+        desc: a.desc || a.description || 'Enhance your session experience.'
+      }))
+      : defaultAddonsList;
+
+    const addonsTotal = selectedTurfAddons.reduce((sum, addName) => {
+      const found = availableAddons.find((a: any) => a.name === addName);
+      return sum + (found ? Number(found.price) : 0);
+    }, 0);
+
+    const grandTotal = baseSlotCost + addonsTotal;
+
+    const executeTurfBooking = (finalAddons: string[], finalCost: number) => {
+      const totalToPay = baseSlotCost + finalCost;
+      const fullSelectedAddons = finalAddons.map(name => {
+        const matched = availableAddons.find((a: any) => a.name === name);
+        return {
+          id: matched?.id || name,
+          name: matched?.name || name,
+          price: Number(matched?.price) || 0,
+          icon: matched?.icon || '⭐',
+          desc: matched?.desc || ''
+        };
+      });
+
+      setSelectedService({
+        ...selectedTurfService,
+        price: baseSlotCost, // Keep pure base slot tariff distinct from add-ons
+        category: category === 'badminton' ? 'Badminton Court Booking' :
+          category === 'tennis' ? 'Tennis Court Booking' :
+            category === 'cricket-ground' ? 'Cricket Ground Booking' :
+              category === 'basketball' ? 'Basketball Court Booking' :
+                category === 'swimming' ? 'Swimming Pool Booking' :
+                  category === 'play-arena' ? 'Play Arena Pass Booking' :
+                    'Sports Turf Booking',
+        selectedListing: {
+          ...(activeListingObj || {}),
+          name: selectedTurfService?.name || activeListingObj?.name || 'Court Listing',
+          price: baseSlotCost,
+          addons: availableAddons
+        },
+        name: `${venueName} — ${selectedTurfService?.name || 'Session Slot'}`,
+        metadata: {
+          ...(selectedTurfService?.metadata || {}),
+          addons: availableAddons,
+          selectedAddons: fullSelectedAddons,
+          addonsCost: finalCost,
+          turfBooking: {
+            venueName,
+            address,
+            slotDate: selectedDate,
+            slotTime: selectedHourSlot,
+            selectedAddons: fullSelectedAddons,
+            addonsCost: finalCost,
+            baseSlotCost,
+            priceBreakdown: {
+              ...pricingResult,
+              finalPayable: totalToPay
+            }
+          }
+        }
+      });
+
+      setSelectedSlot({
+        id: `turf-slot-${Date.now()}`,
+        timeStr: `${selectedDate} at ${selectedHourSlot} (1 Hour)`,
+        date: selectedDate,
+        available: true
+      });
+
+      setIsTurfAddonModalOpen(false);
+      router.push('/booking/checkout');
+    };
+
+    return (
+      <div className="fixed inset-0 z-[100000] flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-slate-900/80 backdrop-blur-md">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96, y: 30 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.96, y: 30 }}
+          className="w-full sm:max-w-2xl md:max-w-3xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-white/10 rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[90vh] sm:h-auto sm:max-h-[85vh]"
+        >
+          {/* Modal Top Header */}
+          <div className="px-6 py-5 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/60 shrink-0">
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                Step 2 of 2: Optional Session Add-ons
+              </span>
+              <h3 className="font-extrabold text-lg sm:text-xl text-slate-900 dark:text-white mt-1 tracking-tight flex items-center gap-2">
+                <span>{category === 'badminton' ? '🏸' : category === 'tennis' ? '🎾' : category === 'cricket-ground' ? '🏏' : category === 'basketball' ? '🏀' : category === 'swimming' ? '🏊' : category === 'play-arena' ? '🧗' : '⚽'}</span>
+                <span>
+                  {category === 'badminton' ? 'Upgrade Your Badminton Session' :
+                    category === 'tennis' ? 'Upgrade Your Tennis Session' :
+                      category === 'cricket-ground' ? 'Upgrade Your Cricket Match' :
+                        category === 'basketball' ? 'Upgrade Your Basketball Game' :
+                          category === 'swimming' ? 'Upgrade Your Pool Session' :
+                            category === 'play-arena' ? 'Upgrade Your Arena Jump Pass' :
+                              'Upgrade Your Match Session'}
+                </span>
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                📅 {selectedDate} • ⏰ {selectedHourSlot} • {selectedTurfService?.name || 'Session Unit'}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsTurfAddonModalOpen(false)}
+              className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
+              title="Close"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Modal Add-ons Grid */}
+          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+            <div className="flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 p-3.5 rounded-2xl">
+              <div className="flex items-center gap-2.5">
+                <span className="text-xl">✨</span>
+                <div>
+                  <span className="text-xs font-black text-emerald-900 dark:text-emerald-300 block">Want official match gear or refreshments?</span>
+                  <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">Select any add-ons below or skip to proceed with pure turf slot rental.</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {availableAddons.map((addon: any, aIdx: number) => {
+                const isChecked = selectedTurfAddons.includes(addon.name);
+
+                return (
+                  <div
+                    key={aIdx}
+                    onClick={() => {
+                      if (isChecked) {
+                        setSelectedTurfAddons(prev => prev.filter(n => n !== addon.name));
+                      } else {
+                        setSelectedTurfAddons(prev => [...prev, addon.name]);
+                      }
+                    }}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${isChecked
+                      ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-500 ring-2 ring-blue-500/20 shadow-md'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                      }`}
+                  >
+                    <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-white/10 flex items-center justify-center text-lg shrink-0">
+                      {addon.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="text-xs font-black text-slate-900 dark:text-white">
+                          {addon.name}
+                        </h4>
+                        <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 shrink-0">
+                          +₹{addon.price}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed font-medium">
+                        {addon.desc}
+                      </p>
+                    </div>
+                    <div className={`h-5 w-5 rounded-md border flex items-center justify-center text-xs font-black shrink-0 mt-0.5 ${isChecked
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'border-slate-300 dark:border-white/20'
+                      }`}>
+                      {isChecked && '✓'}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Universal BokSpot Payment Options Preview */}
+            <div className="pt-3 border-t border-slate-200/80 dark:border-white/10 space-y-2">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
+                Universal BokSpot Payment Options (Configurable at Checkout)
+              </span>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10">
+                  <span className="text-xs block">💳</span>
+                  <span className="text-[10px] font-black text-slate-900 dark:text-white block mt-0.5">100% Online</span>
+                  <span className="text-[9px] text-slate-500 dark:text-slate-400">Instant VIP Pass</span>
+                </div>
+                <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50">
+                  <span className="text-xs block">⚡</span>
+                  <span className="text-[10px] font-black text-amber-900 dark:text-amber-300 block mt-0.5">30% Advance</span>
+                  <span className="text-[9px] text-amber-700 dark:text-amber-400">Hold & 70% at venue</span>
+                </div>
+                <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/50">
+                  <span className="text-xs block">👥</span>
+                  <span className="text-[10px] font-black text-indigo-900 dark:text-indigo-300 block mt-0.5">Split with Friends</span>
+                  <span className="text-[9px] text-indigo-700 dark:text-indigo-400">Equal share links</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Modal Footer (Skip vs Proceed with Add-ons) */}
+          <div className="px-6 py-4 border-t border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/60 flex items-center justify-between gap-3 shrink-0">
+            {/* Skip Option */}
+            <button
+              type="button"
+              onClick={() => {
+                executeTurfBooking([], 0);
+              }}
+              className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-white/20 text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer bg-white dark:bg-slate-800"
+            >
+              Skip Add-ons
+            </button>
+
+            {/* Proceed to Checkout */}
+            <div className="flex items-center gap-3">
+              <div className="text-right hidden sm:block">
+                <span className="text-[10px] text-slate-400 uppercase font-black block">Total Payable</span>
+                <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
+                  ₹{grandTotal.toLocaleString()}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  executeTurfBooking(selectedTurfAddons, addonsTotal);
+                }}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 text-xs font-black shadow-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <span>Proceed to Payment</span>
+                <span>&rarr;</span>
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    );
+  })()
+}
+                  </AnimatePresence >
+
+  {/* ── INTERACTIVE HOTEL ROOM DETAILS & ADD-ONS WORKFLOW MODAL ── */ }
+  <AnimatePresence>
+{
+  activeRoomService && roomModalStep && (
+    <div className="fixed inset-0 z-[100000] flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-slate-900/75 backdrop-blur-md">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 30 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 30 }}
+        className="w-full sm:max-w-2xl md:max-w-3xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-white/10 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[88vh]"
+      >
+        {/* Modal Top Header with Stepper Indicator */}
+        <div className="px-6 py-5 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/60 shrink-0 rounded-t-3xl">
+          <div className="flex items-center gap-3.5">
+            {(roomModalStep === 'ADDONS' || roomModalStep === 'VISIT') && (
+              <button
+                type="button"
+                onClick={() => setRoomModalStep('DETAILS')}
+                className="p-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors border border-slate-200 dark:border-white/10 cursor-pointer shadow-xs"
+                title="Back to Room Details"
+              >
+                <ArrowLeft size={16} />
+              </button>
+            )}
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border border-[#033266]/20 dark:border-[#ff6325]/30">
+                  {isPgStay ? (roomModalStep === 'VISIT' ? 'Schedule Visit' : 'Bed Selection') : (roomModalStep === 'DETAILS' ? 'Step 1 of 2: Room Overview' : 'Step 2 of 2: Customize Stay (Add-ons)')}
+                </span>
+              </div>
+              <h3 className="font-extrabold text-lg sm:text-xl text-slate-900 dark:text-white mt-1.5 tracking-tight">
+                {roomModalStep === 'VISIT'
+                  ? (visitMode === 'LIVE_VIDEO'
+                    ? 'Schedule Live Video Tour'
+                    : 'Schedule Free Property Visit & Callback')
+                  : (activeRoomService.name || 'Room Details')}
+              </h3>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveRoomService(null);
+              setRoomModalStep(null);
+            }}
+            className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
+            title="Close modal"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Modal Body */}
+        <div className={`flex-1 px-6 py-5 space-y-6 ${roomModalStep === 'VISIT' ? 'overflow-visible' : 'overflow-y-auto overscroll-contain'}`}>
+          {(() => {
+            const roomListings = activeRoomService.rawConfig?.metadata?.listings || activeRoomService.metadata?.listings || [];
+            const selectedListing = activeRoomService.selectedListing || (activeRoomService.selectedListingId ? roomListings.find((l: any) => l.id === activeRoomService.selectedListingId) : roomListings[0]);
+            const roomMeta = selectedListing?.metadata || activeRoomService.metadata || {};
+            const rawPgBasePrice = Number(selectedListing?.price || selectedListing?.basePrice || activeRoomService.price || activeRoomService.basePrice) || 2200;
+
+            // Dynamic Tenure Discount & Direct Rent Calculation
+            const customTenureConfig = (selectedListing as any)?.metadata?.tenureDiscounts || (selectedListing as any)?.tenureDiscounts;
+
+            let discountedMonthlyRent = rawPgBasePrice;
+            if (hostelDurationMonths === 11) {
+              discountedMonthlyRent = customTenureConfig?.mo11Price
+                ? Number(customTenureConfig.mo11Price)
+                : Math.round(rawPgBasePrice * (1 - (customTenureConfig?.mo11Pct ?? customTenureConfig?.mo11 ?? 15) / 100));
+            } else if (hostelDurationMonths === 6) {
+              discountedMonthlyRent = customTenureConfig?.mo6Price
+                ? Number(customTenureConfig.mo6Price)
+                : Math.round(rawPgBasePrice * (1 - (customTenureConfig?.mo6Pct ?? customTenureConfig?.mo6 ?? 10) / 100));
+            } else if (hostelDurationMonths === 3) {
+              discountedMonthlyRent = customTenureConfig?.mo3Price
+                ? Number(customTenureConfig.mo3Price)
+                : Math.round(rawPgBasePrice * (1 - (customTenureConfig?.mo3Pct ?? customTenureConfig?.mo3 ?? 5) / 100));
+            }
+
+            const pgBasePrice = discountedMonthlyRent;
+            const roomPrice = isPgStay ? discountedMonthlyRent : (Number(selectedListing?.price || selectedListing?.basePrice || activeRoomService.price || activeRoomService.basePrice) || 2500);
+            const roomTotal = roomPrice * nights * rooms;
+
+            // Room gallery from listing / merchant uploads
+            const rawPhotos: string[] = [];
+            if (activeRoomService.metadata?.gallery && Array.isArray(activeRoomService.metadata.gallery)) {
+              activeRoomService.metadata.gallery.forEach((img: string) => { if (img && !rawPhotos.includes(img)) rawPhotos.push(img); });
+            }
+            if (activeRoomService.images && Array.isArray(activeRoomService.images)) {
+              activeRoomService.images.forEach((img: string) => { if (img && !rawPhotos.includes(img)) rawPhotos.push(img); });
+            }
+            if (activeRoomService.imageUrl && !rawPhotos.includes(activeRoomService.imageUrl)) {
+              rawPhotos.unshift(activeRoomService.imageUrl);
+            }
+            // Fallback to property showcase gallery if room has no specific photo uploaded
+            const propertyGallery = (extractedImages && extractedImages.length > 0) ? extractedImages : defaultHotelPhotos;
+            const roomPhotos = rawPhotos.length > 0 ? rawPhotos : propertyGallery;
+
+            // Check if hotel partner has custom add-ons saved in this listing
+            const rawAddons = roomMeta.addons || activeRoomService.metadata?.addons || activeRoomService.addOns || [];
+            const partnerListingAddons = Array.isArray(rawAddons) ? rawAddons : [];
+
+            const pgFoodDiscount = Number(
+              (selectedListing as any)?.foodDiscountAmount ??
+              activeRoomService.metadata?.foodDiscountAmount ??
+              2000
+            );
+
+            // ONLY show add-ons created directly by the business merchant (or standard PG add-ons if in PG stay mode)
+            const defaultPgAddons = isPgStay ? [
+              { id: 'custom-addon-pg-laundry', name: 'Laundry & Washing Machine Access', desc: 'Unlimited monthly washing machine and drying yard access', price: 350, tag: 'Popular', icon: '🧺' },
+              { id: 'custom-addon-pg-parking', name: 'Reserved Two-Wheeler Parking', desc: 'Covered dedicated CCTV-monitored 2-wheeler parking slot', price: 200, tag: 'Convenience', icon: '🛵' },
+              { id: 'custom-addon-pg-locker', name: 'Personal High-Security Locker', desc: 'Keyed personal wardrobe locker with master backup code', price: 250, tag: 'Security', icon: '🔐' },
+            ] : [];
+
+            const availableAddonsList = partnerListingAddons.length > 0
+              ? partnerListingAddons.map((pa: any, pIdx: number) => ({
+                id: `custom-addon-${pIdx}`,
+                name: typeof pa === 'string' ? pa : (pa.name || 'Custom Add-on'),
+                desc: pa.desc || (isPgStay ? 'Monthly amenity enhancement' : 'Optional enhancement offered directly by host'),
+                price: Number(pa.price || pa.cost || 0),
+                tag: 'Included Choice',
+                icon: '✨'
+              }))
+              : defaultPgAddons;
+
+            const addonsTotalSum = selectedAddonIds.reduce((sum, id) => {
+              const found = availableAddonsList.find((a: any) => a.id === id);
+              return sum + (found?.price || 0);
+            }, 0);
+
+            const basePgPayable = pgPaymentType === 'TOKEN_ADVANCE'
+              ? Number((selectedListing as any)?.tokenAdvanceAmount || activeRoomService.metadata?.tokenAdvanceAmount || 999)
+              : (isFoodExcluded ? Math.max(500, pgBasePrice - pgFoodDiscount) : pgBasePrice);
+
+            const finalCalculatedPayable = isPgStay
+              ? (basePgPayable + addonsTotalSum)
+              : (roomTotal + addonsTotalSum);
+
+            if (roomModalStep === 'DETAILS') {
+              return (
+                <div className="space-y-5">
+                  {/* Room Image Carousel / Hero */}
+                  <div className="relative h-56 sm:h-64 w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-800 group shrink-0">
+                    <img
+                      src={roomPhotos[roomModalImageIdx] || roomPhotos[0]}
+                      alt={activeRoomService.name}
+                      className="w-full h-full object-cover transition-transform duration-300"
+                      onError={(e) => { e.currentTarget.src = defaultHotelPhotos[0]; }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
+
+                    {/* Left & Right Interactive Navigation Arrows */}
+                    {roomPhotos.length > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setRoomModalImageIdx((prev) => (prev > 0 ? prev - 1 : roomPhotos.length - 1));
+                          }}
+                          className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 hover:bg-black/75 text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-md shadow-md hover:scale-105 active:scale-95 border border-white/20 z-10"
+                          aria-label="Previous image"
+                        >
+                          <ChevronLeft size={18} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setRoomModalImageIdx((prev) => (prev < roomPhotos.length - 1 ? prev + 1 : 0));
+                          }}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 hover:bg-black/75 text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-md shadow-md hover:scale-105 active:scale-95 border border-white/20 z-10"
+                          aria-label="Next image"
+                        >
+                          <ChevronRight size={18} />
+                        </button>
+                      </>
+                    )}
+
+                    {/* Image Switcher Pills + Photo Counter Badge */}
+                    {roomPhotos.length > 1 && (
+                      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between z-10">
+                        <div className="flex gap-1.5 items-center bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/15">
+                          {roomPhotos.map((_, pIdx) => (
+                            <button
+                              key={pIdx}
+                              type="button"
+                              onClick={() => setRoomModalImageIdx(pIdx)}
+                              className={`h-1.5 rounded-full transition-all cursor-pointer ${roomModalImageIdx === pIdx ? 'w-5 bg-[#ff6325]' : 'w-1.5 bg-white/60 hover:bg-white'
+                                }`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-[10px] font-black text-white px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 shadow-xs">
+                          📷 {roomModalImageIdx + 1} / {roomPhotos.length}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Top Right Price Tag (Standard Hotels Only) */}
+                    {!isPgStay && (
+                      <div className="absolute top-3 right-3 px-3 py-1 rounded-full bg-[#033266] dark:bg-[#ff6325] text-white text-xs font-bold shadow-sm">
+                        ₹{roomPrice.toLocaleString()} / night
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Long-Stay Tenure Saver / Duration Selection (1 Mo, 3+ Mo, 6+ Mo, 11 Mo Offers) */}
+                  {isPgStay && (
+                    <div className="space-y-2 p-3.5 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-900/40">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 dark:text-amber-300 block">
+                          Stay Duration & Tenure Discounts
+                        </span>
+                        <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/60 px-2 py-0.5 rounded-full">
+                          {hostelDurationMonths >= 6 ? '⭐ Best Value' : hostelDurationMonths >= 3 ? '🔥 Most Popular' : 'Flexi Plan'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-4 gap-2">
+                        {(() => {
+                          const activeListingData = activeRoomService?.selectedListing as any;
+                          const customTenure = activeListingData?.metadata?.tenureDiscounts || activeListingData?.tenureDiscounts;
+                          const disc3 = customTenure?.mo3 !== undefined ? Number(customTenure.mo3) : 5;
+                          const disc6 = customTenure?.mo6 !== undefined ? Number(customTenure.mo6) : 10;
+                          const disc11 = customTenure?.mo11 !== undefined ? Number(customTenure.mo11) : 15;
+
+                          const slabs = [
+                            { months: 1, label: '1 Mo', tag: 'Flexi Stay', disc: 0, rent: rawPgBasePrice },
+                            { months: 3, label: '3 Mo', tag: disc3 > 0 ? `${disc3}% OFF` : 'Standard', disc: disc3, rent: Math.round(rawPgBasePrice * (1 - disc3 / 100)) },
+                            { months: 6, label: '6 Mo', tag: disc6 > 0 ? `${disc6}% OFF` : 'Standard', disc: disc6, rent: Math.round(rawPgBasePrice * (1 - disc6 / 100)) },
+                            { months: 11, label: '11 Mo', tag: disc11 > 0 ? `${disc11}% OFF` : 'Standard', disc: disc11, rent: Math.round(rawPgBasePrice * (1 - disc11 / 100)) },
+                          ];
+
+                          return slabs.map((slab) => {
+                            const isSelected = hostelDurationMonths === slab.months;
+                            return (
+                              <button
+                                key={slab.months}
+                                type="button"
+                                onClick={() => setHostelDurationMonths(slab.months)}
+                                className={`p-2 rounded-xl text-center border-2 transition-all cursor-pointer flex flex-col items-center justify-between ${isSelected
+                                  ? 'border-[#ff6325] bg-white dark:bg-slate-800 shadow-sm scale-102'
+                                  : 'border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-900/40 hover:border-slate-300'
+                                  }`}
+                              >
+                                <div>
+                                  <span className={`text-xs font-black block ${isSelected ? 'text-[#ff6325]' : 'text-slate-900 dark:text-white'}`}>
+                                    {slab.label}
+                                  </span>
+                                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300 block">
+                                    ₹{slab.rent.toLocaleString()}/mo
+                                  </span>
+                                </div>
+                                <span className={`text-[9px] font-bold mt-1 px-1.5 py-0.2 rounded-md ${slab.disc > 0
+                                  ? isSelected
+                                    ? 'bg-rose-500 text-white'
+                                    : 'bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400'
+                                  : 'text-slate-400'
+                                  }`}>
+                                  {slab.tag}
+                                </span>
+                              </button>
+                            );
+                          });
+                        })()}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Top Booking Compact Meal Plans Selector: With Mess vs Without Mess */}
+                  {isPgStay && ((activeRoomService.selectedListing as any)?.foodFacilityProvided ?? (roomMeta.foodFacilityProvided ?? true)) && (
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block px-0.5">
+                        Meal & Stay Plan
+                      </span>
+                      {(() => {
+                        const foodDiscount = Number(
+                          (activeRoomService.selectedListing as any)?.foodDeductionAmount ||
+                          roomMeta.foodDeductionAmount ||
+                          1500
+                        );
+                        const mealPlanDesc = roomMeta.mealPlanOptions || (activeRoomService.selectedListing as any)?.mealPlanOptions || 'Daily Breakfast, Lunch, Dinner';
+                        const finalNoMessPrice = Math.max(500, roomPrice - foodDiscount);
+
+                        return (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            {/* Plan A: Stay + 3 Homely Meals Included */}
+                            <div
+                              onClick={() => setIsFoodExcluded(false)}
+                              className={`p-3 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between gap-2 ${!isFoodExcluded
+                                ? 'border-[#ff6325] bg-orange-50/50 dark:bg-[#ff6325]/10 shadow-2xs'
+                                : 'border-slate-200 dark:border-white/10 bg-white dark:bg-[#0f1219] hover:border-slate-300 dark:hover:border-white/20 opacity-75'
+                                }`}
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${!isFoodExcluded ? 'border-[#ff6325] bg-[#ff6325]' : 'border-slate-300 dark:border-white/20'}`}>
+                                  {!isFoodExcluded && <span className="w-1.5 h-1.5 rounded-full bg-white block" />}
+                                </div>
+                                <div className="min-w-0">
+                                  <h4 className="font-extrabold text-xs text-slate-900 dark:text-white truncate">
+                                    🍱 3 Meals + Stay
+                                  </h4>
+                                  <span className="text-[10px] text-slate-400 dark:text-slate-500 block truncate">
+                                    {mealPlanDesc}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <span className="text-sm font-black text-[#033266] dark:text-[#ff6325] block">
+                                  ₹{roomPrice.toLocaleString()}
+                                </span>
+                                <span className="text-[9px] text-slate-400 font-semibold block">/month</span>
+                              </div>
+                            </div>
+
+                            {/* Plan B: Only Stay (Mess Excluded - Dynamic Off) */}
+                            <div
+                              onClick={() => setIsFoodExcluded(true)}
+                              className={`p-3 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between gap-2 ${isFoodExcluded
+                                ? 'border-[#ff6325] bg-orange-50/50 dark:bg-[#ff6325]/10 shadow-2xs'
+                                : 'border-slate-200 dark:border-white/10 bg-white dark:bg-[#0f1219] hover:border-slate-300 dark:hover:border-white/20 opacity-75'
+                                }`}
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${isFoodExcluded ? 'border-[#ff6325] bg-[#ff6325]' : 'border-slate-300 dark:border-white/20'}`}>
+                                  {isFoodExcluded && <span className="w-1.5 h-1.5 rounded-full bg-white block" />}
+                                </div>
+                                <div className="min-w-0">
+                                  <h4 className="font-extrabold text-xs text-slate-900 dark:text-white truncate">
+                                    🍳 Only Stay (No Mess)
+                                  </h4>
+                                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold block truncate">
+                                    Save ₹{foodDiscount.toLocaleString()}/month
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <div className="flex items-baseline gap-1 justify-end">
+                                  <span className="text-[10px] text-slate-400 line-through">₹{roomPrice.toLocaleString()}</span>
+                                  <span className="text-sm font-black text-[#033266] dark:text-[#ff6325]">
+                                    ₹{finalNoMessPrice.toLocaleString()}
+                                  </span>
+                                </div>
+                                <span className="text-[9px] text-slate-400 font-semibold block">/month</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+
+                  {/* Top-Tier Booking App Style: Premium Key Room Features Bar */}
+                  <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-50 via-sky-50/40 to-slate-50 dark:from-slate-800/90 dark:via-sky-950/20 dark:to-slate-800/90 border border-slate-200/90 dark:border-white/10 shadow-2xs">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-3 px-0.5">
+                      Key Room Specifications
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-3.5 gap-x-5 text-xs font-bold text-slate-800 dark:text-slate-200">
+                      {/* 1. Capacity */}
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
+                          <Users size={16} />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Capacity</span>
+                          <span className="text-xs font-black text-slate-900 dark:text-white leading-snug break-words">
+                            {typeof roomMeta.maxGuests === 'string' && roomMeta.maxGuests.toLowerCase().includes('guest') ? roomMeta.maxGuests : `Max ${roomMeta.maxGuests || 2} Residents`}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* 2. Bed Setup */}
+                      {roomMeta.bedType && (
+                        <div className="flex items-start gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-orange-500/10 text-[#ff6325] flex items-center justify-center shrink-0 mt-0.5">
+                            <Bed size={16} />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Bed Setup</span>
+                            <span className="text-xs font-black text-slate-900 dark:text-white leading-snug break-words">
+                              {roomMeta.bedType}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 3. Room Size */}
+                      {(roomMeta.sizeSqFt || roomMeta.roomSize) && (
+                        <div className="flex items-start gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 text-sm mt-0.5">
+                            📐
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Room Size</span>
+                            <span className="text-xs font-black text-slate-900 dark:text-white leading-snug break-words">
+                              {roomMeta.sizeSqFt || roomMeta.roomSize} sq.ft
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 4. Attached Bathroom */}
+                      {roomMeta.bathroomType && (
+                        <div className="flex items-start gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 text-sm mt-0.5">
+                            🚿
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Washroom</span>
+                            <span className="text-xs font-black text-slate-900 dark:text-white leading-snug break-words">
+                              {roomMeta.bathroomType}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 5. Balcony / Ventilation */}
+                      {roomMeta.viewType && (
+                        <div className="flex items-start gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 text-sm mt-0.5">
+                            🌿
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Balcony / Air</span>
+                            <span className="text-xs font-black text-slate-900 dark:text-white leading-snug break-words">
+                              {roomMeta.viewType}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 6. Cooling */}
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0 text-sm mt-0.5">
+                          ❄️
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Climate</span>
+                          <span className="text-xs font-black text-slate-900 dark:text-white leading-snug break-words">
+                            {activeRoomService.name?.toLowerCase().includes('non ac') ? 'Natural Airflow / Fan' : 'Air Conditioned'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Room Description */}
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                      Room Description
+                    </h4>
+                    <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/80 p-3.5 rounded-xl border border-slate-200 dark:border-white/10">
+                      {activeRoomService.description ||
+                        'Well-appointed room featuring comfortable bedding, attached ensuite bathroom with hot/cold shower, and standard hotel essentials.'}
+                    </p>
+                  </div>
+
+                  {/* Inclusions & Amenities Checklist */}
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                      Included In This Room
+                    </h4>
+                    {(() => {
+                      const rawPerks: string[] = Array.isArray(roomMeta.perks) ? roomMeta.perks : [];
+                      const rawAmenities: string[] = Array.isArray(roomMeta.amenities) ? roomMeta.amenities : [];
+
+                      // Formatting helper for camelCase/tight strings like "balconyview" -> "Balcony View", "smartTV" -> "Smart TV"
+                      const formatPerkName = (str: string) => {
+                        if (!str) return '';
+                        const formatted = str
+                          .replace(/([a-z])([A-Z])/g, '$1 $2')
+                          .replace(/luandry/i, 'Laundry Service')
+                          .replace(/foodfaciiity|foodfacility|food\s*facility/i, 'Food Facility / Mess')
+                          .replace(/Freelaunch/i, 'Free Lunch')
+                          .replace(/freedinner/i, 'Free Dinner')
+                          .replace(/Freewifi/i, 'Free Wi-Fi')
+                          .replace(/waterheater/i, 'Geyser / Water Heater')
+                          .replace(/smarttv/i, 'Smart TV')
+                          .replace(/balconyview/i, 'Balcony View')
+                          .replace(/oceanview/i, 'Ocean View')
+                          .replace(/seaview/i, 'Sea View')
+                          .replace(/swimmingpool/i, 'Swimming Pool')
+                          .replace(/ComplimentorbuffetBreakfast/i, 'Complimentary Buffet Breakfast')
+                          .replace(/buffetbreakfast/i, 'Buffet Breakfast')
+                          .replace(/firecamp/i, 'Fire Camp')
+                          .replace(/waterbottle/i, 'Water Bottle')
+                          .trim();
+                        return formatted.charAt(0).toUpperCase() + formatted.slice(1);
                       };
 
+                      const dynamicPerks = rawPerks.map(p => ({
+                        label: formatPerkName(p),
+                        isFreeHighlight: true,
+                      }));
+
+                      const dynamicAmenities = rawAmenities.map(a => ({
+                        label: formatPerkName(a),
+                        isFreeHighlight: false,
+                      }));
+
+                      const extraFeatures: { label: string; isFreeHighlight: boolean }[] = [];
+                      if (roomMeta.bathroomType) {
+                        const bType = roomMeta.bathroomType.trim();
+                        extraFeatures.push({
+                          label: bType.toLowerCase().includes('bathroom') || bType.toLowerCase().includes('ensuite') ? bType : `${bType} Ensuite`,
+                          isFreeHighlight: false,
+                        });
+                      }
+                      if (roomMeta.bedType) {
+                        const bSetup = roomMeta.bedType.trim();
+                        extraFeatures.push({
+                          label: bSetup.toLowerCase().includes('bed') ? bSetup : `${bSetup} Bed Setup`,
+                          isFreeHighlight: false,
+                        });
+                      }
+
+                      const allInclusions = [...dynamicPerks, ...dynamicAmenities, ...extraFeatures];
+
+                      // Fallback if merchant didn't add any perks or amenities
+                      const displayList = allInclusions.length > 0 ? allInclusions : [
+                        { label: 'Free High-Speed Wi-Fi', isFreeHighlight: true },
+                        { label: 'Free Cancellation (up to 24h before)', isFreeHighlight: true },
+                        { label: 'Private Attached Bathroom', isFreeHighlight: false },
+                        { label: 'Fresh Linens & Bath Toiletries', isFreeHighlight: false },
+                        { label: 'Drinking Water & Electric Kettle', isFreeHighlight: false },
+                        { label: 'Daily Housekeeping & Assistance', isFreeHighlight: false },
+                      ];
+
                       return (
-                        <div className="fixed inset-0 z-[100000] flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-slate-900/80 backdrop-blur-md">
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.96, y: 30 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.96, y: 30 }}
-                            className="w-full sm:max-w-2xl md:max-w-3xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-white/10 rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[90vh] sm:h-auto sm:max-h-[85vh]"
-                          >
-                            {/* Modal Top Header */}
-                            <div className="px-6 py-5 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/60 shrink-0">
-                              <div>
-                                <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                                  Step 2 of 2: Optional Session Add-ons
-                                </span>
-                                <h3 className="font-extrabold text-lg sm:text-xl text-slate-900 dark:text-white mt-1 tracking-tight flex items-center gap-2">
-                                  <span>{category === 'badminton' ? '🏸' : category === 'tennis' ? '🎾' : category === 'cricket-ground' ? '🏏' : category === 'basketball' ? '🏀' : category === 'swimming' ? '🏊' : category === 'play-arena' ? '🧗' : '⚽'}</span>
-                                  <span>
-                                    {category === 'badminton' ? 'Upgrade Your Badminton Session' :
-                                      category === 'tennis' ? 'Upgrade Your Tennis Session' :
-                                        category === 'cricket-ground' ? 'Upgrade Your Cricket Match' :
-                                          category === 'basketball' ? 'Upgrade Your Basketball Game' :
-                                            category === 'swimming' ? 'Upgrade Your Pool Session' :
-                                              category === 'play-arena' ? 'Upgrade Your Arena Jump Pass' :
-                                                'Upgrade Your Match Session'}
-                                  </span>
-                                </h3>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                  📅 {selectedDate} • ⏰ {selectedHourSlot} • {selectedTurfService?.name || 'Session Unit'}
-                                </p>
-                              </div>
-
-                              <button
-                                type="button"
-                                onClick={() => setIsTurfAddonModalOpen(false)}
-                                className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
-                                title="Close"
-                              >
-                                <X size={20} />
-                              </button>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-800 dark:text-slate-200">
+                          {displayList.map((item, idx) => (
+                            <div
+                              key={idx}
+                              className={`flex items-center gap-2 p-2.5 rounded-lg border font-semibold ${item.isFreeHighlight
+                                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/50'
+                                : 'bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-white/10'
+                                }`}
+                            >
+                              <CheckCircle2
+                                size={15}
+                                className={`shrink-0 ${item.isFreeHighlight
+                                  ? 'text-emerald-600 dark:text-emerald-400'
+                                  : 'text-[#033266] dark:text-[#ff6325]'
+                                  }`}
+                              />
+                              <span>{item.label}</span>
                             </div>
-
-                            {/* Modal Add-ons Grid */}
-                            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-                              <div className="flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 p-3.5 rounded-2xl">
-                                <div className="flex items-center gap-2.5">
-                                  <span className="text-xl">✨</span>
-                                  <div>
-                                    <span className="text-xs font-black text-emerald-900 dark:text-emerald-300 block">Want official match gear or refreshments?</span>
-                                    <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">Select any add-ons below or skip to proceed with pure turf slot rental.</span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                                {availableAddons.map((addon: any, aIdx: number) => {
-                                  const isChecked = selectedTurfAddons.includes(addon.name);
-
-                                  return (
-                                    <div
-                                      key={aIdx}
-                                      onClick={() => {
-                                        if (isChecked) {
-                                          setSelectedTurfAddons(prev => prev.filter(n => n !== addon.name));
-                                        } else {
-                                          setSelectedTurfAddons(prev => [...prev, addon.name]);
-                                        }
-                                      }}
-                                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${isChecked
-                                        ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-500 ring-2 ring-blue-500/20 shadow-md'
-                                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
-                                        }`}
-                                    >
-                                      <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-white/10 flex items-center justify-center text-lg shrink-0">
-                                        {addon.icon}
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                        <div className="flex items-center justify-between gap-2">
-                                          <h4 className="text-xs font-black text-slate-900 dark:text-white">
-                                            {addon.name}
-                                          </h4>
-                                          <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 shrink-0">
-                                            +₹{addon.price}
-                                          </span>
-                                        </div>
-                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed font-medium">
-                                          {addon.desc}
-                                        </p>
-                                      </div>
-                                      <div className={`h-5 w-5 rounded-md border flex items-center justify-center text-xs font-black shrink-0 mt-0.5 ${isChecked
-                                        ? 'bg-blue-600 text-white border-blue-600'
-                                        : 'border-slate-300 dark:border-white/20'
-                                        }`}>
-                                        {isChecked && '✓'}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-
-                              {/* Universal BokSpot Payment Options Preview */}
-                              <div className="pt-3 border-t border-slate-200/80 dark:border-white/10 space-y-2">
-                                <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
-                                  Universal BokSpot Payment Options (Configurable at Checkout)
-                                </span>
-                                <div className="grid grid-cols-3 gap-2 text-center">
-                                  <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10">
-                                    <span className="text-xs block">💳</span>
-                                    <span className="text-[10px] font-black text-slate-900 dark:text-white block mt-0.5">100% Online</span>
-                                    <span className="text-[9px] text-slate-500 dark:text-slate-400">Instant VIP Pass</span>
-                                  </div>
-                                  <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50">
-                                    <span className="text-xs block">⚡</span>
-                                    <span className="text-[10px] font-black text-amber-900 dark:text-amber-300 block mt-0.5">30% Advance</span>
-                                    <span className="text-[9px] text-amber-700 dark:text-amber-400">Hold & 70% at venue</span>
-                                  </div>
-                                  <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/50">
-                                    <span className="text-xs block">👥</span>
-                                    <span className="text-[10px] font-black text-indigo-900 dark:text-indigo-300 block mt-0.5">Split with Friends</span>
-                                    <span className="text-[9px] text-indigo-700 dark:text-indigo-400">Equal share links</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Modal Footer (Skip vs Proceed with Add-ons) */}
-                            <div className="px-6 py-4 border-t border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/60 flex items-center justify-between gap-3 shrink-0">
-                              {/* Skip Option */}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  executeTurfBooking([], 0);
-                                }}
-                                className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-white/20 text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer bg-white dark:bg-slate-800"
-                              >
-                                Skip Add-ons
-                              </button>
-
-                              {/* Proceed to Checkout */}
-                              <div className="flex items-center gap-3">
-                                <div className="text-right hidden sm:block">
-                                  <span className="text-[10px] text-slate-400 uppercase font-black block">Total Payable</span>
-                                  <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
-                                    ₹{grandTotal.toLocaleString()}
-                                  </span>
-                                </div>
-
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    executeTurfBooking(selectedTurfAddons, addonsTotal);
-                                  }}
-                                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 text-xs font-black shadow-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
-                                >
-                                  <span>Proceed to Payment</span>
-                                  <span>&rarr;</span>
-                                </button>
-                              </div>
-                            </div>
-                          </motion.div>
+                          ))}
                         </div>
                       );
                     })()}
-                  </AnimatePresence>
+                  </div>
 
-                  {/* ── INTERACTIVE HOTEL ROOM DETAILS & ADD-ONS WORKFLOW MODAL ── */}
-                  <AnimatePresence>
-                    {activeRoomService && roomModalStep && (
-                      <div className="fixed inset-0 z-[100000] flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-slate-900/75 backdrop-blur-md">
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.96, y: 30 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.96, y: 30 }}
-                          className="w-full sm:max-w-2xl md:max-w-3xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-white/10 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[88vh]"
-                        >
-                          {/* Modal Top Header with Stepper Indicator */}
-                          <div className="px-6 py-5 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/60 shrink-0 rounded-t-3xl">
-                            <div className="flex items-center gap-3.5">
-                              {(roomModalStep === 'ADDONS' || roomModalStep === 'VISIT') && (
-                                <button
-                                  type="button"
-                                  onClick={() => setRoomModalStep('DETAILS')}
-                                  className="p-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors border border-slate-200 dark:border-white/10 cursor-pointer shadow-xs"
-                                  title="Back to Room Details"
-                                >
-                                  <ArrowLeft size={16} />
-                                </button>
-                              )}
+                  {/* Highlighted Schedule Free Property Visit Card & Hostel Policies (PG / Hostel) */}
+                  {isPgStay ? (
+                    <div className="space-y-3">
+                      {/* Gate Curfew, Notice & Deposit Policies Note */}
+                      {((activeRoomService.selectedListing as any)?.metadata?.petPolicy || (activeRoomService.selectedListing as any)?.metadata?.checkOutTime || (activeRoomService.selectedListing as any)?.metadata?.cancellationPolicy || roomMeta.petPolicy || roomMeta.checkOutTime || roomMeta.cancellationPolicy) && (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 text-xs">
+                          {((activeRoomService.selectedListing as any)?.metadata?.checkOutTime || roomMeta.checkOutTime) && (
+                            <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                              <span className="text-base shrink-0">🚪</span>
                               <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border border-[#033266]/20 dark:border-[#ff6325]/30">
-                                    {isPgStay ? (roomModalStep === 'VISIT' ? 'Schedule Visit' : 'Bed Selection') : (roomModalStep === 'DETAILS' ? 'Step 1 of 2: Room Overview' : 'Step 2 of 2: Customize Stay (Add-ons)')}
-                                  </span>
-                                </div>
-                                <h3 className="font-extrabold text-lg sm:text-xl text-slate-900 dark:text-white mt-1.5 tracking-tight">
-                                  {roomModalStep === 'VISIT'
-                                    ? (visitMode === 'LIVE_VIDEO'
-                                      ? 'Schedule Live Video Tour'
-                                      : 'Schedule Free Property Visit & Callback')
-                                    : (activeRoomService.name || 'Room Details')}
-                                </h3>
-                              </div>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setActiveRoomService(null);
-                                setRoomModalStep(null);
-                              }}
-                              className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
-                              title="Close modal"
-                            >
-                              <X size={20} />
-                            </button>
-                          </div>
-
-                          {/* Modal Body */}
-                          <div className={`flex-1 px-6 py-5 space-y-6 ${roomModalStep === 'VISIT' ? 'overflow-visible' : 'overflow-y-auto overscroll-contain'}`}>
-                            {(() => {
-                              const roomListings = activeRoomService.rawConfig?.metadata?.listings || activeRoomService.metadata?.listings || [];
-                              const selectedListing = activeRoomService.selectedListing || (activeRoomService.selectedListingId ? roomListings.find((l: any) => l.id === activeRoomService.selectedListingId) : roomListings[0]);
-                              const roomMeta = selectedListing?.metadata || activeRoomService.metadata || {};
-                              const rawPgBasePrice = Number(selectedListing?.price || selectedListing?.basePrice || activeRoomService.price || activeRoomService.basePrice) || 2200;
-
-                              // Dynamic Tenure Discount & Direct Rent Calculation
-                              const customTenureConfig = (selectedListing as any)?.metadata?.tenureDiscounts || (selectedListing as any)?.tenureDiscounts;
-
-                              let discountedMonthlyRent = rawPgBasePrice;
-                              if (hostelDurationMonths === 11) {
-                                discountedMonthlyRent = customTenureConfig?.mo11Price
-                                  ? Number(customTenureConfig.mo11Price)
-                                  : Math.round(rawPgBasePrice * (1 - (customTenureConfig?.mo11Pct ?? customTenureConfig?.mo11 ?? 15) / 100));
-                              } else if (hostelDurationMonths === 6) {
-                                discountedMonthlyRent = customTenureConfig?.mo6Price
-                                  ? Number(customTenureConfig.mo6Price)
-                                  : Math.round(rawPgBasePrice * (1 - (customTenureConfig?.mo6Pct ?? customTenureConfig?.mo6 ?? 10) / 100));
-                              } else if (hostelDurationMonths === 3) {
-                                discountedMonthlyRent = customTenureConfig?.mo3Price
-                                  ? Number(customTenureConfig.mo3Price)
-                                  : Math.round(rawPgBasePrice * (1 - (customTenureConfig?.mo3Pct ?? customTenureConfig?.mo3 ?? 5) / 100));
-                              }
-
-                              const pgBasePrice = discountedMonthlyRent;
-                              const roomPrice = isPgStay ? discountedMonthlyRent : (Number(selectedListing?.price || selectedListing?.basePrice || activeRoomService.price || activeRoomService.basePrice) || 2500);
-                              const roomTotal = roomPrice * nights * rooms;
-
-                              // Room gallery from listing / merchant uploads
-                              const rawPhotos: string[] = [];
-                              if (activeRoomService.metadata?.gallery && Array.isArray(activeRoomService.metadata.gallery)) {
-                                activeRoomService.metadata.gallery.forEach((img: string) => { if (img && !rawPhotos.includes(img)) rawPhotos.push(img); });
-                              }
-                              if (activeRoomService.images && Array.isArray(activeRoomService.images)) {
-                                activeRoomService.images.forEach((img: string) => { if (img && !rawPhotos.includes(img)) rawPhotos.push(img); });
-                              }
-                              if (activeRoomService.imageUrl && !rawPhotos.includes(activeRoomService.imageUrl)) {
-                                rawPhotos.unshift(activeRoomService.imageUrl);
-                              }
-                              // Fallback to property showcase gallery if room has no specific photo uploaded
-                              const propertyGallery = (extractedImages && extractedImages.length > 0) ? extractedImages : defaultHotelPhotos;
-                              const roomPhotos = rawPhotos.length > 0 ? rawPhotos : propertyGallery;
-
-                              // Check if hotel partner has custom add-ons saved in this listing
-                              const rawAddons = roomMeta.addons || activeRoomService.metadata?.addons || activeRoomService.addOns || [];
-                              const partnerListingAddons = Array.isArray(rawAddons) ? rawAddons : [];
-
-                              const pgFoodDiscount = Number(
-                                (selectedListing as any)?.foodDiscountAmount ??
-                                activeRoomService.metadata?.foodDiscountAmount ??
-                                2000
-                              );
-
-                              // ONLY show add-ons created directly by the business merchant (or standard PG add-ons if in PG stay mode)
-                              const defaultPgAddons = isPgStay ? [
-                                { id: 'custom-addon-pg-laundry', name: 'Laundry & Washing Machine Access', desc: 'Unlimited monthly washing machine and drying yard access', price: 350, tag: 'Popular', icon: '🧺' },
-                                { id: 'custom-addon-pg-parking', name: 'Reserved Two-Wheeler Parking', desc: 'Covered dedicated CCTV-monitored 2-wheeler parking slot', price: 200, tag: 'Convenience', icon: '🛵' },
-                                { id: 'custom-addon-pg-locker', name: 'Personal High-Security Locker', desc: 'Keyed personal wardrobe locker with master backup code', price: 250, tag: 'Security', icon: '🔐' },
-                              ] : [];
-
-                              const availableAddonsList = partnerListingAddons.length > 0
-                                ? partnerListingAddons.map((pa: any, pIdx: number) => ({
-                                  id: `custom-addon-${pIdx}`,
-                                  name: typeof pa === 'string' ? pa : (pa.name || 'Custom Add-on'),
-                                  desc: pa.desc || (isPgStay ? 'Monthly amenity enhancement' : 'Optional enhancement offered directly by host'),
-                                  price: Number(pa.price || pa.cost || 0),
-                                  tag: 'Included Choice',
-                                  icon: '✨'
-                                }))
-                                : defaultPgAddons;
-
-                              const addonsTotalSum = selectedAddonIds.reduce((sum, id) => {
-                                const found = availableAddonsList.find((a: any) => a.id === id);
-                                return sum + (found?.price || 0);
-                              }, 0);
-
-                              const basePgPayable = pgPaymentType === 'TOKEN_ADVANCE'
-                                ? Number((selectedListing as any)?.tokenAdvanceAmount || activeRoomService.metadata?.tokenAdvanceAmount || 999)
-                                : (isFoodExcluded ? Math.max(500, pgBasePrice - pgFoodDiscount) : pgBasePrice);
-
-                              const finalCalculatedPayable = isPgStay
-                                ? (basePgPayable + addonsTotalSum)
-                                : (roomTotal + addonsTotalSum);
-
-                              if (roomModalStep === 'DETAILS') {
-                                return (
-                                  <div className="space-y-5">
-                                    {/* Room Image Carousel / Hero */}
-                                    <div className="relative h-56 sm:h-64 w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-800 group shrink-0">
-                                      <img
-                                        src={roomPhotos[roomModalImageIdx] || roomPhotos[0]}
-                                        alt={activeRoomService.name}
-                                        className="w-full h-full object-cover transition-transform duration-300"
-                                        onError={(e) => { e.currentTarget.src = defaultHotelPhotos[0]; }}
-                                      />
-                                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
-
-                                      {/* Left & Right Interactive Navigation Arrows */}
-                                      {roomPhotos.length > 1 && (
-                                        <>
-                                          <button
-                                            type="button"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              setRoomModalImageIdx((prev) => (prev > 0 ? prev - 1 : roomPhotos.length - 1));
-                                            }}
-                                            className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 hover:bg-black/75 text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-md shadow-md hover:scale-105 active:scale-95 border border-white/20 z-10"
-                                            aria-label="Previous image"
-                                          >
-                                            <ChevronLeft size={18} />
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              setRoomModalImageIdx((prev) => (prev < roomPhotos.length - 1 ? prev + 1 : 0));
-                                            }}
-                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 hover:bg-black/75 text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-md shadow-md hover:scale-105 active:scale-95 border border-white/20 z-10"
-                                            aria-label="Next image"
-                                          >
-                                            <ChevronRight size={18} />
-                                          </button>
-                                        </>
-                                      )}
-
-                                      {/* Image Switcher Pills + Photo Counter Badge */}
-                                      {roomPhotos.length > 1 && (
-                                        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between z-10">
-                                          <div className="flex gap-1.5 items-center bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/15">
-                                            {roomPhotos.map((_, pIdx) => (
-                                              <button
-                                                key={pIdx}
-                                                type="button"
-                                                onClick={() => setRoomModalImageIdx(pIdx)}
-                                                className={`h-1.5 rounded-full transition-all cursor-pointer ${roomModalImageIdx === pIdx ? 'w-5 bg-[#ff6325]' : 'w-1.5 bg-white/60 hover:bg-white'
-                                                  }`}
-                                              />
-                                            ))}
-                                          </div>
-                                          <span className="text-[10px] font-black text-white px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 shadow-xs">
-                                            📷 {roomModalImageIdx + 1} / {roomPhotos.length}
-                                          </span>
-                                        </div>
-                                      )}
-
-                                      {/* Top Right Price Tag (Standard Hotels Only) */}
-                                      {!isPgStay && (
-                                        <div className="absolute top-3 right-3 px-3 py-1 rounded-full bg-[#033266] dark:bg-[#ff6325] text-white text-xs font-bold shadow-sm">
-                                          ₹{roomPrice.toLocaleString()} / night
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    {/* Long-Stay Tenure Saver / Duration Selection (1 Mo, 3+ Mo, 6+ Mo, 11 Mo Offers) */}
-                                    {isPgStay && (
-                                      <div className="space-y-2 p-3.5 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-900/40">
-                                        <div className="flex items-center justify-between">
-                                          <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 dark:text-amber-300 block">
-                                            Stay Duration & Tenure Discounts
-                                          </span>
-                                          <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/60 px-2 py-0.5 rounded-full">
-                                            {hostelDurationMonths >= 6 ? '⭐ Best Value' : hostelDurationMonths >= 3 ? '🔥 Most Popular' : 'Flexi Plan'}
-                                          </span>
-                                        </div>
-
-                                        <div className="grid grid-cols-4 gap-2">
-                                          {(() => {
-                                            const activeListingData = activeRoomService?.selectedListing as any;
-                                            const customTenure = activeListingData?.metadata?.tenureDiscounts || activeListingData?.tenureDiscounts;
-                                            const disc3 = customTenure?.mo3 !== undefined ? Number(customTenure.mo3) : 5;
-                                            const disc6 = customTenure?.mo6 !== undefined ? Number(customTenure.mo6) : 10;
-                                            const disc11 = customTenure?.mo11 !== undefined ? Number(customTenure.mo11) : 15;
-
-                                            const slabs = [
-                                              { months: 1, label: '1 Mo', tag: 'Flexi Stay', disc: 0, rent: rawPgBasePrice },
-                                              { months: 3, label: '3 Mo', tag: disc3 > 0 ? `${disc3}% OFF` : 'Standard', disc: disc3, rent: Math.round(rawPgBasePrice * (1 - disc3 / 100)) },
-                                              { months: 6, label: '6 Mo', tag: disc6 > 0 ? `${disc6}% OFF` : 'Standard', disc: disc6, rent: Math.round(rawPgBasePrice * (1 - disc6 / 100)) },
-                                              { months: 11, label: '11 Mo', tag: disc11 > 0 ? `${disc11}% OFF` : 'Standard', disc: disc11, rent: Math.round(rawPgBasePrice * (1 - disc11 / 100)) },
-                                            ];
-
-                                            return slabs.map((slab) => {
-                                              const isSelected = hostelDurationMonths === slab.months;
-                                              return (
-                                                <button
-                                                  key={slab.months}
-                                                  type="button"
-                                                  onClick={() => setHostelDurationMonths(slab.months)}
-                                                  className={`p-2 rounded-xl text-center border-2 transition-all cursor-pointer flex flex-col items-center justify-between ${isSelected
-                                                    ? 'border-[#ff6325] bg-white dark:bg-slate-800 shadow-sm scale-102'
-                                                    : 'border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-900/40 hover:border-slate-300'
-                                                    }`}
-                                                >
-                                                  <div>
-                                                    <span className={`text-xs font-black block ${isSelected ? 'text-[#ff6325]' : 'text-slate-900 dark:text-white'}`}>
-                                                      {slab.label}
-                                                    </span>
-                                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300 block">
-                                                      ₹{slab.rent.toLocaleString()}/mo
-                                                    </span>
-                                                  </div>
-                                                  <span className={`text-[9px] font-bold mt-1 px-1.5 py-0.2 rounded-md ${slab.disc > 0
-                                                    ? isSelected
-                                                      ? 'bg-rose-500 text-white'
-                                                      : 'bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400'
-                                                    : 'text-slate-400'
-                                                    }`}>
-                                                    {slab.tag}
-                                                  </span>
-                                                </button>
-                                              );
-                                            });
-                                          })()}
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {/* Top Booking Compact Meal Plans Selector: With Mess vs Without Mess */}
-                                    {isPgStay && ((activeRoomService.selectedListing as any)?.foodFacilityProvided ?? (roomMeta.foodFacilityProvided ?? true)) && (
-                                      <div className="space-y-1.5">
-                                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block px-0.5">
-                                          Meal & Stay Plan
-                                        </span>
-                                        {(() => {
-                                          const foodDiscount = Number(
-                                            (activeRoomService.selectedListing as any)?.foodDeductionAmount ||
-                                            roomMeta.foodDeductionAmount ||
-                                            1500
-                                          );
-                                          const mealPlanDesc = roomMeta.mealPlanOptions || (activeRoomService.selectedListing as any)?.mealPlanOptions || 'Daily Breakfast, Lunch, Dinner';
-                                          const finalNoMessPrice = Math.max(500, roomPrice - foodDiscount);
-
-                                          return (
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                              {/* Plan A: Stay + 3 Homely Meals Included */}
-                                              <div
-                                                onClick={() => setIsFoodExcluded(false)}
-                                                className={`p-3 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between gap-2 ${!isFoodExcluded
-                                                  ? 'border-[#ff6325] bg-orange-50/50 dark:bg-[#ff6325]/10 shadow-2xs'
-                                                  : 'border-slate-200 dark:border-white/10 bg-white dark:bg-[#0f1219] hover:border-slate-300 dark:hover:border-white/20 opacity-75'
-                                                  }`}
-                                              >
-                                                <div className="flex items-center gap-2 min-w-0">
-                                                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${!isFoodExcluded ? 'border-[#ff6325] bg-[#ff6325]' : 'border-slate-300 dark:border-white/20'}`}>
-                                                    {!isFoodExcluded && <span className="w-1.5 h-1.5 rounded-full bg-white block" />}
-                                                  </div>
-                                                  <div className="min-w-0">
-                                                    <h4 className="font-extrabold text-xs text-slate-900 dark:text-white truncate">
-                                                      🍱 3 Meals + Stay
-                                                    </h4>
-                                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 block truncate">
-                                                      {mealPlanDesc}
-                                                    </span>
-                                                  </div>
-                                                </div>
-                                                <div className="text-right shrink-0">
-                                                  <span className="text-sm font-black text-[#033266] dark:text-[#ff6325] block">
-                                                    ₹{roomPrice.toLocaleString()}
-                                                  </span>
-                                                  <span className="text-[9px] text-slate-400 font-semibold block">/month</span>
-                                                </div>
-                                              </div>
-
-                                              {/* Plan B: Only Stay (Mess Excluded - Dynamic Off) */}
-                                              <div
-                                                onClick={() => setIsFoodExcluded(true)}
-                                                className={`p-3 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between gap-2 ${isFoodExcluded
-                                                  ? 'border-[#ff6325] bg-orange-50/50 dark:bg-[#ff6325]/10 shadow-2xs'
-                                                  : 'border-slate-200 dark:border-white/10 bg-white dark:bg-[#0f1219] hover:border-slate-300 dark:hover:border-white/20 opacity-75'
-                                                  }`}
-                                              >
-                                                <div className="flex items-center gap-2 min-w-0">
-                                                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${isFoodExcluded ? 'border-[#ff6325] bg-[#ff6325]' : 'border-slate-300 dark:border-white/20'}`}>
-                                                    {isFoodExcluded && <span className="w-1.5 h-1.5 rounded-full bg-white block" />}
-                                                  </div>
-                                                  <div className="min-w-0">
-                                                    <h4 className="font-extrabold text-xs text-slate-900 dark:text-white truncate">
-                                                      🍳 Only Stay (No Mess)
-                                                    </h4>
-                                                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold block truncate">
-                                                      Save ₹{foodDiscount.toLocaleString()}/month
-                                                    </span>
-                                                  </div>
-                                                </div>
-                                                <div className="text-right shrink-0">
-                                                  <div className="flex items-baseline gap-1 justify-end">
-                                                    <span className="text-[10px] text-slate-400 line-through">₹{roomPrice.toLocaleString()}</span>
-                                                    <span className="text-sm font-black text-[#033266] dark:text-[#ff6325]">
-                                                      ₹{finalNoMessPrice.toLocaleString()}
-                                                    </span>
-                                                  </div>
-                                                  <span className="text-[9px] text-slate-400 font-semibold block">/month</span>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          );
-                                        })()}
-                                      </div>
-                                    )}
-
-                                    {/* Top-Tier Booking App Style: Premium Key Room Features Bar */}
-                                    <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-50 via-sky-50/40 to-slate-50 dark:from-slate-800/90 dark:via-sky-950/20 dark:to-slate-800/90 border border-slate-200/90 dark:border-white/10 shadow-2xs">
-                                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-3 px-0.5">
-                                        Key Room Specifications
-                                      </span>
-                                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-3.5 gap-x-5 text-xs font-bold text-slate-800 dark:text-slate-200">
-                                        {/* 1. Capacity */}
-                                        <div className="flex items-start gap-2.5">
-                                          <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
-                                            <Users size={16} />
-                                          </div>
-                                          <div className="min-w-0">
-                                            <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Capacity</span>
-                                            <span className="text-xs font-black text-slate-900 dark:text-white leading-snug break-words">
-                                              {typeof roomMeta.maxGuests === 'string' && roomMeta.maxGuests.toLowerCase().includes('guest') ? roomMeta.maxGuests : `Max ${roomMeta.maxGuests || 2} Residents`}
-                                            </span>
-                                          </div>
-                                        </div>
-
-                                        {/* 2. Bed Setup */}
-                                        {roomMeta.bedType && (
-                                          <div className="flex items-start gap-2.5">
-                                            <div className="w-8 h-8 rounded-xl bg-orange-500/10 text-[#ff6325] flex items-center justify-center shrink-0 mt-0.5">
-                                              <Bed size={16} />
-                                            </div>
-                                            <div className="min-w-0">
-                                              <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Bed Setup</span>
-                                              <span className="text-xs font-black text-slate-900 dark:text-white leading-snug break-words">
-                                                {roomMeta.bedType}
-                                              </span>
-                                            </div>
-                                          </div>
-                                        )}
-
-                                        {/* 3. Room Size */}
-                                        {(roomMeta.sizeSqFt || roomMeta.roomSize) && (
-                                          <div className="flex items-start gap-2.5">
-                                            <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 text-sm mt-0.5">
-                                              📐
-                                            </div>
-                                            <div className="min-w-0">
-                                              <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Room Size</span>
-                                              <span className="text-xs font-black text-slate-900 dark:text-white leading-snug break-words">
-                                                {roomMeta.sizeSqFt || roomMeta.roomSize} sq.ft
-                                              </span>
-                                            </div>
-                                          </div>
-                                        )}
-
-                                        {/* 4. Attached Bathroom */}
-                                        {roomMeta.bathroomType && (
-                                          <div className="flex items-start gap-2.5">
-                                            <div className="w-8 h-8 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 text-sm mt-0.5">
-                                              🚿
-                                            </div>
-                                            <div className="min-w-0">
-                                              <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Washroom</span>
-                                              <span className="text-xs font-black text-slate-900 dark:text-white leading-snug break-words">
-                                                {roomMeta.bathroomType}
-                                              </span>
-                                            </div>
-                                          </div>
-                                        )}
-
-                                        {/* 5. Balcony / Ventilation */}
-                                        {roomMeta.viewType && (
-                                          <div className="flex items-start gap-2.5">
-                                            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 text-sm mt-0.5">
-                                              🌿
-                                            </div>
-                                            <div className="min-w-0">
-                                              <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Balcony / Air</span>
-                                              <span className="text-xs font-black text-slate-900 dark:text-white leading-snug break-words">
-                                                {roomMeta.viewType}
-                                              </span>
-                                            </div>
-                                          </div>
-                                        )}
-
-                                        {/* 6. Cooling */}
-                                        <div className="flex items-start gap-2.5">
-                                          <div className="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0 text-sm mt-0.5">
-                                            ❄️
-                                          </div>
-                                          <div className="min-w-0">
-                                            <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Climate</span>
-                                            <span className="text-xs font-black text-slate-900 dark:text-white leading-snug break-words">
-                                              {activeRoomService.name?.toLowerCase().includes('non ac') ? 'Natural Airflow / Fan' : 'Air Conditioned'}
-                                            </span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-
-                                    {/* Room Description */}
-                                    <div>
-                                      <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                                        Room Description
-                                      </h4>
-                                      <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/80 p-3.5 rounded-xl border border-slate-200 dark:border-white/10">
-                                        {activeRoomService.description ||
-                                          'Well-appointed room featuring comfortable bedding, attached ensuite bathroom with hot/cold shower, and standard hotel essentials.'}
-                                      </p>
-                                    </div>
-
-                                    {/* Inclusions & Amenities Checklist */}
-                                    <div>
-                                      <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                                        Included In This Room
-                                      </h4>
-                                      {(() => {
-                                        const rawPerks: string[] = Array.isArray(roomMeta.perks) ? roomMeta.perks : [];
-                                        const rawAmenities: string[] = Array.isArray(roomMeta.amenities) ? roomMeta.amenities : [];
-
-                                        // Formatting helper for camelCase/tight strings like "balconyview" -> "Balcony View", "smartTV" -> "Smart TV"
-                                        const formatPerkName = (str: string) => {
-                                          if (!str) return '';
-                                          const formatted = str
-                                            .replace(/([a-z])([A-Z])/g, '$1 $2')
-                                            .replace(/luandry/i, 'Laundry Service')
-                                            .replace(/foodfaciiity|foodfacility|food\s*facility/i, 'Food Facility / Mess')
-                                            .replace(/Freelaunch/i, 'Free Lunch')
-                                            .replace(/freedinner/i, 'Free Dinner')
-                                            .replace(/Freewifi/i, 'Free Wi-Fi')
-                                            .replace(/waterheater/i, 'Geyser / Water Heater')
-                                            .replace(/smarttv/i, 'Smart TV')
-                                            .replace(/balconyview/i, 'Balcony View')
-                                            .replace(/oceanview/i, 'Ocean View')
-                                            .replace(/seaview/i, 'Sea View')
-                                            .replace(/swimmingpool/i, 'Swimming Pool')
-                                            .replace(/ComplimentorbuffetBreakfast/i, 'Complimentary Buffet Breakfast')
-                                            .replace(/buffetbreakfast/i, 'Buffet Breakfast')
-                                            .replace(/firecamp/i, 'Fire Camp')
-                                            .replace(/waterbottle/i, 'Water Bottle')
-                                            .trim();
-                                          return formatted.charAt(0).toUpperCase() + formatted.slice(1);
-                                        };
-
-                                        const dynamicPerks = rawPerks.map(p => ({
-                                          label: formatPerkName(p),
-                                          isFreeHighlight: true,
-                                        }));
-
-                                        const dynamicAmenities = rawAmenities.map(a => ({
-                                          label: formatPerkName(a),
-                                          isFreeHighlight: false,
-                                        }));
-
-                                        const extraFeatures: { label: string; isFreeHighlight: boolean }[] = [];
-                                        if (roomMeta.bathroomType) {
-                                          const bType = roomMeta.bathroomType.trim();
-                                          extraFeatures.push({
-                                            label: bType.toLowerCase().includes('bathroom') || bType.toLowerCase().includes('ensuite') ? bType : `${bType} Ensuite`,
-                                            isFreeHighlight: false,
-                                          });
-                                        }
-                                        if (roomMeta.bedType) {
-                                          const bSetup = roomMeta.bedType.trim();
-                                          extraFeatures.push({
-                                            label: bSetup.toLowerCase().includes('bed') ? bSetup : `${bSetup} Bed Setup`,
-                                            isFreeHighlight: false,
-                                          });
-                                        }
-
-                                        const allInclusions = [...dynamicPerks, ...dynamicAmenities, ...extraFeatures];
-
-                                        // Fallback if merchant didn't add any perks or amenities
-                                        const displayList = allInclusions.length > 0 ? allInclusions : [
-                                          { label: 'Free High-Speed Wi-Fi', isFreeHighlight: true },
-                                          { label: 'Free Cancellation (up to 24h before)', isFreeHighlight: true },
-                                          { label: 'Private Attached Bathroom', isFreeHighlight: false },
-                                          { label: 'Fresh Linens & Bath Toiletries', isFreeHighlight: false },
-                                          { label: 'Drinking Water & Electric Kettle', isFreeHighlight: false },
-                                          { label: 'Daily Housekeeping & Assistance', isFreeHighlight: false },
-                                        ];
-
-                                        return (
-                                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-800 dark:text-slate-200">
-                                            {displayList.map((item, idx) => (
-                                              <div
-                                                key={idx}
-                                                className={`flex items-center gap-2 p-2.5 rounded-lg border font-semibold ${item.isFreeHighlight
-                                                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/50'
-                                                  : 'bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-white/10'
-                                                  }`}
-                                              >
-                                                <CheckCircle2
-                                                  size={15}
-                                                  className={`shrink-0 ${item.isFreeHighlight
-                                                    ? 'text-emerald-600 dark:text-emerald-400'
-                                                    : 'text-[#033266] dark:text-[#ff6325]'
-                                                    }`}
-                                                />
-                                                <span>{item.label}</span>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        );
-                                      })()}
-                                    </div>
-
-                                    {/* Highlighted Schedule Free Property Visit Card & Hostel Policies (PG / Hostel) */}
-                                    {isPgStay ? (
-                                      <div className="space-y-3">
-                                        {/* Gate Curfew, Notice & Deposit Policies Note */}
-                                        {((activeRoomService.selectedListing as any)?.metadata?.petPolicy || (activeRoomService.selectedListing as any)?.metadata?.checkOutTime || (activeRoomService.selectedListing as any)?.metadata?.cancellationPolicy || roomMeta.petPolicy || roomMeta.checkOutTime || roomMeta.cancellationPolicy) && (
-                                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 text-xs">
-                                            {((activeRoomService.selectedListing as any)?.metadata?.checkOutTime || roomMeta.checkOutTime) && (
-                                              <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-                                                <span className="text-base shrink-0">🚪</span>
-                                                <div>
-                                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Gate Timing</span>
-                                                  <span className="font-extrabold text-slate-900 dark:text-white">
-                                                    Closes at {(activeRoomService.selectedListing as any)?.metadata?.checkOutTime || roomMeta.checkOutTime}
-                                                  </span>
-                                                </div>
-                                              </div>
-                                            )}
-                                            {((activeRoomService.selectedListing as any)?.metadata?.petPolicy || roomMeta.petPolicy) && (
-                                              <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-                                                <span className="text-base shrink-0">📜</span>
-                                                <div>
-                                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Notice Period</span>
-                                                  <span className="font-extrabold text-slate-900 dark:text-white">
-                                                    {(activeRoomService.selectedListing as any)?.metadata?.petPolicy || roomMeta.petPolicy}
-                                                  </span>
-                                                </div>
-                                              </div>
-                                            )}
-                                            {((activeRoomService.selectedListing as any)?.metadata?.cancellationPolicy || roomMeta.cancellationPolicy) && (
-                                              <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-                                                <span className="text-base shrink-0">🛡️</span>
-                                                <div>
-                                                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Deposit Refund</span>
-                                                  <span className="font-extrabold text-slate-900 dark:text-white">
-                                                    {(activeRoomService.selectedListing as any)?.metadata?.cancellationPolicy || roomMeta.cancellationPolicy}
-                                                  </span>
-                                                </div>
-                                              </div>
-                                            )}
-                                          </div>
-                                        )}
-
-                                        <div className="p-4 rounded-2xl bg-gradient-to-r from-sky-50 via-blue-50/50 to-indigo-50/40 dark:from-sky-950/30 dark:via-blue-950/20 dark:to-indigo-950/20 border border-sky-200 dark:border-sky-800/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
-                                          <div className="flex items-center gap-3">
-                                            <span className="text-2xl p-2 rounded-xl bg-white dark:bg-slate-800 shadow-2xs border border-sky-100 dark:border-white/10 shrink-0">
-                                              🗓️
-                                            </span>
-                                            <div>
-                                              <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                                                <span>Want to inspect the property in person?</span>
-                                                <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 font-extrabold text-[10px]">
-                                                  100% Free
-                                                </span>
-                                              </h4>
-                                              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                                                Meet the hostel warden, inspect room amenities & check out mess food before paying.
-                                              </p>
-                                            </div>
-                                          </div>
-                                          <button
-                                            type="button"
-                                            onClick={() => setRoomModalStep('VISIT')}
-                                            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#033266] hover:bg-[#022349] dark:bg-sky-600 dark:hover:bg-sky-500 text-white font-extrabold text-xs shadow-sm active:scale-95 transition-all cursor-pointer shrink-0 text-center"
-                                          >
-                                            Schedule Free Visit &rarr;
-                                          </button>
-                                        </div>
-                                      </div>
-                                    ) : (
-                                      /* Selected Dates Review Banner (Hotel / Resorts Only) */
-                                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 flex items-center justify-between text-xs">
-                                        <div>
-                                          <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">Selected Stay</span>
-                                          <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
-                                            {checkIn} &rarr; {checkOut} ({nights} Night{nights > 1 ? 's' : ''})
-                                          </span>
-                                          <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
-                                            {adults} Adults{children > 0 ? `, ${children} Children` : ''} • {rooms} Room{rooms > 1 ? 's' : ''}
-                                          </span>
-                                        </div>
-                                        <div className="text-right">
-                                          <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">Room Total</span>
-                                          <span className="font-black text-[#033266] dark:text-[#ff6325] text-base">
-                                            ₹{roomTotal.toLocaleString()}
-                                          </span>
-                                          <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold block">
-                                            Taxes & fees included
-                                          </span>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              }
-
-                              // ── STEP 1.5: SCHEDULE VISIT / VIDEO TOUR VIEW ──
-                              if (roomModalStep === 'VISIT') {
-                                return (
-                                  <div className="space-y-4 max-w-lg mx-auto py-2">
-                                    {/* 2-Way Segmented Switcher: Consistent Brand Toggle Styling */}
-                                    <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-white/10">
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setVisitMode('IN_PERSON');
-                                          setVisitConfirmed(false);
-                                        }}
-                                        className={`py-2 px-3 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${visitMode === 'IN_PERSON'
-                                          ? 'bg-[#033266] dark:bg-[#ff6325] text-white shadow-md'
-                                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                                          }`}
-                                      >
-                                        <span>🏢 Free Visit Pass & Callback</span>
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setVisitMode('LIVE_VIDEO');
-                                          setVisitConfirmed(false);
-                                        }}
-                                        className={`py-2 px-3 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${visitMode === 'LIVE_VIDEO'
-                                          ? 'bg-[#033266] dark:bg-[#ff6325] text-white shadow-md'
-                                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                                          }`}
-                                      >
-                                        <span>📹 Live Video Tour</span>
-                                      </button>
-                                    </div>
-
-                                    {visitConfirmed ? (
-                                      <div className="py-8 text-center space-y-3 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 p-6 rounded-3xl">
-                                        <div className="w-14 h-14 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto text-2xl font-black">
-                                          ✓
-                                        </div>
-                                        <h4 className="text-lg font-black text-slate-900 dark:text-white">
-                                          {visitMode === 'LIVE_VIDEO'
-                                            ? 'Live Video Tour Booked!'
-                                            : 'Visit Pass Confirmed!'}
-                                        </h4>
-                                        <p className="text-xs text-slate-600 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
-                                          {visitMode === 'LIVE_VIDEO' ? (
-                                            <>
-                                              Property Warden will connect via <span className="font-bold text-[#ff6325]">{videoPlatform === 'WHATSAPP' ? 'WhatsApp Video' : 'Google Meet'}</span> on <span className="font-bold text-[#ff6325]">{visitDate}</span> at <span className="font-bold text-[#ff6325]">{visitTimeSlot}</span>. Confirmation SMS sent to {visitPhone || 'your mobile'}.
-                                            </>
-                                          ) : (
-                                            <>
-                                              The PG Warden has been notified for <span className="font-bold text-[#ff6325]">{visitDate}</span> at <span className="font-bold text-[#ff6325]">{visitTimeSlot}</span>. Warden will also call your number <span className="font-bold text-emerald-600 dark:text-emerald-400">{visitPhone || 'provided'}</span> to confirm directions and answer your queries.
-                                            </>
-                                          )}
-                                        </p>
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setVisitConfirmed(false);
-                                            setRoomModalStep('DETAILS');
-                                          }}
-                                          className="mt-3 px-6 py-2.5 bg-[#ff6325] hover:bg-[#e04e13] text-white text-xs font-black rounded-xl cursor-pointer"
-                                        >
-                                          Back to Bed Details
-                                        </button>
-                                      </div>
-                                    ) : (
-                                      <div className="space-y-4">
-                                        {/* Top Informational Banner */}
-                                        <div className={`p-4 rounded-2xl border flex items-start gap-3 ${visitMode === 'LIVE_VIDEO'
-                                          ? 'bg-blue-50/70 dark:bg-blue-950/30 border-blue-100 dark:border-blue-900/40'
-                                          : 'bg-sky-50 dark:bg-sky-950/30 border-sky-100 dark:border-sky-900/40'
-                                          }`}>
-                                          <span className="text-2xl shrink-0">
-                                            {visitMode === 'LIVE_VIDEO' ? '📹' : '🗓️'}
-                                          </span>
-                                          <div>
-                                            <h4 className="text-xs font-black text-slate-900 dark:text-white">
-                                              {visitMode === 'LIVE_VIDEO'
-                                                ? 'Schedule Live 1-on-1 Video Tour'
-                                                : 'Free Property Inspection Pass & Warden Callback'}
-                                            </h4>
-                                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                              {visitMode === 'LIVE_VIDEO'
-                                                ? 'Outstation student or working professional? Warden will walk you through rooms, mess, and washrooms over video call.'
-                                                : 'Visit property in person, inspect bed setup & taste mess food. PG Warden will also call you back to assist with directions and details.'}
-                                            </p>
-                                          </div>
-                                        </div>
-
-                                        <div className="space-y-3 text-xs">
-                                          {/* Video Platform Preference selector (Only for LIVE_VIDEO mode) */}
-                                          {visitMode === 'LIVE_VIDEO' && (
-                                            <div>
-                                              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Preferred Video Call App</label>
-                                              <div className="grid grid-cols-2 gap-2">
-                                                <button
-                                                  type="button"
-                                                  onClick={() => setVideoPlatform('WHATSAPP')}
-                                                  className={`p-2.5 rounded-xl border text-center font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer ${videoPlatform === 'WHATSAPP'
-                                                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300'
-                                                    : 'border-slate-200 dark:border-white/10 text-slate-600'
-                                                    }`}
-                                                >
-                                                  <span>💬 WhatsApp Video</span>
-                                                </button>
-                                                <button
-                                                  type="button"
-                                                  onClick={() => setVideoPlatform('GOOGLE_MEET')}
-                                                  className={`p-2.5 rounded-xl border text-center font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer ${videoPlatform === 'GOOGLE_MEET'
-                                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300'
-                                                    : 'border-slate-200 dark:border-white/10 text-slate-600'
-                                                    }`}
-                                                >
-                                                  <span>🎥 Google Meet</span>
-                                                </button>
-                                              </div>
-                                            </div>
-                                          )}
-
-                                          <div>
-                                            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Your Full Name</label>
-                                            <input
-                                              type="text"
-                                              placeholder="e.g. Arun Kumar"
-                                              value={visitName}
-                                              onChange={(e) => setVisitName(e.target.value)}
-                                              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 outline-none text-xs font-semibold focus:border-[#ff6325]"
-                                            />
-                                          </div>
-
-                                          <div>
-                                            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Phone Number (For Warden Callback & SMS)</label>
-                                            <input
-                                              type="tel"
-                                              placeholder="+91 98765 43210"
-                                              value={visitPhone}
-                                              onChange={(e) => setVisitPhone(e.target.value)}
-                                              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 outline-none text-xs font-semibold focus:border-[#ff6325]"
-                                            />
-                                          </div>
-
-                                          <div className="grid grid-cols-2 gap-3">
-                                            <div className="relative">
-                                              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-                                                {visitMode === 'LIVE_VIDEO' ? 'Tour Date' : 'Visit Date'}
-                                              </label>
-                                              <button
-                                                type="button"
-                                                onClick={() => {
-                                                  const targetD = visitDate ? new Date(visitDate) : new Date();
-                                                  setVisitCalMonthDate(isNaN(targetD.getTime()) ? new Date() : targetD);
-                                                  setIsVisitCalPopoverOpen(!isVisitCalPopoverOpen);
-                                                }}
-                                                className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 outline-none text-xs font-semibold flex items-center justify-between text-left hover:border-[#ff6325] transition-colors cursor-pointer"
-                                              >
-                                                <span className="text-slate-900 dark:text-white font-bold">
-                                                  {(() => {
-                                                    try {
-                                                      const [y, m, d] = visitDate.split('-');
-                                                      return `${d}-${m}-${y}`;
-                                                    } catch {
-                                                      return visitDate;
-                                                    }
-                                                  })()}
-                                                </span>
-                                                <Calendar size={15} className="text-[#ff6325] shrink-0" />
-                                              </button>
-
-                                              {/* Custom Popover Calendar matching top booking app UI */}
-                                              <AnimatePresence>
-                                                {isVisitCalPopoverOpen && (
-                                                  <motion.div
-                                                    initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                                                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                                                    exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                                                    className="absolute left-0 bottom-full mb-3 w-72 bg-white dark:bg-[#0c1424] border border-slate-200 dark:border-white/15 rounded-3xl p-4 shadow-2xl z-[300000] space-y-3"
-                                                  >
-                                                    {/* Month Header with Pill Container & < > Controls (Matching Check-in Calendar) */}
-                                                    <div className="bg-slate-50 dark:bg-[#121722] rounded-2xl border border-slate-200/80 dark:border-white/10 p-2.5 flex items-center justify-between">
-                                                      <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                          setVisitCalMonthDate(new Date(visitCalMonthDate.getFullYear(), visitCalMonthDate.getMonth() - 1, 1));
-                                                        }}
-                                                        className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
-                                                      >
-                                                        <ChevronLeft size={15} />
-                                                      </button>
-                                                      <span className="text-sm font-black text-slate-900 dark:text-white">
-                                                        {visitCalMonthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                                                      </span>
-                                                      <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                          setVisitCalMonthDate(new Date(visitCalMonthDate.getFullYear(), visitCalMonthDate.getMonth() + 1, 1));
-                                                        }}
-                                                        className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
-                                                      >
-                                                        <ChevronRight size={15} />
-                                                      </button>
-                                                    </div>
-
-                                                    {/* Weekday Names */}
-                                                    <div className="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400">
-                                                      {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
-                                                        <div key={d} className="py-1">{d}</div>
-                                                      ))}
-                                                    </div>
-
-                                                    {/* Days Grid with Blue Circle Selection */}
-                                                    <div className="grid grid-cols-7 gap-1 text-center text-xs">
-                                                      {(() => {
-                                                        const year = visitCalMonthDate.getFullYear();
-                                                        const month = visitCalMonthDate.getMonth();
-                                                        const firstDay = new Date(year, month, 1).getDay();
-                                                        const totalDays = new Date(year, month + 1, 0).getDate();
-                                                        const cells = [];
-
-                                                        for (let i = 0; i < firstDay; i++) {
-                                                          cells.push(<div key={`visit-modal-empty-${i}`} className="h-8" />);
-                                                        }
-
-                                                        for (let d = 1; d <= totalDays; d++) {
-                                                          const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                                                          const isSelected = visitDate === dStr;
-                                                          const isPast = new Date(dStr) < new Date(new Date().setHours(0, 0, 0, 0));
-
-                                                          cells.push(
-                                                            <div key={d} className="flex items-center justify-center">
-                                                              <button
-                                                                type="button"
-                                                                disabled={isPast}
-                                                                onClick={() => {
-                                                                  setVisitDate(dStr);
-                                                                  setIsVisitCalPopoverOpen(false);
-                                                                }}
-                                                                className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all cursor-pointer ${isSelected
-                                                                  ? 'bg-[#1a56db] text-white font-black shadow-md shadow-blue-500/40 ring-2 ring-blue-400/30'
-                                                                  : isPast
-                                                                    ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
-                                                                    : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                                                  }`}
-                                                              >
-                                                                {d}
-                                                              </button>
-                                                            </div>
-                                                          );
-                                                        }
-                                                        return cells;
-                                                      })()}
-                                                    </div>
-                                                  </motion.div>
-                                                )}
-                                              </AnimatePresence>
-                                            </div>
-                                            <div>
-                                              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-                                                {visitMode === 'LIVE_VIDEO' ? 'Video Slot' : 'Preferred Time'}
-                                              </label>
-                                              <select
-                                                value={visitTimeSlot}
-                                                onChange={(e) => setVisitTimeSlot(e.target.value)}
-                                                className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 outline-none text-xs font-semibold"
-                                              >
-                                                <option>09:00 AM - 11:00 AM</option>
-                                                <option>11:00 AM - 01:00 PM</option>
-                                                <option>02:00 PM - 04:00 PM</option>
-                                                <option>04:00 PM - 06:00 PM</option>
-                                                <option>06:00 PM - 08:00 PM</option>
-                                              </select>
-                                            </div>
-                                          </div>
-                                        </div>
-
-                                        <button
-                                          type="button"
-                                          onClick={async () => {
-                                            if (!visitPhone) {
-                                              alert('Please enter your phone number so the Warden can connect with you.');
-                                              return;
-                                            }
-
-                                            // Sync Live Property Visit Request to Backend & Business Portal
-                                            try {
-                                              const visitBookingData = {
-                                                id: `visit-${Date.now()}`,
-                                                ref: `VISIT-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
-                                                merchantId: merchantId || activeRoomService.merchantId || (merchantData as any)?.id || '51c6a3b8-2abc-9421-7644-2a2dea05dbc0',
-                                                merchantName: (merchantData as any)?.name || (merchantData as any)?.businessName || activeRoomService.merchantName || 'Backpackers Hostel',
-                                                category: 'Hostel Booking',
-                                                serviceId: activeRoomService.id || 'svc-hostel-visit',
-                                                serviceName: activeRoomService.name ? `${activeRoomService.name} (${visitMode === 'LIVE_VIDEO' ? 'Live Video Tour' : 'In-Person Inspection'})` : (visitMode === 'LIVE_VIDEO' ? 'Live Video Tour' : 'Property Visit & Callback'),
-                                                customerName: visitName || 'Guest Visitor',
-                                                customerPhone: visitPhone,
-                                                date: visitDate,
-                                                time: `${visitTimeSlot} • ${visitMode === 'LIVE_VIDEO' ? (videoPlatform === 'WHATSAPP' ? 'WhatsApp Video' : 'Google Meet') : 'Physical Visit'}`,
-                                                amount: 0,
-                                                status: 'PENDING',
-                                                bookingType: 'PROPERTY_VISIT',
-                                                notes: `Scheduled ${visitMode === 'LIVE_VIDEO' ? `Live Video Tour on ${videoPlatform === 'WHATSAPP' ? 'WhatsApp' : 'Google Meet'}` : 'Physical Property Visit & Warden Callback'} for ${visitName || 'Visitor'} (${visitPhone})`,
-                                                metadata: {
-                                                  isPropertyVisit: true,
-                                                  visitMode,
-                                                  videoPlatform: visitMode === 'LIVE_VIDEO' ? videoPlatform : undefined,
-                                                  roomName: activeRoomService.name,
-                                                  roomSharing: (selectedListing as any)?.name || 'Bed Inspection',
-                                                  scheduledDate: visitDate,
-                                                  timeSlot: visitTimeSlot,
-                                                }
-                                              };
-
-                                              await fetch('/api/v1/bookings/sync', {
-                                                method: 'POST',
-                                                headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify(visitBookingData),
-                                              }).catch(() => { });
-                                            } catch (e) {
-                                              console.error('Failed to post live visit sync:', e);
-                                            }
-
-                                            setVisitConfirmed(true);
-                                          }}
-                                          className={`w-full py-3.5 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer mt-2 ${visitMode === 'LIVE_VIDEO'
-                                            ? 'bg-blue-600 hover:bg-blue-700'
-                                            : 'bg-[#ff6325] hover:bg-[#e04e13]'
-                                            }`}
-                                        >
-                                          {visitMode === 'LIVE_VIDEO'
-                                            ? 'Confirm Live Video Tour →'
-                                            : 'Confirm Free Visit Pass & Callback →'}
-                                        </button>
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              }
-
-                              // ── STEP 2: ADD-ONS SELECTION ──
-                              if (roomModalStep === 'ADDONS') {
-                                return (
-                                  <div className="space-y-4">
-                                    <div className="p-3.5 rounded-2xl bg-[#033266]/5 dark:bg-[#ff6325]/10 border border-[#033266]/15 dark:border-[#ff6325]/20 flex items-center gap-3">
-                                      <span className="text-2xl">✨</span>
-                                      <div>
-                                        <h4 className="font-extrabold text-xs text-slate-900 dark:text-white">Enhance Your Stay</h4>
-                                        <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                                          Choose optional upgrades below, or click <strong>Skip Add-ons</strong> to continue directly to checkout.
-                                        </p>
-                                      </div>
-                                    </div>
-
-                                    {/* Add-ons List */}
-                                    <div className="space-y-2.5">
-                                      {availableAddonsList.length === 0 ? (
-                                        <div className="p-6 text-center rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400">
-                                          <p className="text-xs font-semibold">No additional paid upgrades configured for this room.</p>
-                                          <p className="text-[11px] mt-1 text-slate-400">You can proceed directly to checkout.</p>
-                                        </div>
-                                      ) : (
-                                        availableAddonsList.map(addon => {
-                                          const isSelected = selectedAddonIds.includes(addon.id);
-                                          return (
-                                            <div
-                                              key={addon.id}
-                                              onClick={() => {
-                                                setSelectedAddonIds(prev =>
-                                                  prev.includes(addon.id)
-                                                    ? prev.filter(x => x !== addon.id)
-                                                    : [...prev, addon.id]
-                                                );
-                                              }}
-                                              className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${isSelected
-                                                ? 'bg-[#033266]/5 dark:bg-[#ff6325]/10 border-[#033266] dark:border-[#ff6325] shadow-xs'
-                                                : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
-                                                }`}
-                                            >
-                                              <div className="flex items-start gap-3 min-w-0">
-                                                <span className="text-2xl shrink-0 p-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10">
-                                                  {addon.icon}
-                                                </span>
-                                                <div className="min-w-0">
-                                                  <div className="flex items-center gap-2">
-                                                    <h5 className="font-extrabold text-xs text-slate-900 dark:text-white truncate">
-                                                      {addon.name}
-                                                    </h5>
-                                                    {addon.tag && (
-                                                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border border-[#033266]/20 dark:border-[#ff6325]/30">
-                                                        {addon.tag}
-                                                      </span>
-                                                    )}
-                                                  </div>
-                                                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                                                    {addon.desc}
-                                                  </p>
-                                                </div>
-                                              </div>
-
-                                              <div className="flex items-center gap-3 shrink-0">
-                                                <div className="text-right">
-                                                  <span className="text-xs font-black text-slate-900 dark:text-white block">
-                                                    +₹{addon.price.toLocaleString()}
-                                                  </span>
-                                                </div>
-                                                <div
-                                                  className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${isSelected
-                                                    ? 'bg-[#033266] dark:bg-[#ff6325] border-[#033266] dark:border-[#ff6325] text-white'
-                                                    : 'border-slate-300 dark:border-white/20 bg-white dark:bg-slate-700'
-                                                    }`}
-                                                >
-                                                  {isSelected && <Check size={12} />}
-                                                </div>
-                                              </div>
-                                            </div>
-                                          );
-                                        })
-                                      )}
-                                    </div>
-
-                                    {/* Live Total Calculation Preview */}
-                                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 flex items-center justify-between text-xs mt-4">
-                                      <div>
-                                        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">
-                                          {isPgStay
-                                            ? `${pgPaymentType === 'TOKEN_ADVANCE' ? 'Token Advance' : '1st Month Rent'} + ${selectedAddonIds.length} Add-on${selectedAddonIds.length === 1 ? '' : 's'}`
-                                            : `Base Room (${nights}N) + ${selectedAddonIds.length} Add-on${selectedAddonIds.length === 1 ? '' : 's'}`
-                                          }
-                                        </span>
-                                        <span className="text-slate-700 dark:text-slate-300 text-xs">
-                                          ₹{(isPgStay ? basePgPayable : roomTotal).toLocaleString()} + ₹{addonsTotalSum.toLocaleString()}
-                                        </span>
-                                      </div>
-                                      <div className="text-right">
-                                        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Final Total</span>
-                                        <span className="text-base font-black text-[#033266] dark:text-[#ff6325]">
-                                          ₹{finalCalculatedPayable.toLocaleString()}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              }
-
-                              return null;
-                            })()}
-                          </div>
-
-                          {/* Modal Bottom Action Bar */}
-                          <div className="px-6 py-3.5 border-t border-slate-200/80 dark:border-white/10 bg-slate-50/90 dark:bg-slate-900/80 flex items-center justify-between gap-3 backdrop-blur-md shrink-0 rounded-b-3xl">
-                            {roomModalStep === 'VISIT' ? (
-                              <div className="w-full flex items-center justify-between">
-                                <button
-                                  type="button"
-                                  onClick={() => setRoomModalStep('DETAILS')}
-                                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer bg-white dark:bg-slate-800"
-                                >
-                                  &larr; Back to Bed Overview
-                                </button>
-                                <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                                  ✓ No payment required for visit
+                                <span className="text-[10px] uppercase font-bold text-slate-400 block">Gate Timing</span>
+                                <span className="font-extrabold text-slate-900 dark:text-white">
+                                  Closes at {(activeRoomService.selectedListing as any)?.metadata?.checkOutTime || roomMeta.checkOutTime}
                                 </span>
                               </div>
-                            ) : roomModalStep === 'DETAILS' ? (
-                              isPgStay ? (
-                                (() => {
-                                  const basePrice = Number(activeRoomService.price || activeRoomService.basePrice) || 2200;
-                                  const foodDiscount = Number(
-                                    (activeRoomService.selectedListing as any)?.foodDeductionAmount ||
-                                    activeRoomService.metadata?.foodDeductionAmount ||
-                                    1500
-                                  );
-                                  const effectiveRent = isFoodExcluded ? Math.max(500, basePrice - foodDiscount) : basePrice;
-
-                                  return (
-                                    /* Balanced Modern Booking Action Bar: Primary Full Rent + Flexible Token Option */
-                                    <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3">
-                                      {/* Left: Clear Monthly Rent Summary */}
-                                      <div>
-                                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
-                                          Total Monthly Rent
-                                        </span>
-                                        <div className="flex items-baseline gap-1.5 mt-0.5">
-                                          <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                                            ₹{effectiveRent.toLocaleString()}
-                                          </span>
-                                          <span className="text-xs font-semibold text-slate-400">/month</span>
-                                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold ml-1">
-                                            {isFoodExcluded ? '(No Mess)' : '(All Meals Inc.)'}
-                                          </span>
-                                        </div>
-                                      </div>
-
-                                      {/* Right: Primary Full Payment & Secondary Token Advance Action */}
-                                      <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setActiveRoomService(null);
-                                            setRoomModalStep(null);
-                                          }}
-                                          className="px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer bg-white dark:bg-slate-800"
-                                        >
-                                          Back
-                                        </button>
-
-                                        {/* Secondary Action: Pay Dynamic Token Advance */}
-                                        {((activeRoomService.selectedListing as any)?.isTokenAdvanceEnabled ?? (activeRoomService.metadata?.isTokenAdvanceEnabled ?? true)) && (
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setPgPaymentType('TOKEN_ADVANCE');
-                                              setRoomModalStep('ADDONS');
-                                            }}
-                                            className="px-4 py-2.5 rounded-xl border border-orange-200 dark:border-orange-900/40 hover:border-[#ff6325] text-[#ff6325] hover:bg-orange-50 dark:hover:bg-orange-950/20 text-xs font-black transition-all cursor-pointer bg-white dark:bg-slate-800 flex items-center gap-1.5 whitespace-nowrap shadow-2xs"
-                                          >
-                                            <span>🔒 Pay ₹{Number((activeRoomService.selectedListing as any)?.tokenAdvanceAmount || activeRoomService.metadata?.tokenAdvanceAmount || 999).toLocaleString()} Token</span>
-                                          </button>
-                                        )}
-
-                                        {/* Primary Main CTA: Pay Full 1st Month Rent */}
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setPgPaymentType('FULL_MONTH_RENT');
-                                            setRoomModalStep('ADDONS');
-                                          }}
-                                          className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#ff6325] to-[#f4511e] hover:from-[#e04e13] hover:to-[#d84315] active:scale-95 text-white text-xs font-black shadow-md transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-                                        >
-                                          <span>PAY FULL MONTH (₹{effectiveRent.toLocaleString()})</span>
-                                          <span>&rarr;</span>
-                                        </button>
-                                      </div>
-                                    </div>
-                                  );
-                                })()
-                              ) : (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setActiveRoomService(null);
-                                      setRoomModalStep(null);
-                                    }}
-                                    className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-white/20 text-slate-700 dark:text-slate-200 hover:text-slate-900 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer bg-white dark:bg-slate-800"
-                                  >
-                                    Back to Rooms
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => setRoomModalStep('ADDONS')}
-                                    className="px-6 py-2.5 rounded-xl bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] active:scale-95 text-white text-xs font-extrabold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer ml-auto"
-                                  >
-                                    <span>Choose This Room &rarr;</span>
-                                  </button>
-                                </>
-                              )
-                            ) : (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    // Skip Addons: directly execute checkout payload with empty addons
-                                    const isBackpackersHostel = category === 'hostels' || venueName.toLowerCase().includes('backpackers');
-                                    const effectiveMerchantId = isBackpackersHostel ? '51c6a3b8-2abc-9421-7644-2a2dea05dbc0' : (activeRoomService.merchantId || merchantId);
-                                    const effectiveMerchantName = isBackpackersHostel ? 'Backpackers Hostel' : venueName;
-
-                                    if (isPgStay) {
-                                      const rawBasePrice = Number(activeRoomService.price || activeRoomService.basePrice) || 2200;
-                                      // Tenure discount calculation
-                                      const tenureDiscountPct = hostelDurationMonths >= 11 ? 15 : hostelDurationMonths >= 6 ? 10 : hostelDurationMonths >= 3 ? 5 : 0;
-                                      const basePrice = Math.round(rawBasePrice * (1 - tenureDiscountPct / 100));
-
-                                      const foodDiscount = Number(
-                                        (activeRoomService.selectedListing as any)?.foodDiscountAmount ??
-                                        activeRoomService.metadata?.foodDiscountAmount ??
-                                        2000
-                                      );
-                                      const actualRent = isFoodExcluded ? Math.max(500, basePrice - foodDiscount) : basePrice;
-                                      const deposit = Number((activeRoomService.selectedListing as any)?.securityDeposit ?? activeRoomService.metadata?.securityDeposit ?? activeRoomService.metadata?.refundableDeposit ?? 3000);
-                                      const tokenAmount = Number((activeRoomService.selectedListing as any)?.tokenAdvanceAmount || activeRoomService.metadata?.tokenAdvanceAmount || 999);
-                                      const payable = pgPaymentType === 'TOKEN_ADVANCE' ? tokenAmount : actualRent;
-                                      const slotStr = pgPaymentType === 'TOKEN_ADVANCE'
-                                        ? `${hostelDurationMonths} Month${hostelDurationMonths > 1 ? 's' : ''} Stay (Starts ${checkIn}) • Token Advance ₹${tokenAmount}`
-                                        : `1st Month Rent for ${hostelDurationMonths} Month${hostelDurationMonths > 1 ? 's' : ''} Stay (Starts ${checkIn}) • ₹${actualRent.toLocaleString()}`;
-
-                                      setSelectedService({
-                                        ...activeRoomService,
-                                        price: payable,
-                                        name: `${effectiveMerchantName} — ${activeRoomService.name} (${pgPaymentType === 'TOKEN_ADVANCE' ? 'Token Advance' : '1st Month Rent'})`,
-                                        merchantId: effectiveMerchantId,
-                                        merchantName: effectiveMerchantName,
-                                        merchant: {
-                                          id: effectiveMerchantId,
-                                          name: effectiveMerchantName,
-                                        },
-                                        merchantObj: {
-                                          ...(activeRoomService.merchantObj || {}),
-                                          id: effectiveMerchantId,
-                                          name: effectiveMerchantName,
-                                        },
-                                        category: category === 'hostels' ? 'Hostel Booking' : 'PG & Co-Living Stays',
-                                        metadata: {
-                                          ...(activeRoomService.metadata || {}),
-                                          merchantId: effectiveMerchantId,
-                                          merchantName: effectiveMerchantName,
-                                          pgBooking: {
-                                            venueName: effectiveMerchantName,
-                                            address,
-                                            roomType: activeRoomService.name,
-                                            monthlyRent: actualRent,
-                                            tokenPaid: payable,
-                                            refundableDeposit: deposit,
-                                            foodExcluded: isFoodExcluded,
-                                            startDate: checkIn,
-                                            durationMonths: hostelDurationMonths,
-                                            tenureDiscountPct,
-                                            paymentType: pgPaymentType,
-                                            selectedAddons: []
-                                          }
-                                        }
-                                      });
-
-                                      setSelectedSlot({
-                                        id: `pg-bed-${Date.now()}`,
-                                        timeStr: slotStr,
-                                        date: checkIn,
-                                        available: true
-                                      });
-
-                                      setActiveRoomService(null);
-                                      setRoomModalStep(null);
-                                      router.push('/booking/checkout');
-                                      return;
-                                    }
-
-                                    const roomPrice = Number(activeRoomService.price || activeRoomService.basePrice) || 2500;
-                                    const roomTotal = roomPrice * nights * rooms;
-                                    const slotStr = `${checkIn} to ${checkOut} (${nights} Night${nights > 1 ? 's' : ''}) • ${adults + children} Guests • ${rooms} Room${rooms > 1 ? 's' : ''}`;
-
-                                    setSelectedService({
-                                      ...activeRoomService,
-                                      price: roomTotal,
-                                      name: `${effectiveMerchantName} — ${activeRoomService.name || 'Room'}`,
-                                      merchantId: effectiveMerchantId,
-                                      merchantName: effectiveMerchantName,
-                                      merchant: {
-                                        id: effectiveMerchantId,
-                                        name: effectiveMerchantName,
-                                      },
-                                      merchantObj: {
-                                        ...(activeRoomService.merchantObj || {}),
-                                        id: effectiveMerchantId,
-                                        name: effectiveMerchantName,
-                                      },
-                                      category: category === 'hostels' ? 'Hostel Booking' : (category === 'pg-hostels' ? 'PG & Co-Living Stays' : 'Hotel Booking'),
-                                      metadata: {
-                                        ...(activeRoomService.metadata || {}),
-                                        merchantId: effectiveMerchantId,
-                                        merchantName: effectiveMerchantName,
-                                        hotelBooking: {
-                                          venueName: effectiveMerchantName,
-                                          realHotelName: rawVenueName,
-                                          isLuxeBlindBooking,
-                                          address,
-                                          roomType: activeRoomService.name,
-                                          checkIn,
-                                          checkOut,
-                                          nights,
-                                          rooms,
-                                          adults,
-                                          children,
-                                          childAges,
-                                          pets,
-                                          petCount,
-                                          selectedAddons: [],
-                                          pricePerNight: roomPrice,
-                                          totalPrice: roomTotal
-                                        }
-                                      }
-                                    });
-
-                                    setSelectedSlot({
-                                      id: `hotel-stay-${Date.now()}`,
-                                      timeStr: slotStr,
-                                      date: checkIn,
-                                      available: true
-                                    });
-
-                                    router.push('/booking/checkout');
-                                  }}
-                                  className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-white/20 text-slate-700 dark:text-slate-200 hover:text-slate-900 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer bg-white dark:bg-slate-800"
-                                >
-                                  Skip Add-ons &rarr;
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    // Proceed to Checkout with Selected Addons included
-                                    const isBackpackersHostel = category === 'hostels' || venueName.toLowerCase().includes('backpackers');
-                                    const effectiveMerchantId = isBackpackersHostel ? '51c6a3b8-2abc-9421-7644-2a2dea05dbc0' : (activeRoomService.merchantId || merchantId);
-                                    const effectiveMerchantName = isBackpackersHostel ? 'Backpackers Hostel' : venueName;
-
-                                    const roomListings = activeRoomService.rawConfig?.metadata?.listings || activeRoomService.metadata?.listings || [];
-                                    const selectedListing = activeRoomService.selectedListing || (activeRoomService.selectedListingId ? roomListings.find((l: any) => l.id === activeRoomService.selectedListingId) : roomListings[0]);
-                                    const roomMeta = selectedListing?.metadata || activeRoomService.metadata || {};
-
-                                    const rawAddons = roomMeta.addons || activeRoomService.metadata?.addons || activeRoomService.addOns || [];
-                                    const partnerListingAddons = Array.isArray(rawAddons) ? rawAddons : [];
-
-                                    const defaultPgAddons = isPgStay ? [
-                                      { id: 'custom-addon-pg-laundry', name: 'Laundry & Washing Machine Access', desc: 'Unlimited monthly washing machine and drying yard access', price: 350, tag: 'Popular', icon: '🧺' },
-                                      { id: 'custom-addon-pg-parking', name: 'Reserved Two-Wheeler Parking', desc: 'Covered dedicated CCTV-monitored 2-wheeler parking slot', price: 200, tag: 'Convenience', icon: '🛵' },
-                                      { id: 'custom-addon-pg-locker', name: 'Personal High-Security Locker', desc: 'Keyed personal wardrobe locker with master backup code', price: 250, tag: 'Security', icon: '🔐' },
-                                    ] : [];
-
-                                    const activeAddonsList = partnerListingAddons.length > 0
-                                      ? partnerListingAddons.map((pa: any, pIdx: number) => ({
-                                        id: `custom-addon-${pIdx}`,
-                                        name: typeof pa === 'string' ? pa : (pa.name || 'Custom Add-on'),
-                                        desc: pa.desc || (isPgStay ? 'Monthly amenity enhancement' : 'Optional enhancement offered directly by host'),
-                                        price: Number(pa.price || pa.cost || 0),
-                                        tag: 'Included Choice',
-                                        icon: '✨'
-                                      }))
-                                      : defaultPgAddons;
-
-                                    const chosenAddons = activeAddonsList.filter((a: any) => selectedAddonIds.includes(a.id));
-                                    const currentAddonsSum = chosenAddons.reduce((sum: number, a: any) => sum + (a.price || 0), 0);
-
-                                    if (isPgStay) {
-                                      const rawBasePrice = Number(activeRoomService.price || activeRoomService.basePrice || selectedListing?.price) || 2200;
-                                      const tenureDiscountPct = hostelDurationMonths >= 11 ? 15 : hostelDurationMonths >= 6 ? 10 : hostelDurationMonths >= 3 ? 5 : 0;
-                                      const basePrice = Math.round(rawBasePrice * (1 - tenureDiscountPct / 100));
-
-                                      const foodDiscount = Number(
-                                        (selectedListing as any)?.foodDiscountAmount ??
-                                        activeRoomService.metadata?.foodDiscountAmount ??
-                                        2000
-                                      );
-                                      const actualRent = isFoodExcluded ? Math.max(500, basePrice - foodDiscount) : basePrice;
-                                      const deposit = Number((selectedListing as any)?.securityDeposit ?? activeRoomService.metadata?.securityDeposit ?? activeRoomService.metadata?.refundableDeposit ?? 3000);
-                                      const tokenAmount = Number((selectedListing as any)?.tokenAdvanceAmount || activeRoomService.metadata?.tokenAdvanceAmount || 999);
-                                      const payable = (pgPaymentType === 'TOKEN_ADVANCE' ? tokenAmount : actualRent) + currentAddonsSum;
-                                      const slotStr = pgPaymentType === 'TOKEN_ADVANCE'
-                                        ? `${hostelDurationMonths} Month${hostelDurationMonths > 1 ? 's' : ''} Stay (Starts ${checkIn}) • Token Advance ₹${tokenAmount} + Add-ons ₹${currentAddonsSum}`
-                                        : `1st Month Rent for ${hostelDurationMonths} Month${hostelDurationMonths > 1 ? 's' : ''} Stay (Starts ${checkIn}) • ₹${actualRent.toLocaleString()} + Add-ons ₹${currentAddonsSum}`;
-
-                                      setSelectedService({
-                                        ...activeRoomService,
-                                        price: payable,
-                                        name: `${effectiveMerchantName} — ${activeRoomService.name} (${pgPaymentType === 'TOKEN_ADVANCE' ? 'Token Advance' : '1st Month Rent'})`,
-                                        merchantId: effectiveMerchantId,
-                                        merchantName: effectiveMerchantName,
-                                        merchant: {
-                                          id: effectiveMerchantId,
-                                          name: effectiveMerchantName,
-                                        },
-                                        merchantObj: {
-                                          ...(activeRoomService.merchantObj || {}),
-                                          id: effectiveMerchantId,
-                                          name: effectiveMerchantName,
-                                        },
-                                        category: category === 'hostels' ? 'Hostel Booking' : 'PG & Co-Living Stays',
-                                        metadata: {
-                                          ...(activeRoomService.metadata || {}),
-                                          merchantId: effectiveMerchantId,
-                                          merchantName: effectiveMerchantName,
-                                          pgBooking: {
-                                            venueName: effectiveMerchantName,
-                                            address,
-                                            roomType: activeRoomService.name,
-                                            monthlyRent: actualRent,
-                                            tokenPaid: payable,
-                                            refundableDeposit: deposit,
-                                            foodExcluded: isFoodExcluded,
-                                            startDate: checkIn,
-                                            durationMonths: hostelDurationMonths,
-                                            tenureDiscountPct,
-                                            paymentType: pgPaymentType,
-                                            selectedAddons: chosenAddons
-                                          }
-                                        }
-                                      });
-
-                                      setSelectedSlot({
-                                        id: `pg-bed-${Date.now()}`,
-                                        timeStr: slotStr,
-                                        date: checkIn,
-                                        available: true
-                                      });
-
-                                      setActiveRoomService(null);
-                                      setRoomModalStep(null);
-                                      router.push('/booking/checkout');
-                                      return;
-                                    }
-
-                                    const roomPrice = Number(activeRoomService.price || activeRoomService.basePrice || selectedListing?.price) || 2500;
-                                    const roomTotal = roomPrice * nights * rooms;
-                                    const finalTotal = roomTotal + currentAddonsSum;
-                                    const slotStr = `${checkIn} to ${checkOut} (${nights} Night${nights > 1 ? 's' : ''}) • ${adults + children} Guests • ${rooms} Room${rooms > 1 ? 's' : ''}`;
-
-                                    setSelectedService({
-                                      ...activeRoomService,
-                                      price: finalTotal,
-                                      name: `${effectiveMerchantName} — ${activeRoomService.name || 'Room'}`,
-                                      merchantId: effectiveMerchantId,
-                                      merchantName: effectiveMerchantName,
-                                      merchant: {
-                                        id: effectiveMerchantId,
-                                        name: effectiveMerchantName,
-                                      },
-                                      merchantObj: {
-                                        ...(activeRoomService.merchantObj || {}),
-                                        id: effectiveMerchantId,
-                                        name: effectiveMerchantName,
-                                      },
-                                      category: category === 'hostels' ? 'Hostel Booking' : (category === 'pg-hostels' ? 'PG & Co-Living Stays' : 'Hotel Booking'),
-                                      metadata: {
-                                        ...(activeRoomService.metadata || {}),
-                                        merchantId: effectiveMerchantId,
-                                        merchantName: effectiveMerchantName,
-                                        hotelBooking: {
-                                          venueName: effectiveMerchantName,
-                                          realHotelName: rawVenueName,
-                                          isLuxeBlindBooking,
-                                          address,
-                                          roomType: activeRoomService.name,
-                                          checkIn,
-                                          checkOut,
-                                          nights,
-                                          rooms,
-                                          adults,
-                                          children,
-                                          childAges,
-                                          pets,
-                                          petCount,
-                                          selectedAddons: chosenAddons,
-                                          pricePerNight: roomPrice,
-                                          totalPrice: finalTotal
-                                        }
-                                      }
-                                    });
-
-                                    setSelectedSlot({
-                                      id: `hotel-stay-${Date.now()}`,
-                                      timeStr: slotStr,
-                                      date: checkIn,
-                                      available: true
-                                    });
-
-                                    router.push('/booking/checkout');
-                                  }}
-                                  className="px-6 py-2.5 rounded-xl bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] active:scale-95 text-white text-xs font-extrabold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer ml-auto"
-                                >
-                                  <span>Proceed to Checkout &rarr;</span>
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </motion.div>
-                      </div>
-                    )}
-
-                    {/* Full-Screen Photo Gallery Lightbox Modal */}
-                    {isGalleryOpen && (
-                      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-md animate-fade-in">
-                        <div className="relative w-full max-w-5xl h-[85vh] bg-[#0b0f19] rounded-3xl border border-white/10 overflow-hidden flex flex-col shadow-2xl">
-                          {/* Modal Top Header */}
-                          <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-black/40">
-                            <div className="flex items-center gap-3">
-                              <span className="text-white font-black text-sm sm:text-base">{venueName} Gallery</span>
-                              <span className="text-xs px-2.5 py-0.5 rounded-full bg-white/10 text-white font-bold">
-                                {currentImageIdx + 1} of {galleryImages.length}
-                              </span>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => setIsGalleryOpen(false)}
-                              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
-                              title="Close gallery"
-                            >
-                              <X size={20} />
-                            </button>
-                          </div>
-
-                          {/* Main Image View */}
-                          <div className="relative flex-1 flex items-center justify-center p-4 min-h-0 bg-black/50">
-                            <img
-                              src={galleryImages[currentImageIdx] || galleryImages[0]}
-                              alt={`${venueName} photo ${currentImageIdx + 1}`}
-                              className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl transition-all duration-300"
-                            />
-
-                            {/* Left/Right Prev/Next Buttons */}
-                            {galleryImages.length > 1 && (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={() => setCurrentImageIdx((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1))}
-                                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/70 hover:bg-black/90 text-white border border-white/20 shadow-xl cursor-pointer transition-transform hover:scale-110 active:scale-95"
-                                  title="Previous photo"
-                                >
-                                  ‹
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setCurrentImageIdx((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1))}
-                                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/70 hover:bg-black/90 text-white border border-white/20 shadow-xl cursor-pointer transition-transform hover:scale-110 active:scale-95"
-                                  title="Next photo"
-                                >
-                                  ›
-                                </button>
-                              </>
-                            )}
-                          </div>
-
-                          {/* Bottom Thumbnail Strip */}
-                          <div className="p-3 bg-black/70 border-t border-white/10 overflow-x-auto flex items-center gap-2.5 scrollbar-thin scrollbar-thumb-white/20">
-                            {galleryImages.map((imgUrl, idx) => (
-                              <button
-                                key={idx}
-                                type="button"
-                                onClick={() => setCurrentImageIdx(idx)}
-                                className={`relative w-16 h-12 sm:w-20 sm:h-14 rounded-xl overflow-hidden shrink-0 border-2 transition-all cursor-pointer ${currentImageIdx === idx
-                                  ? 'border-[#ff6325] scale-105 shadow-md shadow-[#ff6325]/30'
-                                  : 'border-white/10 opacity-60 hover:opacity-100'
-                                  }`}
-                              >
-                                <img src={imgUrl} alt={`Thumb ${idx + 1}`} className="w-full h-full object-cover" />
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* ── PG "Schedule Free Property Visit" Modal ── */}
-                  <AnimatePresence>
-                    {isVisitModalOpen && (
-                      <div className="fixed inset-0 z-[200000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-                        <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-white/10 space-y-4">
-                          <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xl">{visitMode === 'LIVE_VIDEO' ? '📹' : '🗓️'}</span>
+                          )}
+                          {((activeRoomService.selectedListing as any)?.metadata?.petPolicy || roomMeta.petPolicy) && (
+                            <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                              <span className="text-base shrink-0">📜</span>
                               <div>
-                                <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                                  {visitMode === 'LIVE_VIDEO' ? 'Schedule Live Video Tour' : 'Schedule Free Property Visit'}
-                                </h3>
-                                <p className="text-[10px] text-slate-400">
-                                  {visitMode === 'LIVE_VIDEO' ? 'Live 1-on-1 video walkthrough with property warden' : 'Inspect room, food & facilities before paying'}
-                                </p>
+                                <span className="text-[10px] uppercase font-bold text-slate-400 block">Notice Period</span>
+                                <span className="font-extrabold text-slate-900 dark:text-white">
+                                  {(activeRoomService.selectedListing as any)?.metadata?.petPolicy || roomMeta.petPolicy}
+                                </span>
                               </div>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setIsVisitModalOpen(false);
-                                setVisitConfirmed(false);
-                              }}
-                              className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"
-                            >
-                              <X size={16} />
-                            </button>
-                          </div>
-
-                          {/* Visit Type Toggle Switch (Consistent Brand Styling) */}
-                          <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-white/10">
-                            <button
-                              type="button"
-                              onClick={() => setVisitMode('IN_PERSON')}
-                              className={`py-2 px-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${visitMode === 'IN_PERSON'
-                                ? 'bg-[#033266] dark:bg-[#ff6325] text-white shadow-md'
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                                }`}
-                            >
-                              <span>🏢 Free Visit & Callback</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setVisitMode('LIVE_VIDEO')}
-                              className={`py-2 px-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${visitMode === 'LIVE_VIDEO'
-                                ? 'bg-[#033266] dark:bg-[#ff6325] text-white shadow-md'
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                                }`}
-                            >
-                              <span>📹 Live Video Tour</span>
-                            </button>
-                          </div>
-
-                          {visitConfirmed ? (
-                            <div className="py-6 text-center space-y-3">
-                              <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-xl">
-                                ✓
-                              </div>
-                              <h4 className="text-base font-bold text-slate-900 dark:text-white">
-                                {visitMode === 'LIVE_VIDEO' ? 'Live Video Tour Booked!' : 'Visit Confirmed!'}
-                              </h4>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
-                                {visitMode === 'LIVE_VIDEO' ? (
-                                  <>
-                                    Property Warden will call you on <span className="font-bold text-[#ff6325]">{videoPlatform === 'WHATSAPP' ? 'WhatsApp Video' : 'Google Meet'}</span> for <span className="font-bold text-[#ff6325]">{visitDate}</span> at <span className="font-bold text-[#ff6325]">{visitTimeSlot}</span>. Confirmation SMS sent to {visitPhone || 'your mobile'}.
-                                  </>
-                                ) : (
-                                  <>
-                                    The PG Warden has been notified for <span className="font-bold text-[#ff6325]">{visitDate}</span> at <span className="font-bold text-[#ff6325]">{visitTimeSlot}</span>. SMS sent to {visitPhone || 'your mobile'}.
-                                  </>
-                                )}
-                              </p>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setIsVisitModalOpen(false);
-                                  setVisitConfirmed(false);
-                                }}
-                                className="mt-3 px-6 py-2 bg-[#ff6325] text-white text-xs font-bold rounded-xl"
-                              >
-                                Done
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="space-y-3.5 text-xs">
-                              {visitMode === 'LIVE_VIDEO' && (
-                                <div>
-                                  <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Video Call Platform</label>
-                                  <div className="grid grid-cols-2 gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => setVideoPlatform('WHATSAPP')}
-                                      className={`p-2.5 rounded-xl border text-center font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer ${videoPlatform === 'WHATSAPP'
-                                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300'
-                                        : 'border-slate-200 dark:border-white/10 text-slate-600'
-                                        }`}
-                                    >
-                                      <span>💬 WhatsApp Video</span>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => setVideoPlatform('GOOGLE_MEET')}
-                                      className={`p-2.5 rounded-xl border text-center font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer ${videoPlatform === 'GOOGLE_MEET'
-                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300'
-                                        : 'border-slate-200 dark:border-white/10 text-slate-600'
-                                        }`}
-                                    >
-                                      <span>🎥 Google Meet</span>
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
+                          )}
+                          {((activeRoomService.selectedListing as any)?.metadata?.cancellationPolicy || roomMeta.cancellationPolicy) && (
+                            <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                              <span className="text-base shrink-0">🛡️</span>
                               <div>
-                                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Your Full Name</label>
-                                <input
-                                  type="text"
-                                  placeholder="e.g. Arun Kumar"
-                                  value={visitName}
-                                  onChange={(e) => setVisitName(e.target.value)}
-                                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 outline-none text-xs font-semibold"
-                                />
+                                <span className="text-[10px] uppercase font-bold text-slate-400 block">Deposit Refund</span>
+                                <span className="font-extrabold text-slate-900 dark:text-white">
+                                  {(activeRoomService.selectedListing as any)?.metadata?.cancellationPolicy || roomMeta.cancellationPolicy}
+                                </span>
                               </div>
-
-                              <div>
-                                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Phone Number (For Warden SMS)</label>
-                                <input
-                                  type="tel"
-                                  placeholder="+91 98765 43210"
-                                  value={visitPhone}
-                                  onChange={(e) => setVisitPhone(e.target.value)}
-                                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 outline-none text-xs font-semibold"
-                                />
-                              </div>
-
-                              <div className="grid grid-cols-2 gap-2">
-                                <div className="relative">
-                                  <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-                                    {visitMode === 'LIVE_VIDEO' ? 'Tour Date' : 'Visit Date'}
-                                  </label>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const targetD = visitDate ? new Date(visitDate) : new Date();
-                                      setVisitCalMonthDate(isNaN(targetD.getTime()) ? new Date() : targetD);
-                                      setIsVisitCalPopoverOpen(!isVisitCalPopoverOpen);
-                                    }}
-                                    className="w-full px-2.5 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 outline-none text-xs font-semibold flex items-center justify-between text-left hover:border-[#ff6325] transition-colors cursor-pointer"
-                                  >
-                                    <span className="text-slate-900 dark:text-white font-bold">
-                                      {(() => {
-                                        try {
-                                          const [y, m, d] = visitDate.split('-');
-                                          return `${d}-${m}-${y}`;
-                                        } catch {
-                                          return visitDate;
-                                        }
-                                      })()}
-                                    </span>
-                                    <Calendar size={15} className="text-[#ff6325] shrink-0" />
-                                  </button>
-
-                                  {/* Custom Popover Calendar matching top booking app UI */}
-                                  <AnimatePresence>
-                                    {isVisitCalPopoverOpen && (
-                                      <motion.div
-                                        initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                                        exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                                        className="absolute left-0 bottom-full mb-3 w-72 bg-white dark:bg-[#0c1424] border border-slate-200 dark:border-white/15 rounded-3xl p-4 shadow-2xl z-[300000] space-y-3"
-                                      >
-                                        {/* Month Header with Pill Container & < > Controls (Matching Check-in Calendar) */}
-                                        <div className="bg-slate-50 dark:bg-[#121722] rounded-2xl border border-slate-200/80 dark:border-white/10 p-2.5 flex items-center justify-between">
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setVisitCalMonthDate(new Date(visitCalMonthDate.getFullYear(), visitCalMonthDate.getMonth() - 1, 1));
-                                            }}
-                                            className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
-                                          >
-                                            <ChevronLeft size={15} />
-                                          </button>
-                                          <span className="text-sm font-black text-slate-900 dark:text-white">
-                                            {visitCalMonthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                                          </span>
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setVisitCalMonthDate(new Date(visitCalMonthDate.getFullYear(), visitCalMonthDate.getMonth() + 1, 1));
-                                            }}
-                                            className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
-                                          >
-                                            <ChevronRight size={15} />
-                                          </button>
-                                        </div>
-
-                                        {/* Weekday Names */}
-                                        <div className="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400">
-                                          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
-                                            <div key={d} className="py-1">{d}</div>
-                                          ))}
-                                        </div>
-
-                                        {/* Days Grid with Blue Circle Selection */}
-                                        <div className="grid grid-cols-7 gap-1 text-center text-xs">
-                                          {(() => {
-                                            const year = visitCalMonthDate.getFullYear();
-                                            const month = visitCalMonthDate.getMonth();
-                                            const firstDay = new Date(year, month, 1).getDay();
-                                            const totalDays = new Date(year, month + 1, 0).getDate();
-                                            const cells = [];
-
-                                            for (let i = 0; i < firstDay; i++) {
-                                              cells.push(<div key={`standalone-visit-empty-${i}`} className="h-8" />);
-                                            }
-
-                                            for (let d = 1; d <= totalDays; d++) {
-                                              const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                                              const isSelected = visitDate === dStr;
-                                              const isPast = new Date(dStr) < new Date(new Date().setHours(0, 0, 0, 0));
-
-                                              cells.push(
-                                                <div key={d} className="flex items-center justify-center">
-                                                  <button
-                                                    type="button"
-                                                    disabled={isPast}
-                                                    onClick={() => {
-                                                      setVisitDate(dStr);
-                                                      setIsVisitCalPopoverOpen(false);
-                                                    }}
-                                                    className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all cursor-pointer ${isSelected
-                                                      ? 'bg-[#1a56db] text-white font-black shadow-md shadow-blue-500/40 ring-2 ring-blue-400/30'
-                                                      : isPast
-                                                        ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
-                                                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                                      }`}
-                                                  >
-                                                    {d}
-                                                  </button>
-                                                </div>
-                                              );
-                                            }
-                                            return cells;
-                                          })()}
-                                        </div>
-                                      </motion.div>
-                                    )}
-                                  </AnimatePresence>
-                                </div>
-                                <div>
-                                  <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Preferred Time Slot</label>
-                                  <select
-                                    value={visitTimeSlot}
-                                    onChange={(e) => setVisitTimeSlot(e.target.value)}
-                                    className="w-full px-2.5 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 outline-none text-xs font-semibold"
-                                  >
-                                    <option value="10:00 AM - 11:00 AM">10:00 AM - 11:00 AM</option>
-                                    <option value="11:00 AM - 12:00 PM">11:00 AM - 12:00 PM</option>
-                                    <option value="02:00 PM - 03:00 PM">02:00 PM - 03:00 PM</option>
-                                    <option value="05:00 PM - 06:00 PM">05:00 PM - 06:00 PM</option>
-                                    <option value="07:00 PM - 08:00 PM">07:00 PM - 08:00 PM</option>
-                                  </select>
-                                </div>
-                              </div>
-
-                              <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
-                                {visitMode === 'LIVE_VIDEO'
-                                  ? '✓ 1-on-1 live walkthrough • Warden video inspection • Mess & room live preview.'
-                                  : '✓ Free visit pass • PG Warden direct assistance & callback • Sample mess food inspection.'}
-                              </div>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (!visitName) setVisitName('Guest');
-                                  setVisitConfirmed(true);
-                                }}
-                                className="w-full py-3 bg-[#ff6325] hover:bg-[#e04e13] text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md mt-2"
-                              >
-                                {visitMode === 'LIVE_VIDEO' ? 'Confirm Live Video Tour →' : 'Confirm Free Visit →'}
-                              </button>
                             </div>
                           )}
                         </div>
+                      )}
+
+                      <div className="p-4 rounded-2xl bg-gradient-to-r from-sky-50 via-blue-50/50 to-indigo-50/40 dark:from-sky-950/30 dark:via-blue-950/20 dark:to-indigo-950/20 border border-sky-200 dark:border-sky-800/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl p-2 rounded-xl bg-white dark:bg-slate-800 shadow-2xs border border-sky-100 dark:border-white/10 shrink-0">
+                            🗓️
+                          </span>
+                          <div>
+                            <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                              <span>Want to inspect the property in person?</span>
+                              <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 font-extrabold text-[10px]">
+                                100% Free
+                              </span>
+                            </h4>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                              Meet the hostel warden, inspect room amenities & check out mess food before paying.
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setRoomModalStep('VISIT')}
+                          className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#033266] hover:bg-[#022349] dark:bg-sky-600 dark:hover:bg-sky-500 text-white font-extrabold text-xs shadow-sm active:scale-95 transition-all cursor-pointer shrink-0 text-center"
+                        >
+                          Schedule Free Visit &rarr;
+                        </button>
                       </div>
-                    )}
-                  </AnimatePresence>
+                    </div>
+                  ) : (
+                    /* Selected Dates Review Banner (Hotel / Resorts Only) */
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 flex items-center justify-between text-xs">
+                      <div>
+                        <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">Selected Stay</span>
+                        <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
+                          {checkIn} &rarr; {checkOut} ({nights} Night{nights > 1 ? 's' : ''})
+                        </span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
+                          {adults} Adults{children > 0 ? `, ${children} Children` : ''} • {rooms} Room{rooms > 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">Room Total</span>
+                        <span className="font-black text-[#033266] dark:text-[#ff6325] text-base">
+                          ₹{roomTotal.toLocaleString()}
+                        </span>
+                        <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold block">
+                          Taxes & fees included
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
+              );
+            }
+
+            // ── STEP 1.5: SCHEDULE VISIT / VIDEO TOUR VIEW ──
+            if (roomModalStep === 'VISIT') {
+              return (
+                <div className="space-y-4 max-w-lg mx-auto py-2">
+                  {/* 2-Way Segmented Switcher: Consistent Brand Toggle Styling */}
+                  <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-white/10">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVisitMode('IN_PERSON');
+                        setVisitConfirmed(false);
+                      }}
+                      className={`py-2 px-3 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${visitMode === 'IN_PERSON'
+                        ? 'bg-[#033266] dark:bg-[#ff6325] text-white shadow-md'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                    >
+                      <span>🏢 Free Visit Pass & Callback</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVisitMode('LIVE_VIDEO');
+                        setVisitConfirmed(false);
+                      }}
+                      className={`py-2 px-3 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${visitMode === 'LIVE_VIDEO'
+                        ? 'bg-[#033266] dark:bg-[#ff6325] text-white shadow-md'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                    >
+                      <span>📹 Live Video Tour</span>
+                    </button>
+                  </div>
+
+                  {visitConfirmed ? (
+                    <div className="py-8 text-center space-y-3 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 p-6 rounded-3xl">
+                      <div className="w-14 h-14 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto text-2xl font-black">
+                        ✓
+                      </div>
+                      <h4 className="text-lg font-black text-slate-900 dark:text-white">
+                        {visitMode === 'LIVE_VIDEO'
+                          ? 'Live Video Tour Booked!'
+                          : 'Visit Pass Confirmed!'}
+                      </h4>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
+                        {visitMode === 'LIVE_VIDEO' ? (
+                          <>
+                            Property Warden will connect via <span className="font-bold text-[#ff6325]">{videoPlatform === 'WHATSAPP' ? 'WhatsApp Video' : 'Google Meet'}</span> on <span className="font-bold text-[#ff6325]">{visitDate}</span> at <span className="font-bold text-[#ff6325]">{visitTimeSlot}</span>. Confirmation SMS sent to {visitPhone || 'your mobile'}.
+                          </>
+                        ) : (
+                          <>
+                            The PG Warden has been notified for <span className="font-bold text-[#ff6325]">{visitDate}</span> at <span className="font-bold text-[#ff6325]">{visitTimeSlot}</span>. Warden will also call your number <span className="font-bold text-emerald-600 dark:text-emerald-400">{visitPhone || 'provided'}</span> to confirm directions and answer your queries.
+                          </>
+                        )}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVisitConfirmed(false);
+                          setRoomModalStep('DETAILS');
+                        }}
+                        className="mt-3 px-6 py-2.5 bg-[#ff6325] hover:bg-[#e04e13] text-white text-xs font-black rounded-xl cursor-pointer"
+                      >
+                        Back to Bed Details
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Top Informational Banner */}
+                      <div className={`p-4 rounded-2xl border flex items-start gap-3 ${visitMode === 'LIVE_VIDEO'
+                        ? 'bg-blue-50/70 dark:bg-blue-950/30 border-blue-100 dark:border-blue-900/40'
+                        : 'bg-sky-50 dark:bg-sky-950/30 border-sky-100 dark:border-sky-900/40'
+                        }`}>
+                        <span className="text-2xl shrink-0">
+                          {visitMode === 'LIVE_VIDEO' ? '📹' : '🗓️'}
+                        </span>
+                        <div>
+                          <h4 className="text-xs font-black text-slate-900 dark:text-white">
+                            {visitMode === 'LIVE_VIDEO'
+                              ? 'Schedule Live 1-on-1 Video Tour'
+                              : 'Free Property Inspection Pass & Warden Callback'}
+                          </h4>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            {visitMode === 'LIVE_VIDEO'
+                              ? 'Outstation student or working professional? Warden will walk you through rooms, mess, and washrooms over video call.'
+                              : 'Visit property in person, inspect bed setup & taste mess food. PG Warden will also call you back to assist with directions and details.'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 text-xs">
+                        {/* Video Platform Preference selector (Only for LIVE_VIDEO mode) */}
+                        {visitMode === 'LIVE_VIDEO' && (
+                          <div>
+                            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Preferred Video Call App</label>
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setVideoPlatform('WHATSAPP')}
+                                className={`p-2.5 rounded-xl border text-center font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer ${videoPlatform === 'WHATSAPP'
+                                  ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300'
+                                  : 'border-slate-200 dark:border-white/10 text-slate-600'
+                                  }`}
+                              >
+                                <span>💬 WhatsApp Video</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setVideoPlatform('GOOGLE_MEET')}
+                                className={`p-2.5 rounded-xl border text-center font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer ${videoPlatform === 'GOOGLE_MEET'
+                                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300'
+                                  : 'border-slate-200 dark:border-white/10 text-slate-600'
+                                  }`}
+                              >
+                                <span>🎥 Google Meet</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        <div>
+                          <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Your Full Name</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Arun Kumar"
+                            value={visitName}
+                            onChange={(e) => setVisitName(e.target.value)}
+                            className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 outline-none text-xs font-semibold focus:border-[#ff6325]"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Phone Number (For Warden Callback & SMS)</label>
+                          <input
+                            type="tel"
+                            placeholder="+91 98765 43210"
+                            value={visitPhone}
+                            onChange={(e) => setVisitPhone(e.target.value)}
+                            className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 outline-none text-xs font-semibold focus:border-[#ff6325]"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="relative">
+                            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                              {visitMode === 'LIVE_VIDEO' ? 'Tour Date' : 'Visit Date'}
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const targetD = visitDate ? new Date(visitDate) : new Date();
+                                setVisitCalMonthDate(isNaN(targetD.getTime()) ? new Date() : targetD);
+                                setIsVisitCalPopoverOpen(!isVisitCalPopoverOpen);
+                              }}
+                              className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 outline-none text-xs font-semibold flex items-center justify-between text-left hover:border-[#ff6325] transition-colors cursor-pointer"
+                            >
+                              <span className="text-slate-900 dark:text-white font-bold">
+                                {(() => {
+                                  try {
+                                    const [y, m, d] = visitDate.split('-');
+                                    return `${d}-${m}-${y}`;
+                                  } catch {
+                                    return visitDate;
+                                  }
+                                })()}
+                              </span>
+                              <Calendar size={15} className="text-[#ff6325] shrink-0" />
+                            </button>
+
+                            {/* Custom Popover Calendar matching top booking app UI */}
+                            <AnimatePresence>
+                              {isVisitCalPopoverOpen && (
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                                  className="absolute left-0 bottom-full mb-3 w-72 bg-white dark:bg-[#0c1424] border border-slate-200 dark:border-white/15 rounded-3xl p-4 shadow-2xl z-[300000] space-y-3"
+                                >
+                                  {/* Month Header with Pill Container & < > Controls (Matching Check-in Calendar) */}
+                                  <div className="bg-slate-50 dark:bg-[#121722] rounded-2xl border border-slate-200/80 dark:border-white/10 p-2.5 flex items-center justify-between">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setVisitCalMonthDate(new Date(visitCalMonthDate.getFullYear(), visitCalMonthDate.getMonth() - 1, 1));
+                                      }}
+                                      className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+                                    >
+                                      <ChevronLeft size={15} />
+                                    </button>
+                                    <span className="text-sm font-black text-slate-900 dark:text-white">
+                                      {visitCalMonthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setVisitCalMonthDate(new Date(visitCalMonthDate.getFullYear(), visitCalMonthDate.getMonth() + 1, 1));
+                                      }}
+                                      className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+                                    >
+                                      <ChevronRight size={15} />
+                                    </button>
+                                  </div>
+
+                                  {/* Weekday Names */}
+                                  <div className="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400">
+                                    {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                                      <div key={d} className="py-1">{d}</div>
+                                    ))}
+                                  </div>
+
+                                  {/* Days Grid with Blue Circle Selection */}
+                                  <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                                    {(() => {
+                                      const year = visitCalMonthDate.getFullYear();
+                                      const month = visitCalMonthDate.getMonth();
+                                      const firstDay = new Date(year, month, 1).getDay();
+                                      const totalDays = new Date(year, month + 1, 0).getDate();
+                                      const cells = [];
+
+                                      for (let i = 0; i < firstDay; i++) {
+                                        cells.push(<div key={`visit-modal-empty-${i}`} className="h-8" />);
+                                      }
+
+                                      for (let d = 1; d <= totalDays; d++) {
+                                        const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                                        const isSelected = visitDate === dStr;
+                                        const isPast = new Date(dStr) < new Date(new Date().setHours(0, 0, 0, 0));
+
+                                        cells.push(
+                                          <div key={d} className="flex items-center justify-center">
+                                            <button
+                                              type="button"
+                                              disabled={isPast}
+                                              onClick={() => {
+                                                setVisitDate(dStr);
+                                                setIsVisitCalPopoverOpen(false);
+                                              }}
+                                              className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all cursor-pointer ${isSelected
+                                                ? 'bg-[#1a56db] text-white font-black shadow-md shadow-blue-500/40 ring-2 ring-blue-400/30'
+                                                : isPast
+                                                  ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                                                  : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                                }`}
+                                            >
+                                              {d}
+                                            </button>
+                                          </div>
+                                        );
+                                      }
+                                      return cells;
+                                    })()}
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                              {visitMode === 'LIVE_VIDEO' ? 'Video Slot' : 'Preferred Time'}
+                            </label>
+                            <select
+                              value={visitTimeSlot}
+                              onChange={(e) => setVisitTimeSlot(e.target.value)}
+                              className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 outline-none text-xs font-semibold"
+                            >
+                              <option>09:00 AM - 11:00 AM</option>
+                              <option>11:00 AM - 01:00 PM</option>
+                              <option>02:00 PM - 04:00 PM</option>
+                              <option>04:00 PM - 06:00 PM</option>
+                              <option>06:00 PM - 08:00 PM</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!visitPhone) {
+                            alert('Please enter your phone number so the Warden can connect with you.');
+                            return;
+                          }
+
+                          // Sync Live Property Visit Request to Backend & Business Portal
+                          try {
+                            const visitBookingData = {
+                              id: `visit-${Date.now()}`,
+                              ref: `VISIT-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+                              merchantId: merchantId || activeRoomService.merchantId || (merchantData as any)?.id || '51c6a3b8-2abc-9421-7644-2a2dea05dbc0',
+                              merchantName: (merchantData as any)?.name || (merchantData as any)?.businessName || activeRoomService.merchantName || 'Backpackers Hostel',
+                              category: 'Hostel Booking',
+                              serviceId: activeRoomService.id || 'svc-hostel-visit',
+                              serviceName: activeRoomService.name ? `${activeRoomService.name} (${visitMode === 'LIVE_VIDEO' ? 'Live Video Tour' : 'In-Person Inspection'})` : (visitMode === 'LIVE_VIDEO' ? 'Live Video Tour' : 'Property Visit & Callback'),
+                              customerName: visitName || 'Guest Visitor',
+                              customerPhone: visitPhone,
+                              date: visitDate,
+                              time: `${visitTimeSlot} • ${visitMode === 'LIVE_VIDEO' ? (videoPlatform === 'WHATSAPP' ? 'WhatsApp Video' : 'Google Meet') : 'Physical Visit'}`,
+                              amount: 0,
+                              status: 'PENDING',
+                              bookingType: 'PROPERTY_VISIT',
+                              notes: `Scheduled ${visitMode === 'LIVE_VIDEO' ? `Live Video Tour on ${videoPlatform === 'WHATSAPP' ? 'WhatsApp' : 'Google Meet'}` : 'Physical Property Visit & Warden Callback'} for ${visitName || 'Visitor'} (${visitPhone})`,
+                              metadata: {
+                                isPropertyVisit: true,
+                                visitMode,
+                                videoPlatform: visitMode === 'LIVE_VIDEO' ? videoPlatform : undefined,
+                                roomName: activeRoomService.name,
+                                roomSharing: (selectedListing as any)?.name || 'Bed Inspection',
+                                scheduledDate: visitDate,
+                                timeSlot: visitTimeSlot,
+                              }
+                            };
+
+                            await fetch('/api/v1/bookings/sync', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify(visitBookingData),
+                            }).catch(() => { });
+                          } catch (e) {
+                            console.error('Failed to post live visit sync:', e);
+                          }
+
+                          setVisitConfirmed(true);
+                        }}
+                        className={`w-full py-3.5 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer mt-2 ${visitMode === 'LIVE_VIDEO'
+                          ? 'bg-blue-600 hover:bg-blue-700'
+                          : 'bg-[#ff6325] hover:bg-[#e04e13]'
+                          }`}
+                      >
+                        {visitMode === 'LIVE_VIDEO'
+                          ? 'Confirm Live Video Tour →'
+                          : 'Confirm Free Visit Pass & Callback →'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            // ── STEP 2: ADD-ONS SELECTION ──
+            if (roomModalStep === 'ADDONS') {
+              return (
+                <div className="space-y-4">
+                  <div className="p-3.5 rounded-2xl bg-[#033266]/5 dark:bg-[#ff6325]/10 border border-[#033266]/15 dark:border-[#ff6325]/20 flex items-center gap-3">
+                    <span className="text-2xl">✨</span>
+                    <div>
+                      <h4 className="font-extrabold text-xs text-slate-900 dark:text-white">Enhance Your Stay</h4>
+                      <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                        Choose optional upgrades below, or click <strong>Skip Add-ons</strong> to continue directly to checkout.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Add-ons List */}
+                  <div className="space-y-2.5">
+                    {availableAddonsList.length === 0 ? (
+                      <div className="p-6 text-center rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400">
+                        <p className="text-xs font-semibold">No additional paid upgrades configured for this room.</p>
+                        <p className="text-[11px] mt-1 text-slate-400">You can proceed directly to checkout.</p>
+                      </div>
+                    ) : (
+                      availableAddonsList.map(addon => {
+                        const isSelected = selectedAddonIds.includes(addon.id);
+                        return (
+                          <div
+                            key={addon.id}
+                            onClick={() => {
+                              setSelectedAddonIds(prev =>
+                                prev.includes(addon.id)
+                                  ? prev.filter(x => x !== addon.id)
+                                  : [...prev, addon.id]
+                              );
+                            }}
+                            className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${isSelected
+                              ? 'bg-[#033266]/5 dark:bg-[#ff6325]/10 border-[#033266] dark:border-[#ff6325] shadow-xs'
+                              : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                              }`}
+                          >
+                            <div className="flex items-start gap-3 min-w-0">
+                              <span className="text-2xl shrink-0 p-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10">
+                                {addon.icon}
+                              </span>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <h5 className="font-extrabold text-xs text-slate-900 dark:text-white truncate">
+                                    {addon.name}
+                                  </h5>
+                                  {addon.tag && (
+                                    <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] border border-[#033266]/20 dark:border-[#ff6325]/30">
+                                      {addon.tag}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                                  {addon.desc}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 shrink-0">
+                              <div className="text-right">
+                                <span className="text-xs font-black text-slate-900 dark:text-white block">
+                                  +₹{addon.price.toLocaleString()}
+                                </span>
+                              </div>
+                              <div
+                                className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${isSelected
+                                  ? 'bg-[#033266] dark:bg-[#ff6325] border-[#033266] dark:border-[#ff6325] text-white'
+                                  : 'border-slate-300 dark:border-white/20 bg-white dark:bg-slate-700'
+                                  }`}
+                              >
+                                {isSelected && <Check size={12} />}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  {/* Live Total Calculation Preview */}
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 flex items-center justify-between text-xs mt-4">
+                    <div>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">
+                        {isPgStay
+                          ? `${pgPaymentType === 'TOKEN_ADVANCE' ? 'Token Advance' : '1st Month Rent'} + ${selectedAddonIds.length} Add-on${selectedAddonIds.length === 1 ? '' : 's'}`
+                          : `Base Room (${nights}N) + ${selectedAddonIds.length} Add-on${selectedAddonIds.length === 1 ? '' : 's'}`
+                        }
+                      </span>
+                      <span className="text-slate-700 dark:text-slate-300 text-xs">
+                        ₹{(isPgStay ? basePgPayable : roomTotal).toLocaleString()} + ₹{addonsTotalSum.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Final Total</span>
+                      <span className="text-base font-black text-[#033266] dark:text-[#ff6325]">
+                        ₹{finalCalculatedPayable.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            return null;
+          })()}
+        </div>
+
+        {/* Modal Bottom Action Bar */}
+        <div className="px-6 py-3.5 border-t border-slate-200/80 dark:border-white/10 bg-slate-50/90 dark:bg-slate-900/80 flex items-center justify-between gap-3 backdrop-blur-md shrink-0 rounded-b-3xl">
+          {roomModalStep === 'VISIT' ? (
+            <div className="w-full flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setRoomModalStep('DETAILS')}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer bg-white dark:bg-slate-800"
+              >
+                &larr; Back to Bed Overview
+              </button>
+              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                ✓ No payment required for visit
+              </span>
+            </div>
+          ) : roomModalStep === 'DETAILS' ? (
+            isPgStay ? (
+              (() => {
+                const basePrice = Number(activeRoomService.price || activeRoomService.basePrice) || 2200;
+                const foodDiscount = Number(
+                  (activeRoomService.selectedListing as any)?.foodDeductionAmount ||
+                  activeRoomService.metadata?.foodDeductionAmount ||
+                  1500
+                );
+                const effectiveRent = isFoodExcluded ? Math.max(500, basePrice - foodDiscount) : basePrice;
+
+                return (
+                  /* Balanced Modern Booking Action Bar: Primary Full Rent + Flexible Token Option */
+                  <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3">
+                    {/* Left: Clear Monthly Rent Summary */}
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
+                        Total Monthly Rent
+                      </span>
+                      <div className="flex items-baseline gap-1.5 mt-0.5">
+                        <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                          ₹{effectiveRent.toLocaleString()}
+                        </span>
+                        <span className="text-xs font-semibold text-slate-400">/month</span>
+                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold ml-1">
+                          {isFoodExcluded ? '(No Mess)' : '(All Meals Inc.)'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Right: Primary Full Payment & Secondary Token Advance Action */}
+                    <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveRoomService(null);
+                          setRoomModalStep(null);
+                        }}
+                        className="px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer bg-white dark:bg-slate-800"
+                      >
+                        Back
+                      </button>
+
+                      {/* Secondary Action: Pay Dynamic Token Advance */}
+                      {((activeRoomService.selectedListing as any)?.isTokenAdvanceEnabled ?? (activeRoomService.metadata?.isTokenAdvanceEnabled ?? true)) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPgPaymentType('TOKEN_ADVANCE');
+                            setRoomModalStep('ADDONS');
+                          }}
+                          className="px-4 py-2.5 rounded-xl border border-orange-200 dark:border-orange-900/40 hover:border-[#ff6325] text-[#ff6325] hover:bg-orange-50 dark:hover:bg-orange-950/20 text-xs font-black transition-all cursor-pointer bg-white dark:bg-slate-800 flex items-center gap-1.5 whitespace-nowrap shadow-2xs"
+                        >
+                          <span>🔒 Pay ₹{Number((activeRoomService.selectedListing as any)?.tokenAdvanceAmount || activeRoomService.metadata?.tokenAdvanceAmount || 999).toLocaleString()} Token</span>
+                        </button>
+                      )}
+
+                      {/* Primary Main CTA: Pay Full 1st Month Rent */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPgPaymentType('FULL_MONTH_RENT');
+                          setRoomModalStep('ADDONS');
+                        }}
+                        className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#ff6325] to-[#f4511e] hover:from-[#e04e13] hover:to-[#d84315] active:scale-95 text-white text-xs font-black shadow-md transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                      >
+                        <span>PAY FULL MONTH (₹{effectiveRent.toLocaleString()})</span>
+                        <span>&rarr;</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveRoomService(null);
+                    setRoomModalStep(null);
+                  }}
+                  className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-white/20 text-slate-700 dark:text-slate-200 hover:text-slate-900 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer bg-white dark:bg-slate-800"
+                >
+                  Back to Rooms
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setRoomModalStep('ADDONS')}
+                  className="px-6 py-2.5 rounded-xl bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] active:scale-95 text-white text-xs font-extrabold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer ml-auto"
+                >
+                  <span>Choose This Room &rarr;</span>
+                </button>
+              </>
+            )
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  // Skip Addons: directly execute checkout payload with empty addons
+                  const isBackpackersHostel = category === 'hostels' || venueName.toLowerCase().includes('backpackers');
+                  const effectiveMerchantId = isBackpackersHostel ? '51c6a3b8-2abc-9421-7644-2a2dea05dbc0' : (activeRoomService.merchantId || merchantId);
+                  const effectiveMerchantName = isBackpackersHostel ? 'Backpackers Hostel' : venueName;
+
+                  if (isPgStay) {
+                    const rawBasePrice = Number(activeRoomService.price || activeRoomService.basePrice) || 2200;
+                    // Tenure discount calculation
+                    const tenureDiscountPct = hostelDurationMonths >= 11 ? 15 : hostelDurationMonths >= 6 ? 10 : hostelDurationMonths >= 3 ? 5 : 0;
+                    const basePrice = Math.round(rawBasePrice * (1 - tenureDiscountPct / 100));
+
+                    const foodDiscount = Number(
+                      (activeRoomService.selectedListing as any)?.foodDiscountAmount ??
+                      activeRoomService.metadata?.foodDiscountAmount ??
+                      2000
+                    );
+                    const actualRent = isFoodExcluded ? Math.max(500, basePrice - foodDiscount) : basePrice;
+                    const deposit = Number((activeRoomService.selectedListing as any)?.securityDeposit ?? activeRoomService.metadata?.securityDeposit ?? activeRoomService.metadata?.refundableDeposit ?? 3000);
+                    const tokenAmount = Number((activeRoomService.selectedListing as any)?.tokenAdvanceAmount || activeRoomService.metadata?.tokenAdvanceAmount || 999);
+                    const payable = pgPaymentType === 'TOKEN_ADVANCE' ? tokenAmount : actualRent;
+                    const slotStr = pgPaymentType === 'TOKEN_ADVANCE'
+                      ? `${hostelDurationMonths} Month${hostelDurationMonths > 1 ? 's' : ''} Stay (Starts ${checkIn}) • Token Advance ₹${tokenAmount}`
+                      : `1st Month Rent for ${hostelDurationMonths} Month${hostelDurationMonths > 1 ? 's' : ''} Stay (Starts ${checkIn}) • ₹${actualRent.toLocaleString()}`;
+
+                    setSelectedService({
+                      ...activeRoomService,
+                      price: payable,
+                      name: `${effectiveMerchantName} — ${activeRoomService.name} (${pgPaymentType === 'TOKEN_ADVANCE' ? 'Token Advance' : '1st Month Rent'})`,
+                      merchantId: effectiveMerchantId,
+                      merchantName: effectiveMerchantName,
+                      merchant: {
+                        id: effectiveMerchantId,
+                        name: effectiveMerchantName,
+                      },
+                      merchantObj: {
+                        ...(activeRoomService.merchantObj || {}),
+                        id: effectiveMerchantId,
+                        name: effectiveMerchantName,
+                      },
+                      category: category === 'hostels' ? 'Hostel Booking' : 'PG & Co-Living Stays',
+                      metadata: {
+                        ...(activeRoomService.metadata || {}),
+                        merchantId: effectiveMerchantId,
+                        merchantName: effectiveMerchantName,
+                        pgBooking: {
+                          venueName: effectiveMerchantName,
+                          address,
+                          roomType: activeRoomService.name,
+                          monthlyRent: actualRent,
+                          tokenPaid: payable,
+                          refundableDeposit: deposit,
+                          foodExcluded: isFoodExcluded,
+                          startDate: checkIn,
+                          durationMonths: hostelDurationMonths,
+                          tenureDiscountPct,
+                          paymentType: pgPaymentType,
+                          selectedAddons: []
+                        }
+                      }
+                    });
+
+                    setSelectedSlot({
+                      id: `pg-bed-${Date.now()}`,
+                      timeStr: slotStr,
+                      date: checkIn,
+                      available: true
+                    });
+
+                    setActiveRoomService(null);
+                    setRoomModalStep(null);
+                    router.push('/booking/checkout');
+                    return;
+                  }
+
+                  const roomPrice = Number(activeRoomService.price || activeRoomService.basePrice) || 2500;
+                  const roomTotal = roomPrice * nights * rooms;
+                  const slotStr = `${checkIn} to ${checkOut} (${nights} Night${nights > 1 ? 's' : ''}) • ${adults + children} Guests • ${rooms} Room${rooms > 1 ? 's' : ''}`;
+
+                  setSelectedService({
+                    ...activeRoomService,
+                    price: roomTotal,
+                    name: `${effectiveMerchantName} — ${activeRoomService.name || 'Room'}`,
+                    merchantId: effectiveMerchantId,
+                    merchantName: effectiveMerchantName,
+                    merchant: {
+                      id: effectiveMerchantId,
+                      name: effectiveMerchantName,
+                    },
+                    merchantObj: {
+                      ...(activeRoomService.merchantObj || {}),
+                      id: effectiveMerchantId,
+                      name: effectiveMerchantName,
+                    },
+                    category: category === 'hostels' ? 'Hostel Booking' : (category === 'pg-hostels' ? 'PG & Co-Living Stays' : 'Hotel Booking'),
+                    metadata: {
+                      ...(activeRoomService.metadata || {}),
+                      merchantId: effectiveMerchantId,
+                      merchantName: effectiveMerchantName,
+                      hotelBooking: {
+                        venueName: effectiveMerchantName,
+                        realHotelName: rawVenueName,
+                        isLuxeBlindBooking,
+                        address,
+                        roomType: activeRoomService.name,
+                        checkIn,
+                        checkOut,
+                        nights,
+                        rooms,
+                        adults,
+                        children,
+                        childAges,
+                        pets,
+                        petCount,
+                        selectedAddons: [],
+                        pricePerNight: roomPrice,
+                        totalPrice: roomTotal
+                      }
+                    }
+                  });
+
+                  setSelectedSlot({
+                    id: `hotel-stay-${Date.now()}`,
+                    timeStr: slotStr,
+                    date: checkIn,
+                    available: true
+                  });
+
+                  router.push('/booking/checkout');
+                }}
+                className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-white/20 text-slate-700 dark:text-slate-200 hover:text-slate-900 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer bg-white dark:bg-slate-800"
+              >
+                Skip Add-ons &rarr;
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  // Proceed to Checkout with Selected Addons included
+                  const isBackpackersHostel = category === 'hostels' || venueName.toLowerCase().includes('backpackers');
+                  const effectiveMerchantId = isBackpackersHostel ? '51c6a3b8-2abc-9421-7644-2a2dea05dbc0' : (activeRoomService.merchantId || merchantId);
+                  const effectiveMerchantName = isBackpackersHostel ? 'Backpackers Hostel' : venueName;
+
+                  const roomListings = activeRoomService.rawConfig?.metadata?.listings || activeRoomService.metadata?.listings || [];
+                  const selectedListing = activeRoomService.selectedListing || (activeRoomService.selectedListingId ? roomListings.find((l: any) => l.id === activeRoomService.selectedListingId) : roomListings[0]);
+                  const roomMeta = selectedListing?.metadata || activeRoomService.metadata || {};
+
+                  const rawAddons = roomMeta.addons || activeRoomService.metadata?.addons || activeRoomService.addOns || [];
+                  const partnerListingAddons = Array.isArray(rawAddons) ? rawAddons : [];
+
+                  const defaultPgAddons = isPgStay ? [
+                    { id: 'custom-addon-pg-laundry', name: 'Laundry & Washing Machine Access', desc: 'Unlimited monthly washing machine and drying yard access', price: 350, tag: 'Popular', icon: '🧺' },
+                    { id: 'custom-addon-pg-parking', name: 'Reserved Two-Wheeler Parking', desc: 'Covered dedicated CCTV-monitored 2-wheeler parking slot', price: 200, tag: 'Convenience', icon: '🛵' },
+                    { id: 'custom-addon-pg-locker', name: 'Personal High-Security Locker', desc: 'Keyed personal wardrobe locker with master backup code', price: 250, tag: 'Security', icon: '🔐' },
+                  ] : [];
+
+                  const activeAddonsList = partnerListingAddons.length > 0
+                    ? partnerListingAddons.map((pa: any, pIdx: number) => ({
+                      id: `custom-addon-${pIdx}`,
+                      name: typeof pa === 'string' ? pa : (pa.name || 'Custom Add-on'),
+                      desc: pa.desc || (isPgStay ? 'Monthly amenity enhancement' : 'Optional enhancement offered directly by host'),
+                      price: Number(pa.price || pa.cost || 0),
+                      tag: 'Included Choice',
+                      icon: '✨'
+                    }))
+                    : defaultPgAddons;
+
+                  const chosenAddons = activeAddonsList.filter((a: any) => selectedAddonIds.includes(a.id));
+                  const currentAddonsSum = chosenAddons.reduce((sum: number, a: any) => sum + (a.price || 0), 0);
+
+                  if (isPgStay) {
+                    const rawBasePrice = Number(activeRoomService.price || activeRoomService.basePrice || selectedListing?.price) || 2200;
+                    const tenureDiscountPct = hostelDurationMonths >= 11 ? 15 : hostelDurationMonths >= 6 ? 10 : hostelDurationMonths >= 3 ? 5 : 0;
+                    const basePrice = Math.round(rawBasePrice * (1 - tenureDiscountPct / 100));
+
+                    const foodDiscount = Number(
+                      (selectedListing as any)?.foodDiscountAmount ??
+                      activeRoomService.metadata?.foodDiscountAmount ??
+                      2000
+                    );
+                    const actualRent = isFoodExcluded ? Math.max(500, basePrice - foodDiscount) : basePrice;
+                    const deposit = Number((selectedListing as any)?.securityDeposit ?? activeRoomService.metadata?.securityDeposit ?? activeRoomService.metadata?.refundableDeposit ?? 3000);
+                    const tokenAmount = Number((selectedListing as any)?.tokenAdvanceAmount || activeRoomService.metadata?.tokenAdvanceAmount || 999);
+                    const payable = (pgPaymentType === 'TOKEN_ADVANCE' ? tokenAmount : actualRent) + currentAddonsSum;
+                    const slotStr = pgPaymentType === 'TOKEN_ADVANCE'
+                      ? `${hostelDurationMonths} Month${hostelDurationMonths > 1 ? 's' : ''} Stay (Starts ${checkIn}) • Token Advance ₹${tokenAmount} + Add-ons ₹${currentAddonsSum}`
+                      : `1st Month Rent for ${hostelDurationMonths} Month${hostelDurationMonths > 1 ? 's' : ''} Stay (Starts ${checkIn}) • ₹${actualRent.toLocaleString()} + Add-ons ₹${currentAddonsSum}`;
+
+                    setSelectedService({
+                      ...activeRoomService,
+                      price: payable,
+                      name: `${effectiveMerchantName} — ${activeRoomService.name} (${pgPaymentType === 'TOKEN_ADVANCE' ? 'Token Advance' : '1st Month Rent'})`,
+                      merchantId: effectiveMerchantId,
+                      merchantName: effectiveMerchantName,
+                      merchant: {
+                        id: effectiveMerchantId,
+                        name: effectiveMerchantName,
+                      },
+                      merchantObj: {
+                        ...(activeRoomService.merchantObj || {}),
+                        id: effectiveMerchantId,
+                        name: effectiveMerchantName,
+                      },
+                      category: category === 'hostels' ? 'Hostel Booking' : 'PG & Co-Living Stays',
+                      metadata: {
+                        ...(activeRoomService.metadata || {}),
+                        merchantId: effectiveMerchantId,
+                        merchantName: effectiveMerchantName,
+                        pgBooking: {
+                          venueName: effectiveMerchantName,
+                          address,
+                          roomType: activeRoomService.name,
+                          monthlyRent: actualRent,
+                          tokenPaid: payable,
+                          refundableDeposit: deposit,
+                          foodExcluded: isFoodExcluded,
+                          startDate: checkIn,
+                          durationMonths: hostelDurationMonths,
+                          tenureDiscountPct,
+                          paymentType: pgPaymentType,
+                          selectedAddons: chosenAddons
+                        }
+                      }
+                    });
+
+                    setSelectedSlot({
+                      id: `pg-bed-${Date.now()}`,
+                      timeStr: slotStr,
+                      date: checkIn,
+                      available: true
+                    });
+
+                    setActiveRoomService(null);
+                    setRoomModalStep(null);
+                    router.push('/booking/checkout');
+                    return;
+                  }
+
+                  const roomPrice = Number(activeRoomService.price || activeRoomService.basePrice || selectedListing?.price) || 2500;
+                  const roomTotal = roomPrice * nights * rooms;
+                  const finalTotal = roomTotal + currentAddonsSum;
+                  const slotStr = `${checkIn} to ${checkOut} (${nights} Night${nights > 1 ? 's' : ''}) • ${adults + children} Guests • ${rooms} Room${rooms > 1 ? 's' : ''}`;
+
+                  setSelectedService({
+                    ...activeRoomService,
+                    price: finalTotal,
+                    name: `${effectiveMerchantName} — ${activeRoomService.name || 'Room'}`,
+                    merchantId: effectiveMerchantId,
+                    merchantName: effectiveMerchantName,
+                    merchant: {
+                      id: effectiveMerchantId,
+                      name: effectiveMerchantName,
+                    },
+                    merchantObj: {
+                      ...(activeRoomService.merchantObj || {}),
+                      id: effectiveMerchantId,
+                      name: effectiveMerchantName,
+                    },
+                    category: category === 'hostels' ? 'Hostel Booking' : (category === 'pg-hostels' ? 'PG & Co-Living Stays' : 'Hotel Booking'),
+                    metadata: {
+                      ...(activeRoomService.metadata || {}),
+                      merchantId: effectiveMerchantId,
+                      merchantName: effectiveMerchantName,
+                      hotelBooking: {
+                        venueName: effectiveMerchantName,
+                        realHotelName: rawVenueName,
+                        isLuxeBlindBooking,
+                        address,
+                        roomType: activeRoomService.name,
+                        checkIn,
+                        checkOut,
+                        nights,
+                        rooms,
+                        adults,
+                        children,
+                        childAges,
+                        pets,
+                        petCount,
+                        selectedAddons: chosenAddons,
+                        pricePerNight: roomPrice,
+                        totalPrice: finalTotal
+                      }
+                    }
+                  });
+
+                  setSelectedSlot({
+                    id: `hotel-stay-${Date.now()}`,
+                    timeStr: slotStr,
+                    date: checkIn,
+                    available: true
+                  });
+
+                  router.push('/booking/checkout');
+                }}
+                className="px-6 py-2.5 rounded-xl bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] active:scale-95 text-white text-xs font-extrabold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer ml-auto"
+              >
+                <span>Proceed to Checkout &rarr;</span>
+              </button>
+            </>
+          )}
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
+{/* Full-Screen Photo Gallery Lightbox Modal */ }
+{
+  isGalleryOpen && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-md animate-fade-in">
+      <div className="relative w-full max-w-5xl h-[85vh] bg-[#0b0f19] rounded-3xl border border-white/10 overflow-hidden flex flex-col shadow-2xl">
+        {/* Modal Top Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-black/40">
+          <div className="flex items-center gap-3">
+            <span className="text-white font-black text-sm sm:text-base">{venueName} Gallery</span>
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-white/10 text-white font-bold">
+              {currentImageIdx + 1} of {galleryImages.length}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsGalleryOpen(false)}
+            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+            title="Close gallery"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Main Image View */}
+        <div className="relative flex-1 flex items-center justify-center p-4 min-h-0 bg-black/50">
+          <img
+            src={galleryImages[currentImageIdx] || galleryImages[0]}
+            alt={`${venueName} photo ${currentImageIdx + 1}`}
+            className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl transition-all duration-300"
+          />
+
+          {/* Left/Right Prev/Next Buttons */}
+          {galleryImages.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={() => setCurrentImageIdx((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1))}
+                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/70 hover:bg-black/90 text-white border border-white/20 shadow-xl cursor-pointer transition-transform hover:scale-110 active:scale-95"
+                title="Previous photo"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentImageIdx((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1))}
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/70 hover:bg-black/90 text-white border border-white/20 shadow-xl cursor-pointer transition-transform hover:scale-110 active:scale-95"
+                title="Next photo"
+              >
+                ›
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Bottom Thumbnail Strip */}
+        <div className="p-3 bg-black/70 border-t border-white/10 overflow-x-auto flex items-center gap-2.5 scrollbar-thin scrollbar-thumb-white/20">
+          {galleryImages.map((imgUrl, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setCurrentImageIdx(idx)}
+              className={`relative w-16 h-12 sm:w-20 sm:h-14 rounded-xl overflow-hidden shrink-0 border-2 transition-all cursor-pointer ${currentImageIdx === idx
+                ? 'border-[#ff6325] scale-105 shadow-md shadow-[#ff6325]/30'
+                : 'border-white/10 opacity-60 hover:opacity-100'
+                }`}
+            >
+              <img src={imgUrl} alt={`Thumb ${idx + 1}`} className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+                  </AnimatePresence >
+
+  {/* ── PG "Schedule Free Property Visit" Modal ── */ }
+  <AnimatePresence>
+{
+  isVisitModalOpen && (
+    <div className="fixed inset-0 z-[200000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+      <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-white/10 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">{visitMode === 'LIVE_VIDEO' ? '📹' : '🗓️'}</span>
+            <div>
+              <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                {visitMode === 'LIVE_VIDEO' ? 'Schedule Live Video Tour' : 'Schedule Free Property Visit'}
+              </h3>
+              <p className="text-[10px] text-slate-400">
+                {visitMode === 'LIVE_VIDEO' ? 'Live 1-on-1 video walkthrough with property warden' : 'Inspect room, food & facilities before paying'}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setIsVisitModalOpen(false);
+              setVisitConfirmed(false);
+            }}
+            className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Visit Type Toggle Switch (Consistent Brand Styling) */}
+        <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-white/10">
+          <button
+            type="button"
+            onClick={() => setVisitMode('IN_PERSON')}
+            className={`py-2 px-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${visitMode === 'IN_PERSON'
+              ? 'bg-[#033266] dark:bg-[#ff6325] text-white shadow-md'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+          >
+            <span>🏢 Free Visit & Callback</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setVisitMode('LIVE_VIDEO')}
+            className={`py-2 px-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${visitMode === 'LIVE_VIDEO'
+              ? 'bg-[#033266] dark:bg-[#ff6325] text-white shadow-md'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+          >
+            <span>📹 Live Video Tour</span>
+          </button>
+        </div>
+
+        {visitConfirmed ? (
+          <div className="py-6 text-center space-y-3">
+            <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-xl">
+              ✓
+            </div>
+            <h4 className="text-base font-bold text-slate-900 dark:text-white">
+              {visitMode === 'LIVE_VIDEO' ? 'Live Video Tour Booked!' : 'Visit Confirmed!'}
+            </h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+              {visitMode === 'LIVE_VIDEO' ? (
+                <>
+                  Property Warden will call you on <span className="font-bold text-[#ff6325]">{videoPlatform === 'WHATSAPP' ? 'WhatsApp Video' : 'Google Meet'}</span> for <span className="font-bold text-[#ff6325]">{visitDate}</span> at <span className="font-bold text-[#ff6325]">{visitTimeSlot}</span>. Confirmation SMS sent to {visitPhone || 'your mobile'}.
+                </>
+              ) : (
+                <>
+                  The PG Warden has been notified for <span className="font-bold text-[#ff6325]">{visitDate}</span> at <span className="font-bold text-[#ff6325]">{visitTimeSlot}</span>. SMS sent to {visitPhone || 'your mobile'}.
+                </>
+              )}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setIsVisitModalOpen(false);
+                setVisitConfirmed(false);
+              }}
+              className="mt-3 px-6 py-2 bg-[#ff6325] text-white text-xs font-bold rounded-xl"
+            >
+              Done
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3.5 text-xs">
+            {visitMode === 'LIVE_VIDEO' && (
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Video Call Platform</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setVideoPlatform('WHATSAPP')}
+                    className={`p-2.5 rounded-xl border text-center font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer ${videoPlatform === 'WHATSAPP'
+                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300'
+                      : 'border-slate-200 dark:border-white/10 text-slate-600'
+                      }`}
+                  >
+                    <span>💬 WhatsApp Video</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVideoPlatform('GOOGLE_MEET')}
+                    className={`p-2.5 rounded-xl border text-center font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer ${videoPlatform === 'GOOGLE_MEET'
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300'
+                      : 'border-slate-200 dark:border-white/10 text-slate-600'
+                      }`}
+                  >
+                    <span>🎥 Google Meet</span>
+                  </button>
+                </div>
+              </div>
+            )}
+            <div>
+              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Your Full Name</label>
+              <input
+                type="text"
+                placeholder="e.g. Arun Kumar"
+                value={visitName}
+                onChange={(e) => setVisitName(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 outline-none text-xs font-semibold"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Phone Number (For Warden SMS)</label>
+              <input
+                type="tel"
+                placeholder="+91 98765 43210"
+                value={visitPhone}
+                onChange={(e) => setVisitPhone(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 outline-none text-xs font-semibold"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="relative">
+                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                  {visitMode === 'LIVE_VIDEO' ? 'Tour Date' : 'Visit Date'}
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const targetD = visitDate ? new Date(visitDate) : new Date();
+                    setVisitCalMonthDate(isNaN(targetD.getTime()) ? new Date() : targetD);
+                    setIsVisitCalPopoverOpen(!isVisitCalPopoverOpen);
+                  }}
+                  className="w-full px-2.5 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 outline-none text-xs font-semibold flex items-center justify-between text-left hover:border-[#ff6325] transition-colors cursor-pointer"
+                >
+                  <span className="text-slate-900 dark:text-white font-bold">
+                    {(() => {
+                      try {
+                        const [y, m, d] = visitDate.split('-');
+                        return `${d}-${m}-${y}`;
+                      } catch {
+                        return visitDate;
+                      }
+                    })()}
+                  </span>
+                  <Calendar size={15} className="text-[#ff6325] shrink-0" />
+                </button>
+
+                {/* Custom Popover Calendar matching top booking app UI */}
+                <AnimatePresence>
+                  {isVisitCalPopoverOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                      className="absolute left-0 bottom-full mb-3 w-72 bg-white dark:bg-[#0c1424] border border-slate-200 dark:border-white/15 rounded-3xl p-4 shadow-2xl z-[300000] space-y-3"
+                    >
+                      {/* Month Header with Pill Container & < > Controls (Matching Check-in Calendar) */}
+                      <div className="bg-slate-50 dark:bg-[#121722] rounded-2xl border border-slate-200/80 dark:border-white/10 p-2.5 flex items-center justify-between">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVisitCalMonthDate(new Date(visitCalMonthDate.getFullYear(), visitCalMonthDate.getMonth() - 1, 1));
+                          }}
+                          className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+                        >
+                          <ChevronLeft size={15} />
+                        </button>
+                        <span className="text-sm font-black text-slate-900 dark:text-white">
+                          {visitCalMonthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVisitCalMonthDate(new Date(visitCalMonthDate.getFullYear(), visitCalMonthDate.getMonth() + 1, 1));
+                          }}
+                          className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+                        >
+                          <ChevronRight size={15} />
+                        </button>
+                      </div>
+
+                      {/* Weekday Names */}
+                      <div className="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400">
+                        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                          <div key={d} className="py-1">{d}</div>
+                        ))}
+                      </div>
+
+                      {/* Days Grid with Blue Circle Selection */}
+                      <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                        {(() => {
+                          const year = visitCalMonthDate.getFullYear();
+                          const month = visitCalMonthDate.getMonth();
+                          const firstDay = new Date(year, month, 1).getDay();
+                          const totalDays = new Date(year, month + 1, 0).getDate();
+                          const cells = [];
+
+                          for (let i = 0; i < firstDay; i++) {
+                            cells.push(<div key={`standalone-visit-empty-${i}`} className="h-8" />);
+                          }
+
+                          for (let d = 1; d <= totalDays; d++) {
+                            const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                            const isSelected = visitDate === dStr;
+                            const isPast = new Date(dStr) < new Date(new Date().setHours(0, 0, 0, 0));
+
+                            cells.push(
+                              <div key={d} className="flex items-center justify-center">
+                                <button
+                                  type="button"
+                                  disabled={isPast}
+                                  onClick={() => {
+                                    setVisitDate(dStr);
+                                    setIsVisitCalPopoverOpen(false);
+                                  }}
+                                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all cursor-pointer ${isSelected
+                                    ? 'bg-[#1a56db] text-white font-black shadow-md shadow-blue-500/40 ring-2 ring-blue-400/30'
+                                    : isPast
+                                      ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                                      : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                    }`}
+                                >
+                                  {d}
+                                </button>
+                              </div>
+                            );
+                          }
+                          return cells;
+                        })()}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Preferred Time Slot</label>
+                <select
+                  value={visitTimeSlot}
+                  onChange={(e) => setVisitTimeSlot(e.target.value)}
+                  className="w-full px-2.5 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 outline-none text-xs font-semibold"
+                >
+                  <option value="10:00 AM - 11:00 AM">10:00 AM - 11:00 AM</option>
+                  <option value="11:00 AM - 12:00 PM">11:00 AM - 12:00 PM</option>
+                  <option value="02:00 PM - 03:00 PM">02:00 PM - 03:00 PM</option>
+                  <option value="05:00 PM - 06:00 PM">05:00 PM - 06:00 PM</option>
+                  <option value="07:00 PM - 08:00 PM">07:00 PM - 08:00 PM</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
+              {visitMode === 'LIVE_VIDEO'
+                ? '✓ 1-on-1 live walkthrough • Warden video inspection • Mess & room live preview.'
+                : '✓ Free visit pass • PG Warden direct assistance & callback • Sample mess food inspection.'}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!visitName) setVisitName('Guest');
+                setVisitConfirmed(true);
+              }}
+              className="w-full py-3 bg-[#ff6325] hover:bg-[#e04e13] text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md mt-2"
+            >
+              {visitMode === 'LIVE_VIDEO' ? 'Confirm Live Video Tour →' : 'Confirm Free Visit →'}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+                  </AnimatePresence >
+                </div >
               );
 }

@@ -44,7 +44,7 @@ export interface FitnessPassItem {
   tenureDuration?: string; // "1 Month", "3 Months", "6 Months", "1 Year"
   savingsPct?: number; // 15%, 25%, 40%
   popularBadge?: string;
-  maxCapacity: number; // e.g. 15 spots per yoga batch or 40 for open gym
+  maxCapacity: number; // e.g. 15 spots per yoga batch or 40 for open gym floor
   icon: string;
   description: string;
   amenities: string[];
