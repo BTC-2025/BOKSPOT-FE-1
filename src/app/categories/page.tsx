@@ -368,6 +368,19 @@ export default function CategoriesPage() {
   const router = useRouter();
   const [activeGroup, setActiveGroup] = useState<string>('ALL');
   const [searchFilter, setSearchFilter] = useState<string>('');
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const handleSelectCategory = (tag: string) => {
+    const nextGroup = activeGroup === tag && tag !== 'ALL' ? 'ALL' : tag;
+    setActiveGroup(nextGroup);
+
+    // Smoothly scroll down to the filtered list section so user sees immediate results
+    setTimeout(() => {
+      if (listRef.current) {
+        listRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 50);
+  };
 
   const visibleGroups = (activeGroup === 'ALL'
     ? SERVICE_GROUPS
@@ -417,7 +430,7 @@ export default function CategoriesPage() {
 
   // Bento Primary Highlights - ALL 9 Categories + "All" option
   const BENTO_CATEGORIES = [
-    { title: 'All Services', tag: 'ALL', icon: 'apps', emoji: '✨', desc: 'Browse entire directory', border: 'hover:border-[#ff6325]/50', badge: '55 TOTAL' },
+    { title: 'All Services', tag: 'ALL', icon: 'apps', emoji: '✨', desc: 'Browse entire directory', border: 'hover:border-[#FF5201]/50', badge: '55 TOTAL' },
     { title: 'Travel & Cabs', tag: 'Travel', icon: 'directions_car', emoji: '🚕', desc: 'Rides, flights & buses', border: 'hover:border-sky-500/50', badge: '9 SERVICES' },
     { title: 'Stay & Accommodation', tag: 'Stay & Accommodation', icon: 'hotel', emoji: '🏨', desc: 'Resorts, villas & homestays', border: 'hover:border-amber-500/50', badge: '5 TYPES' },
     { title: 'Sports & Turfs', tag: 'Sports', icon: 'sports_soccer', emoji: '⚽', desc: 'Football, cricket & courts', border: 'hover:border-emerald-500/50', badge: '7 ARENAS' },
@@ -432,7 +445,7 @@ export default function CategoriesPage() {
   return (
     <main className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] transition-colors duration-300 relative overflow-hidden pb-16 pt-[104px] md:pt-[110px]">
       {/* Ambient Backdrop */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-64 bg-gradient-to-b from-[#0a3161]/10 dark:from-[#ff6325]/10 via-[#0a3161]/5 to-transparent blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-64 bg-gradient-to-b from-[#0a3161]/10 dark:from-[#FF5201]/10 via-[#0a3161]/5 to-transparent blur-3xl pointer-events-none -z-10" />
 
       <div className="w-full px-4 md:px-8 lg:px-12">
 
@@ -494,7 +507,7 @@ export default function CategoriesPage() {
               return (
                 <button
                   key={bento.title}
-                  onClick={() => setActiveGroup(isSelected && bento.tag !== 'ALL' ? 'ALL' : bento.tag)}
+                  onClick={() => handleSelectCategory(bento.tag)}
                   className={`group relative p-3.5 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 cursor-pointer overflow-hidden min-h-[94px] backdrop-blur-xl ${isSelected
                       ? 'bg-gradient-to-br from-[color:var(--color-primary)]/15 via-white dark:via-[#161c2b] to-white/80 dark:to-[#121722] border-[color:var(--color-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_12px_32px_rgba(0,0,0,0.5)] scale-[1.02] ring-1 ring-[color:var(--color-primary)]/40'
                       : `bg-white/70 dark:bg-[#121722]/70 hover:bg-white dark:hover:bg-[#161c2b] border-black/5 dark:border-white/10 ${bento.border} hover:-translate-y-1 shadow-[0_2px_12px_rgba(0,0,0,0.02)]`
@@ -528,7 +541,7 @@ export default function CategoriesPage() {
         </div>
 
         {/* ── HIGH-SPEED DIRECTORY TABLE / LIST (Apple Glass Card) ─────────────────── */}
-        <div className="rounded-[28px] border border-black/5 dark:border-white/10 bg-white/75 dark:bg-[#121722]/80 backdrop-blur-2xl shadow-[0_8px_30px_rgba(0,0,0,0.03)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.4)] overflow-hidden">
+        <div ref={listRef} className="scroll-mt-24 rounded-[28px] border border-black/5 dark:border-white/10 bg-white/75 dark:bg-[#121722]/80 backdrop-blur-2xl shadow-[0_8px_30px_rgba(0,0,0,0.03)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.4)] overflow-hidden">
 
           {/* Table Header Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 border-b border-black/5 dark:border-white/10 bg-slate-50/60 dark:bg-slate-900/40 gap-2">

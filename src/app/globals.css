@@ -781,23 +781,23 @@
   width: 100%;
   z-index: 50;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  background: linear-gradient(135deg, #FF6325 0%, #FF5200 60%, #E04E13 100%) !important;
+  background: #FF5201 !important;
   border-bottom: 1.5px solid rgba(255, 255, 255, 0.22) !important;
-  box-shadow: 0 4px 20px -2px rgba(252, 128, 25, 0.35), 0 2px 6px rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 4px 20px -2px rgba(255, 82, 1, 0.35), 0 2px 6px rgba(0, 0, 0, 0.12) !important;
 }
 
 /* Dark Mode Styling */
 .dark .custom-navbar {
-  background: linear-gradient(135deg, #E04E13 0%, #CC3F00 50%, #9E2F00 100%) !important;
+  background: #FF5201 !important;
   border-bottom: 1.5px solid rgba(255, 255, 255, 0.15) !important;
   box-shadow: 0 6px 30px rgba(0, 0, 0, 0.45) !important;
 }
 
 /* Light Mode Styling */
 .light .custom-navbar {
-  background: linear-gradient(135deg, #FF6325 0%, #FF5200 60%, #E04E13 100%) !important;
+  background: #FF5201 !important;
   border-bottom: 1.5px solid rgba(255, 255, 255, 0.25) !important;
-  box-shadow: 0 4px 20px -2px rgba(252, 128, 25, 0.35), 0 2px 6px rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 4px 20px -2px rgba(255, 82, 1, 0.35), 0 2px 6px rgba(0, 0, 0, 0.12) !important;
 }
 
 /* Brand Logo Color Classes (To prevent overrides) */
@@ -810,7 +810,7 @@
 }
 
 .logo-text-spot {
-  color: #FF6325 !important;
+  color: #FF5201 !important;
 }
 
 /* High legibility color overrides inside Navbar */
@@ -842,53 +842,29 @@
 
 /* Lucide and other icon color fallback */
 .custom-navbar > div:first-child svg:not(.lucide-sparkles) {
-  color: #334155 !important;
-  stroke: #334155 !important;
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
 }
 
 :is(.dark) .custom-navbar > div:first-child svg:not(.lucide-sparkles) {
-  color: #f1f5f9 !important;
-  stroke: #f1f5f9 !important;
-}
-
-/* Placeholder color */
-.custom-navbar input::placeholder {
-  color: #94a3b8 !important;
-}
-
-/* Light Mode Specific Legibility overrides inside Navbar - Pure Crisp White */
-.light .custom-navbar,
-.light .custom-navbar a,
-.light .custom-navbar select,
-.light .custom-navbar input,
-.light .custom-navbar .custom-nav-link,
-.light .custom-navbar .custom-nav-btn,
-.light .custom-navbar .custom-nav-btn span,
-.light .custom-navbar .custom-nav-btn div,
-.light .custom-navbar .custom-nav-icon-container span,
-.light .custom-navbar .custom-nav-icon-btn {
-  color: #0f172a !important;
-}
-
-.light .custom-navbar > div:first-child svg:not(.lucide-sparkles) {
-  color: #334155 !important;
-  stroke: #334155 !important;
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
 }
 
 .light .custom-navbar input::placeholder {
-  color: #94a3b8 !important;
+  color: rgba(255, 255, 255, 0.75) !important;
 }
 
 .light .custom-navbar .custom-nav-btn {
-  background-color: #f8fafc !important;
-  border: 1px solid #e2e8f0 !important;
-  color: #0f172a !important;
+  background: rgba(255, 255, 255, 0.22) !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  color: #FFFFFF !important;
 }
 
 .light .custom-navbar .custom-nav-btn:hover {
-  background-color: #fff4ec !important;
-  border-color: rgba(252, 128, 25, 0.5) !important;
-  color: #FF6325 !important;
+  background: rgba(255, 255, 255, 0.32) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  color: #FFFFFF !important;
 }
 
 /* Button Styling (Matching Business App) */
@@ -991,8 +967,7 @@
 .dark .custom-nav-link-inactive:hover,
 .light .custom-nav-link-inactive:hover,
 .custom-navbar .custom-nav-link-inactive:hover {
-  color: #FF6325 !important;
-  background: rgba(252, 128, 25, 0.08);
+  color: #FFFFFF !important;
 }
 
 /* Active Nav Link */
@@ -1007,9 +982,9 @@
 .custom-navbar .custom-nav-active-bg,
 .light .custom-navbar .custom-nav-active-bg,
 .dark .custom-navbar .custom-nav-active-bg {
-  background: linear-gradient(135deg, #FF6325 0%, #e26d0b 100%) !important;
+  background: linear-gradient(135deg, #FF5201 0%, #E04E13 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.45) !important;
-  box-shadow: 0 4px 14px rgba(252, 128, 25, 0.45) !important;
+  box-shadow: 0 4px 14px rgba(255, 82, 1, 0.45) !important;
   border-radius: 9999px !important;
 }
 
@@ -1027,26 +1002,28 @@
 
 .custom-navbar .custom-nav-icon-container,
 .light .custom-navbar .custom-nav-icon-container {
-  border: 1px solid #e2e8f0 !important;
-  background-color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  background: rgba(255, 255, 255, 0.22) !important;
+  background-color: rgba(255, 255, 255, 0.22) !important;
 }
 
 .custom-navbar .custom-nav-icon-container svg,
 .light .custom-navbar .custom-nav-icon-container svg {
-  color: #334155 !important;
-  stroke: #334155 !important;
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
 }
 
 .custom-navbar .custom-nav-icon-container:hover,
 .light .custom-navbar .custom-nav-icon-container:hover {
-  background-color: #fff4ec !important;
-  border-color: rgba(252, 128, 25, 0.45) !important;
+  background: rgba(255, 255, 255, 0.32) !important;
+  background-color: rgba(255, 255, 255, 0.32) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
 }
 
 .custom-navbar .custom-nav-icon-container:hover svg,
 .light .custom-navbar .custom-nav-icon-container:hover svg {
-  color: #FF6325 !important;
-  stroke: #FF6325 !important;
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
 }
 
 .dark .custom-nav-icon-container {
@@ -1169,7 +1146,7 @@
 
 .light .custom-navbar .absolute .text-primary,
 .light .custom-navbar .absolute .text-primary * {
-  color: #ff6325 !important;
+  color: #FF5201 !important;
   /* Bokspot orange accent */
 }
 
@@ -1211,7 +1188,7 @@
 
 .custom-navbar .custom-nav-link-inactive,
 .light .custom-navbar .custom-nav-link-inactive {
-  color: #334155 !important;
+  color: #FFFFFF !important;
 }
 
 :is(.dark) .custom-navbar .custom-nav-link-inactive {
@@ -1220,7 +1197,7 @@
 
 .custom-navbar .custom-nav-link-inactive:hover,
 .light .custom-navbar .custom-nav-link-inactive:hover {
-  color: #FF6325 !important;
+  color: #FFFFFF !important;
 }
 
 /* Secondary Subnav Bar (Distinct High-Contrast Layer from Main Blue Header) */
@@ -1244,22 +1221,22 @@
 }
 
 .light .secondary-subnav-bar .subnav-pill {
-  color: #00224f !important;
+  color: #0A3161 !important;
   background-color: #f8fafc !important;
   border: 1px solid #e2e8f0 !important;
   font-weight: 600 !important;
 }
 
 .light .secondary-subnav-bar .subnav-pill:hover {
-  color: #ff6325 !important;
+  color: #FF5201 !important;
   background-color: #fff7ed !important;
-  border-color: #ff6325 !important;
+  border-color: #FF5201 !important;
 }
 
 .light .secondary-subnav-bar .subnav-pill-action {
-  color: #ff6325 !important;
+  color: #FF5201 !important;
   background-color: #fff7ed !important;
-  border: 1px solid rgba(255, 99, 37, 0.3) !important;
+  border: 1px solid rgba(255, 82, 1, 0.3) !important;
   font-weight: 600 !important;
 }
 
@@ -1271,12 +1248,12 @@
 .light .secondary-subnav-bar .subnav-pill-action span,
 .light .secondary-subnav-bar a,
 .light .secondary-subnav-bar span {
-  color: #00224f !important;
+  color: #0A3161 !important;
 }
 
 .light .secondary-subnav-bar .subnav-pill:hover svg,
 .light .secondary-subnav-bar .subnav-pill:hover span {
-  color: #ff6325 !important;
+  color: #FF5201 !important;
 }
 
 .light .secondary-subnav-bar a:hover,
@@ -1324,183 +1301,8 @@
 .light .custom-navbar .custom-nav-icon-btn,
 .custom-navbar .custom-nav-icon-container svg,
 .light .custom-navbar .custom-nav-icon-container svg {
-  color: #ffffff !important;
-  stroke: #ffffff !important;
-}
-
-.custom-navbar .custom-nav-icon-container,
-.light .custom-navbar .custom-nav-icon-container {
-  background-color: rgba(0, 0, 0, 0.25) !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
-}
-
-/* Hover states for search, wishlist, and cart icons */
-.custom-navbar .custom-nav-icon-container:hover,
-.light .custom-navbar .custom-nav-icon-container:hover {
-  background-color: rgba(255, 255, 255, 0.15) !important;
-  border-color: rgba(255, 255, 255, 0.5) !important;
-}
-
-
-
-@keyframes marquee {
-  0% {
-    transform: translateX(0);
-  }
-
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
-.animate-marquee {
-  animation: marquee 35s linear infinite;
-  display: flex;
-  width: max-content;
-}
-
-.animate-marquee:hover {
-  animation-play-state: paused;
-}
-
-
-/* Custom Animated Light Background */
-@keyframes lightGradientScroll {
-  0% {
-    background-position: 0% 50%;
-  }
-
-  50% {
-    background-position: 100% 50%;
-  }
-
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-.light body,
-body,
-.page-content {
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-}
-
-/* ── Global Ultra-Smooth Scrolling & Momentum Scrollbar (Apple macOS & iOS feel) ── */
-html {
-  scroll-behavior: smooth;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Plus Jakarta Sans", "Inter", -apple-system-subheadline, system-ui, sans-serif;
-  letter-spacing: -0.011em;
-}
-
-body {
-  font-family: inherit;
-  letter-spacing: -0.011em;
-}
-
-/* Apple Silicon / iOS style Clean Squircle & Glassmorphism Utility Tokens */
-.apple-glass {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(24px) saturate(190%);
-  -webkit-backdrop-filter: blur(24px) saturate(190%);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 0 1px 1px rgba(255, 255, 255, 0.8) inset;
-}
-
-.dark .apple-glass {
-  background: rgba(18, 22, 32, 0.75);
-  backdrop-filter: blur(24px) saturate(190%);
-  -webkit-backdrop-filter: blur(24px) saturate(190%);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-}
-
-/* Apple Fluid Card Physics */
-.apple-card {
-  border-radius: 20px;
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease;
-}
-
-.apple-card:hover {
-  transform: translateY(-2px) scale(1.008);
-}
-
-/* Custom Apple Sleek Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(120, 130, 150, 0.28);
-  border-radius: 9999px;
-  backdrop-filter: blur(8px);
-  transition: background 0.25s ease;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(120, 130, 150, 0.55);
-}
-
-/* Micro-interaction smooth card physics */
-.smooth-hover {
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease;
-}
-
-/* Leaflet Z-Index Overrides */
-.leaflet-pane {
-  z-index: 10 !important;
-}
-
-.leaflet-top,
-.leaflet-bottom {
-  z-index: 10 !important;
-}
-
-.leaflet-control {
-  z-index: 10 !important;
-}
-
-/* ─── Clear, High-Contrast Date & Time Picker Indicators ─── */
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="time"]::-webkit-calendar-picker-indicator {
-  cursor: pointer;
-  opacity: 0.85;
-  filter: invert(42%) sepia(98%) saturate(1450%) hue-rotate(346deg) brightness(98%) contrast(102%);
-  transition: transform 0.2s ease, opacity 0.2s ease;
-  width: 18px;
-  height: 18px;
-}
-
-input[type="date"]::-webkit-calendar-picker-indicator:hover,
-input[type="time"]::-webkit-calendar-picker-indicator:hover {
-  transform: scale(1.15);
-  opacity: 1;
-}
-
-/* Subnav Bar Icon Visibility Fix */
-.secondary-subnav-bar .subnav-pill svg,
-.secondary-subnav-bar svg {
-  stroke-width: 2.2px !important;
-}
-.light .secondary-subnav-bar .subnav-pill,
-.secondary-subnav-bar .subnav-pill {
-  color: #00224f !important;
-}
-.secondary-subnav-bar .subnav-pill svg.lucide-headset {
-  color: #ff6325 !important;
-  stroke: #ff6325 !important;
-}
-.secondary-subnav-bar .subnav-pill svg.lucide-settings {
-  color: #334155 !important;
-  stroke: #334155 !important;
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -1788,20 +1590,28 @@ body::-webkit-scrollbar,
   box-shadow: none !important;
 }
 
-/* Inactive Nav Links */
+/* Inactive Nav Links - Always Crisp Pure White on Swiggy Orange Navbar */
 .custom-navbar .custom-nav-link,
 .custom-navbar .custom-nav-link-inactive,
 .light .custom-navbar .custom-nav-link,
-.dark .custom-navbar .custom-nav-link {
+.light .custom-navbar .custom-nav-link-inactive,
+.dark .custom-navbar .custom-nav-link,
+.dark .custom-navbar .custom-nav-link-inactive {
   color: #FFFFFF !important;
-  opacity: 0.9 !important;
+  opacity: 0.92 !important;
   font-weight: 700 !important;
   text-shadow: none !important;
 }
 
-.custom-navbar .custom-nav-link:hover {
+.custom-navbar .custom-nav-link:hover,
+.custom-navbar .custom-nav-link-inactive:hover,
+.light .custom-navbar .custom-nav-link:hover,
+.light .custom-navbar .custom-nav-link-inactive:hover,
+.dark .custom-navbar .custom-nav-link:hover,
+.dark .custom-navbar .custom-nav-link-inactive:hover {
   opacity: 1 !important;
   color: #FFFFFF !important;
+  background: transparent !important;
 }
 
 /* Active Nav Pill: Pure White badge with Swiggy Orange Text */
@@ -1815,9 +1625,12 @@ body::-webkit-scrollbar,
 }
 
 .custom-navbar .custom-nav-link.custom-nav-link-active,
+.custom-navbar .custom-nav-link-active,
 .light .custom-navbar .custom-nav-link.custom-nav-link-active,
-.dark .custom-navbar .custom-nav-link.custom-nav-link-active {
-  color: #E85513 !important;
+.light .custom-navbar .custom-nav-link-active,
+.dark .custom-navbar .custom-nav-link.custom-nav-link-active,
+.dark .custom-navbar .custom-nav-link-active {
+  color: #FF5201 !important;
   opacity: 1 !important;
   font-weight: 900 !important;
 }
@@ -1884,4 +1697,69 @@ main,
 .light .page-content {
   background: #FFFFFF !important;
   background-color: #FFFFFF !important;
+}
+
+
+/* =========================================================================
+   1ST SCREENSHOT EXACT CRISP PURE WHITE HEADER ELEMENTS
+   ========================================================================= */
+.custom-navbar .custom-nav-btn,
+.light .custom-navbar .custom-nav-btn,
+.dark .custom-navbar .custom-nav-btn {
+  background: rgba(255, 255, 255, 0.22) !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  color: #FFFFFF !important;
+}
+
+.custom-navbar .custom-nav-btn span,
+.custom-navbar .custom-nav-btn div,
+.custom-navbar .custom-nav-btn svg,
+.light .custom-navbar .custom-nav-btn span,
+.light .custom-navbar .custom-nav-btn div,
+.light .custom-navbar .custom-nav-btn svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+.custom-navbar .custom-nav-icon-container,
+.light .custom-navbar .custom-nav-icon-container,
+.dark .custom-navbar .custom-nav-icon-container {
+  background: rgba(255, 255, 255, 0.22) !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+}
+
+.custom-navbar .custom-nav-icon-container svg,
+.custom-navbar .custom-nav-icon-btn svg,
+.light .custom-navbar .custom-nav-icon-container svg,
+.dark .custom-navbar .custom-nav-icon-container svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+.custom-navbar input,
+.light .custom-navbar input,
+.dark .custom-navbar input {
+  color: #FFFFFF !important;
+}
+
+.custom-navbar input::placeholder,
+.light .custom-navbar input::placeholder,
+.dark .custom-navbar input::placeholder {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+
+/* Avatar circle inside user profile button - Force vibrant orange text on white circle */
+.custom-navbar .profile-avatar-circle,
+.custom-navbar .profile-avatar-circle *,
+.custom-navbar .custom-nav-btn div.profile-avatar-circle,
+.custom-navbar .custom-nav-btn div.profile-avatar-circle *,
+.light .custom-navbar .profile-avatar-circle,
+.light .custom-navbar .profile-avatar-circle *,
+.dark .custom-navbar .profile-avatar-circle,
+.dark .custom-navbar .profile-avatar-circle * {
+  background-color: #FFFFFF !important;
+  color: #FF5201 !important;
+  stroke: #FF5201 !important;
+  font-weight: 900 !important;
 }

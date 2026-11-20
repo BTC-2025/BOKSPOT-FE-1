@@ -103,19 +103,15 @@ export function TopNav({
   const [activeIndex, setActiveIndex] = useState(-1);
 
   // Scroll behavior:
-  // - On Home page ('/' or '/home'): dynamic scroll hide/reveal behavior
-  //   - Downward scroll: hide all headers
-  //   - Upward scroll: main header appears first
-  //   - Top of page (scroll <= 25px): both main and secondary header appear
-  // - On Booking / Categories / Discovery pages: statically pinned at top (never hide on scroll)
-  const isHomePage = pathname === '/' || pathname === '/home';
-  const [homeMainHeaderVisible, setHomeMainHeaderVisible] = useState(true);
-  const [homeSecondaryHeaderVisible, setHomeSecondaryHeaderVisible] = useState(true);
+  // Dynamically hide/reveal on scroll across Home, Categories, and Booking pages:
+  // - Downward scroll: hide all headers
+  // - Upward scroll: main header appears first
+  // - Top of page (scroll <= 25px): both main and secondary header appear
+  const [headerMainVisible, setHeaderMainVisible] = useState(true);
+  const [headerSecondaryVisible, setHeaderSecondaryVisible] = useState(true);
   const lastScrollYRef = useRef(0);
 
   useEffect(() => {
-    if (!isHomePage) return;
-
     let ticking = false;
 
     const handleScroll = () => {
@@ -125,20 +121,20 @@ export function TopNav({
         window.requestAnimationFrame(() => {
           // 1. When at or near the very top of page (scrollY <= 25), BOTH headers show
           if (currentScrollY <= 25) {
-            setHomeMainHeaderVisible(true);
-            setHomeSecondaryHeaderVisible(true);
+            setHeaderMainVisible(true);
+            setHeaderSecondaryVisible(true);
           } else {
             const scrollDelta = currentScrollY - lastScrollYRef.current;
 
             // Use an intentional threshold to prevent microscopic mouse/touch jitter
             if (scrollDelta > 15) {
               // Scrolling DOWN: hide both headers
-              setHomeMainHeaderVisible(false);
-              setHomeSecondaryHeaderVisible(false);
+              setHeaderMainVisible(false);
+              setHeaderSecondaryVisible(false);
             } else if (scrollDelta < -15) {
-              // Scrolling UP in middle: ONLY main blue header, secondary white nav stays strictly hidden
-              setHomeMainHeaderVisible(true);
-              setHomeSecondaryHeaderVisible(false);
+              // Scrolling UP in middle: ONLY main orange header, secondary white nav stays strictly hidden
+              setHeaderMainVisible(true);
+              setHeaderSecondaryVisible(false);
             }
           }
 
@@ -153,10 +149,10 @@ export function TopNav({
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [isHomePage]);
+  }, []);
 
-  const isMainHeaderVisible = isHomePage ? homeMainHeaderVisible : true;
-  const isSecondaryHeaderVisible = isHomePage ? homeSecondaryHeaderVisible : true;
+  const isMainHeaderVisible = headerMainVisible;
+  const isSecondaryHeaderVisible = headerSecondaryVisible;
 
   useEffect(() => {
     setMounted(true);
@@ -179,6 +175,10 @@ export function TopNav({
       }
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
         setShowSuggestions(false);
+        // If user clicked outside and search has no typed query, collapse back to icon
+        if (!searchQuery.trim()) {
+          setSearchOpen(false);
+        }
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -403,20 +403,20 @@ export function TopNav({
             <div className="relative hidden lg:inline-block">
               <button
                 onClick={() => setIsLocationModalOpen(true)}
-                className="custom-nav-btn px-2.5 h-7.5 shadow-xs duration-200 flex items-center gap-1 hover:border-[#ff6325]/40 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10"
+                className="custom-nav-btn px-2.5 h-7.5 shadow-xs duration-200 flex items-center gap-1 hover:border-white/50 bg-white/20 hover:bg-white/30 border border-white/30 text-white"
                 title={mounted ? (city || 'Select Location') : 'Chennai'}
               >
                 <div className="relative flex items-center justify-center shrink-0">
-                  <MapPin size={12} className={`text-[#ff6325] ${status === 'detecting' ? 'animate-bounce' : ''}`} />
-                  <span className="absolute -top-0.5 -right-0.5 w-1 h-1 bg-[#ff6325] rounded-full animate-ping" />
+                  <MapPin size={12} className={`text-white stroke-white ${status === 'detecting' ? 'animate-bounce' : ''}`} />
+                  <span className="absolute -top-0.5 -right-0.5 w-1 h-1 bg-white rounded-full animate-ping" />
                 </div>
-                <span className="text-slate-800 dark:text-white text-[12px] font-black block text-left">
+                <span className="text-white text-[12px] font-black block text-left">
                   {(() => {
                     const raw = mounted ? (city || 'Select Location') : 'Chennai';
                     return raw.length > 8 ? `${raw.slice(0, 8)}...` : raw;
                   })()}
                 </span>
-                <span className="material-symbols-outlined text-[13px] text-slate-500 dark:text-white/80 transition-transform duration-200 shrink-0" style={{ transform: isLocationModalOpen ? 'rotate(180deg)' : 'none' }}>keyboard_arrow_down</span>
+                <span className="material-symbols-outlined text-[13px] text-white/90 transition-transform duration-200 shrink-0" style={{ transform: isLocationModalOpen ? 'rotate(180deg)' : 'none' }}>keyboard_arrow_down</span>
               </button>
             </div>
 
@@ -512,7 +512,7 @@ export function TopNav({
                     className="custom-nav-icon-btn p-1 shrink-0"
                     aria-label="Search"
                   >
-                    <Search size={14} strokeWidth={2.5} />
+                    <Search size={14} strokeWidth={2.5} className="text-white stroke-white" />
                   </button>
                   <div
                     className={`overflow-hidden transition-all duration-300 flex items-center ${searchOpen ? 'w-36 xl:w-48 opacity-100 ml-2' : 'w-0 opacity-0'
@@ -527,7 +527,7 @@ export function TopNav({
                         setShowSuggestions(true);
                       }}
                       onFocus={() => setShowSuggestions(true)}
-                      className="bg-transparent border-none outline-none text-xs text-[#111] dark:text-white placeholder-[#555] dark:placeholder-[#aaa] w-full font-bold"
+                      className="bg-transparent border-none outline-none text-xs !text-white placeholder-white/80 w-full font-bold caret-white selection:bg-white/30 selection:text-white"
                       onKeyDown={handleSearchInputKeyDown}
                       autoFocus={searchOpen}
                     />
@@ -578,7 +578,7 @@ export function TopNav({
                 className="custom-nav-icon-container custom-nav-icon-btn w-8 h-8 shadow-md transition-all hover:scale-105 active:scale-95 relative"
                 aria-label="Wishlist"
               >
-                <Heart size={14} strokeWidth={2} />
+                <Heart size={14} strokeWidth={2} className="text-white stroke-white" />
                 {wishlistCount > 0 && (
                   <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
                 )}
@@ -590,7 +590,7 @@ export function TopNav({
                 className="custom-nav-icon-container custom-nav-icon-btn w-8 h-8 shadow-md transition-all hover:scale-105 active:scale-95 relative"
                 aria-label="Cart"
               >
-                <ShoppingBag size={14} strokeWidth={2} />
+                <ShoppingBag size={14} strokeWidth={2} className="text-white stroke-white" />
                 {cartCount > 0 ? (
                   <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold px-1 min-w-[16px] h-[16px] flex items-center justify-center rounded-full shadow-md">
                     {cartCount > 99 ? '99+' : cartCount}
@@ -605,7 +605,7 @@ export function TopNav({
             {!user ? (
               <Link
                 href="/login"
-                className="custom-nav-btn px-4 h-8 rounded-full flex items-center justify-center shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-[11px] font-extrabold tracking-wider bg-[#ff6325] hover:bg-[#e26d0b] text-white cursor-pointer"
+                className="custom-nav-btn px-4 h-8 rounded-full flex items-center justify-center shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-[11px] font-extrabold tracking-wider bg-[#FF5201] hover:brightness-105 text-white cursor-pointer"
               >
                 Sign In
               </Link>
@@ -613,12 +613,12 @@ export function TopNav({
               <div className="hidden lg:flex items-center gap-2 relative" ref={profileRef}>
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
-                  className="group custom-nav-btn pl-1.5 pr-3 h-8.5 rounded-full flex items-center gap-2 shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 hover:border-[#ff6325]/40"
+                  className="group custom-nav-btn pl-1.5 pr-3 h-8.5 rounded-full flex items-center gap-2 shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border border-white/30 bg-white/20 hover:bg-white/30 hover:border-white/50 text-white"
                   aria-label="Toggle profile menu"
                   title="Profile Settings"
                 >
                   {/* Sleek User Avatar */}
-                  <div className="h-6 w-6 rounded-full bg-gradient-to-br from-[#ff6325] to-[#e26d0b] text-white flex items-center justify-center shrink-0 shadow-xs overflow-hidden text-[11px] font-black profile-avatar-circle ring-1 ring-white/50">
+                  <div className="h-6 w-6 rounded-full bg-white text-[#FF5201] flex items-center justify-center shrink-0 shadow-xs overflow-hidden text-[11px] font-black profile-avatar-circle ring-1 ring-white/50">
                     {userPhoto ? (
                       <img src={userPhoto} alt={userName} className="h-full w-full object-cover animate-fade-in" />
                     ) : (
@@ -627,13 +627,13 @@ export function TopNav({
                   </div>
 
                   {/* Clean Username */}
-                  <span className="text-slate-800 dark:text-white text-[12px] font-bold tracking-wide select-none truncate max-w-[130px]">
+                  <span className="text-white text-[12px] font-bold tracking-wide select-none truncate max-w-[130px]">
                     {userName}
                   </span>
 
                   {/* Chevron pointing down/up on the right */}
                   <span
-                    className="material-symbols-outlined text-[15px] text-slate-500 dark:text-white/80 group-hover:text-slate-900 dark:group-hover:text-white transition-transform duration-200"
+                    className="material-symbols-outlined text-[15px] text-white/90 group-hover:text-white transition-transform duration-200"
                     style={{ transform: profileOpen ? 'rotate(180deg)' : 'none' }}
                   >
                     keyboard_arrow_down
@@ -816,7 +816,7 @@ export function TopNav({
                 }
               }}
               className={`relative flex items-center justify-center transition-all cursor-pointer shadow-md custom-nav-icon-container custom-nav-icon-btn w-9 h-9 ${utilityDrawerOpen
-                ? 'opacity-100 scale-105'
+                ? '!bg-white/35 !border-white/60 shadow-lg scale-105'
                 : 'opacity-85 hover:opacity-100 hover:scale-105'
                 }`}
               title="Bokspot Utilities"
