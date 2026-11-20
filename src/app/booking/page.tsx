@@ -271,45 +271,41 @@ function TracksContent() {
       <div className="mx-auto max-w-[1600px] pt-4 pb-14 space-y-6">
 
         {/* ── DESIGN MOCKUP & SKETCH TRACKER HERO DOCK ── */}
-        <div className="relative rounded-3xl overflow-hidden border border-slate-200/90 dark:border-white/10 bg-gradient-to-br from-[#f8fafc] via-white to-orange-50/20 dark:from-[#0d1424] dark:via-[#111936] dark:to-[#0f172a] p-4 sm:p-6 lg:p-7 shadow-sm transition-all hover:shadow-md">
-          {/* Subtle Ambient Decorative Flight Watermark/Glow */}
-          <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-orange-500/10 via-transparent to-transparent pointer-events-none" />
-          <div className="absolute -top-12 -right-12 w-48 h-48 bg-orange-400/10 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative z-10 w-full space-y-5">
-            {/* 1. TOP ROW: 4 Rich Category Cards (Replaces empty centered look with rich icon pill, live status & count) */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 w-full">
+        <div className="relative rounded-2xl overflow-hidden border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#0f172a] p-3 sm:p-4 shadow-xs">
+          <div className="relative z-10 w-full space-y-3">
+            {/* 1. TOP ROW: 4 Compact Transit Mode Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 w-full">
               {[
                 {
                   id: 'flight',
                   icon: Plane,
                   label: 'Flights',
-                  subtitle: 'Airport Terminals',
-                  tag: 'Radar Live',
+                  subtitle: 'Terminals',
+                  tag: 'Live',
                   iconBg: 'bg-blue-500/15 text-blue-500',
                 },
                 {
                   id: 'train',
                   icon: Train,
                   label: 'Trains',
-                  subtitle: 'IRCTC & Stations',
-                  tag: 'PF Tracking',
+                  subtitle: 'IRCTC',
+                  tag: 'Platform',
                   iconBg: 'bg-indigo-500/15 text-indigo-500',
                 },
                 {
                   id: 'bus',
                   icon: Bus,
                   label: 'Buses',
-                  subtitle: 'Intercity Routes',
-                  tag: 'GPS Telemetry',
+                  subtitle: 'Intercity',
+                  tag: 'GPS',
                   iconBg: 'bg-amber-500/15 text-amber-500',
                 },
                 {
                   id: 'cab',
                   icon: Car,
                   label: 'Cabs',
-                  subtitle: 'Outstation & City',
-                  tag: 'Driver ETA',
+                  subtitle: 'Outstation',
+                  tag: 'ETA',
                   iconBg: 'bg-emerald-500/15 text-emerald-500',
                 },
               ].map(({ id, icon: Icon, label, subtitle, tag, iconBg }) => {
@@ -325,37 +321,32 @@ function TracksContent() {
                       const matching = mergedBookings.find(b => (b.category || '').toLowerCase().includes(id) || (b.serviceName || '').toLowerCase().includes(id));
                       if (matching) setPnr(matching.ref);
                     }}
-                    className={`relative group flex items-center justify-between p-3.5 sm:p-4 rounded-2xl transition-all cursor-pointer select-none w-full text-left overflow-hidden ${
+                    className={`relative group flex items-center justify-between px-3 py-2.5 rounded-xl transition-all cursor-pointer select-none w-full text-left overflow-hidden ${
                       isActive
-                        ? 'bg-[#0a2540] text-white shadow-xl shadow-[#0a2540]/25 ring-2 ring-[#0a2540] scale-[1.01]'
-                        : 'bg-white dark:bg-slate-800/90 text-slate-800 dark:text-slate-200 border border-slate-200/90 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs hover:shadow-xs'
+                        ? 'bg-[#0a2540] text-white shadow-md ring-1 ring-[#0a2540]'
+                        : 'bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-white/10 hover:border-slate-300 hover:bg-white shadow-2xs'
                     }`}
                   >
-                    {/* Background Ambient Glow on Active */}
-                    {isActive && (
-                      <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
-                    )}
-
                     {/* Left: Icon Pill + Labels */}
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 ${
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                         isActive ? 'bg-white/15 text-white' : `${iconBg} dark:bg-white/10 dark:text-white`
                       }`}>
-                        <Icon size={22} className="stroke-[2.2]" />
+                        <Icon size={16} className="stroke-[2.2]" />
                       </div>
 
                       <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm sm:text-base font-black tracking-tight truncate">{label}</span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs sm:text-[13px] font-black tracking-tight truncate">{label}</span>
                           {matchingCount > 0 && (
                             <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black font-mono ${
-                              isActive ? 'bg-[#ff6325] text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                              isActive ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
                             }`}>
                               {matchingCount}
                             </span>
                           )}
                         </div>
-                        <span className={`text-[11px] block truncate font-medium ${
+                        <span className={`text-[10px] block truncate font-medium ${
                           isActive ? 'text-slate-300' : 'text-slate-400 dark:text-slate-400'
                         }`}>
                           {subtitle}
@@ -364,11 +355,11 @@ function TracksContent() {
                     </div>
 
                     {/* Right: Live Tag Pill */}
-                    <div className="shrink-0 pl-2">
-                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                    <div className="shrink-0 pl-1.5">
+                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
                         isActive
                           ? 'bg-white/20 text-white'
-                          : 'bg-slate-100 dark:bg-slate-700/80 text-slate-600 dark:text-slate-400'
+                          : 'bg-slate-200/80 dark:bg-slate-700/80 text-slate-600 dark:text-slate-400'
                       }`}>
                         {tag}
                       </span>

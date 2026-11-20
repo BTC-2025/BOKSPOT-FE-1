@@ -403,20 +403,20 @@ export function TopNav({
             <div className="relative hidden lg:inline-block">
               <button
                 onClick={() => setIsLocationModalOpen(true)}
-                className="custom-nav-btn px-2.5 h-7.5 shadow-sm duration-200 flex items-center gap-1 hover:border-[#ff6325]/40"
+                className="custom-nav-btn px-2.5 h-7.5 shadow-xs duration-200 flex items-center gap-1 hover:border-[#ff6325]/40 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10"
                 title={mounted ? (city || 'Select Location') : 'Chennai'}
               >
                 <div className="relative flex items-center justify-center shrink-0">
                   <MapPin size={12} className={`text-[#ff6325] ${status === 'detecting' ? 'animate-bounce' : ''}`} />
                   <span className="absolute -top-0.5 -right-0.5 w-1 h-1 bg-[#ff6325] rounded-full animate-ping" />
                 </div>
-                <span className="!text-white text-[12px] font-black block text-left">
+                <span className="text-slate-800 dark:text-white text-[12px] font-black block text-left">
                   {(() => {
                     const raw = mounted ? (city || 'Select Location') : 'Chennai';
                     return raw.length > 8 ? `${raw.slice(0, 8)}...` : raw;
                   })()}
                 </span>
-                <span className="material-symbols-outlined text-[13px] !text-white/80 transition-transform duration-200 shrink-0" style={{ transform: isLocationModalOpen ? 'rotate(180deg)' : 'none' }}>keyboard_arrow_down</span>
+                <span className="material-symbols-outlined text-[13px] text-slate-500 dark:text-white/80 transition-transform duration-200 shrink-0" style={{ transform: isLocationModalOpen ? 'rotate(180deg)' : 'none' }}>keyboard_arrow_down</span>
               </button>
             </div>
 
@@ -605,7 +605,7 @@ export function TopNav({
             {!user ? (
               <Link
                 href="/login"
-                className="custom-nav-btn px-4 h-8 rounded-full flex items-center justify-center shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-[11px] font-extrabold tracking-wider bg-white/10 hover:bg-white/20 text-white cursor-pointer"
+                className="custom-nav-btn px-4 h-8 rounded-full flex items-center justify-center shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-[11px] font-extrabold tracking-wider bg-[#ff6325] hover:bg-[#e26d0b] text-white cursor-pointer"
               >
                 Sign In
               </Link>
@@ -613,12 +613,12 @@ export function TopNav({
               <div className="hidden lg:flex items-center gap-2 relative" ref={profileRef}>
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
-                  className="group custom-nav-btn pl-1.5 pr-3 h-8.5 rounded-full flex items-center gap-2 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border border-white/15 bg-white/5 hover:bg-white/10 hover:border-[#ff6325]/40"
+                  className="group custom-nav-btn pl-1.5 pr-3 h-8.5 rounded-full flex items-center gap-2 shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 hover:border-[#ff6325]/40"
                   aria-label="Toggle profile menu"
                   title="Profile Settings"
                 >
                   {/* Sleek User Avatar */}
-                  <div className="h-6 w-6 rounded-full bg-gradient-to-br from-[#ff6325] to-[#1557bf] text-white flex items-center justify-center shrink-0 shadow-sm overflow-hidden text-[11px] font-black profile-avatar-circle ring-1 ring-white/30">
+                  <div className="h-6 w-6 rounded-full bg-gradient-to-br from-[#ff6325] to-[#e26d0b] text-white flex items-center justify-center shrink-0 shadow-xs overflow-hidden text-[11px] font-black profile-avatar-circle ring-1 ring-white/50">
                     {userPhoto ? (
                       <img src={userPhoto} alt={userName} className="h-full w-full object-cover animate-fade-in" />
                     ) : (
@@ -627,13 +627,13 @@ export function TopNav({
                   </div>
 
                   {/* Clean Username */}
-                  <span className="!text-white text-[12px] font-bold tracking-wide select-none truncate max-w-[130px]">
+                  <span className="text-slate-800 dark:text-white text-[12px] font-bold tracking-wide select-none truncate max-w-[130px]">
                     {userName}
                   </span>
 
                   {/* Chevron pointing down/up on the right */}
                   <span
-                    className="material-symbols-outlined text-[15px] !text-white/80 group-hover:!text-white transition-transform duration-200"
+                    className="material-symbols-outlined text-[15px] text-slate-500 dark:text-white/80 group-hover:text-slate-900 dark:group-hover:text-white transition-transform duration-200"
                     style={{ transform: profileOpen ? 'rotate(180deg)' : 'none' }}
                   >
                     keyboard_arrow_down
