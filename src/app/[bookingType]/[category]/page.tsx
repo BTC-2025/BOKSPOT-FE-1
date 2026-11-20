@@ -1718,15 +1718,32 @@ export default function ProviderDiscoveryPage() {
   const isPgCategory = category === 'pg-hostels';
   const isDoctorCategory = category === 'doctor' || (bookingType === 'lifestyle_local' && category.includes('doctor'));
   const isHomeServicesCategory = ['plumber', 'electrician', 'cleaning', 'technician', 'babysitting', 'elder-care', 'event-organizer', 'pet-grooming'].includes(category);
-  const isAppointmentCategory = ['salons', 'spa', 'studio', 'gym-yoga'].includes(category) || (bookingType === 'lifestyle_local' && (category.includes('salon') || category.includes('spa') || category.includes('studio')));
-  const isDiningCategory = category === 'dining' || category === 'restaurants' || (bookingType === 'lifestyle-local' && (category.includes('dine') || category.includes('food') || category.includes('restaurant')));
   const isSalonCategory = category === 'salons' || category === 'spa' || category === 'studio' || (bookingType === 'lifestyle_local' && (category.includes('salon') || category.includes('spa') || category.includes('studio')));
+  const isFitnessCategory = category === 'gym' || category === 'yoga' || category === 'gym-yoga' || (bookingType === 'lifestyle_local' && (category.includes('gym') || category.includes('yoga') || category.includes('fitness')));
+  const isAppointmentCategory = (!isSalonCategory && !isFitnessCategory && ['appointment'].includes(category)) || (bookingType === 'lifestyle_local' && !isSalonCategory && !isFitnessCategory && (category.includes('appointment')));
+  const isDiningCategory = category === 'dining' || category === 'restaurants' || (bookingType === 'lifestyle-local' && (category.includes('dine') || category.includes('food') || category.includes('restaurant')));
   const isSportsCategory = (bookingType || '').toLowerCase().includes('sport') || ['football-turf', 'cricket-ground', 'badminton', 'tennis', 'basketball', 'swimming', 'play-arena', 'turfs'].includes((category || '').toLowerCase());
   const isEntertainmentCategory = (bookingType || '').toLowerCase().includes('entertainment') || ['movies', 'theatre', 'concerts', 'events', 'exhibitions', 'workshops', 'gaming'].includes((category || '').toLowerCase());
-  const isHotelCategory = !isDoctorCategory && !isHomeServicesCategory && !isAppointmentCategory && !isDiningCategory && !isSportsCategory && !isEntertainmentCategory && (category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'pg-hostels' || category === 'camping' || bookingType === 'stay-accommodation' || bookingType === 'home');
+  const isHotelCategory = !isDoctorCategory && !isHomeServicesCategory && !isAppointmentCategory && !isSalonCategory && !isFitnessCategory && !isDiningCategory && !isSportsCategory && !isEntertainmentCategory && (category === 'hotels' || category === 'resorts' || category === 'villas' || category === 'hostels' || category === 'pg-hostels' || category === 'camping' || bookingType === 'stay-accommodation' || bookingType === 'home');
   const [homeServiceTimeWindow, setHomeServiceTimeWindow] = useState<string>('ALL');
   const [doctorSpecialityFilter, setDoctorSpecialityFilter] = useState<string>('ALL');
   const [doctorModeFilter, setDoctorModeFilter] = useState<'ALL' | 'IN_CLINIC' | 'VIDEO_CALL'>('ALL');
+
+  // Fitness / Gym / Yoga Dedicated Search States
+  const isExplicitGym = category === 'gym' || category.includes('gym');
+  const isExplicitYoga = category === 'yoga' || category.includes('yoga');
+  const [fitnessPlanFilter, setFitnessPlanFilter] = useState<'ALL' | 'DAILY' | '1_MONTH' | '3_MONTHS' | '6_MONTHS' | '12_MONTHS' | 'PT'>('1_MONTH');
+  const [fitnessBatchFilter, setFitnessBatchFilter] = useState<string>('ALL'); // 'ALL', 'MORNING', 'EVENING'
+  const [isFitnessPlanDropdownOpen, setIsFitnessPlanDropdownOpen] = useState(false);
+  const [isFitnessBatchDropdownOpen, setIsFitnessBatchDropdownOpen] = useState(false);
+  const [isFitnessDatePickerOpen, setIsFitnessDatePickerOpen] = useState(false);
+
+  // Salon & Spa Dedicated Search States
+  const [salonTypeFilter, setSalonTypeFilter] = useState<'ALL' | 'SALON' | 'SPA'>('ALL'); // 'ALL' | 'SALON' | 'SPA'
+  const [salonGenderFilter, setSalonGenderFilter] = useState<'ALL' | 'WOMEN' | 'MEN' | 'KIDS'>('ALL'); // 'ALL' | 'WOMEN' | 'MEN' | 'KIDS'
+  const [salonServiceInput, setSalonServiceInput] = useState<string>(''); // e.g. 'Haircut', 'Massage', 'Facial'
+  const [isSalonServiceDropdownOpen, setIsSalonServiceDropdownOpen] = useState(false);
+  const [isSalonGenderDropdownOpen, setIsSalonGenderDropdownOpen] = useState(false);
 
   // Dining Dedicated Search States
   const todayStr = new Date().toISOString().split('T')[0];
@@ -2832,6 +2849,39 @@ export default function ProviderDiscoveryPage() {
         const meta = mObj.metadata || s.metadata || {};
         if (colivingCoworkingOnly && meta.hasCoworkingLounge === false) return false;
         if (colivingPowerBackupOnly && meta.hasFullPowerBackup === false) return false;
+      }
+    }
+
+    // Salon & Luxury Spa Filtering (Salon vs Spa, Gender Target & Specific Ritual Search)
+    if (isSalonCategory) {
+      const rawSalonText = `${s.name || ''} ${s.description || ''} ${JSON.stringify(s.metadata || {})} ${JSON.stringify(s.merchant?.metadata || {})}`.toLowerCase();
+      
+      // 1. Type: Salon vs Spa
+      if (salonTypeFilter === 'SALON') {
+        const isSpaOnly = rawSalonText.includes('ayurvedic spa') || rawSalonText.includes('luxury spa') || rawSalonText.includes('thai spa');
+        const hasSalonServices = rawSalonText.includes('salon') || rawSalonText.includes('hair') || rawSalonText.includes('grooming') || rawSalonText.includes('beard') || rawSalonText.includes('stylist');
+        if (isSpaOnly && !hasSalonServices) return false;
+      } else if (salonTypeFilter === 'SPA') {
+        const hasSpa = rawSalonText.includes('spa') || rawSalonText.includes('massage') || rawSalonText.includes('therapy') || rawSalonText.includes('steam') || rawSalonText.includes('sauna') || rawSalonText.includes('jacuzzi');
+        if (!hasSpa) return false;
+      }
+
+      // 2. Gender Target: Women, Men, Kids
+      if (salonGenderFilter === 'WOMEN') {
+        const isMenOnly = (rawSalonText.includes("men's") || rawSalonText.includes("mens")) && !rawSalonText.includes("women") && !rawSalonText.includes("unisex");
+        if (isMenOnly) return false;
+      } else if (salonGenderFilter === 'MEN') {
+        const isWomenOnly = (rawSalonText.includes("women's") || rawSalonText.includes("womens") || rawSalonText.includes("ladies")) && !rawSalonText.includes("men") && !rawSalonText.includes("unisex");
+        if (isWomenOnly) return false;
+      } else if (salonGenderFilter === 'KIDS') {
+        const hasKids = rawSalonText.includes('kid') || rawSalonText.includes('children') || rawSalonText.includes('baby') || rawSalonText.includes('unisex');
+        if (!hasKids) return false;
+      }
+
+      // 3. Specific Ritual / Service Typed (e.g. Haircut, Facial, Body Massage, Pedicure)
+      if (salonServiceInput.trim()) {
+        const reqService = salonServiceInput.toLowerCase().trim();
+        if (!rawSalonText.includes(reqService)) return false;
       }
     }
 
@@ -4488,6 +4538,781 @@ export default function ProviderDiscoveryPage() {
                   >
                     <Search size={17} className="group-hover:scale-110 transition-transform" />
                     <span>Book Doctor</span>
+                  </button>
+                </div>
+              </div>
+            ) : isSalonCategory ? (
+              /* =========================================================================
+               * DEDICATED SALON & SPA SEARCH DOCK (Option 1: Clean, Spacious & Uncrowded)
+               * SALON / SPA / AREA | SERVICE & RITUAL | FOR WHOM | APPOINTMENT DATE | CTA
+               * ========================================================================= */
+              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-1.5 sm:gap-2">
+                {/* 1. Salon / Spa / Locality with Autocomplete */}
+                <div className="flex-1 relative px-3.5 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors cursor-pointer group">
+                  <div className="flex items-center gap-2">
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <MapPin size={17} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">LOCATION / SALON</span>
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onFocus={(e) => {
+                          setShowAutocomplete(true);
+                          e.target.select();
+                        }}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          setShowAutocomplete(true);
+                        }}
+                        placeholder={`Search salon, spa, or area in ${city || 'Chennai'}...`}
+                        className="w-full bg-transparent text-xs font-bold text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-normal outline-none truncate"
+                      />
+                    </div>
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSearchQuery('');
+                        }}
+                        className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-0.5"
+                        title="Clear"
+                      >
+                        <X size={13} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Autocomplete Dropdown */}
+                  {showAutocomplete && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowAutocomplete(false)} />
+                      <div className="absolute top-full left-0 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl p-2 z-50 max-h-72 overflow-y-auto">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1.5 flex items-center justify-between">
+                          <span>{searchQuery ? `Matching "${searchQuery}"` : `Top Salons & Spas`}</span>
+                          <span className="text-[9px] text-[#ff6325]">{city || 'All India'}</span>
+                        </div>
+                        {(() => {
+                          const q = searchQuery.toLowerCase().trim();
+                          const matchingCities = q
+                            ? ALL_CITIES.filter(c => c.toLowerCase().includes(q)).slice(0, 4).map(c => ({
+                              label: c,
+                              type: 'City Destination',
+                              icon: '📍',
+                              isCity: true
+                            }))
+                            : [
+                              { label: city || 'Chennai', type: 'Current City', icon: '📍', isCity: true },
+                              ...POPULAR_CITIES.filter(p => p.name !== city).slice(0, 3).map(p => ({
+                                label: p.name,
+                                type: 'Popular City',
+                                icon: '📍',
+                                isCity: true
+                              }))
+                            ];
+
+                          const matchingSalons = (servicesList || [])
+                            .filter((s: any) => {
+                              if (!q) return true;
+                              const sName = (s.name || '').toLowerCase();
+                              const mName = (s.merchant?.name || s.branchName || s.merchantName || '').toLowerCase();
+                              const sAddress = (s.address || s.merchant?.address || '').toLowerCase();
+                              return sName.includes(q) || mName.includes(q) || sAddress.includes(q);
+                            })
+                            .slice(0, 4)
+                            .map((s: any) => ({
+                              label: s.branchName || s.merchant?.name || s.name,
+                              type: s.name || 'Verified Salon / Spa',
+                              icon: '✨',
+                              isCity: false
+                            }));
+
+                          const combinedMatches = [...matchingCities, ...matchingSalons];
+
+                          return combinedMatches.map((item, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (item.isCity) {
+                                  const popMatch = POPULAR_CITIES.find(p => p.name.toLowerCase() === item.label.toLowerCase());
+                                  if (popMatch) {
+                                    setLocation(popMatch.lat, popMatch.lng, popMatch.name);
+                                  } else {
+                                    setCity(item.label);
+                                  }
+                                }
+                                setSearchQuery(item.label);
+                                setShowAutocomplete(false);
+                              }}
+                              className="w-full text-left flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 cursor-pointer transition-colors"
+                            >
+                              <span className="flex items-center gap-2 font-semibold truncate">
+                                <span>{item.icon}</span>
+                                <span className="truncate">{item.label}</span>
+                              </span>
+                              <span className="text-[10px] text-slate-400 shrink-0 font-medium ml-2">{item.type}</span>
+                            </button>
+                          ));
+                        })()}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 2. Service / Ritual Type (Clean Popover Picker with Salon vs Spa Filter) */}
+                <div className="flex-1 relative px-3.5 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
+                  <div className="flex items-center gap-2">
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <Sparkles size={17} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">
+                        {salonTypeFilter === 'SPA' ? 'SPA & MASSAGE' : salonTypeFilter === 'SALON' ? 'SALON & GROOMING' : 'SERVICE / RITUAL'}
+                      </span>
+                      <div className="relative flex items-center">
+                        <input
+                          type="text"
+                          value={salonServiceInput}
+                          onFocus={() => setIsSalonServiceDropdownOpen(true)}
+                          onChange={(e) => setSalonServiceInput(e.target.value)}
+                          placeholder="All Services & Treatments..."
+                          className="w-full bg-transparent text-xs font-bold text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-normal outline-none truncate"
+                        />
+                        {salonServiceInput ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSalonServiceInput('');
+                            }}
+                            className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-0.5"
+                          >
+                            <X size={12} />
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setIsSalonServiceDropdownOpen(!isSalonServiceDropdownOpen)}
+                            className="text-slate-400 hover:text-slate-600"
+                          >
+                            <ChevronDown size={13} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Ritual / Service Dropdown Menu with Salon vs Spa Tabs */}
+                  {isSalonServiceDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsSalonServiceDropdownOpen(false)} />
+                      <div className="absolute top-full left-0 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl p-3 z-50 space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Choose Type</span>
+                          {salonServiceInput && (
+                            <button
+                              type="button"
+                              onClick={() => setSalonServiceInput('')}
+                              className="text-[10px] font-bold text-[#ff6325] hover:underline"
+                            >
+                              Reset
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Clean Tab Segment: All, Salon, Spa */}
+                        <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800">
+                          {[
+                            { id: 'ALL', label: 'All Services', icon: '✨' },
+                            { id: 'SALON', label: 'Salon', icon: '✂️' },
+                            { id: 'SPA', label: 'Spa & Sauna', icon: '🧖' },
+                          ].map(t => (
+                            <button
+                              key={t.id}
+                              type="button"
+                              onClick={() => setSalonTypeFilter(t.id as any)}
+                              className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 ${
+                                salonTypeFilter === t.id
+                                  ? 'bg-[#ff6325] text-white shadow-xs font-black'
+                                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                              }`}
+                            >
+                              <span>{t.icon}</span>
+                              <span className="truncate">{t.label}</span>
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pt-1">
+                          Popular Treatments & Rituals
+                        </div>
+                        <div className="grid grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-0.5">
+                          {[
+                            { label: 'Haircut & Styling', icon: '✂️', type: 'SALON' },
+                            { label: 'Beard Grooming', icon: '🧔', type: 'SALON' },
+                            { label: 'Facial & Clean Up', icon: '✨', type: 'SALON' },
+                            { label: 'Full Body Massage', icon: '💆', type: 'SPA' },
+                            { label: 'Thai Therapy', icon: '🧘', type: 'SPA' },
+                            { label: 'Hair Spa & Keratin', icon: '🧴', type: 'SALON' },
+                            { label: 'Pedicure & Manicure', icon: '💅', type: 'SALON' },
+                            { label: 'Aromatherapy Steam', icon: '🧖', type: 'SPA' },
+                            { label: 'Bridal Makeover', icon: '👰', type: 'SALON' },
+                          ]
+                            .filter(i => salonTypeFilter === 'ALL' || i.type === salonTypeFilter)
+                            .map((item) => (
+                              <button
+                                key={item.label}
+                                type="button"
+                                onClick={() => {
+                                  setSalonServiceInput(item.label);
+                                  setIsSalonServiceDropdownOpen(false);
+                                }}
+                                className={`p-2 rounded-xl text-left text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                                  salonServiceInput.toLowerCase() === item.label.toLowerCase()
+                                    ? 'bg-[#ff6325] text-white font-black'
+                                    : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 bg-slate-50/50 dark:bg-white/5'
+                                }`}
+                              >
+                                <span>{item.icon}</span>
+                                <span className="truncate">{item.label}</span>
+                              </button>
+                            ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 3. For Whom (Gender / Audience Target) */}
+                <div className="flex-1 relative px-3.5 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
+                  <button
+                    type="button"
+                    onClick={() => setIsSalonGenderDropdownOpen(!isSalonGenderDropdownOpen)}
+                    className="flex items-center gap-2 w-full text-left cursor-pointer"
+                  >
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <Users size={17} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">FOR WHOM</span>
+                      <span className="text-xs font-bold text-slate-800 dark:text-white truncate">
+                        {salonGenderFilter === 'WOMEN'
+                          ? "👩 Women"
+                          : salonGenderFilter === 'MEN'
+                          ? "🧔 Men"
+                          : salonGenderFilter === 'KIDS'
+                          ? "🧒 Kids"
+                          : '✨ All / Unisex'}
+                      </span>
+                    </div>
+                    <ChevronDown size={13} className={`text-slate-400 transition-transform shrink-0 ${isSalonGenderDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Gender Selector Dropdown */}
+                  {isSalonGenderDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsSalonGenderDropdownOpen(false)} />
+                      <div className="absolute top-full right-0 mt-3 w-56 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl p-2 z-50 space-y-1">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1.5">
+                          Target Audience
+                        </div>
+                        {[
+                          { id: 'ALL', label: 'All Services (Unisex)', icon: '✨' },
+                          { id: 'WOMEN', label: "Women's Beauty & Spa", icon: '👩' },
+                          { id: 'MEN', label: "Men's Grooming", icon: '🧔' },
+                          { id: 'KIDS', label: 'Kids & Teens Care', icon: '🧒' },
+                        ].map((g) => (
+                          <button
+                            key={g.id}
+                            type="button"
+                            onClick={() => {
+                              setSalonGenderFilter(g.id as any);
+                              setIsSalonGenderDropdownOpen(false);
+                            }}
+                            className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                              salonGenderFilter === g.id
+                                ? 'bg-[#ff6325] text-white font-black'
+                                : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                            }`}
+                          >
+                            <span className="flex items-center gap-2">
+                              <span>{g.icon}</span>
+                              <span>{g.label}</span>
+                            </span>
+                            {salonGenderFilter === g.id && <span>✓</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 4. Service Date (Today, Tomorrow, Custom) */}
+                <div className="flex-1 relative px-3.5 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
+                  <button
+                    type="button"
+                    onClick={() => setIsSportsDatePickerOpen(!isSportsDatePickerOpen)}
+                    className="flex items-center gap-2 w-full text-left cursor-pointer"
+                  >
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <Calendar size={17} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">DATE</span>
+                      <span className="text-xs font-bold text-slate-800 dark:text-white truncate">
+                        {sportsSlotDate === todayStr ? 'Today' : sportsSlotDate === tomorrowStr ? 'Tomorrow' : sportsSlotDate}
+                      </span>
+                    </div>
+                  </button>
+
+                  {isSportsDatePickerOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsSportsDatePickerOpen(false)} />
+                      <div className="absolute top-full right-0 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-white/15 shadow-2xl p-4 z-50 text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
+                        {/* Month Header */}
+                        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-2 mb-3 border border-slate-150/60 dark:border-white/5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newD = new Date(calendarViewDate);
+                              newD.setMonth(newD.getMonth() - 1);
+                              setCalendarViewDate(newD);
+                            }}
+                            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
+                          >
+                            <ChevronLeft size={16} />
+                          </button>
+                          <span className="font-extrabold text-xs sm:text-sm tracking-tight text-slate-900 dark:text-white">
+                            {calendarViewDate.toLocaleString('default', { month: 'long' })} {calendarViewDate.getFullYear()}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newD = new Date(calendarViewDate);
+                              newD.setMonth(newD.getMonth() + 1);
+                              setCalendarViewDate(newD);
+                            }}
+                            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
+                          >
+                            <ChevronRight size={16} />
+                          </button>
+                        </div>
+
+                        {/* Day of Week */}
+                        <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-400 mb-2">
+                          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
+                            <div key={day} className="py-1">{day}</div>
+                          ))}
+                        </div>
+
+                        {/* Days Grid */}
+                        <div className="grid grid-cols-7 gap-1 text-center">
+                          {(() => {
+                            const year = calendarViewDate.getFullYear();
+                            const month = calendarViewDate.getMonth();
+                            const firstDayIndex = new Date(year, month, 1).getDay();
+                            const totalDays = new Date(year, month + 1, 0).getDate();
+
+                            const cells = [];
+                            for (let i = 0; i < firstDayIndex; i++) {
+                              cells.push(<div key={`empty-${i}`} className="h-8 w-8" />);
+                            }
+
+                            for (let day = 1; day <= totalDays; day++) {
+                              const monthStr = String(month + 1).padStart(2, '0');
+                              const dayStr = String(day).padStart(2, '0');
+                              const dateStr = `${year}-${monthStr}-${dayStr}`;
+                              const isSelected = dateStr === (sportsSlotDate || todayStr);
+                              const isPast = dateStr < todayStr;
+
+                              cells.push(
+                                <button
+                                  key={`day-${day}`}
+                                  type="button"
+                                  disabled={isPast}
+                                  onClick={() => {
+                                    setSportsSlotDate(dateStr);
+                                    setIsSportsDatePickerOpen(false);
+                                  }}
+                                  className={`h-8 w-8 mx-auto rounded-full text-xs font-bold flex items-center justify-center transition-all ${
+                                    isSelected
+                                      ? 'bg-[#ff6325] text-white shadow-sm font-black'
+                                      : isPast
+                                      ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                                      : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer'
+                                  }`}
+                                >
+                                  {day}
+                                </button>
+                              );
+                            }
+                            return cells;
+                          })()}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 5. Action CTA Button */}
+                <div className="p-1 shrink-0 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAutocomplete(false);
+                      setIsSportsDatePickerOpen(false);
+                      setIsSalonGenderDropdownOpen(false);
+                      setIsSalonServiceDropdownOpen(false);
+                      const el = document.getElementById('hotel-results-anchor');
+                      el?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="w-full md:w-auto px-6 py-3 rounded-full bg-[#ff6325] hover:bg-[#e0531b] active:scale-95 text-white flex items-center justify-center gap-2 font-bold text-xs sm:text-sm shadow-lg shadow-[#ff6325]/30 hover:shadow-[#ff6325]/50 transition-all cursor-pointer group"
+                  >
+                    <Search size={16} className="group-hover:scale-110 transition-transform" />
+                    <span>Find Salons & Spas</span>
+                  </button>
+                </div>
+              </div>
+            ) : isFitnessCategory ? (
+              /* =========================================================================
+               * DEDICATED GYM & YOGA SEARCH DOCK (Matching Category Style)
+               * GYM/YOGA/AREA | MEMBERSHIP / PASS TYPE | BATCH / TIMING | START DATE | CTA
+               * ========================================================================= */
+              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-1.5 sm:gap-2">
+                {/* 1. Gym / Yoga Studio / Locality */}
+                <div className="flex-1 relative px-3.5 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors cursor-pointer group">
+                  <div className="flex items-center gap-2">
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <MapPin size={17} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">
+                        {isExplicitGym ? 'GYM / AREA' : isExplicitYoga ? 'YOGA SHALA / AREA' : 'FITNESS CLUB / AREA'}
+                      </span>
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onFocus={(e) => {
+                          setShowAutocomplete(true);
+                          e.target.select();
+                        }}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          setShowAutocomplete(true);
+                        }}
+                        placeholder={`Search ${isExplicitGym ? 'gym, crossfit' : isExplicitYoga ? 'yoga shala, guru' : 'fitness studio'} in ${city || 'Chennai'}...`}
+                        className="w-full bg-transparent text-xs font-bold text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-normal outline-none truncate"
+                      />
+                    </div>
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSearchQuery('');
+                        }}
+                        className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-0.5"
+                        title="Clear"
+                      >
+                        <X size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* 2. Membership Duration / Plan Type */}
+                <div className="flex-1 relative px-3.5 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
+                  <button
+                    type="button"
+                    onClick={() => setIsFitnessPlanDropdownOpen(!isFitnessPlanDropdownOpen)}
+                    className="flex items-center gap-2 w-full text-left cursor-pointer"
+                  >
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <Sparkles size={17} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">MEMBERSHIP PLAN</span>
+                      <span className="text-xs font-bold text-slate-800 dark:text-white truncate">
+                        {fitnessPlanFilter === '1_MONTH'
+                          ? '📅 1 Month Standard'
+                          : fitnessPlanFilter === '3_MONTHS'
+                          ? '🚀 3 Months (Quarterly)'
+                          : fitnessPlanFilter === '6_MONTHS'
+                          ? '🏆 6 Months (Pro Pass)'
+                          : fitnessPlanFilter === '12_MONTHS'
+                          ? '👑 12 Months (Annual VIP)'
+                          : fitnessPlanFilter === 'DAILY'
+                          ? '🎟️ 1 Day Workout Pass'
+                          : fitnessPlanFilter === 'PT'
+                          ? '🏋️ 1-on-1 Personal Trainer'
+                          : '✨ All Memberships'}
+                      </span>
+                    </div>
+                    <ChevronDown size={13} className={`text-slate-400 transition-transform shrink-0 ${isFitnessPlanDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Plan Selector Dropdown */}
+                  {isFitnessPlanDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsFitnessPlanDropdownOpen(false)} />
+                      <div className="absolute top-full left-0 mt-3 w-72 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl p-2.5 z-50 space-y-1">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1">
+                          {isExplicitGym ? 'Gym Memberships & Passes' : 'Yoga Shala Plans'}
+                        </div>
+                        {[
+                          { id: '1_MONTH', label: '1 Month Membership (Standard)', icon: '📅' },
+                          { id: '3_MONTHS', label: '3 Months (Quarterly Transformation)', icon: '🚀' },
+                          { id: '6_MONTHS', label: '6 Months (Pro Fitness Pass)', icon: '🏆' },
+                          { id: '12_MONTHS', label: '12 Months (Annual VIP — Best Value)', icon: '👑' },
+                          { id: 'DAILY', label: 'Single Day Workout Pass', icon: '🎟️' },
+                          { id: 'PT', label: '1-on-1 Personal Trainer Package', icon: '🏋️' },
+                          { id: 'ALL', label: 'Browse All Membership Tiers', icon: '✨' },
+                        ].map((p) => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => {
+                              setFitnessPlanFilter(p.id as any);
+                              setIsFitnessPlanDropdownOpen(false);
+                            }}
+                            className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                              fitnessPlanFilter === p.id
+                                ? 'bg-[#ff6325] text-white font-black'
+                                : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                            }`}
+                          >
+                            <span className="flex items-center gap-2">
+                              <span>{p.icon}</span>
+                              <span className="truncate">{p.label}</span>
+                            </span>
+                            {fitnessPlanFilter === p.id && <span>✓</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 3. Session / Batch Timing */}
+                <div className="flex-1 relative px-3.5 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
+                  <button
+                    type="button"
+                    onClick={() => setIsFitnessBatchDropdownOpen(!isFitnessBatchDropdownOpen)}
+                    className="flex items-center gap-2 w-full text-left cursor-pointer"
+                  >
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <Clock size={17} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">SHIFT / TIME</span>
+                      <span className="text-xs font-bold text-slate-800 dark:text-white truncate">
+                        {fitnessBatchFilter === 'MORNING'
+                          ? '🌅 Morning (05:30 AM – 10:30 AM)'
+                          : fitnessBatchFilter === 'EVENING'
+                          ? '🌆 Evening (04:30 PM – 10:00 PM)'
+                          : '⚡ Flexible All-Day Access'}
+                      </span>
+                    </div>
+                    <ChevronDown size={13} className={`text-slate-400 transition-transform shrink-0 ${isFitnessBatchDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Batch Selector Dropdown */}
+                  {isFitnessBatchDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsFitnessBatchDropdownOpen(false)} />
+                      <div className="absolute top-full right-0 mt-3 w-64 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl p-2 z-50 space-y-1">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1.5">
+                          Workout Shift
+                        </div>
+                        {[
+                          { id: 'ALL', label: 'Flexible (All-Day Floor Access)', icon: '⚡' },
+                          { id: 'MORNING', label: 'Morning Shift (05:30 AM - 10:30 AM)', icon: '🌅' },
+                          { id: 'EVENING', label: 'Evening Shift (04:30 PM - 10:00 PM)', icon: '🌆' },
+                        ].map((b) => (
+                          <button
+                            key={b.id}
+                            type="button"
+                            onClick={() => {
+                              setFitnessBatchFilter(b.id);
+                              setIsFitnessBatchDropdownOpen(false);
+                            }}
+                            className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                              fitnessBatchFilter === b.id
+                                ? 'bg-[#ff6325] text-white font-black'
+                                : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                            }`}
+                          >
+                            <span className="flex items-center gap-2">
+                              <span>{b.icon}</span>
+                              <span className="truncate">{b.label}</span>
+                            </span>
+                            {fitnessBatchFilter === b.id && <span>✓</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 4. Start Date with Full Interactive Calendar Popover */}
+                <div className="flex-1 relative px-3.5 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
+                  <button
+                    type="button"
+                    onClick={() => setIsFitnessDatePickerOpen(!isFitnessDatePickerOpen)}
+                    className="flex items-center gap-2 w-full text-left cursor-pointer"
+                  >
+                    <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
+                      <Calendar size={17} />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">START DATE</span>
+                      <span className="text-xs font-bold text-slate-800 dark:text-white truncate">
+                        {sportsSlotDate === todayStr ? 'Today' : sportsSlotDate === tomorrowStr ? 'Tomorrow' : sportsSlotDate}
+                      </span>
+                    </div>
+                  </button>
+
+                  {isFitnessDatePickerOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsFitnessDatePickerOpen(false)} />
+                      <div className="absolute top-full right-0 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-white/15 shadow-2xl p-4 z-50 text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
+                        {/* Month Header */}
+                        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-2 mb-3 border border-slate-150/60 dark:border-white/5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newD = new Date(calendarViewDate);
+                              newD.setMonth(newD.getMonth() - 1);
+                              setCalendarViewDate(newD);
+                            }}
+                            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
+                          >
+                            <ChevronLeft size={16} />
+                          </button>
+                          <span className="font-extrabold text-xs sm:text-sm tracking-tight text-slate-900 dark:text-white">
+                            {calendarViewDate.toLocaleString('default', { month: 'long' })} {calendarViewDate.getFullYear()}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newD = new Date(calendarViewDate);
+                              newD.setMonth(newD.getMonth() + 1);
+                              setCalendarViewDate(newD);
+                            }}
+                            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
+                          >
+                            <ChevronRight size={16} />
+                          </button>
+                        </div>
+
+                        {/* Quick Start Shortcuts (Today, Tomorrow, 1st of Next Month) */}
+                        <div className="grid grid-cols-3 gap-1.5 mb-2.5">
+                          {[
+                            { label: 'Today', val: todayStr },
+                            { label: 'Tomorrow', val: tomorrowStr },
+                            {
+                              label: '1st of Next Mo.',
+                              val: (() => {
+                                const d = new Date();
+                                d.setMonth(d.getMonth() + 1, 1);
+                                return d.toISOString().split('T')[0];
+                              })()
+                            }
+                          ].map(s => (
+                            <button
+                              key={s.label}
+                              type="button"
+                              onClick={() => {
+                                setSportsSlotDate(s.val);
+                                setIsFitnessDatePickerOpen(false);
+                              }}
+                              className={`py-1 px-2 rounded-lg text-[10px] font-bold text-center transition-colors cursor-pointer ${
+                                sportsSlotDate === s.val
+                                  ? 'bg-[#ff6325] text-white font-black'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+                              }`}
+                            >
+                              {s.label}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Day of Week */}
+                        <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-400 mb-2">
+                          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
+                            <div key={day} className="py-1">{day}</div>
+                          ))}
+                        </div>
+
+                        {/* Days Grid */}
+                        <div className="grid grid-cols-7 gap-1 text-center">
+                          {(() => {
+                            const year = calendarViewDate.getFullYear();
+                            const month = calendarViewDate.getMonth();
+                            const firstDayIndex = new Date(year, month, 1).getDay();
+                            const totalDays = new Date(year, month + 1, 0).getDate();
+
+                            const cells = [];
+                            for (let i = 0; i < firstDayIndex; i++) {
+                              cells.push(<div key={`empty-${i}`} className="h-8 w-8" />);
+                            }
+
+                            for (let day = 1; day <= totalDays; day++) {
+                              const monthStr = String(month + 1).padStart(2, '0');
+                              const dayStr = String(day).padStart(2, '0');
+                              const dateStr = `${year}-${monthStr}-${dayStr}`;
+                              const isSelected = dateStr === (sportsSlotDate || todayStr);
+                              const isPast = dateStr < todayStr;
+
+                              cells.push(
+                                <button
+                                  key={`day-${day}`}
+                                  type="button"
+                                  disabled={isPast}
+                                  onClick={() => {
+                                    setSportsSlotDate(dateStr);
+                                    setIsFitnessDatePickerOpen(false);
+                                  }}
+                                  className={`h-8 w-8 mx-auto rounded-full text-xs font-bold flex items-center justify-center transition-all ${
+                                    isSelected
+                                      ? 'bg-[#ff6325] text-white shadow-sm font-black'
+                                      : isPast
+                                      ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                                      : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer'
+                                  }`}
+                                >
+                                  {day}
+                                </button>
+                              );
+                            }
+                            return cells;
+                          })()}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 5. Search Action Button */}
+                <div className="p-1 shrink-0 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAutocomplete(false);
+                      setIsFitnessDatePickerOpen(false);
+                      setIsFitnessPlanDropdownOpen(false);
+                      setIsFitnessBatchDropdownOpen(false);
+                      const el = document.getElementById('hotel-results-anchor');
+                      el?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="w-full md:w-auto px-6 py-3 rounded-full bg-[#ff6325] hover:bg-[#e0531b] active:scale-95 text-white flex items-center justify-center gap-2 font-bold text-xs sm:text-sm shadow-lg shadow-[#ff6325]/30 hover:shadow-[#ff6325]/50 transition-all cursor-pointer group"
+                  >
+                    <Search size={16} className="group-hover:scale-110 transition-transform" />
+                    <span>{isExplicitGym ? 'Find Gym Memberships' : isExplicitYoga ? 'Find Yoga Studios' : 'Find Fitness Studios'}</span>
                   </button>
                 </div>
               </div>

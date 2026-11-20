@@ -1809,7 +1809,7 @@ export default function VenueProfilePage() {
                 }}
                 className="px-4 py-2 bg-[#ff6325] hover:bg-[#e04e13] active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               >
-                <span>{isDining ? 'Reserve Table' : isFitness ? 'Select Fitness Pass' : isWellness ? 'Select Stylist & Rituals' : isFacility ? (isStudio ? 'Select Studio Bay' : 'Select Court & Slot') : isEntertainment ? 'Select Tickets & Seats' : isRental ? 'Select Gear' : isHomeCall ? 'Book Home Service' : isAppointment ? 'Select Specialist' : 'Select Room'}</span>
+                <span>{isDining ? 'Reserve Table' : isFitness ? 'Select Fitness Pass' : isWellness ? 'Select Stylist & Services' : isFacility ? (isStudio ? 'Select Studio Bay' : 'Select Court & Slot') : isEntertainment ? 'Select Tickets & Seats' : isRental ? 'Select Gear' : isHomeCall ? 'Book Home Service' : isAppointment ? 'Select Specialist' : 'Select Room'}</span>
                 <ChevronRight size={14} />
               </button>
             </div>
@@ -2646,8 +2646,100 @@ export default function VenueProfilePage() {
                     </button>
                   </div>
                 </div>
-              ) : isAppointment || isWellness ? (
-                /* ================= Dedicated Doctor & Salon/Spa Appointment Editor ================= */
+              ) : isWellness ? (
+                /* ================= Dedicated Salon & Spa Appointment Editor (Matching Search Dock) ================= */
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    {/* 1. Category / Service Type (Salon vs Spa) */}
+                    <div>
+                      <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                        Service Type
+                      </label>
+                      <select
+                        value={wellnessServiceMode === 'HOME_VISIT' ? 'HOME_VISIT' : 'IN_SALON'}
+                        onChange={(e) => setWellnessServiceMode(e.target.value as any)}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white text-xs outline-none cursor-pointer"
+                      >
+                        <option value="IN_SALON">🏢 In-Salon Visit</option>
+                        <option value="HOME_VISIT">🏠 Doorstep Home Service</option>
+                      </select>
+                    </div>
+
+                    {/* 2. For Whom (Gender Target) */}
+                    <div>
+                      <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                        For Whom
+                      </label>
+                      <select
+                        value={wellnessGenderFilter}
+                        onChange={(e) => setWellnessGenderFilter(e.target.value as any)}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white text-xs outline-none cursor-pointer"
+                      >
+                        <option value="ALL">✨ All / Unisex</option>
+                        <option value="WOMEN">👩 Women's Beauty & Spa</option>
+                        <option value="MEN">🧔 Men's Grooming</option>
+                      </select>
+                    </div>
+
+                    {/* 3. Appointment Date */}
+                    <div>
+                      <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                        Appointment Date
+                      </label>
+                      <input
+                        type="date"
+                        min={todayStr}
+                        value={selectedDate || todayStr}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 font-bold text-slate-900 dark:text-white text-xs outline-none"
+                      />
+                    </div>
+
+                    {/* 4. Preferred Slot */}
+                    <div>
+                      <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                        Time Slot Window
+                      </label>
+                      <select
+                        value={selectedApptSlot || '10:00 AM'}
+                        onChange={(e) => setSelectedApptSlot(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white text-xs outline-none cursor-pointer"
+                      >
+                        {['09:00 AM', '10:00 AM', '11:30 AM', '02:00 PM', '04:30 PM', '06:00 PM', '07:30 PM'].map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/10">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditSearchOpen(false)}
+                      className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditSearchOpen(false);
+                        const newQuery = new URLSearchParams(window.location.search);
+                        newQuery.set('date', selectedDate);
+                        newQuery.set('slot', selectedApptSlot || '10:00 AM');
+                        newQuery.set('gender', wellnessGenderFilter);
+                        window.history.replaceState(null, '', `?${newQuery.toString()}`);
+                        const el = document.getElementById('wellness-booking-section');
+                        el?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className="px-6 py-2 bg-[#ff6325] text-white rounded-xl font-black text-xs hover:bg-[#e04e13] active:scale-95 transition-all cursor-pointer shadow-md"
+                    >
+                      Apply Search
+                    </button>
+                  </div>
+                </div>
+              ) : isAppointment ? (
+                /* ================= Dedicated Doctor & Clinic Appointment Editor ================= */
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {/* 1. Speciality / Service Title */}
@@ -5368,7 +5460,7 @@ export default function VenueProfilePage() {
               <div className="space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                    2. Select Treatments & Rituals ({selectedTreatments.length} chosen • {totalSelectedDuration} mins)
+                    2. Select Treatments & Services ({selectedTreatments.length} chosen • {totalSelectedDuration} mins)
                   </label>
 
                   {/* Sub-Category Filter Tabs */}

@@ -126,7 +126,8 @@ const CATEGORY_DATA: Record<string, {
         subheading: 'Beauty & Wellness',
         categories: [
           { name: 'Salon / Spa Appointment', emoji: '💇', slug: 'salons', desc: 'Book haircuts, spa therapies, and massages' },
-          { name: 'Gym / Yoga Slot Booking', emoji: '🧘', slug: 'gym-yoga', desc: 'Book daily or monthly slots at gyms and yoga studios' },
+          { name: 'Gym Booking', emoji: '🏋️', slug: 'gym', desc: 'Book daily, monthly, and personal training gym passes' },
+          { name: 'Yoga Booking', emoji: '🧘', slug: 'yoga', desc: 'Reserve batches, guru sessions, and yoga shala mats' },
         ]
       },
       {
