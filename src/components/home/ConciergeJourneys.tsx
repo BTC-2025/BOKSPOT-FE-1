@@ -177,22 +177,22 @@ export function ConciergeJourneys() {
                 <div className="p-3.5 flex flex-col justify-between flex-1 bg-[color:var(--color-surface-container)]">
                   <div>
                     {/* Title */}
-                    <h3 className="font-extrabold text-[13px] leading-snug text-[color:var(--color-on-surface)] line-clamp-1 group-hover/card:text-[color:var(--color-primary)] transition-colors">
+                    <h3 className="font-extrabold text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 group-hover/card:text-[#ff6325] transition-colors">
                       {journey.trainName}
                     </h3>
 
                     {/* Source -> Destination */}
-                    <p className="text-[11px] text-[color:var(--color-outline)] font-medium mt-1 truncate flex items-center gap-1">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1 truncate flex items-center gap-1">
                       <span className="truncate">{journey.source}</span>
-                      <span className="text-[color:var(--color-primary)]">➔</span>
+                      <span className="text-[#0A3161] dark:text-blue-400">➔</span>
                       <span className="truncate">{journey.destination}</span>
                     </p>
                   </div>
 
                   {/* Countdown Timer Capsule */}
                   <div className="mt-3 pt-2.5 border-t border-[color:var(--color-outline-variant)]/20 flex items-center justify-between gap-2">
-                    <div className="w-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-[10px] font-black tracking-wider px-2.5 py-1 rounded-full shadow-sm flex items-center justify-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping shrink-0" />
+                    <div className="w-full bg-[#0A3161]/10 text-[#0A3161] dark:bg-blue-950/40 dark:text-blue-300 border border-[#0A3161]/20 text-[10px] font-black tracking-wider px-2.5 py-1 rounded-full shadow-sm flex items-center justify-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-ping shrink-0" />
                       <span>{formatSecondsLeft(journey)}</span>
                     </div>
                   </div>

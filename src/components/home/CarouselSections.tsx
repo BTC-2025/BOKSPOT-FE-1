@@ -153,13 +153,13 @@ export function CarouselSections() {
                   <div className="p-3 flex-1 flex flex-col justify-between bg-[color:var(--color-surface-container)]">
                     <div>
                       {/* Title */}
-                      <h3 className="font-extrabold text-[13px] leading-snug text-[color:var(--color-on-surface)] line-clamp-1 group-hover:text-[color:var(--color-primary)] transition-colors">
+                      <h3 className="font-extrabold text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 group-hover:text-[#ff6325] transition-colors">
                         {item.title}
                       </h3>
 
                       {/* Location */}
-                      <div className="flex items-center gap-1 text-[10px] text-[color:var(--color-outline)] font-medium mt-1">
-                        <span className="material-symbols-outlined text-[12px] text-[color:var(--color-primary)] shrink-0">
+                      <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1">
+                        <span className="material-symbols-outlined text-[12px] text-[#0A3161] dark:text-blue-400 shrink-0">
                           location_on
                         </span>
                         <span className="truncate">{item.location}</span>
@@ -180,7 +180,7 @@ export function CarouselSections() {
                       </div>
 
                       {/* Book CTA pill */}
-                      <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[color:var(--color-primary)]/10 text-[color:var(--color-primary)] group-hover:bg-[color:var(--color-primary)] group-hover:text-white transition-all duration-300 font-bold text-[10px] shadow-xs">
+                      <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#ff6325] text-white hover:brightness-105 transition-all duration-300 font-bold text-[10px] shadow-xs">
                         <span>Book Slot</span>
                         <span className="material-symbols-outlined text-[12px] group-hover:translate-x-0.5 transition-transform">
                           arrow_forward
@@ -304,7 +304,7 @@ export function CarouselSections() {
                         <div className="p-3 flex-1 flex flex-col justify-between bg-[color:var(--color-surface)] dark:bg-[#161c2b]">
                           <div>
                             <div className="flex items-start justify-between gap-1.5">
-                              <h3 className="font-black text-[13px] leading-snug text-[color:var(--color-on-surface)] dark:text-white line-clamp-1 group-hover:text-orange-500 transition-colors">
+                              <h3 className="font-black text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 group-hover:text-[#ff6325] transition-colors">
                                 {item.title}
                               </h3>
                               <div className="flex text-amber-400 shrink-0">
@@ -314,8 +314,8 @@ export function CarouselSections() {
                               </div>
                             </div>
 
-                            <p className="text-[11px] text-[color:var(--color-outline)] mt-1 flex items-center gap-1 font-medium truncate">
-                              <span className="material-symbols-outlined text-[13px] text-orange-500 shrink-0">location_on</span>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1 font-medium truncate">
+                              <span className="material-symbols-outlined text-[13px] text-[#0A3161] dark:text-blue-400 shrink-0">location_on</span>
                               <span className="truncate">{item.location}</span>
                             </p>
                           </div>
@@ -331,7 +331,7 @@ export function CarouselSections() {
                               </span>
                             </div>
 
-                            <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-orange-500 to-rose-600 text-white group-hover:brightness-110 transition-all font-bold text-[10px] shadow-sm">
+                            <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#ff6325] text-white hover:brightness-105 transition-all font-bold text-[10px] shadow-sm">
                               <span>Instant Book</span>
                               <span className="material-symbols-outlined text-[11px] group-hover:translate-x-0.5 transition-transform">
                                 bolt
@@ -365,20 +365,20 @@ export function CarouselSections() {
               {/* Section Header with Standardized Styling */}
               <div className="flex items-center justify-between mb-5 relative z-10">
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-500">
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-[#0A3161]/10 text-[#0A3161] dark:bg-blue-950/40 dark:text-blue-300">
                     <span className="material-symbols-outlined text-[16px]">confirmation_number</span>
                   </span>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h2 className="text-[19px] sm:text-[20px] font-black text-[color:var(--color-on-surface)] tracking-tight">
+                      <h2 className="text-[19px] sm:text-[20px] font-black text-[#0A3161] dark:text-white tracking-tight">
                         {sec.title}
                       </h2>
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-[#0A3161]/10 text-[#0A3161] dark:text-blue-300 border border-[#0A3161]/20">
                         <span className="material-symbols-outlined text-[11px]">calendar_today</span>
                         This Weekend
                       </span>
                     </div>
-                    <p className="text-[12px] mt-0.5 text-[color:var(--color-outline)] font-medium">
+                    <p className="text-[12px] mt-0.5 text-slate-500 dark:text-slate-400 font-medium">
                       {sec.description}
                     </p>
                   </div>
@@ -386,10 +386,10 @@ export function CarouselSections() {
 
                 <Link 
                   href={sec.href} 
-                  className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold text-[color:var(--color-primary)] hover:bg-[color:var(--color-primary)]/10 border border-[color:var(--color-primary)]/20 transition-all duration-300"
+                  className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold text-[#ff6325] hover:bg-[#ff6325]/10 border border-[#ff6325]/30 transition-all duration-300"
                 >
                   <span>All Events</span>
-                  <span className="material-symbols-outlined text-[14px] text-[color:var(--color-primary)] group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+                  <span className="material-symbols-outlined text-[14px] text-[#ff6325] group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
                 </Link>
               </div>
 
@@ -442,8 +442,8 @@ export function CarouselSections() {
                           
                           {/* Event Category Tag */}
                           <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5">
-                            <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 shadow-sm flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md bg-[#0A3161]/90 text-white border border-[#0A3161]/50 shadow-sm flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
                               PASS ENTRY
                             </span>
                           </div>
@@ -458,7 +458,7 @@ export function CarouselSections() {
                           )}
 
                           {/* Ticket Price Chip */}
-                          <div className="absolute bottom-2.5 right-2.5 z-10 flex items-baseline gap-0.5 px-2.5 py-0.5 rounded-lg backdrop-blur-xl bg-slate-950/90 border border-emerald-500/40 text-emerald-300 shadow-md">
+                          <div className="absolute bottom-2.5 right-2.5 z-10 flex items-baseline gap-0.5 px-2.5 py-0.5 rounded-lg backdrop-blur-xl bg-slate-950/90 border border-[#0A3161]/50 text-white shadow-md">
                             <span className="text-[9px] text-slate-400 font-bold">From</span>
                             <span className="text-[12px] font-black tracking-tight">{item.price}</span>
                           </div>
@@ -466,36 +466,36 @@ export function CarouselSections() {
 
                         {/* Ticket Perforation Dashed Line */}
                         <div className="relative flex items-center justify-between px-3 py-0.5 bg-[color:var(--color-surface)] dark:bg-[#101c1c]">
-                          <div className="w-3 h-3 rounded-full bg-[color:var(--color-surface-container)] -ml-4 border-r border-emerald-500/30" />
-                          <div className="flex-1 border-b border-dashed border-emerald-500/30 mx-2" />
-                          <div className="w-3 h-3 rounded-full bg-[color:var(--color-surface-container)] -mr-4 border-l border-emerald-500/30" />
+                          <div className="w-3 h-3 rounded-full bg-[color:var(--color-surface-container)] -ml-4 border-r border-[#0A3161]/30" />
+                          <div className="flex-1 border-b border-dashed border-[#0A3161]/30 mx-2" />
+                          <div className="w-3 h-3 rounded-full bg-[color:var(--color-surface-container)] -mr-4 border-l border-[#0A3161]/30" />
                         </div>
 
                         {/* Ticket Lower Half Content */}
                         <div className="p-3 flex-1 flex flex-col justify-between bg-[color:var(--color-surface)] dark:bg-[#101c1c]">
                           <div>
                             <div className="flex items-start justify-between gap-1.5">
-                              <h3 className="font-black text-[13px] leading-snug text-[color:var(--color-on-surface)] line-clamp-1 group-hover:text-emerald-500 transition-colors">
+                              <h3 className="font-black text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 group-hover:text-[#ff6325] transition-colors">
                                 {item.title}
                               </h3>
-                              <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
+                              <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-[#0A3161]/10 text-[#0A3161] dark:text-blue-300 border border-[#0A3161]/20 shrink-0">
                                 ⭐ {item.ratingScore}
                               </span>
                             </div>
 
-                            <p className="text-[11px] text-[color:var(--color-outline)] mt-1 flex items-center gap-1 font-medium truncate">
-                              <span className="material-symbols-outlined text-[13px] text-emerald-500 shrink-0">stadium</span>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1 font-medium truncate">
+                              <span className="material-symbols-outlined text-[13px] text-[#0A3161] dark:text-blue-400 shrink-0">stadium</span>
                               <span className="truncate">{item.location}</span>
                             </p>
                           </div>
 
                           <div className="flex items-center justify-between pt-2 mt-0.5">
-                            <div className="flex items-center gap-1.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                            <div className="flex items-center gap-1.5 text-[10px] text-[#0A3161] dark:text-blue-300 font-bold">
                               <span className="material-symbols-outlined text-[13px]">qr_code_scanner</span>
                               <span>Turnstile Pass</span>
                             </div>
 
-                            <div className="flex items-center gap-1 px-3 py-1 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 group-hover:brightness-110 transition-all font-black text-[10px] shadow-sm">
+                            <div className="flex items-center gap-1 px-3 py-1 rounded-lg bg-[#ff6325] text-white hover:brightness-105 transition-all font-black text-[10px] shadow-sm">
                               <span>Get Pass</span>
                               <span className="material-symbols-outlined text-[12px] group-hover:translate-x-0.5 transition-transform">
                                 confirmation_number

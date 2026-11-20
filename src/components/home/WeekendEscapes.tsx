@@ -239,19 +239,19 @@ export function WeekendEscapes() {
                   <div className="p-3 flex-1 flex flex-col justify-between bg-[color:var(--color-surface-container)]">
                     <div>
                       {/* Title */}
-                      <h3 className="font-extrabold text-[13px] leading-snug text-[color:var(--color-on-surface)] line-clamp-1 group-hover:text-[color:var(--color-primary)] transition-colors">
+                      <h3 className="font-extrabold text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 group-hover:text-[#ff6325] transition-colors">
                         {item.title}
                       </h3>
 
                       {/* Location & Distance */}
-                      <div className="flex items-center gap-1 text-[10px] text-[color:var(--color-outline)] font-medium mt-1">
-                        <MapPin className="w-3 h-3 text-[color:var(--color-primary)] shrink-0" />
+                      <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1">
+                        <MapPin className="w-3 h-3 text-[#0A3161] dark:text-blue-400 shrink-0" />
                         <span className="truncate">{item.destination}</span>
-                        <span className="text-[9px] text-[color:var(--color-outline)]/70">({item.distance})</span>
+                        <span className="text-[9px] text-slate-400">({item.distance})</span>
                       </div>
 
                       {/* Highlights */}
-                      <p className="text-[9px] text-[color:var(--color-outline)] font-medium mt-1.5 line-clamp-1 border-t border-[color:var(--color-outline-variant)]/15 pt-1">
+                      <p className="text-[9px] text-slate-500 dark:text-slate-400 font-medium mt-1.5 line-clamp-1 border-t border-[color:var(--color-outline-variant)]/15 pt-1">
                         {item.highlights}
                       </p>
                     </div>
@@ -268,7 +268,7 @@ export function WeekendEscapes() {
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[color:var(--color-primary)]/10 text-[color:var(--color-primary)] group-hover:bg-[color:var(--color-primary)] group-hover:text-white transition-all duration-300 font-bold text-[10px] shadow-xs">
+                      <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#ff6325] text-white hover:brightness-105 transition-all duration-300 font-bold text-[10px] shadow-xs">
                         <span>Book Stay</span>
                         <ArrowRight className="w-2.5 h-2.5 group-hover:translate-x-0.5 transition-transform" />
                       </div>

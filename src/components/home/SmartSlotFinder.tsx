@@ -225,7 +225,7 @@ export function SmartSlotFinder() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff6325] opacity-75" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#ff6325]" />
             </span>
-            <h3 className="text-xs md:text-sm font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-1.5">
+            <h3 className="text-xs md:text-sm font-black tracking-tight text-[#0A3161] dark:text-white flex items-center gap-1.5">
               <span>Instant Slot Finder</span>
               <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#ff6325]/15 text-[#ff6325] uppercase tracking-wider">
                 Live
@@ -234,7 +234,7 @@ export function SmartSlotFinder() {
           </div>
           <button
             onClick={() => setIsCategoryModalOpen(true)}
-            className="text-[10px] uppercase font-bold tracking-wider text-[#ff6325] hover:text-[#ea580c] transition-colors flex items-center gap-1 cursor-pointer"
+            className="text-[10px] uppercase font-bold tracking-wider text-[#0A3161] dark:text-blue-300 hover:text-[#ff6325] transition-colors flex items-center gap-1 cursor-pointer"
           >
             <span>9 Categories</span>
             <span className="material-symbols-outlined text-[13px]">tune</span>
@@ -246,7 +246,7 @@ export function SmartSlotFinder() {
           {/* Step 1: Category & Service (Unified Single Line) */}
           <div>
             <div className="flex items-center justify-between mb-1 px-0.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--color-outline)]">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#0A3161] dark:text-blue-300">
                 Step 1: Category &amp; Service
               </span>
               <span className="text-[10px] font-semibold text-slate-400">
@@ -261,18 +261,18 @@ export function SmartSlotFinder() {
                 onClick={() => setIsCategoryModalOpen(true)}
                 className={`h-9 px-2.5 rounded-xl border flex items-center justify-between transition-all cursor-pointer group min-w-0 ${
                   activeCategory
-                    ? 'border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.04] hover:border-[#ff6325]/50'
-                    : 'border-dashed border-[#ff6325]/40 bg-[#ff6325]/5 hover:bg-[#ff6325]/10 text-[#ff6325]'
+                    ? 'border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.04] hover:border-[#0A3161]/50'
+                    : 'border-dashed border-[#0A3161]/40 bg-[#0A3161]/5 hover:bg-[#0A3161]/10 text-[#0A3161] dark:text-blue-300'
                 }`}
                 title={activeCategory ? `${activeCategory.label} - Click to switch category` : 'Choose booking category'}
               >
                 <div className="flex items-center gap-1.5 min-w-0 truncate">
                   <span className="text-sm shrink-0">{activeCategory ? activeCategory.emoji : '🎯'}</span>
-                  <span className={`text-xs font-bold truncate ${activeCategory ? 'text-slate-800 dark:text-white' : 'text-[#ff6325]'}`}>
+                  <span className={`text-xs font-bold truncate ${activeCategory ? 'text-[#0A3161] dark:text-white' : 'text-[#0A3161] dark:text-blue-300'}`}>
                     {activeCategory ? activeCategory.label : 'Select Category'}
                   </span>
                 </div>
-                <span className="material-symbols-outlined text-[15px] text-[#ff6325] shrink-0 ml-1 group-hover:rotate-180 transition-transform">
+                <span className="material-symbols-outlined text-[15px] text-[#0A3161] dark:text-blue-300 shrink-0 ml-1 group-hover:rotate-180 transition-transform">
                   swap_vert
                 </span>
               </button>
@@ -348,7 +348,7 @@ export function SmartSlotFinder() {
           {/* Step 2: City & Spot/Venue (Contextual for Transit & Other Verticals) */}
           <div>
             <div className="mb-1 px-0.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--color-outline)]">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#0A3161] dark:text-blue-300">
                 {isTravelTransitArchetype ? 'Step 2: Source & Destination Route' : 'Step 2: City & Venue'}
               </span>
             </div>
@@ -437,7 +437,7 @@ export function SmartSlotFinder() {
           {/* Step 3: Date & Archetype-Specific Duration/Slot */}
           <div>
             <div className="flex items-center justify-between mb-1 px-0.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--color-outline)]">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#0A3161] dark:text-blue-300">
                 {isHostelArchetype ? 'Step 3: Move-in Date & Duration' : isHotelStayArchetype ? 'Step 3: Check-in Date & Nights' : isRentalArchetype ? 'Step 3: Pickup Date & Duration' : 'Step 3: Date & Slot'}
               </span>
             </div>

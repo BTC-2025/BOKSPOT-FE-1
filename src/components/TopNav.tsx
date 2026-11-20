@@ -605,7 +605,7 @@ export function TopNav({
             {!user ? (
               <Link
                 href="/login"
-                className="custom-nav-btn px-4 h-8 rounded-full flex items-center justify-center shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-[11px] font-extrabold tracking-wider bg-[#FF5201] hover:brightness-105 text-white cursor-pointer"
+                className="custom-nav-btn px-4 h-8 rounded-full flex items-center justify-center shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-[11px] font-extrabold tracking-wider bg-[#ff6325] hover:brightness-105 text-white cursor-pointer"
               >
                 Sign In
               </Link>
@@ -618,7 +618,7 @@ export function TopNav({
                   title="Profile Settings"
                 >
                   {/* Sleek User Avatar */}
-                  <div className="h-6 w-6 rounded-full bg-white text-[#FF5201] flex items-center justify-center shrink-0 shadow-xs overflow-hidden text-[11px] font-black profile-avatar-circle ring-1 ring-white/50">
+                  <div className="h-6 w-6 rounded-full bg-white text-[#ff6325] flex items-center justify-center shrink-0 shadow-xs overflow-hidden text-[11px] font-black profile-avatar-circle ring-1 ring-white/50">
                     {userPhoto ? (
                       <img src={userPhoto} alt={userName} className="h-full w-full object-cover animate-fade-in" />
                     ) : (
@@ -701,8 +701,8 @@ export function TopNav({
                           type="button"
                           onClick={() => setTheme('light')}
                           className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${theme === 'light'
-                              ? 'bg-white text-slate-900 shadow-sm'
-                              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            ? 'bg-white text-slate-900 shadow-sm'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                             }`}
                         >
                           <Sun size={13} className={theme === 'light' ? 'text-amber-500' : ''} /> Light
@@ -711,8 +711,8 @@ export function TopNav({
                           type="button"
                           onClick={() => setTheme('dark')}
                           className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${theme === 'dark'
-                              ? 'bg-slate-900 text-white shadow-sm'
-                              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            ? 'bg-slate-900 text-white shadow-sm'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                             }`}
                         >
                           <Moon size={13} className={theme === 'dark' ? 'text-blue-400' : ''} /> Dark
@@ -721,8 +721,8 @@ export function TopNav({
                           type="button"
                           onClick={() => setTheme('system')}
                           className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${theme === 'system'
-                              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
-                              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                             }`}
                         >
                           <Laptop size={13} /> Auto
@@ -828,13 +828,12 @@ export function TopNav({
 
         {/* Secondary Subnav Bar (Appears when at the very top of page; hidden during middle scrolling) */}
         <div
-          className={`w-full overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out ${
-            isSecondaryHeaderVisible
+          className={`w-full overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out ${isSecondaryHeaderVisible
               ? 'max-h-14 opacity-100'
               : 'max-h-0 opacity-0 pointer-events-none'
-          }`}
+            }`}
         >
-          <div 
+          <div
             style={{
               paddingRight: !utilityDrawerOpen
                 ? '16px'

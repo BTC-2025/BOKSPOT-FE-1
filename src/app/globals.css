@@ -235,12 +235,12 @@
 
 .light {
   --color-primary: #ff6325;
-    /* Bokspot Main Theme Orange */
-    --color-primary-fixed: #ffe4d6;
-    --color-primary-fixed-dim: #e04e13;
-    --color-on-primary: #FFFFFF;
-    --color-primary-container: #fff0eb;
-    --color-on-primary-container: #ff6325;
+  /* Bokspot Main Theme Orange */
+  --color-primary-fixed: #ffe4d6;
+  --color-primary-fixed-dim: #e04e13;
+  --color-on-primary: #FFFFFF;
+  --color-primary-container: #fff0eb;
+  --color-on-primary-container: #ff6325;
   /* dark navy text */
   --color-secondary-container: #fff0eb;
   --color-on-secondary-container: #e04e13;
@@ -781,23 +781,23 @@
   width: 100%;
   z-index: 50;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  background: #FF5201 !important;
+  background: #ff6325 !important;
   border-bottom: 1.5px solid rgba(255, 255, 255, 0.22) !important;
-  box-shadow: 0 4px 20px -2px rgba(255, 82, 1, 0.35), 0 2px 6px rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
 }
 
 /* Dark Mode Styling */
 .dark .custom-navbar {
-  background: #FF5201 !important;
+  background: #ff6325 !important;
   border-bottom: 1.5px solid rgba(255, 255, 255, 0.15) !important;
   box-shadow: 0 6px 30px rgba(0, 0, 0, 0.45) !important;
 }
 
 /* Light Mode Styling */
 .light .custom-navbar {
-  background: #FF5201 !important;
+  background: #ff6325 !important;
   border-bottom: 1.5px solid rgba(255, 255, 255, 0.25) !important;
-  box-shadow: 0 4px 20px -2px rgba(255, 82, 1, 0.35), 0 2px 6px rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
 }
 
 /* Brand Logo Color Classes (To prevent overrides) */
@@ -810,7 +810,7 @@
 }
 
 .logo-text-spot {
-  color: #FF5201 !important;
+  color: #ff6325 !important;
 }
 
 /* High legibility color overrides inside Navbar */
@@ -841,12 +841,12 @@
 }
 
 /* Lucide and other icon color fallback */
-.custom-navbar > div:first-child svg:not(.lucide-sparkles) {
+.custom-navbar>div:first-child svg:not(.lucide-sparkles) {
   color: #FFFFFF !important;
   stroke: #FFFFFF !important;
 }
 
-:is(.dark) .custom-navbar > div:first-child svg:not(.lucide-sparkles) {
+:is(.dark) .custom-navbar>div:first-child svg:not(.lucide-sparkles) {
   color: #FFFFFF !important;
   stroke: #FFFFFF !important;
 }
@@ -982,7 +982,7 @@
 .custom-navbar .custom-nav-active-bg,
 .light .custom-navbar .custom-nav-active-bg,
 .dark .custom-navbar .custom-nav-active-bg {
-  background: linear-gradient(135deg, #FF5201 0%, #E04E13 100%) !important;
+  background: linear-gradient(135deg, #ff6325 0%, #E04E13 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.45) !important;
   box-shadow: 0 4px 14px rgba(255, 82, 1, 0.45) !important;
   border-radius: 9999px !important;
@@ -1146,7 +1146,7 @@
 
 .light .custom-navbar .absolute .text-primary,
 .light .custom-navbar .absolute .text-primary * {
-  color: #FF5201 !important;
+  color: #ff6325 !important;
   /* Bokspot orange accent */
 }
 
@@ -1203,20 +1203,21 @@
 /* Secondary Subnav Bar (Distinct High-Contrast Layer from Main Blue Header) */
 .secondary-subnav-bar {
   background: rgba(11, 15, 25, 0.96) !important;
-  border-top: 1px solid rgba(255, 99, 37, 0.3) !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.4) !important;
+  border-top: 1px solid rgba(10, 49, 97, 0.35) !important;
+  border-bottom: 1.5px solid #0A3161 !important;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
 }
 
 .dark .secondary-subnav-bar {
   background: rgba(8, 12, 20, 0.98) !important;
-  border-top: 1px solid rgba(255, 99, 37, 0.25) !important;
+  border-top: 1px solid rgba(10, 49, 97, 0.3) !important;
+  border-bottom: 1.5px solid #0A3161 !important;
 }
 
 .light .secondary-subnav-bar {
   background: #ffffff !important;
   border-top: 1px solid rgba(0, 34, 79, 0.08) !important;
-  border-bottom: 1px solid #e2e8f0 !important;
+  border-bottom: 1.5px solid #0A3161 !important;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05) !important;
 }
 
@@ -1228,13 +1229,13 @@
 }
 
 .light .secondary-subnav-bar .subnav-pill:hover {
-  color: #FF5201 !important;
+  color: #ff6325 !important;
   background-color: #fff7ed !important;
-  border-color: #FF5201 !important;
+  border-color: #ff6325 !important;
 }
 
 .light .secondary-subnav-bar .subnav-pill-action {
-  color: #FF5201 !important;
+  color: #ff6325 !important;
   background-color: #fff7ed !important;
   border: 1px solid rgba(255, 82, 1, 0.3) !important;
   font-weight: 600 !important;
@@ -1253,7 +1254,7 @@
 
 .light .secondary-subnav-bar .subnav-pill:hover svg,
 .light .secondary-subnav-bar .subnav-pill:hover span {
-  color: #FF5201 !important;
+  color: #ff6325 !important;
 }
 
 .light .secondary-subnav-bar a:hover,
@@ -1363,6 +1364,7 @@ a[role="button"]:not([disabled]):active,
 .apple-pill {
   transition: transform 160ms var(--apple-ease-fluid), background-color 160ms ease, color 160ms ease;
 }
+
 .apple-pill:active {
   transform: scale(0.94);
 }
@@ -1372,9 +1374,11 @@ a[role="button"]:not([disabled]):active,
   0% {
     transform: rotate(-1.5deg) scale(1);
   }
+
   50% {
     transform: rotate(1.5deg) scale(1.02);
   }
+
   100% {
     transform: rotate(-1.5deg) scale(1);
   }
@@ -1392,15 +1396,20 @@ a[role="button"]:not([disabled]):active,
 }
 
 /* ─── Global Scrollbar Hide (Keep Full Scrolling Ability) ─── */
-html, body, * {
-  scrollbar-width: none !important; /* Firefox */
-  -ms-overflow-style: none !important; /* IE & Edge */
+html,
+body,
+* {
+  scrollbar-width: none !important;
+  /* Firefox */
+  -ms-overflow-style: none !important;
+  /* IE & Edge */
 }
 
 html::-webkit-scrollbar,
 body::-webkit-scrollbar,
 *::-webkit-scrollbar {
-  display: none !important; /* Chrome, Safari, Opera */
+  display: none !important;
+  /* Chrome, Safari, Opera */
   width: 0 !important;
   height: 0 !important;
 }
@@ -1497,6 +1506,7 @@ body::-webkit-scrollbar,
 .custom-navbar .logo-text-bok {
   color: #ffffff !important;
 }
+
 .custom-navbar .logo-text-spot {
   color: #FFE0D3 !important;
 }
@@ -1524,7 +1534,7 @@ body::-webkit-scrollbar,
 .custom-navbar .custom-nav-link.custom-nav-link-active,
 .light .custom-navbar .custom-nav-link.custom-nav-link-active,
 .dark .custom-navbar .custom-nav-link.custom-nav-link-active {
-  color: #E85513 !important;
+  color: #ff6325 !important;
   font-weight: 900 !important;
 }
 
@@ -1556,12 +1566,12 @@ body::-webkit-scrollbar,
   background: rgba(255, 255, 255, 0.3) !important;
 }
 
-.custom-navbar > div:first-child svg:not(.lucide-sparkles) {
+.custom-navbar>div:first-child svg:not(.lucide-sparkles) {
   color: #ffffff !important;
   stroke: #ffffff !important;
 }
 
-:is(.dark) .custom-navbar > div:first-child svg:not(.lucide-sparkles) {
+:is(.dark) .custom-navbar>div:first-child svg:not(.lucide-sparkles) {
   color: #ffffff !important;
   stroke: #ffffff !important;
 }
@@ -1573,7 +1583,7 @@ body::-webkit-scrollbar,
 .custom-navbar,
 .light .custom-navbar,
 .dark .custom-navbar {
-  background: #E85513 !important;
+  background: #ff6325 !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.18) !important;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14) !important;
   backdrop-filter: none !important;
@@ -1630,7 +1640,7 @@ body::-webkit-scrollbar,
 .light .custom-navbar .custom-nav-link-active,
 .dark .custom-navbar .custom-nav-link.custom-nav-link-active,
 .dark .custom-navbar .custom-nav-link-active {
-  color: #FF5201 !important;
+  color: #ff6325 !important;
   opacity: 1 !important;
   font-weight: 900 !important;
 }
@@ -1759,7 +1769,7 @@ main,
 .dark .custom-navbar .profile-avatar-circle,
 .dark .custom-navbar .profile-avatar-circle * {
   background-color: #FFFFFF !important;
-  color: #FF5201 !important;
-  stroke: #FF5201 !important;
+  color: #ff6325 !important;
+  stroke: #ff6325 !important;
   font-weight: 900 !important;
 }

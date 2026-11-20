@@ -383,7 +383,7 @@ function TracksContent() {
                   </span>
                 </div>
 
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                <h2 className="text-xl sm:text-2xl font-black text-[#0A3161] dark:text-white tracking-tight flex items-center gap-2">
                   <span>Track Your Journey &amp;</span>
                   <span className="text-[#ff6325]">Live</span>
                   <span>PNR</span>
@@ -520,10 +520,10 @@ function TracksContent() {
                 Live Reservations Dashboard
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-black text-[#0A3161] dark:text-blue-300 tracking-tight">
               My Bookings
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mt-0.5">
+            <p className="text-[#0A3161]/70 dark:text-slate-400 text-xs font-semibold mt-0.5">
               Manage your confirmed bookings, digital passes, and contactless room keycards.
             </p>
           </div>
@@ -741,7 +741,7 @@ function TracksContent() {
                         {/* Top: Category + Status Badge */}
                         <div>
                           <div className="flex items-center justify-between gap-2 mb-1.5">
-                            <span className="inline-block px-2.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/50 text-[#003580] dark:text-blue-300 text-[10px] font-black uppercase tracking-wider border border-blue-100 dark:border-blue-900/40 truncate">
+                            <span className="inline-block px-2.5 py-0.5 rounded-md bg-[#0A3161]/10 dark:bg-blue-950/50 text-[#0A3161] dark:text-blue-300 text-[10px] font-black uppercase tracking-wider border border-[#0A3161]/20 dark:border-blue-900/40 truncate">
                               {b.merchantCategory || getBookingType(b.serviceName)}
                             </span>
                             <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wide shrink-0 ${st.badge}`}>
@@ -751,10 +751,10 @@ function TracksContent() {
                           </div>
 
                           {/* Venue Title & Unit */}
-                          <h2 className="font-black text-base sm:text-lg text-slate-900 dark:text-white truncate tracking-tight leading-snug group-hover:text-[#003580] dark:group-hover:text-blue-400 transition-colors">
+                          <h2 className="font-black text-base sm:text-lg text-[#0A3161] dark:text-white truncate tracking-tight leading-snug group-hover:text-[#ff6325] dark:group-hover:text-blue-400 transition-colors">
                             {b.merchantName}
                           </h2>
-                          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                          <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 truncate mt-0.5">
                             {b.serviceName}
                           </p>
                         </div>
@@ -784,7 +784,7 @@ function TracksContent() {
                         <div className="flex items-center justify-between pt-0.5">
                           <div>
                             <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block leading-none">Total Fare</span>
-                            <span className={`font-black text-base sm:text-lg tracking-tight leading-tight ${isCancelled ? 'line-through text-slate-400' : 'text-slate-900 dark:text-white'}`}>
+                            <span className={`font-black text-base sm:text-lg tracking-tight leading-tight ${isCancelled ? 'line-through text-slate-400' : 'text-[#0A3161] dark:text-blue-300'}`}>
                               ₹{b.amount?.toLocaleString()}
                             </span>
                           </div>
