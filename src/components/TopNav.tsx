@@ -828,9 +828,9 @@ export function TopNav({
 
         {/* Secondary Subnav Bar (Appears when at the very top of page; hidden during middle scrolling) */}
         <div
-          className={`w-full overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out ${isSecondaryHeaderVisible
-              ? 'max-h-14 opacity-100'
-              : 'max-h-0 opacity-0 pointer-events-none'
+          className={`w-full overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out bg-gradient-to-r from-[#f0f7ff] via-[#e8f2fe] to-[#f0f7ff] dark:bg-[#080c14] border-b-[1px] border-[#0A3161]/80 shadow-[0_4px_16px_rgba(10,49,97,0.08)] ${isSecondaryHeaderVisible
+              ? 'h-10 max-h-10 opacity-100'
+              : 'h-0 max-h-0 opacity-0 pointer-events-none'
             }`}
         >
           <div
@@ -841,7 +841,7 @@ export function TopNav({
                   ? (activeUtilityTab === 'beta' ? '412px' : '392px')
                   : '72px'
             }}
-            className="w-full secondary-subnav-bar px-4 lg:px-8 h-10 flex items-center justify-between text-xs select-none transition-[padding-right] duration-200 ease-out"
+            className="w-full secondary-subnav-bar px-4 lg:px-8 h-full flex items-center justify-between text-xs select-none transition-[padding-right] duration-200 ease-out"
           >
             {/* Left Side: High-intent booking shortcuts */}
             <div className="flex items-center gap-1.5 md:gap-2.5 overflow-x-auto custom-scrollbar scrollbar-none py-0.5">
