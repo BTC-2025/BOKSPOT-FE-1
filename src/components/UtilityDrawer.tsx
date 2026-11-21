@@ -418,7 +418,7 @@ export function UtilityDrawer({
               : 'top-16'
           }`}
         >
-          {/* Slide-out Left Content Panel (320px) - Hidden for keyboard since keyboard floats freely */}
+          {/* Slide-out Left Content Panel: strictly for non-keyboard tools */}
           <AnimatePresence>
             {activeTab && activeTab !== 'keyboard' && (
               <motion.div
@@ -1238,8 +1238,7 @@ export function UtilityDrawer({
                   </div>
                 )}
 
-                {/* 6. Virtual Keyboard Panel (Floating draggable window) */}
-                {/* (Rendered as independent draggable floating modal below to allow moving anywhere across the screen) */}
+                {/* 6. Virtual Keyboard Panel (Rendered independently outside the drawer panel) */}
 
                 {/* 7. BETA APP LAUNCHER PANEL (Exact match to Beta Ecosystem screenshot) */}
                 {activeTab === 'beta' && (
@@ -2007,7 +2006,7 @@ export function UtilityDrawer({
         </motion.div>
       )}
 
-      {/* Floating Draggable Virtual Keyboard Window */}
+      {/* Floating Virtual Keyboard - Can drag anywhere across the screen, rendered independently without drawer side panel */}
       {activeTab === 'keyboard' && (
         <motion.div
           drag
@@ -2018,7 +2017,7 @@ export function UtilityDrawer({
           transition={{ duration: 0.16 }}
           className="fixed z-[10005] bottom-10 right-20 sm:right-28 w-[95vw] sm:w-[620px] max-w-[620px] bg-white dark:bg-[#0c121e] rounded-3xl border border-slate-200/90 dark:border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35)] overflow-hidden select-none flex flex-col font-sans"
         >
-          {/* Draggable Header - Native system open hand (grab) & closed hand (grabbing) */}
+          {/* Draggable Header - Open hand on hover, closed hand on drag */}
           <div
             className="h-12 px-5 bg-white dark:bg-[#0c121e] flex items-center justify-between select-none cursor-grab active:cursor-grabbing hover:cursor-grab"
             style={{ cursor: 'grab' }}
@@ -2044,7 +2043,7 @@ export function UtilityDrawer({
             </div>
           </div>
 
-          {/* Virtual Keyboard Keys - matching user screenshot */}
+          {/* Virtual Keyboard Keys - Clean matching user screenshot */}
           <div className="px-5 pb-5 pt-1 bg-white dark:bg-[#0c121e] flex flex-col gap-2">
             {(() => {
               const isUpper = (isCapsActive && !isShiftActive) || (!isCapsActive && isShiftActive);

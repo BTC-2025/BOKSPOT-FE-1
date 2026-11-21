@@ -83,7 +83,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           marginRight: !utilityDrawerOpen 
             ? '0px' 
             : activeUtilityTab 
-              ? (activeUtilityTab === 'beta' ? '390px' : '370px') 
+              ? (activeUtilityTab === 'keyboard' ? '50px' : activeUtilityTab === 'beta' ? '390px' : '370px') 
               : '50px'
         }}
         className="flex-1 w-auto transition-[margin-right] duration-200 ease-out flex flex-col justify-between"
