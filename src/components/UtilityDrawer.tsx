@@ -86,7 +86,7 @@ export function UtilityDrawer({
   const [isShiftActive, setIsShiftActive] = useState(false);
   const [isCapsActive, setIsCapsActive] = useState(false);
   const [copiedKeyboard, setCopiedKeyboard] = useState(false);
-  const [keyboardPosition, setKeyboardPosition] = useState({ x: 0, y: 0 });
+  const [isKeyboardDragging, setIsKeyboardDragging] = useState(false);
 
   const handleKeyPress = (char: string) => {
     setKeyboardInput((prev) => prev + char);
@@ -2011,6 +2011,8 @@ export function UtilityDrawer({
         <motion.div
           drag
           dragMomentum={false}
+          onDragStart={() => setIsKeyboardDragging(true)}
+          onDragEnd={() => setIsKeyboardDragging(false)}
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -2019,10 +2021,11 @@ export function UtilityDrawer({
         >
           {/* Draggable Header - Open hand on hover, closed hand on drag */}
           <div
-            className="h-12 px-5 bg-white dark:bg-[#0c121e] flex items-center justify-between select-none cursor-grab active:cursor-grabbing hover:cursor-grab"
-            style={{ cursor: 'grab' }}
+            className={`h-12 px-5 bg-white dark:bg-[#0c121e] flex items-center justify-between select-none custom-drag-hand ${
+              isKeyboardDragging ? 'is-dragging cursor-grabbing' : 'cursor-grab'
+            }`}
           >
-            <div className="flex items-center gap-2.5 pointer-events-none">
+            <div className="flex items-center gap-2.5 pointer-events-none select-none">
               <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-[#2563eb] flex items-center justify-center">
                 <Keyboard size={17} />
               </div>
