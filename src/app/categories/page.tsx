@@ -455,11 +455,11 @@ export default function CategoriesPage() {
           {/* Header Row */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-2 text-[10px] font-black text-[color:var(--color-primary)] uppercase tracking-widest mb-2 px-3 py-1 rounded-full bg-[color:var(--color-primary)]/10 border border-[color:var(--color-primary)]/20 shadow-2xs">
+              <div className="inline-flex items-center gap-2 text-[10px] font-bold text-[color:var(--color-primary)] uppercase tracking-widest mb-2 px-3 py-1 rounded-full bg-[color:var(--color-primary)]/10 border border-[color:var(--color-primary)]/20 shadow-2xs">
                 <Compass size={13} className="text-[color:var(--color-primary)] animate-spin-slow" />
                 <span>All Categories &amp; Services</span>
               </div>
-              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[color:var(--color-on-surface)] flex items-center gap-3">
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[color:var(--color-on-surface)] flex items-center gap-3">
                 <span>Categories</span>
                 <span className="text-xs font-bold text-[color:var(--color-outline)] px-2.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 border border-black/5 dark:border-white/10">
                   55 Services Listed
@@ -523,8 +523,8 @@ export default function CategoriesPage() {
                     </span>
                   </div>
                   <div>
-                    <h3 className={`font-black text-xs transition-colors leading-tight ${isSelected
-                      ? 'text-[color:var(--color-primary)]'
+                    <h3 className={`font-semibold text-xs transition-colors leading-tight ${isSelected
+                      ? 'text-[color:var(--color-primary)] font-bold'
                       : 'text-[color:var(--color-on-surface)] group-hover:text-[color:var(--color-primary)]'
                       }`}>
                       {bento.title}

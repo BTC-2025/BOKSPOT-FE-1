@@ -177,7 +177,7 @@ export function ConciergeJourneys() {
                 <div className="p-3.5 flex flex-col justify-between flex-1 bg-[color:var(--color-surface-container)]">
                   <div>
                     {/* Title */}
-                    <h3 className="font-extrabold text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 group-hover/card:text-[#ff6325] transition-colors">
+                    <h3 className="font-bold text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 group-hover/card:text-[#ff6325] transition-colors">
                       {journey.trainName}
                     </h3>
 

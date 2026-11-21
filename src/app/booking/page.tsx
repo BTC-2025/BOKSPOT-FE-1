@@ -383,7 +383,7 @@ function TracksContent() {
                   </span>
                 </div>
 
-                <h2 className="text-xl sm:text-2xl font-black text-[#0A3161] dark:text-white tracking-tight flex items-center gap-2">
+                <h2 className="text-xl sm:text-2xl font-bold text-[#0A3161] dark:text-white tracking-tight flex items-center gap-2">
                   <span>Track Your Journey &amp;</span>
                   <span className="text-[#ff6325]">Live</span>
                   <span>PNR</span>
@@ -520,10 +520,10 @@ function TracksContent() {
                 Live Reservations Dashboard
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-[#0A3161] dark:text-blue-300 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#0A3161] dark:text-blue-300 tracking-tight">
               My Bookings
             </h1>
-            <p className="text-[#0A3161]/70 dark:text-slate-400 text-xs font-semibold mt-0.5">
+            <p className="text-[#0A3161]/70 dark:text-slate-400 text-xs font-normal mt-0.5">
               Manage your confirmed bookings, digital passes, and contactless room keycards.
             </p>
           </div>
@@ -751,10 +751,10 @@ function TracksContent() {
                           </div>
 
                           {/* Venue Title & Unit */}
-                          <h2 className="font-black text-base sm:text-lg text-[#0A3161] dark:text-white truncate tracking-tight leading-snug group-hover:text-[#ff6325] dark:group-hover:text-blue-400 transition-colors">
+                          <h2 className="font-bold text-base sm:text-lg text-[#0A3161] dark:text-white truncate tracking-tight leading-snug group-hover:text-[#ff6325] dark:group-hover:text-blue-400 transition-colors">
                             {b.merchantName}
                           </h2>
-                          <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 truncate mt-0.5">
+                          <p className="text-xs font-normal text-slate-600 dark:text-slate-300 truncate mt-0.5">
                             {b.serviceName}
                           </p>
                         </div>

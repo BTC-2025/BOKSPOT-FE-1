@@ -1606,8 +1606,8 @@ body::-webkit-scrollbar,
 .custom-navbar .custom-nav-capsule,
 .light .custom-navbar .custom-nav-capsule,
 .dark .custom-navbar .custom-nav-capsule {
-  background: rgba(255, 255, 255, 0.22) !important;
-  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  background: rgba(0, 0, 0, 0.22) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
   border-radius: 9999px !important;
   box-shadow: none !important;
 }
@@ -1640,9 +1640,9 @@ body::-webkit-scrollbar,
 .custom-navbar .custom-nav-active-bg,
 .light .custom-navbar .custom-nav-active-bg,
 .dark .custom-navbar .custom-nav-active-bg {
-  background: #FFFFFF !important;
+  background: rgba(255, 255, 255, 0.26) !important;
   border: none !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08) !important;
   border-radius: 9999px !important;
 }
 
@@ -1652,9 +1652,9 @@ body::-webkit-scrollbar,
 .light .custom-navbar .custom-nav-link-active,
 .dark .custom-navbar .custom-nav-link.custom-nav-link-active,
 .dark .custom-navbar .custom-nav-link-active {
-  color: #ff6325 !important;
+  color: #FFFFFF !important;
   opacity: 1 !important;
-  font-weight: 900 !important;
+  font-weight: 700 !important;
 }
 
 /* Location Selector Button */

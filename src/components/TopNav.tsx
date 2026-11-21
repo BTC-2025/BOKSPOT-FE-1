@@ -424,7 +424,7 @@ export function TopNav({
 
           {/* Center Column: Floating Segmented Dock (Instant Fluid Switch) */}
           <div className="hidden lg:flex flex-none justify-center">
-            <nav className="custom-nav-capsule shadow-lg relative flex items-center p-1">
+            <nav className="custom-nav-capsule shadow-lg relative p-[3px] rounded-full flex items-center">
               {(() => {
                 const isHomePath = pathname === '/' || pathname === '/home' || pathname.startsWith('/home/');
                 const isExplicitCategoriesPath = pathname === '/categories' || pathname.startsWith('/service') || pathname.startsWith('/venue');
@@ -446,13 +446,9 @@ export function TopNav({
                 }
 
                 const navItems = [
-                  { label: 'Home', href: '/', id: 'home' },
-                  { label: 'Categories', href: '/categories', id: 'categories' },
-                  {
-                    label: 'Bookings',
-                    href: '/bookings',
-                    id: 'bookings'
-                  },
+                  { label: 'Home', href: '/', id: 'home', widthClass: 'w-20' },
+                  { label: 'Categories', href: '/categories', id: 'categories', widthClass: 'w-28' },
+                  { label: 'Bookings', href: '/bookings', id: 'bookings', widthClass: 'w-24' },
                 ];
 
                 return (
@@ -465,13 +461,13 @@ export function TopNav({
                           key={item.id}
                           href={item.href}
                           scroll={false}
-                          className={`flex items-center justify-center gap-1.5 px-5 py-1.5 text-[12px] font-black tracking-wide relative z-10 custom-nav-link select-none transition-colors duration-150 ${isActive ? 'custom-nav-link-active' : 'custom-nav-link-inactive'
+                          className={`${item.widthClass} text-center py-1.5 rounded-full text-[13px] font-bold tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link select-none transition-colors duration-150 ${isActive ? 'custom-nav-link-active !text-white' : 'custom-nav-link-inactive'
                             }`}
                         >
                           {isActive && (
                             <motion.div
                               layoutId="fluid-nav-active-pill"
-                              className="absolute inset-0 rounded-full custom-nav-active-bg -z-10"
+                              className="absolute inset-0 rounded-full bg-white/26 shadow-[0_1px_4px_rgba(0,0,0,0.08)] -z-10 custom-nav-active-bg"
                               style={{ willChange: 'transform' }}
                               transition={{
                                 type: 'spring',
@@ -618,7 +614,7 @@ export function TopNav({
                   title="Profile Settings"
                 >
                   {/* Sleek User Avatar */}
-                  <div className="h-6 w-6 rounded-full bg-white text-[#ff6325] flex items-center justify-center shrink-0 shadow-xs overflow-hidden text-[11px] font-black profile-avatar-circle ring-1 ring-white/50">
+                  <div className="h-6 w-6 rounded-full bg-gradient-to-br from-[#ff6325] to-[#1557bf] flex items-center justify-center shrink-0 shadow-sm overflow-hidden text-white font-black text-[11px] ring-1 ring-white/30">
                     {userPhoto ? (
                       <img src={userPhoto} alt={userName} className="h-full w-full object-cover animate-fade-in" />
                     ) : (

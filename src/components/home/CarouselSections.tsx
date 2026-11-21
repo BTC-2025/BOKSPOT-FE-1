@@ -153,7 +153,7 @@ export function CarouselSections() {
                   <div className="p-3 flex-1 flex flex-col justify-between bg-[color:var(--color-surface-container)]">
                     <div>
                       {/* Title */}
-                      <h3 className="font-extrabold text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 group-hover:text-[#ff6325] transition-colors">
+                      <h3 className="font-bold text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 group-hover:text-[#ff6325] transition-colors">
                         {item.title}
                       </h3>
 
@@ -304,7 +304,7 @@ export function CarouselSections() {
                         <div className="p-3 flex-1 flex flex-col justify-between bg-[color:var(--color-surface)] dark:bg-[#161c2b]">
                           <div>
                             <div className="flex items-start justify-between gap-1.5">
-                              <h3 className="font-black text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 group-hover:text-[#ff6325] transition-colors">
+                              <h3 className="font-bold text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 group-hover:text-[#ff6325] transition-colors">
                                 {item.title}
                               </h3>
                               <div className="flex text-amber-400 shrink-0">
@@ -475,7 +475,7 @@ export function CarouselSections() {
                         <div className="p-3 flex-1 flex flex-col justify-between bg-[color:var(--color-surface)] dark:bg-[#101c1c]">
                           <div>
                             <div className="flex items-start justify-between gap-1.5">
-                              <h3 className="font-black text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 group-hover:text-[#ff6325] transition-colors">
+                              <h3 className="font-bold text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 group-hover:text-[#ff6325] transition-colors">
                                 {item.title}
                               </h3>
                               <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-[#0A3161]/10 text-[#0A3161] dark:text-blue-300 border border-[#0A3161]/20 shrink-0">

@@ -239,7 +239,7 @@ export function WeekendEscapes() {
                   <div className="p-3 flex-1 flex flex-col justify-between bg-[color:var(--color-surface-container)]">
                     <div>
                       {/* Title */}
-                      <h3 className="font-extrabold text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 group-hover:text-[#ff6325] transition-colors">
+                      <h3 className="font-bold text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 group-hover:text-[#ff6325] transition-colors">
                         {item.title}
                       </h3>
 
