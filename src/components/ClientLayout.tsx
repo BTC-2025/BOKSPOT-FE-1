@@ -4,6 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { TopNav } from './TopNav';
 import { BottomNav } from './BottomNav';
+import { BokspotFooter } from './layout/BokspotFooter';
 
 function getHierarchicalParent(path: string): string | null {
   if (!path || path === '/') return null;
@@ -49,6 +50,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   // We exclude administrative dashboard portals /sales and /superadmin
   const isExcluded = pathname?.startsWith('/sales') || pathname?.startsWith('/superadmin');
+  const isCheckout = pathname?.startsWith('/booking/checkout') || pathname?.startsWith('/booking/payment');
 
   // Clean native browser history without synthetic popstate interventions
 
@@ -84,9 +86,12 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
               ? (activeUtilityTab === 'beta' ? '390px' : '370px') 
               : '50px'
         }}
-        className="flex-1 w-auto transition-[margin-right] duration-200 ease-out"
+        className="flex-1 w-auto transition-[margin-right] duration-200 ease-out flex flex-col justify-between"
       >
-        {children}
+        <div className="flex-1">
+          {children}
+        </div>
+        {!isCheckout && <BokspotFooter />}
       </div>
       <BottomNav />
     </div>

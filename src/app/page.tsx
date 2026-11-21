@@ -20,7 +20,6 @@ import { NearbyRadar } from '../components/home/NearbyRadar';
 import { AdBanner } from '../components/home/AdBanner';
 import { HorizontalQuickShortcuts } from '../components/home/HorizontalQuickShortcuts';
 import { MegaMenuSubnav } from '../components/home/MegaMenuSubnav';
-import { BokspotFooter } from '../components/layout/BokspotFooter';
 import { CategoryCard, SectionHeader, StatCard, WishlistButton, CartAddButton } from '../components/home/HomeShared';
 import { CITY_COORDINATES, EXPLORE_SECTIONS, RECOMMENDED_ITEMS, CONCIERGE_JOURNEYS_POOL, MOCK_ADS, MOCK_ACTIVITIES, getCombinedConciergePool } from '../lib/homeData';
 
@@ -213,9 +212,6 @@ export default function HomePage() {
           </motion.div>
         </div>
       </main>
-
-      {/* New Exact Reference Production Footer - Edge to Edge Full Width */}
-      <BokspotFooter />
 
       {/* Glassmorphic Dashboard Drawer/Modal */}
       {dashboardOpen && (
