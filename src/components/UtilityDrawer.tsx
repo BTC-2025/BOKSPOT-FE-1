@@ -404,20 +404,22 @@ export function UtilityDrawer({
   }, [isOpen, activeTab]);
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          ref={drawerRef}
-          initial={{ x: '100%' }}
-          animate={{ x: 0 }}
-          exit={{ x: '100%' }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
-          className={`fixed right-0 bottom-0 z-[10000] flex flex-row overflow-hidden pointer-events-auto bg-white dark:bg-[#0a0f1d] border-l border-slate-200/80 dark:border-white/10 shadow-2xl overscroll-contain ${
-            !isMainHeaderVisible
-              ? 'top-0'
-              : 'top-16'
-          }`}
-        >
+    <>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            key="utility-drawer-container"
+            ref={drawerRef}
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className={`fixed right-0 bottom-0 z-[10000] flex flex-row overflow-hidden pointer-events-auto bg-white dark:bg-[#0a0f1d] border-l border-slate-200/80 dark:border-white/10 shadow-2xl overscroll-contain ${
+              !isMainHeaderVisible
+                ? 'top-0'
+                : 'top-16'
+            }`}
+          >
           {/* Slide-out Left Content Panel: strictly for non-keyboard tools */}
           <AnimatePresence>
             {activeTab && activeTab !== 'keyboard' && (
@@ -2005,11 +2007,14 @@ export function UtilityDrawer({
           </div>
         </motion.div>
       )}
+      </AnimatePresence>
 
       {/* Floating Virtual Keyboard - Can drag anywhere across the screen, rendered independently without drawer side panel */}
-      {activeTab === 'keyboard' && (
-        <motion.div
-          drag
+      <AnimatePresence>
+        {activeTab === 'keyboard' && (
+          <motion.div
+            key="floating-virtual-keyboard"
+            drag
           dragMomentum={false}
           onDragStart={() => setIsKeyboardDragging(true)}
           onDragEnd={() => setIsKeyboardDragging(false)}
@@ -2297,7 +2302,8 @@ export function UtilityDrawer({
           </div>
         </motion.div>
       )}
-    </AnimatePresence>
+      </AnimatePresence>
+    </>
   );
 }
 
