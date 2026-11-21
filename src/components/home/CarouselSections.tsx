@@ -377,13 +377,7 @@ export function CarouselSections() {
         return (
           <section className="mb-10 text-left">
             {/* Outer Container with Light/Dark Adaptive Mesh */}
-            <div className="bg-[color:var(--color-surface-container)] rounded-[28px] p-5 sm:p-6 shadow-[0_8px_30px_rgba(16,185,129,0.06)] border border-[color:var(--color-outline-variant)]/30 backdrop-blur-2xl relative overflow-hidden">
-              {/* Ambient Emerald/Cyan Glow Core */}
-              <div 
-                className="absolute -right-20 -top-20 w-96 h-96 rounded-full opacity-15 pointer-events-none blur-[100px]"
-                style={{ background: 'radial-gradient(circle, #10b981 0%, #06b6d4 60%, transparent 80%)' }}
-              />
-
+            <div className="bg-[color:var(--color-surface-container)] rounded-[28px] p-5 sm:p-6 shadow-[0_8px_30px_rgba(10,49,97,0.04)] border border-[color:var(--color-outline-variant)]/30 backdrop-blur-2xl relative overflow-hidden">
               {/* Section Header with Standardized Styling */}
               <div className="flex items-center justify-between mb-5 relative z-10">
                 <div className="flex items-center gap-2">
@@ -421,7 +415,7 @@ export function CarouselSections() {
                 <button
                   onClick={() => scrollEvents('left')}
                   aria-label="Scroll left"
-                  className="absolute -left-4 top-[45%] -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-slate-900/90 backdrop-blur-xl border border-white/15 flex items-center justify-center shadow-2xl hover:scale-110 hover:border-emerald-500/50 transition-all opacity-0 group-hover:opacity-100 text-white"
+                  className="absolute -left-4 top-[45%] -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-slate-900/90 backdrop-blur-xl border border-white/15 flex items-center justify-center shadow-2xl hover:scale-110 hover:border-[#0A3161]/50 transition-all opacity-0 group-hover:opacity-100 text-white"
                 >
                   <span className="material-symbols-outlined text-[22px]">chevron_left</span>
                 </button>
@@ -430,7 +424,7 @@ export function CarouselSections() {
                 <button
                   onClick={() => scrollEvents('right')}
                   aria-label="Scroll right"
-                  className="absolute -right-4 top-[45%] -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-slate-900/90 backdrop-blur-xl border border-white/15 flex items-center justify-center shadow-2xl hover:scale-110 hover:border-emerald-500/50 transition-all opacity-0 group-hover:opacity-100 text-white"
+                  className="absolute -right-4 top-[45%] -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-slate-900/90 backdrop-blur-xl border border-white/15 flex items-center justify-center shadow-2xl hover:scale-110 hover:border-[#0A3161]/50 transition-all opacity-0 group-hover:opacity-100 text-white"
                 >
                   <span className="material-symbols-outlined text-[22px]">chevron_right</span>
                 </button>
@@ -439,95 +433,102 @@ export function CarouselSections() {
                   ref={eventsScrollRef}
                   className="flex gap-5 overflow-x-auto pb-4 pt-1 custom-scrollbar scroll-smooth snap-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-1"
                 >
-                  {sec.items.map((item: any) => (
-                    <Link
-                      key={item.id}
-                      href={item.link}
-                      className="w-[260px] sm:w-[280px] shrink-0 snap-start group flex flex-col"
-                    >
-                      {/* Ticket Card Architecture with Perforated Look & Pass Entry Pill */}
-                      <div className="relative bg-[color:var(--color-surface)] dark:bg-[#101c1c]/90 rounded-[22px] overflow-hidden border border-emerald-500/25 hover:border-emerald-400/60 shadow-[0_4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_6px_25px_rgba(0,0,0,0.4)] hover:shadow-[0_16px_36px_rgba(16,185,129,0.15)] transition-all duration-400 flex flex-col h-[320px] hover:-translate-y-1">
-                        
-                        {/* Wide Image Header */}
-                        <div className="relative h-[155px] w-full shrink-0 overflow-hidden bg-slate-950">
-                          <img
-                            src={item.image}
-                            alt={item.title}
-                            loading="lazy"
-                            onError={(e: any) => {
-                              e.currentTarget.src = 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop&q=80';
-                            }}
-                            className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out brightness-95"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
-                          <WishlistButton item={item} />
+                  {sec.items.map((item: any, idx: number) => {
+                    const isOrange = idx % 2 === 1; // 0: Blue, 1: Orange, 2: Blue, 3: Orange
+                    const cardBorderClass = isOrange
+                      ? 'border-[#ff6325]/30 hover:border-[#ff6325] hover:shadow-[0_14px_30px_rgba(255,99,37,0.14)]'
+                      : 'border-[#0A3161]/30 hover:border-[#0A3161] hover:shadow-[0_14px_30px_rgba(10,49,97,0.16)]';
+
+                    return (
+                      <Link
+                        key={item.id}
+                        href={item.link}
+                        className="w-[260px] sm:w-[280px] shrink-0 snap-start group flex flex-col"
+                      >
+                        {/* Ticket Card Architecture with Perforated Look & Pass Entry Pill */}
+                        <div className={`relative bg-[color:var(--color-surface)] dark:bg-[#101c1c]/90 rounded-[22px] overflow-hidden border ${cardBorderClass} shadow-[0_4px_16px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)] dark:hover:shadow-[0_16px_36px_rgba(0,0,0,0.4)] transition-all duration-400 flex flex-col h-[320px] hover:-translate-y-1`}>
                           
-                          {/* Event Category Tag */}
-                          <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5">
-                            <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md bg-[#0A3161]/90 text-white border border-[#0A3161]/50 shadow-sm flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                              PASS ENTRY
-                            </span>
-                          </div>
-
-                          {/* Event Badge */}
-                          {item.badge && (
-                            <div className="absolute bottom-2.5 left-2.5 z-10">
-                              <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider backdrop-blur-md shadow-sm border border-white/20 flex items-center gap-1 ${item.badgeBg}`}>
-                                {item.badge}
-                              </span>
-                            </div>
-                          )}
-
-                          {/* Ticket Price Chip */}
-                          <div className="absolute bottom-2.5 right-2.5 z-10 flex items-baseline gap-0.5 px-2.5 py-0.5 rounded-lg backdrop-blur-xl bg-slate-950/90 border border-[#0A3161]/50 text-white shadow-md">
-                            <span className="text-[9px] text-slate-400 font-bold">From</span>
-                            <span className="text-[12px] font-black tracking-tight">{item.price}</span>
-                          </div>
-                        </div>
-
-                        {/* Ticket Perforation Dashed Line */}
-                        <div className="relative flex items-center justify-between px-3 py-0.5 bg-[color:var(--color-surface)] dark:bg-[#101c1c]">
-                          <div className="w-3 h-3 rounded-full bg-[color:var(--color-surface-container)] -ml-4 border-r border-[#0A3161]/30" />
-                          <div className="flex-1 border-b border-dashed border-[#0A3161]/30 mx-2" />
-                          <div className="w-3 h-3 rounded-full bg-[color:var(--color-surface-container)] -mr-4 border-l border-[#0A3161]/30" />
-                        </div>
-
-                        {/* Ticket Lower Half Content */}
-                        <div className="p-3 flex-1 flex flex-col justify-between bg-[color:var(--color-surface)] dark:bg-[#101c1c]">
-                          <div>
-                            <div className="flex items-start justify-between gap-1.5">
-                              <h3 className="font-bold text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 group-hover:text-[#ff6325] transition-colors">
-                                {item.title}
-                              </h3>
-                              <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-[#0A3161]/10 text-[#0A3161] dark:text-blue-300 border border-[#0A3161]/20 shrink-0">
-                                ⭐ {item.ratingScore}
+                          {/* Wide Image Header */}
+                          <div className="relative h-[155px] w-full shrink-0 overflow-hidden bg-slate-950">
+                            <img
+                              src={item.image}
+                              alt={item.title}
+                              loading="lazy"
+                              onError={(e: any) => {
+                                e.currentTarget.src = 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop&q=80';
+                              }}
+                              className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out brightness-95"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
+                            <WishlistButton item={item} />
+                            
+                            {/* Event Category Tag */}
+                            <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5">
+                              <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md bg-[#0A3161]/90 text-white border border-[#0A3161]/50 shadow-sm flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                                PASS ENTRY
                               </span>
                             </div>
 
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1 font-medium truncate">
-                              <span className="material-symbols-outlined text-[13px] text-[#0A3161] dark:text-blue-400 shrink-0">stadium</span>
-                              <span className="truncate">{item.location}</span>
-                            </p>
+                            {/* Event Badge */}
+                            {item.badge && (
+                              <div className="absolute bottom-2.5 left-2.5 z-10">
+                                <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider backdrop-blur-md shadow-sm border border-white/20 flex items-center gap-1 ${item.badgeBg}`}>
+                                  {item.badge}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Ticket Price Chip */}
+                            <div className="absolute bottom-2.5 right-2.5 z-10 flex items-baseline gap-0.5 px-2.5 py-0.5 rounded-lg backdrop-blur-xl bg-slate-950/90 border border-[#0A3161]/50 text-white shadow-md">
+                              <span className="text-[9px] text-slate-400 font-bold">From</span>
+                              <span className="text-[12px] font-black tracking-tight">{item.price}</span>
+                            </div>
                           </div>
 
-                          <div className="flex items-center justify-between pt-2 mt-0.5">
-                            <div className="flex items-center gap-1.5 text-[10px] text-[#0A3161] dark:text-blue-300 font-bold">
-                              <span className="material-symbols-outlined text-[13px]">qr_code_scanner</span>
-                              <span>Turnstile Pass</span>
+                          {/* Ticket Perforation Dashed Line */}
+                          <div className="relative flex items-center justify-between px-3 py-0.5 bg-[color:var(--color-surface)] dark:bg-[#101c1c]">
+                            <div className="w-3 h-3 rounded-full bg-[color:var(--color-surface-container)] -ml-4 border-r border-[#0A3161]/30" />
+                            <div className="flex-1 border-b border-dashed border-[#0A3161]/30 mx-2" />
+                            <div className="w-3 h-3 rounded-full bg-[color:var(--color-surface-container)] -mr-4 border-l border-[#0A3161]/30" />
+                          </div>
+
+                          {/* Ticket Lower Half Content */}
+                          <div className="p-3 flex-1 flex flex-col justify-between bg-[color:var(--color-surface)] dark:bg-[#101c1c]">
+                            <div>
+                              <div className="flex items-start justify-between gap-1.5">
+                                <h3 className="font-bold text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 transition-colors">
+                                  {item.title}
+                                </h3>
+                                <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-[#0A3161]/10 text-[#0A3161] dark:text-blue-300 border border-[#0A3161]/20 shrink-0">
+                                  ⭐ {item.ratingScore}
+                                </span>
+                              </div>
+
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1 font-medium truncate">
+                                <span className="material-symbols-outlined text-[13px] text-[#0A3161] dark:text-blue-400 shrink-0">stadium</span>
+                                <span className="truncate">{item.location}</span>
+                              </p>
                             </div>
 
-                            <div className="flex items-center gap-1 px-3 py-1 rounded-lg bg-[#ff6325] text-white hover:brightness-105 transition-all font-black text-[10px] shadow-sm">
-                              <span>Get Pass</span>
-                              <span className="material-symbols-outlined text-[12px] group-hover:translate-x-0.5 transition-transform">
-                                confirmation_number
-                              </span>
+                            <div className="flex items-center justify-between pt-2 mt-0.5">
+                              <div className="flex items-center gap-1.5 text-[10px] text-[#0A3161] dark:text-blue-300 font-bold">
+                                <span className="material-symbols-outlined text-[13px]">qr_code_scanner</span>
+                                <span>Turnstile Pass</span>
+                              </div>
+
+                              <div className="flex items-center gap-1 px-3 py-1 rounded-lg bg-[#ff6325] text-white hover:brightness-105 transition-all font-black text-[10px] shadow-sm">
+                                <span>Get Pass</span>
+                                <span className="material-symbols-outlined text-[12px] group-hover:translate-x-0.5 transition-transform">
+                                  confirmation_number
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </Link>
-                  ))}
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             </div>

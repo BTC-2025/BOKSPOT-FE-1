@@ -99,14 +99,14 @@ export function ConciergeJourneys() {
         <div className="flex items-center justify-between mb-5">
           <div>
             <div className="flex items-center gap-2.5">
-              <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-500/20 to-indigo-500/20 border border-sky-500/30 text-sky-500 shadow-sm">
-                <Compass size={18} className="animate-spin-slow" />
+              <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-[#0A3161]/10 border border-[#0A3161]/20 text-[#0A3161] dark:text-blue-300 shadow-sm">
+                <Compass size={18} />
               </span>
               <h2 className="text-[19px] sm:text-[21px] font-black text-[color:var(--color-on-surface)] tracking-tight">
                 Upcoming Concierge Journeys & Events
               </h2>
-              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#ff6325]/10 text-[#ff6325] border border-[#ff6325]/25">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#ff6325] animate-ping" />
                 Live Feed
               </span>
             </div>
@@ -125,80 +125,81 @@ export function ConciergeJourneys() {
 
         {/* Ticker Container with Frosted Glass Borders */}
         <div className="relative group overflow-hidden w-full p-2.5 rounded-[32px] bg-[color:var(--color-surface-container)]/70 border border-[color:var(--color-outline-variant)]/25 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-          {/* Subtle ambient glow */}
-          <div 
-            className="absolute -left-10 -top-10 w-64 h-64 rounded-full opacity-10 pointer-events-none blur-3xl"
-            style={{ background: 'radial-gradient(circle, #38bdf8, #818cf8)' }}
-          />
-
           <div className="flex gap-4 overflow-visible py-2 animate-marquee relative z-10">
-            {[...activeJourneys, ...activeJourneys, ...activeJourneys].map((journey, index) => (
-              <Link
-                href={journey.link || '/booking'}
-                key={`${journey.id}-${index}`}
-                className="w-[235px] shrink-0 group/card flex flex-col rounded-[22px] bg-[color:var(--color-surface-container-high)]/70 hover:bg-[color:var(--color-surface-container)] border border-[color:var(--color-outline-variant)]/30 hover:border-[color:var(--color-primary)]/40 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1.5 overflow-hidden"
-              >
-                {/* Image & Header */}
-                <div className="relative h-[115px] w-full overflow-hidden bg-slate-800">
-                  <img
-                    src={journey.image}
-                    alt={journey.trainName}
-                    loading="lazy"
-                    onError={(e: any) => {
-                      e.currentTarget.src = 'https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=800&auto=format&fit=crop&q=80';
-                    }}
-                    className="w-full h-full object-cover group-hover/card:scale-110 transition-transform duration-700 ease-out"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent pointer-events-none" />
+            {[...activeJourneys, ...activeJourneys, ...activeJourneys].map((journey, index) => {
+              const isOrange = index % 2 === 1;
+              const cardBorderClass = isOrange
+                ? 'border-[#ff6325]/30 hover:border-[#ff6325] hover:shadow-[0_14px_30px_rgba(255,99,37,0.14)]'
+                : 'border-[#0A3161]/30 hover:border-[#0A3161] hover:shadow-[0_14px_30px_rgba(10,49,97,0.16)]';
 
-                  {/* Top Category Badge */}
-                  <div className="absolute top-2.5 left-2.5 z-10">
-                    <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider backdrop-blur-md bg-black/60 text-white/95 border border-white/20 shadow-sm flex items-center gap-1">
-                      <span>{journey.icon}</span>
-                      <span>{getCategoryLabel(journey)}</span>
-                    </span>
-                  </div>
+              return (
+                <Link
+                  href={journey.link || '/booking'}
+                  key={`${journey.id}-${index}`}
+                  className={`w-[235px] shrink-0 group/card flex flex-col rounded-[22px] bg-[color:var(--color-surface-container-high)]/70 hover:bg-[color:var(--color-surface-container)] border ${cardBorderClass} shadow-[0_4px_16px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)] transition-all duration-400 hover:-translate-y-1 overflow-hidden`}
+                >
+                  {/* Image & Header */}
+                  <div className="relative h-[115px] w-full overflow-hidden bg-slate-800">
+                    <img
+                      src={journey.image}
+                      alt={journey.trainName}
+                      loading="lazy"
+                      onError={(e: any) => {
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=800&auto=format&fit=crop&q=80';
+                      }}
+                      className="w-full h-full object-cover group-hover/card:scale-110 transition-transform duration-700 ease-out"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent pointer-events-none" />
 
-                  {/* Live Radar Ping */}
-                  <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full backdrop-blur-md bg-black/60 border border-white/20 text-white text-[9px] font-bold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>Live</span>
-                  </div>
-
-                  {/* Price Tag Floating Bottom Right */}
-                  {journey.price && (
-                    <div className="absolute bottom-2 right-2.5 z-10 px-2.5 py-0.5 rounded-lg backdrop-blur-md bg-black/75 border border-white/20 text-white text-[11px] font-black shadow-md">
-                      {journey.price}
+                    {/* Top Category Badge */}
+                    <div className="absolute top-2.5 left-2.5 z-10">
+                      <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider backdrop-blur-md bg-black/60 text-white/95 border border-white/20 shadow-sm flex items-center gap-1">
+                        <span>{journey.icon}</span>
+                        <span>{getCategoryLabel(journey)}</span>
+                      </span>
                     </div>
-                  )}
-                </div>
 
-                {/* Content Section */}
-                <div className="p-3.5 flex flex-col justify-between flex-1 bg-[color:var(--color-surface-container)]">
-                  <div>
-                    {/* Title */}
-                    <h3 className="font-bold text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 group-hover/card:text-[#ff6325] transition-colors">
-                      {journey.trainName}
-                    </h3>
+                    {/* Live Radar Ping */}
+                    <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full backdrop-blur-md bg-black/60 border border-white/20 text-white text-[9px] font-bold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#ff6325] animate-pulse" />
+                      <span>Live</span>
+                    </div>
 
-                    {/* Source -> Destination */}
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1 truncate flex items-center gap-1">
-                      <span className="truncate">{journey.source}</span>
-                      <span className="text-[#0A3161] dark:text-blue-400">➔</span>
-                      <span className="truncate">{journey.destination}</span>
-                    </p>
+                    {/* Price Tag Floating Bottom Right */}
+                    {journey.price && (
+                      <div className="absolute bottom-2 right-2.5 z-10 px-2.5 py-0.5 rounded-lg backdrop-blur-md bg-black/75 border border-white/20 text-white text-[11px] font-black shadow-md">
+                        {journey.price}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Countdown Timer Capsule */}
-                  <div className="mt-3 pt-2.5 border-t border-[color:var(--color-outline-variant)]/20 flex items-center justify-between gap-2">
-                    <div className="w-full bg-[#0A3161]/10 text-[#0A3161] dark:bg-blue-950/40 dark:text-blue-300 border border-[#0A3161]/20 text-[10px] font-black tracking-wider px-2.5 py-1 rounded-full shadow-sm flex items-center justify-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-ping shrink-0" />
-                      <span>{formatSecondsLeft(journey)}</span>
+                  {/* Content Section */}
+                  <div className="p-3.5 flex flex-col justify-between flex-1 bg-[color:var(--color-surface-container)]">
+                    <div>
+                      {/* Title */}
+                      <h3 className="font-bold text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 transition-colors">
+                        {journey.trainName}
+                      </h3>
+
+                      {/* Source -> Destination */}
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1 truncate flex items-center gap-1">
+                        <span className="truncate">{journey.source}</span>
+                        <span className="text-[#0A3161] dark:text-blue-400">➔</span>
+                        <span className="truncate">{journey.destination}</span>
+                      </p>
+                    </div>
+
+                    {/* Countdown Timer Capsule */}
+                    <div className="mt-3 pt-2.5 border-t border-[color:var(--color-outline-variant)]/20 flex items-center justify-between gap-2">
+                      <div className="w-full bg-[#0A3161]/10 text-[#0A3161] dark:bg-blue-950/40 dark:text-blue-300 border border-[#0A3161]/20 text-[10px] font-black tracking-wider px-2.5 py-1 rounded-full shadow-sm flex items-center justify-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-ping shrink-0" />
+                        <span>{formatSecondsLeft(journey)}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>

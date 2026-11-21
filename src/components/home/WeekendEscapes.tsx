@@ -121,23 +121,17 @@ export function WeekendEscapes() {
       className="mb-12 text-left"
     >
       <div className="relative overflow-hidden rounded-[32px] bg-[color:var(--color-surface-container)] border border-[color:var(--color-outline-variant)]/25 p-5 sm:p-7 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-        {/* Ambient Gradient Glow */}
-        <div
-          className="absolute -left-20 -top-20 w-80 h-80 rounded-full opacity-10 pointer-events-none blur-3xl"
-          style={{ background: 'radial-gradient(circle, #0ea5e9, #6366f1)' }}
-        />
-
         {/* Section Header */}
         <div className="flex items-center justify-between mb-6 relative z-10">
           <div>
             <div className="flex items-center gap-2.5">
-              <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-sky-500/20 to-indigo-500/20 border border-sky-500/30 text-sky-500 shadow-sm">
-                <Compass className="w-5 h-5 animate-spin-slow" />
+              <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-[#0A3161]/10 border border-[#0A3161]/20 text-[#0A3161] dark:text-blue-300 shadow-sm">
+                <Compass className="w-5 h-5" />
               </span>
               <h2 className="text-[19px] sm:text-[21px] font-black text-[color:var(--color-on-surface)] tracking-tight">
                 Weekend Getaways & Escapes
               </h2>
-              <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/25">
+              <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#ff6325]/10 text-[#ff6325] border border-[#ff6325]/25">
                 From Chennai
               </span>
             </div>
@@ -180,104 +174,111 @@ export function WeekendEscapes() {
             ref={scrollRef}
             className="flex gap-4.5 overflow-x-auto pb-4 pt-1 scroll-smooth snap-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-1"
           >
-            {escapes.map((item) => (
-              <Link
-                key={item.id}
-                href={item.link}
-                className="w-[250px] sm:w-[270px] shrink-0 snap-start group flex flex-col"
-              >
-                <div className="relative bg-[color:var(--color-surface-container-high)]/60 rounded-[20px] overflow-hidden border border-[color:var(--color-outline-variant)]/25 shadow-[0_4px_16px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_28px_rgba(0,0,0,0.1)] hover:border-[color:var(--color-primary)]/40 transition-all duration-400 flex flex-col h-[310px] hover:-translate-y-1">
-                  
-                  {/* Image Section */}
-                  <div className="relative h-[155px] w-full shrink-0 overflow-hidden bg-slate-800">
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      loading="lazy"
-                      onError={(e: any) => {
-                        e.currentTarget.src =
-                          'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80';
-                      }}
-                      className="w-full h-full object-cover group-hover:scale-106 transition-transform duration-500 ease-out"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-black/20 pointer-events-none" />
+            {escapes.map((item, idx) => {
+              const isOrange = idx % 2 === 1;
+              const cardBorderClass = isOrange
+                ? 'border-[#ff6325]/30 hover:border-[#ff6325] hover:shadow-[0_14px_30px_rgba(255,99,37,0.14)]'
+                : 'border-[#0A3161]/30 hover:border-[#0A3161] hover:shadow-[0_14px_30px_rgba(10,49,97,0.16)]';
 
-                    {/* Category Pill Top Left */}
-                    <div className="absolute top-2.5 left-2.5 z-10">
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider backdrop-blur-md bg-black/60 text-white/95 border border-white/20 shadow-sm flex items-center gap-1">
-                        <Sparkles className="w-2.5 h-2.5 text-amber-300" />
-                        <span>{item.category}</span>
-                      </span>
-                    </div>
+              return (
+                <Link
+                  key={item.id}
+                  href={item.link}
+                  className="w-[250px] sm:w-[270px] shrink-0 snap-start group flex flex-col"
+                >
+                  <div className={`relative bg-[color:var(--color-surface-container-high)]/60 rounded-[20px] overflow-hidden border ${cardBorderClass} shadow-[0_4px_16px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)] transition-all duration-400 flex flex-col h-[310px] hover:-translate-y-1`}>
+                    
+                    {/* Image Section */}
+                    <div className="relative h-[155px] w-full shrink-0 overflow-hidden bg-slate-800">
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        loading="lazy"
+                        onError={(e: any) => {
+                          e.currentTarget.src =
+                            'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80';
+                        }}
+                        className="w-full h-full object-cover group-hover:scale-106 transition-transform duration-500 ease-out"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-black/20 pointer-events-none" />
 
-                    {/* Wishlist Button Top Right */}
-                    <WishlistButton item={item} />
-
-                    {/* Drive Distance Pill Bottom Left */}
-                    <div className="absolute bottom-2.5 left-2.5 z-10 flex items-center gap-1">
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold backdrop-blur-md bg-black/75 text-white/90 border border-white/20 flex items-center gap-1 shadow-sm">
-                        <Car className="w-2.5 h-2.5 text-sky-300" />
-                        <span>{item.driveTime}</span>
-                      </span>
-                      <span className={`px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider backdrop-blur-md shadow-sm border border-white/20 ${item.tagColor}`}>
-                        {item.tag}
-                      </span>
-                    </div>
-
-                    {/* Price Tag Bottom Right */}
-                    <div className="absolute bottom-2.5 right-2.5 z-10 flex items-baseline gap-1 px-2.5 py-0.5 rounded-lg backdrop-blur-md bg-black/80 border border-white/20 text-white shadow-md">
-                      <span className="text-[12px] font-black tracking-tight">{item.price}</span>
-                      {item.originalPrice && (
-                        <span className="text-[9px] text-white/60 line-through font-semibold">
-                          {item.originalPrice}
+                      {/* Category Pill Top Left */}
+                      <div className="absolute top-2.5 left-2.5 z-10">
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider backdrop-blur-md bg-black/60 text-white/95 border border-white/20 shadow-sm flex items-center gap-1">
+                          <Sparkles className="w-2.5 h-2.5 text-amber-300" />
+                          <span>{item.category}</span>
                         </span>
-                      )}
+                      </div>
+
+                      {/* Wishlist Button Top Right */}
+                      <WishlistButton item={item} />
+
+                      {/* Drive Distance Pill Bottom Left */}
+                      <div className="absolute bottom-2.5 left-2.5 z-10 flex items-center gap-1">
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold backdrop-blur-md bg-black/75 text-white/90 border border-white/20 flex items-center gap-1 shadow-sm">
+                          <Car className="w-2.5 h-2.5 text-sky-300" />
+                          <span>{item.driveTime}</span>
+                        </span>
+                        <span className={`px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider backdrop-blur-md shadow-sm border border-white/20 ${item.tagColor}`}>
+                          {item.tag}
+                        </span>
+                      </div>
+
+                      {/* Price Tag Bottom Right */}
+                      <div className="absolute bottom-2.5 right-2.5 z-10 flex items-baseline gap-1 px-2.5 py-0.5 rounded-lg backdrop-blur-md bg-black/80 border border-white/20 text-white shadow-md">
+                        <span className="text-[12px] font-black tracking-tight">{item.price}</span>
+                        {item.originalPrice && (
+                          <span className="text-[9px] text-white/60 line-through font-semibold">
+                            {item.originalPrice}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Card Content Section */}
+                    <div className="p-3 flex-1 flex flex-col justify-between bg-[color:var(--color-surface-container)]">
+                      <div>
+                        {/* Title */}
+                        <h3 className="font-bold text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 transition-colors">
+                          {item.title}
+                        </h3>
+
+                        {/* Location & Distance */}
+                        <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1">
+                          <MapPin className="w-3 h-3 text-[#0A3161] dark:text-blue-400 shrink-0" />
+                          <span className="truncate">{item.destination}</span>
+                          <span className="text-[9px] text-slate-400">({item.distance})</span>
+                        </div>
+
+                        {/* Highlights */}
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 font-medium mt-1.5 line-clamp-1 border-t border-[color:var(--color-outline-variant)]/15 pt-1">
+                          {item.highlights}
+                        </p>
+                      </div>
+
+                      {/* Bottom Rating & CTA */}
+                      <div className="flex items-center justify-between pt-2 mt-1 border-t border-[color:var(--color-outline-variant)]/20">
+                        <div className="flex items-center gap-1 bg-amber-500/10 dark:bg-amber-500/15 px-2 py-0.5 rounded-full border border-amber-500/20">
+                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                          <span className="text-[10px] font-black text-amber-600 dark:text-amber-400">
+                            {item.rating}
+                          </span>
+                          <span className="text-[9px] text-[color:var(--color-outline)] font-medium hidden sm:inline">
+                            ({item.reviews})
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#ff6325] text-white hover:brightness-105 transition-all duration-300 font-bold text-[10px] shadow-xs">
+                          <span>Book Stay</span>
+                          <ArrowRight className="w-2.5 h-2.5 group-hover:translate-x-0.5 transition-transform" />
+                        </div>
+                      </div>
+
                     </div>
                   </div>
-
-                  {/* Card Content Section */}
-                  <div className="p-3 flex-1 flex flex-col justify-between bg-[color:var(--color-surface-container)]">
-                    <div>
-                      {/* Title */}
-                      <h3 className="font-bold text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 group-hover:text-[#ff6325] transition-colors">
-                        {item.title}
-                      </h3>
-
-                      {/* Location & Distance */}
-                      <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1">
-                        <MapPin className="w-3 h-3 text-[#0A3161] dark:text-blue-400 shrink-0" />
-                        <span className="truncate">{item.destination}</span>
-                        <span className="text-[9px] text-slate-400">({item.distance})</span>
-                      </div>
-
-                      {/* Highlights */}
-                      <p className="text-[9px] text-slate-500 dark:text-slate-400 font-medium mt-1.5 line-clamp-1 border-t border-[color:var(--color-outline-variant)]/15 pt-1">
-                        {item.highlights}
-                      </p>
-                    </div>
-
-                    {/* Bottom Rating & CTA */}
-                    <div className="flex items-center justify-between pt-2 mt-1 border-t border-[color:var(--color-outline-variant)]/20">
-                      <div className="flex items-center gap-1 bg-amber-500/10 dark:bg-amber-500/15 px-2 py-0.5 rounded-full border border-amber-500/20">
-                        <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                        <span className="text-[10px] font-black text-amber-600 dark:text-amber-400">
-                          {item.rating}
-                        </span>
-                        <span className="text-[9px] text-[color:var(--color-outline)] font-medium hidden sm:inline">
-                          ({item.reviews})
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#ff6325] text-white hover:brightness-105 transition-all duration-300 font-bold text-[10px] shadow-xs">
-                        <span>Book Stay</span>
-                        <ArrowRight className="w-2.5 h-2.5 group-hover:translate-x-0.5 transition-transform" />
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>

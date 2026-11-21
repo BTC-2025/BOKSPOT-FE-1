@@ -106,12 +106,18 @@ export function VerifiedPartners() {
 
         {/* 4 Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4.5 relative z-10">
-          {partners.map((partner) => (
-            <Link
-              key={partner.id}
-              href={partner.link}
-              className="group flex flex-col rounded-[20px] bg-[color:var(--color-surface-container-high)]/60 border border-[color:var(--color-outline-variant)]/25 overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_28px_rgba(0,0,0,0.1)] hover:border-[color:var(--color-primary)]/40 transition-all duration-400 hover:-translate-y-1"
-            >
+          {partners.map((partner, idx) => {
+            const isOrange = idx % 2 === 1;
+            const cardBorderClass = isOrange
+              ? 'border-[#ff6325]/30 hover:border-[#ff6325] hover:shadow-[0_14px_30px_rgba(255,99,37,0.14)]'
+              : 'border-[#0A3161]/30 hover:border-[#0A3161] hover:shadow-[0_14px_30px_rgba(10,49,97,0.16)]';
+
+            return (
+              <Link
+                key={partner.id}
+                href={partner.link}
+                className={`group flex flex-col rounded-[20px] bg-[color:var(--color-surface-container-high)]/60 border ${cardBorderClass} overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)] transition-all duration-400 hover:-translate-y-1`}
+              >
               {/* Image Section */}
               <div className="relative h-[145px] w-full overflow-hidden bg-slate-800">
                 <img
@@ -152,12 +158,12 @@ export function VerifiedPartners() {
               {/* Card Details */}
               <div className="p-3 flex-1 flex flex-col justify-between bg-[color:var(--color-surface-container)]">
                 <div>
-                  <h3 className="font-extrabold text-[13px] leading-snug text-[color:var(--color-on-surface)] line-clamp-1 group-hover:text-[color:var(--color-primary)] transition-colors">
+                  <h3 className="font-extrabold text-[13px] leading-snug text-[color:var(--color-on-surface)] line-clamp-1 transition-colors">
                     {partner.name}
                   </h3>
 
                   <div className="flex items-center gap-1 text-[10px] text-[color:var(--color-outline)] font-medium mt-1">
-                    <MapPin className="w-3 h-3 text-[color:var(--color-primary)] shrink-0" />
+                    <MapPin className="w-3 h-3 text-[#0A3161] dark:text-blue-400 shrink-0" />
                     <span className="truncate">{partner.city}</span>
                   </div>
 
@@ -178,14 +184,15 @@ export function VerifiedPartners() {
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[color:var(--color-primary)]/10 text-[color:var(--color-primary)] group-hover:bg-[color:var(--color-primary)] group-hover:text-white transition-all duration-300 font-bold text-[10px] shadow-xs">
+                  <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#0A3161]/10 text-[#0A3161] dark:text-blue-300 font-bold text-[10px] shadow-xs">
                     <span>View Slots</span>
                     <ArrowRight className="w-2.5 h-2.5 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </div>
               </div>
             </Link>
-          ))}
+          );
+        })}
         </div>
       </div>
     </motion.section>
