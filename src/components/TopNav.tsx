@@ -446,9 +446,9 @@ export function TopNav({
                 }
 
                 const navItems = [
-                  { label: 'Home', href: '/', id: 'home', widthClass: 'w-20' },
-                  { label: 'Categories', href: '/categories', id: 'categories', widthClass: 'w-28' },
-                  { label: 'Bookings', href: '/bookings', id: 'bookings', widthClass: 'w-24' },
+                  { label: 'Home', href: '/', id: 'home' },
+                  { label: 'Categories', href: '/categories', id: 'categories' },
+                  { label: 'Bookings', href: '/bookings', id: 'bookings' },
                 ];
 
                 return (
@@ -461,7 +461,7 @@ export function TopNav({
                           key={item.id}
                           href={item.href}
                           scroll={false}
-                          className={`${item.widthClass} text-center py-1.5 rounded-full text-[13px] font-bold tracking-wide hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link select-none transition-colors duration-150 ${isActive ? 'custom-nav-link-active !text-white' : 'custom-nav-link-inactive'
+                          className={`px-3.5 py-1 rounded-full text-[13px] font-semibold tracking-normal hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link select-none transition-colors duration-150 ${isActive ? 'custom-nav-link-active !text-white' : 'custom-nav-link-inactive'
                             }`}
                         >
                           {isActive && (
