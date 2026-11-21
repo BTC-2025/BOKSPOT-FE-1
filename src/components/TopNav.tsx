@@ -881,7 +881,7 @@ export function TopNav({
                 className="subnav-pill flex items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-semibold shrink-0 !text-[#00224f] hover:!text-[#ff6325] transition-colors"
                 title="Customer Support & Help Desk"
               >
-                <Headset className="w-3.5 h-3.5 shrink-0 text-[#ff6325] stroke-[#ff6325]" style={{ color: '#ff6325', stroke: '#ff6325' }} />
+                <Headset className="w-3.5 h-3.5 shrink-0 text-[#00224f] stroke-[#00224f]" style={{ color: '#00224f', stroke: '#00224f' }} />
                 <span className="!text-[#00224f] hover:!text-[#ff6325]">Support</span>
               </Link>
 
