@@ -2015,21 +2015,25 @@ export function UtilityDrawer({
           <motion.div
             key="floating-virtual-keyboard"
             drag
-          dragMomentum={false}
-          onDragStart={() => setIsKeyboardDragging(true)}
-          onDragEnd={() => setIsKeyboardDragging(false)}
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ duration: 0.16 }}
-          className="fixed z-[10005] bottom-10 right-20 sm:right-28 w-[95vw] sm:w-[620px] max-w-[620px] bg-white dark:bg-[#0c121e] rounded-3xl border border-slate-200/90 dark:border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35)] overflow-hidden select-none flex flex-col font-sans"
-        >
-          {/* Draggable Header - Open hand on hover, closed hand on drag */}
-          <div
-            className={`h-12 px-5 bg-white dark:bg-[#0c121e] flex items-center justify-between select-none custom-drag-hand ${
-              isKeyboardDragging ? 'is-dragging cursor-grabbing' : 'cursor-grab'
+            dragMomentum={false}
+            onDragStart={() => {
+              setIsKeyboardDragging(true);
+            }}
+            onDragEnd={() => {
+              setIsKeyboardDragging(false);
+            }}
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ duration: 0.16 }}
+            className={`fixed z-[10005] bottom-10 right-20 sm:right-28 w-[95vw] sm:w-[620px] max-w-[620px] bg-white dark:bg-[#0c121e] rounded-3xl border border-slate-200/90 dark:border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35)] overflow-hidden select-none flex flex-col font-sans ${
+              isKeyboardDragging ? 'keyboard-dragging-active' : ''
             }`}
           >
+            {/* Draggable Header - Open hand on hover, closed hand on drag */}
+            <div
+              className="keyboard-drag-header h-12 px-5 bg-white dark:bg-[#0c121e] flex items-center justify-between select-none"
+            >
             <div className="flex items-center gap-2.5 pointer-events-none select-none">
               <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-[#2563eb] flex items-center justify-center">
                 <Keyboard size={17} />
