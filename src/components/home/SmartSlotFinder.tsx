@@ -365,9 +365,9 @@ export function SmartSlotFinder() {
                     setSelectedCity(e.target.value);
                     setIsCitySuggestionsOpen(true);
                   }}
-                  className="w-full h-9 pl-8.5 pr-3 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] text-slate-800 dark:text-white text-xs font-semibold focus:outline-hidden focus:border-[#ff6325] focus:ring-1 focus:ring-[#ff6325]/30 cursor-text shadow-xs placeholder:text-slate-400"
+                  className="w-full h-9 pl-8.5 pr-3 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] text-slate-800 dark:text-white text-xs font-semibold focus:outline-hidden focus:border-[#0A3161] dark:focus:border-blue-400 focus:ring-1 focus:ring-[#0A3161]/30 cursor-text shadow-xs placeholder:text-slate-400"
                 />
-                <span className="material-symbols-outlined pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[14px] text-[#ff6325]">
+                <span className="material-symbols-outlined pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[14px] text-[#0A3161] dark:text-blue-400">
                   {isTravelTransitArchetype ? 'trip_origin' : 'location_on'}
                 </span>
 
