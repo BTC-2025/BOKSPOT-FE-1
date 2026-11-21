@@ -1108,7 +1108,7 @@ export function SmartSlotFinder() {
           <button
             onClick={handleSearch}
             disabled={isSearching}
-            className="w-full sm:w-auto min-w-[210px] px-6 py-2 rounded-xl bg-gradient-to-r from-[#ff6325] via-[#ea580c] to-[#d94e09] hover:brightness-110 active:scale-[0.98] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(255,99,37,0.35)] transition-all cursor-pointer disabled:opacity-75"
+            className="w-full sm:w-auto min-w-[210px] px-6 py-2 rounded-xl bg-[#ff6325] hover:brightness-110 active:scale-[0.98] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(255,99,37,0.35)] transition-all cursor-pointer disabled:opacity-75"
           >
             {isSearching ? (
               <span className="flex items-center gap-1.5">
