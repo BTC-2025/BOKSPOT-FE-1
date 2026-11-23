@@ -13,6 +13,7 @@ import { getEntertainmentCategoryConfig, getMovieBySlugOrId, NOW_SHOWING_MOVIES,
 import { getDiningConfig } from '@/lib/diningData';
 import { getWellnessConfig } from '@/lib/wellnessData';
 import { getFitnessConfig } from '@/lib/fitnessData';
+import { getYogaConfig } from '@/lib/yogaData';
 import { getClinicConfig } from '@/lib/clinicalData';
 import { getHomeServiceConfig } from '@/lib/homeServicesData';
 
@@ -262,6 +263,12 @@ export default function VenueProfilePage() {
 
   // ── Dedicated Gym / Yoga / Fitness Slot Flow States ──
   const [gymBookingType, setGymBookingType] = useState<'MEMBERSHIP' | 'DAY_PASS'>('MEMBERSHIP');
+  // ── Dedicated Pure Yoga Shala Flow States (Mat Spot, Live Schedule, Rituals) ──
+  const [selectedYogaBatchId, setSelectedYogaBatchId] = useState<string>('batch-sunrise');
+  const [selectedYogaMatSpot, setSelectedYogaMatSpot] = useState<string>('M-03');
+  const [selectedYogaBrew, setSelectedYogaBrew] = useState<'ASHWAGANDHA_TULSI' | 'DETOX_GREEN' | 'WARM_TURMERIC_GOLD'>('ASHWAGANDHA_TULSI');
+  const [yogaEyePillowAddon, setYogaEyePillowAddon] = useState<boolean>(true);
+  const [yogaSadhanaTab, setYogaSadhanaTab] = useState<'SINGLE_SESSION' | 'MONTHLY_SADHANA'>('SINGLE_SESSION');
   const [selectedGymPlanId, setSelectedGymPlanId] = useState<string>('gym-plan-3m');
   const [selectedGymPTId, setSelectedGymPTId] = useState<string>('pt-none');
   const [selectedGymTrainerId, setSelectedGymTrainerId] = useState<string>('trn-vikram');
@@ -1031,7 +1038,50 @@ export default function VenueProfilePage() {
                 }
               }
             ];
-          } else if (finalServices.length === 0 && (cleanCat.includes('gym') || cleanCat.includes('yoga') || cleanMerchantId.includes('f202') || cleanMerchantId.includes('zenfit'))) {
+          } else if (finalServices.length === 0 && (isYoga || cleanCat.includes('yoga') || cleanCat.includes('meditation') || cleanMerchantId.includes('yoga') || cleanMerchantId.includes('shala') || cleanMerchantId.includes('prana'))) {
+            const yogaCfg = getYogaConfig(cleanMerchantId);
+            const targetCity = city || yogaCfg.city || 'Chennai';
+            finalServices = [
+              {
+                id: `svc-yoga-${merchantId}`,
+                name: yogaCfg.name,
+                category: yogaCfg.category,
+                rating: yogaCfg.rating,
+                reviewCount: 620,
+                basePrice: String(yogaCfg.passes[0]?.price || 299),
+                price: yogaCfg.passes[0]?.price || 299,
+                image: yogaCfg.heroImage,
+                merchantId: merchantId,
+                merchant: yogaCfg.name,
+                branchName: yogaCfg.name,
+                address: yogaCfg.address,
+                merchantObj: {
+                  id: merchantId,
+                  name: yogaCfg.name,
+                  city: targetCity,
+                  address: yogaCfg.address,
+                  rating: yogaCfg.rating,
+                  username: 'YOGA101',
+                  metadata: {
+                    isYoga: true,
+                    passes: yogaCfg.passes,
+                    membershipPlans: yogaCfg.membershipPlans,
+                    gurus: yogaCfg.gurus,
+                    timeSlots: yogaCfg.timeSlots,
+                    features: yogaCfg.features
+                  }
+                },
+                metadata: {
+                  isYoga: true,
+                  passes: yogaCfg.passes,
+                  membershipPlans: yogaCfg.membershipPlans,
+                  gurus: yogaCfg.gurus,
+                  timeSlots: yogaCfg.timeSlots,
+                  features: yogaCfg.features
+                }
+              }
+            ];
+          } else if (finalServices.length === 0 && (cleanCat.includes('gym') || cleanMerchantId.includes('f202') || cleanMerchantId.includes('zenfit') || cleanCat.includes('fitness'))) {
             const fitCfg = getFitnessConfig('zenfit-clinic');
             const targetCity = city || fitCfg.city || 'Chennai';
             const isYogaCat = isYoga || cleanCat.includes('yoga') || cleanCat.includes('meditation');
@@ -1440,7 +1490,7 @@ export default function VenueProfilePage() {
       : true;
 
     if (isSvcCompatible) {
-      const svcListings = svc.metadata?.listings || svc.rawConfig?.metadata?.listings || [];
+      const svcListings = (Array.isArray(svc.listings) && svc.listings.length > 0) ? svc.listings : (svc.metadata?.listings || svc.rawConfig?.metadata?.listings || []);
       svcListings.forEach((l: any) => {
         addIfValid(l.imageUrl);
         addIfValid(l.image);
@@ -5306,10 +5356,24 @@ export default function VenueProfilePage() {
                 Select Specialist / Doctor
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {[
-                  { name: 'Dr. Rajesh Kumar (Senior Consultant)', fee: 600, exp: '14+ yrs exp • MBBS, MD' },
-                  { name: 'Dr. Priya Sundaram (Associate Specialist)', fee: 450, exp: '8+ yrs exp • DNB, Fellow' }
-                ].map(spec => (
+                {(() => {
+                  const liveDocListings = (liveServices && liveServices.length > 0 && liveServices[0]?.listings && liveServices[0].listings.length > 0)
+                    ? liveServices[0].listings.map((l: any, idx: number) => ({
+                        name: l.title || l.name || Doctor ,
+                        fee: Number(l.price || l.basePrice || 600),
+                        exp: l.subtitle || l.description || 'Verified Specialist • Live OPD'
+                      }))
+                    : (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.doctors)
+                      ? (liveServices[0].metadata.doctors as any[]).map((d: any) => ({
+                          name: d.name || 'Doctor Specialist',
+                          fee: Number(d.consultationFee || 600),
+                          exp: `${d.qualification || 'MBBS'} • ${d.specialty || 'General'}`
+                        }))
+                      : [
+                          { name: 'Dr. Rajesh Kumar (Senior Consultant)', fee: 600, exp: '14+ yrs exp • MBBS, MD' },
+                          { name: 'Dr. Priya Sundaram (Associate Specialist)', fee: 450, exp: '8+ yrs exp • DNB, Fellow' }
+                        ];
+                  return liveDocListings.map(spec => (
                   <div
                     key={spec.name}
                     onClick={() => setSelectedPractitioner(spec.name)}
@@ -5324,7 +5388,8 @@ export default function VenueProfilePage() {
                     </div>
                     <span className="text-sm font-black text-[#033266] dark:text-[#ff6325]">₹{spec.fee}</span>
                   </div>
-                ))}
+                ));
+                })()}
               </div>
             </div>
 
@@ -5546,9 +5611,23 @@ export default function VenueProfilePage() {
          * ============================================================ */}
         {isWellness && (() => {
           const wellCfg = getWellnessConfig(cleanMerchantId);
-          const allTreatments = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.treatments)
-            ? (liveServices[0].metadata.treatments as any[])
-            : wellCfg.treatments;
+          // Dynamic Backend DB integration: pull live listings or metadata treatments first
+          const dbTreatments = (liveServices && liveServices.length > 0 && liveServices[0]?.listings && liveServices[0].listings.length > 0)
+            ? liveServices[0].listings.map((l: any, idx: number) => ({
+                id: l.id || `live-treat-${idx}`,
+                name: l.title || l.name || 'Treatment',
+                category: l.category || 'HAIR',
+                durationMinutes: l.durationMinutes || l.duration || 45,
+                price: Number(l.price || l.basePrice || 499),
+                description: l.description || 'Professional styling & care ritual by verified stylist.',
+                genderTarget: (l.genderTarget || 'UNISEX'),
+                serviceMode: (l.serviceMode || 'BOTH'),
+                badge: l.badge || 'Live Available'
+              }))
+            : (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.treatments)
+              ? (liveServices[0].metadata.treatments as any[])
+              : wellCfg.treatments;
+          const allTreatments = dbTreatments;
           const allSpecialists = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.specialists)
             ? (liveServices[0].metadata.specialists as any[])
             : wellCfg.specialists;
@@ -6208,54 +6287,621 @@ export default function VenueProfilePage() {
          * ============================================================ */}
         {(isFitness || isYoga) && (() => {
           const isYogaCategory = isYoga || cleanCat.includes('yoga') || cleanCat.includes('meditation');
+
+          if (isYogaCategory) {
+            // 1. Direct real-time dynamic listings created in Vendor Business Portal
+            const liveYogaListings = (liveServices && liveServices.length > 0 && Array.isArray(liveServices[0]?.listings) && liveServices[0].listings.length > 0)
+              ? liveServices[0].listings.map((l: any, idx: number) => ({
+                  id: l.id || `batch-live-${idx}`,
+                  time: l.metadata?.time || l.schedule || (idx === 0 ? '06:00 AM – 07:15 AM' : idx === 1 ? '07:30 AM – 08:45 AM' : '05:30 PM – 06:45 PM'),
+                  title: l.name,
+                  guru: l.metadata?.guru || { name: l.metadata?.instructor || 'Senior Shala Acharya', lineage: 'Certified Lineage', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80' },
+                  level: l.metadata?.level || 'All Levels',
+                  discipline: l.metadata?.discipline || 'HATHA FLOW',
+                  intensity: l.metadata?.intensity || 'Mindful Flow',
+                  price: Number(l.price || l.basePrice || 399),
+                  spotsAvailable: Number(l.metadata?.spotsLeft || l.maxCapacity || 8),
+                  totalCapacity: Number(l.maxCapacity || 14)
+                }))
+              : [];
+
+            const yogaCfg = getYogaConfig(cleanMerchantId);
+            const allGurus = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.gurus)
+              ? (liveServices[0].metadata.gurus as any[])
+              : yogaCfg.gurus;
+            const allMembershipPlans = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.membershipPlans)
+              ? (liveServices[0].metadata.membershipPlans as any[])
+              : yogaCfg.membershipPlans;
+
+            // Live Circadian Shala Schedule (prioritizes live vendor listings)
+            const shalaBatches = liveYogaListings.length > 0 ? liveYogaListings : [
+              {
+                id: 'batch-sunrise',
+                time: '06:00 AM – 07:15 AM',
+                title: 'Brahma Muhurta Sunrise Flow & Pranayama',
+                guru: allGurus[0] || { name: 'Acharya Shanti Vardhan', lineage: 'Rishikesh Alliance', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80' },
+                level: 'All Levels',
+                discipline: 'HATHA FLOW',
+                intensity: 'Gentle Awakening',
+                price: 399,
+                spotsAvailable: 6,
+                totalCapacity: 14
+              },
+              {
+                id: 'batch-ashtanga',
+                time: '07:30 AM – 08:45 AM',
+                title: 'Traditional Ashtanga Vinyasa (Primary Series)',
+                guru: allGurus[1] || { name: 'Meenakshi Sundaram', lineage: 'Senior Iyengar Specialist', avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&q=80' },
+                level: 'Intermediate to Advanced',
+                discipline: 'ASHTANGA',
+                intensity: 'Dynamic Strength',
+                price: 450,
+                spotsAvailable: 4,
+                totalCapacity: 12
+              },
+              {
+                id: 'batch-soundbath',
+                time: '05:30 PM – 06:45 PM',
+                title: 'Sunset Yin & Tibetan Singing Bowl Sound Bath',
+                guru: allGurus[2] || { name: 'Ananya Sharma', lineage: 'Sound Healing & Breathwork', avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300&q=80' },
+                level: 'Restorative & Meditative',
+                discipline: 'SOUND BATH & NIDRA',
+                intensity: 'Deep Relaxation',
+                price: 550,
+                spotsAvailable: 3,
+                totalCapacity: 12
+              },
+              {
+                id: 'batch-gentle',
+                time: '07:00 PM – 08:00 PM',
+                title: 'Candlelight Yoga Nidra & Pranic Healing',
+                guru: allGurus[0] || { name: 'Acharya Shanti Vardhan', lineage: 'Rishikesh Alliance', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80' },
+                level: 'Relaxation & Anti-Stress',
+                discipline: 'YOGA NIDRA',
+                intensity: 'Restorative Sleep Flow',
+                price: 499,
+                spotsAvailable: 7,
+                totalCapacity: 14
+              }
+            ];
+
+            const activeBatch = shalaBatches.find(b => b.id === selectedYogaBatchId) || shalaBatches[0];
+            const activePlan = allMembershipPlans.find((m: any) => m.id === selectedGymPlanId) || allMembershipPlans[0];
+
+            // Visual Mat Studio Layout (Rows: Front row near Guru, Center Row, Garden/Window Row)
+            const matGrid = [
+              {
+                rowName: 'Front Row (Direct Guru Guidance & Alignment)',
+                mats: [
+                  { id: 'M-01', label: 'Mat 1', status: 'available' },
+                  { id: 'M-02', label: 'Mat 2', status: 'booked' },
+                  { id: 'M-03', label: 'Mat 3', status: 'available' },
+                  { id: 'M-04', label: 'Mat 4', status: 'booked' },
+                  { id: 'M-05', label: 'Mat 5', status: 'available' }
+                ]
+              },
+              {
+                rowName: 'Center Studio (Balanced Acoustic Zone & Singing Bowls)',
+                mats: [
+                  { id: 'M-06', label: 'Mat 6', status: 'available' },
+                  { id: 'M-07', label: 'Mat 7', status: 'available' },
+                  { id: 'M-08', label: 'Mat 8', status: 'booked' },
+                  { id: 'M-09', label: 'Mat 9', status: 'available' }
+                ]
+              },
+              {
+                rowName: 'Garden / Bamboo Courtyard Window (Quiet Corner)',
+                mats: [
+                  { id: 'M-10', label: 'Mat 10', status: 'available' },
+                  { id: 'M-11', label: 'Mat 11', status: 'booked' },
+                  { id: 'M-12', label: 'Mat 12', status: 'available' }
+                ]
+              }
+            ];
+
+            const effectivePrice = yogaSadhanaTab === 'MONTHLY_SADHANA' 
+              ? (activePlan?.price || 2199)
+              : (activeBatch.price + (yogaEyePillowAddon ? 120 : 0));
+
+            return (
+              <div id="fitness-booking-section" className="space-y-6 mt-8 p-6 sm:p-7 rounded-3xl bg-[#fbf9f5] dark:bg-[#0c1017] border border-amber-900/15 dark:border-amber-500/20 shadow-sm">
+                {/* 1. Shala Atmosphere Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-amber-900/10 dark:border-white/10 pb-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] uppercase font-black tracking-widest px-2.5 py-0.5 rounded-full bg-emerald-600/10 text-emerald-700 dark:text-emerald-400 border border-emerald-600/20">
+                        Sanctuary Atmosphere
+                      </span>
+                      <span className="text-[10px] text-amber-800/60 dark:text-amber-400/60 font-semibold">
+                        Pure Bamboo & Natural Acoustics
+                      </span>
+                    </div>
+                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                      Yoga Shala Live Batches & Mat Booking
+                    </h2>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
+                      Select your live class timetable, reserve your personal cork mat spot in the studio, and enjoy post-practice ayurvedic herbal brew.
+                    </p>
+                  </div>
+
+                  {/* Mode Toggle: Single Class & Mat vs Monthly Sadhana */}
+                  <div className="inline-flex p-1 rounded-2xl bg-amber-100/60 dark:bg-slate-800 border border-amber-900/15 dark:border-white/10 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setYogaSadhanaTab('SINGLE_SESSION')}
+                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                        yogaSadhanaTab === 'SINGLE_SESSION'
+                          ? 'bg-[#ff6325] text-white shadow-sm'
+                          : 'text-slate-700 dark:text-slate-300 hover:text-slate-900'
+                      }`}
+                    >
+                      Live Batches & Mat Spots
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setYogaSadhanaTab('MONTHLY_SADHANA')}
+                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                        yogaSadhanaTab === 'MONTHLY_SADHANA'
+                          ? 'bg-[#033266] text-white shadow-sm'
+                          : 'text-slate-700 dark:text-slate-300 hover:text-slate-900'
+                      }`}
+                    >
+                      Monthly Sadhana Pass
+                    </button>
+                  </div>
+                </div>
+
+                {yogaSadhanaTab === 'SINGLE_SESSION' ? (
+                  <>
+                    {/* STEP 1: DATE & LIVE SHALA TIMETABLE / BATCH SELECTION */}
+                    <div className="space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-[#ff6325] text-white flex items-center justify-center text-[10px] font-black">
+                            1
+                          </span>
+                          <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">
+                            Select Practice Date & Live Shala Timetable
+                          </h3>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-semibold text-slate-500">Date:</span>
+                          <input
+                            type="date"
+                            min={todayStr}
+                            value={selectedDate || todayStr}
+                            onChange={(e) => setSelectedDate(e.target.value)}
+                            className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Timetable Schedule Cards */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {shalaBatches.map((batch) => {
+                          const isSelected = selectedYogaBatchId === batch.id;
+                          return (
+                            <div
+                              key={batch.id}
+                              onClick={() => setSelectedYogaBatchId(batch.id)}
+                              className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
+                                isSelected
+                                  ? 'bg-orange-50/70 dark:bg-orange-950/20 border-[#ff6325] ring-1 ring-[#ff6325]/40 shadow-sm'
+                                  : 'bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-white/10 hover:border-slate-300'
+                              }`}
+                            >
+                              <div>
+                                <div className="flex items-center justify-between gap-2 mb-1.5">
+                                  <span className="text-xs font-extrabold text-[#ff6325] flex items-center gap-1.5">
+                                    <Clock size={13} />
+                                    <span>{batch.time}</span>
+                                  </span>
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100/70 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400">
+                                    {batch.spotsAvailable} mats left
+                                  </span>
+                                </div>
+                                <h4 className="text-sm font-black text-slate-900 dark:text-white leading-snug">
+                                  {batch.title}
+                                </h4>
+                                <div className="flex items-center gap-2 mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 font-bold text-slate-700 dark:text-slate-300">
+                                    {batch.discipline}
+                                  </span>
+                                  <span>•</span>
+                                  <span>{batch.intensity}</span>
+                                </div>
+                              </div>
+
+                              <div className="pt-2 border-t border-slate-100 dark:border-white/10 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <img
+                                    src={batch.guru.avatar}
+                                    alt={batch.guru.name}
+                                    className="w-7 h-7 rounded-full object-cover border border-white shadow-xs"
+                                  />
+                                  <div className="leading-tight">
+                                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
+                                      {batch.guru.name}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 block">
+                                      {batch.guru.lineage}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <span className="text-sm font-black text-slate-900 dark:text-white">
+                                    ₹{batch.price}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* STEP 2: INTERACTIVE MAT SPOT SELECTOR (Studio Floor Plan) */}
+                    <div className="space-y-3 pt-2 border-t border-amber-900/10 dark:border-white/10">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-[#ff6325] text-white flex items-center justify-center text-[10px] font-black">
+                            2
+                          </span>
+                          <div>
+                            <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">
+                              Choose Your Studio Mat Spot
+                            </h3>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+                              Sanitized Cork Mats & Blocks are pre-laid on the bamboo floor.
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Legend */}
+                        <div className="flex items-center gap-3 text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-3 h-3 rounded-md bg-[#ff6325] block shadow-xs" />
+                            <span>Your Mat</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-3 h-3 rounded-md bg-white dark:bg-slate-700 border border-slate-300 block" />
+                            <span>Available</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-3 h-3 rounded-md bg-slate-300 dark:bg-slate-800 block opacity-50" />
+                            <span>Reserved</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Studio Floor Graphic & Mat Grid */}
+                      <div className="p-5 rounded-2xl bg-amber-50/50 dark:bg-slate-900/60 border border-amber-200/60 dark:border-white/10 space-y-4">
+                        {/* Shala Guru Altar / Stage */}
+                        <div className="w-full py-2 px-4 rounded-xl bg-gradient-to-r from-amber-100/90 via-orange-100/90 to-amber-100/90 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 border border-amber-300/40 dark:border-white/10 text-center">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-amber-900 dark:text-amber-300">
+                            ॐ GURU PEDESTAL, SINGING BOWLS & INCENSE ALTAR ॐ
+                          </span>
+                        </div>
+
+                        {/* Rows of Mats */}
+                        <div className="space-y-4">
+                          {matGrid.map((row, rIdx) => (
+                            <div key={rIdx} className="space-y-1.5">
+                              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
+                                {row.rowName}
+                              </span>
+                              <div className="flex flex-wrap items-center gap-2.5">
+                                {row.mats.map((mat) => {
+                                  const isSelected = selectedYogaMatSpot === mat.id;
+                                  const isBooked = mat.status === 'booked';
+                                  return (
+                                    <button
+                                      key={mat.id}
+                                      type="button"
+                                      disabled={isBooked}
+                                      onClick={() => setSelectedYogaMatSpot(mat.id)}
+                                      className={`px-4 py-2.5 rounded-xl border flex flex-col items-center gap-1 transition-all cursor-pointer ${
+                                        isSelected
+                                          ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md ring-2 ring-[#ff6325]/30'
+                                          : isBooked
+                                          ? 'bg-slate-200/60 dark:bg-slate-800 text-slate-400 border-transparent cursor-not-allowed opacity-50'
+                                          : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 hover:border-amber-400 text-slate-800 dark:text-slate-200 shadow-xs'
+                                      }`}
+                                    >
+                                      <span className="text-xs font-black">{mat.id}</span>
+                                      <span className="text-[9px] font-bold opacity-80">
+                                        {isBooked ? 'Booked' : isSelected ? 'Reserved' : 'Cork Mat'}
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* STEP 3: POST-SADHANA HERBAL DETOX BREW & SENSORY ADDONS */}
+                    <div className="space-y-3 pt-2 border-t border-amber-900/10 dark:border-white/10">
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-[#ff6325] text-white flex items-center justify-center text-[10px] font-black">
+                          3
+                        </span>
+                        <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">
+                          Select Post-Practice Ayurvedic Herbal Brew (Included)
+                        </h3>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        {[
+                          {
+                            id: 'ASHWAGANDHA_TULSI',
+                            name: 'Ashwagandha & Holy Tulsi Elixir',
+                            desc: 'Deep restorative nervous system calming after asanas'
+                          },
+                          {
+                            id: 'DETOX_GREEN',
+                            name: 'Cold-Pressed Triphala & Lemongrass',
+                            desc: 'Metabolism detox, gut cleansing and vital hydration'
+                          },
+                          {
+                            id: 'WARM_TURMERIC_GOLD',
+                            name: 'Golden Saffron & Vedic Turmeric',
+                            desc: 'Anti-inflammatory joint lubrication & pranic flow'
+                          }
+                        ].map((brew) => {
+                          const isBrewActive = selectedYogaBrew === brew.id;
+                          return (
+                            <div
+                              key={brew.id}
+                              onClick={() => setSelectedYogaBrew(brew.id as any)}
+                              className={`p-3 rounded-2xl border transition-all cursor-pointer ${
+                                isBrewActive
+                                  ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/20 ring-1 ring-emerald-500/40 shadow-xs'
+                                  : 'bg-white dark:bg-slate-800/40 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-black text-slate-900 dark:text-white">
+                                  {brew.name}
+                                </span>
+                                {isBrewActive && (
+                                  <span className="text-xs font-black text-emerald-600">✓</span>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-1 leading-snug">
+                                {brew.desc}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Optional Add-on: Organic French Lavender Eye Pillow */}
+                      <div className="p-3 rounded-2xl bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-white/10 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={yogaEyePillowAddon}
+                            onChange={(e) => setYogaEyePillowAddon(e.target.checked)}
+                            className="w-4 h-4 text-[#ff6325] rounded-md border-slate-300 cursor-pointer"
+                          />
+                          <div>
+                            <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                              Organic Flaxseed & Lavender Eye Pillow for Shavasana (+₹120)
+                            </span>
+                            <span className="text-[11px] text-slate-400 block">
+                              Gently weighted aromatherapy cushion blocking light for deep nervous-system relaxation.
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  /* MONTHLY SHALA SADHANA MEMBERSHIPS */
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {allMembershipPlans.map((plan: any) => {
+                        const isSelected = selectedGymPlanId === plan.id;
+                        return (
+                          <div
+                            key={plan.id}
+                            onClick={() => setSelectedGymPlanId(plan.id)}
+                            className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
+                              isSelected
+                                ? 'bg-orange-50/70 dark:bg-orange-950/20 border-[#ff6325] ring-1 ring-[#ff6325]/40 shadow-xs'
+                                : 'bg-white dark:bg-slate-800/40 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                            }`}
+                          >
+                            <div>
+                              <div className="flex items-center justify-between mb-1">
+                                <h4 className="text-sm font-black text-slate-900 dark:text-white truncate">
+                                  {plan.name}
+                                </h4>
+                                {plan.savingsBadge && (
+                                  <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-[#ff6325] text-white">
+                                    {plan.savingsBadge}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-xs text-slate-400 block">
+                                {plan.months} Month{plan.months > 1 ? 's' : ''} Unlimited Access
+                              </span>
+                              <div className="mt-3 space-y-1">
+                                {(plan.features || []).map((feat: string, idx: number) => (
+                                  <div key={idx} className="text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                                    <span className="text-emerald-500 font-black">✓</span>
+                                    <span>{feat}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="pt-3 border-t border-slate-100 dark:border-white/10 flex items-center justify-between">
+                              <span className="text-base font-black text-slate-900 dark:text-white">
+                                ₹{plan.price}
+                              </span>
+                              <button
+                                type="button"
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                                  isSelected ? 'bg-[#ff6325] text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                                }`}
+                              >
+                                {isSelected ? 'Selected' : 'Choose'}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Shala Amenities Highlights */}
+                <div className="pt-2">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-2">
+                    Studio Inclusions & Shala Protocols
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      'Natural Bamboo Flooring',
+                      'Pre-Sanitized Eco Cork Mats & Blocks',
+                      'Tibetan Singing Bowls & Sound Bath',
+                      'Complimentary Post-Practice Ayurvedic Tea',
+                      'Silent Footwear-Free Sanctuary Zone'
+                    ].map((label, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-slate-800/80 border border-amber-200/50 dark:border-white/5 text-[11px] font-medium text-amber-900 dark:text-amber-200"
+                      >
+                        ✓ {label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* BOTTOM SUMMARY & CHECKOUT DOCK */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-black text-slate-900 dark:text-white">
+                        {yogaSadhanaTab === 'MONTHLY_SADHANA'
+                          ? activePlan?.name
+                          : `${activeBatch.title} • Mat ${selectedYogaMatSpot}`}
+                      </span>
+                      <span className="text-base font-black text-[#ff6325]">
+                        ₹{effectivePrice}
+                      </span>
+                    </div>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
+                      {selectedDate || todayStr} at {yogaSadhanaTab === 'MONTHLY_SADHANA' ? 'Any Daily Batch' : activeBatch.time.split(' ')[0]}
+                      {yogaSadhanaTab === 'SINGLE_SESSION' ? ` • Guru: ${activeBatch.guru.name} • Cork Mat Spot ${selectedYogaMatSpot}` : ' • Full Month Unlimited Access'}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const bookingTitle = yogaSadhanaTab === 'MONTHLY_SADHANA'
+                        ? `${venueName} — ${activePlan.name} (${activePlan.months}M Sadhana)`
+                        : `${venueName} — ${activeBatch.title} (Mat ${selectedYogaMatSpot})`;
+
+                      setSelectedService({
+                        id: `yoga-${Date.now()}`,
+                        name: bookingTitle,
+                        price: effectivePrice,
+                        metadata: {
+                          isYogaBooking: true,
+                          yogaBooking: {
+                            venueName,
+                            batchTitle: activeBatch.title,
+                            matSpot: selectedYogaMatSpot,
+                            herbalBrew: selectedYogaBrew,
+                            eyePillowAddon: yogaEyePillowAddon,
+                            guru: activeBatch.guru.name,
+                            slotTime: activeBatch.time,
+                            slotDate: selectedDate || todayStr,
+                            bookingType: yogaSadhanaTab,
+                            durationMinutes: 75
+                          }
+                        }
+                      });
+                      setSelectedSlot({
+                        id: `slot-yoga-${Date.now()}`,
+                        timeStr: `${selectedDate || todayStr} at ${activeBatch.time}`,
+                        date: selectedDate || todayStr,
+                        available: true
+                      });
+                      router.push('/booking/checkout');
+                    }}
+                    className="px-8 py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-wider shadow-md bg-[#ff6325] hover:bg-[#e04e13] text-white active:scale-95 transition-all cursor-pointer w-full sm:w-auto flex items-center justify-center gap-2"
+                  >
+                    <span>
+                      {yogaSadhanaTab === 'MONTHLY_SADHANA'
+                        ? `Join Sadhana (₹${effectivePrice})`
+                        : `Reserve Mat ${selectedYogaMatSpot} (₹${effectivePrice})`}
+                    </span>
+                    <span>→</span>
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          // PURE GYM SECTION (100% REAL-TIME DYNAMIC FROM LIVE SERVICES / LISTINGS)
+          // 1. Check live listings created in vendor portal (Hotel pattern)
+          const livePassListings = (liveServices && liveServices.length > 0 && Array.isArray(liveServices[0]?.listings) && liveServices[0].listings.length > 0)
+            ? liveServices[0].listings.map((l: any) => ({
+                id: l.id,
+                name: l.name,
+                price: Number(l.price || l.basePrice || 299),
+                originalPrice: l.originalPrice ? Number(l.originalPrice) : undefined,
+                durationMinutes: l.durationMinutes || (l.metadata?.durationMinutes) || 720,
+                formatType: l.metadata?.formatType || (l.name?.toLowerCase().includes('pt') || l.name?.toLowerCase().includes('trainer') ? 'PERSONAL_TRAINING' : 'OPEN_GYM'),
+                description: l.description || '',
+                inclusions: l.metadata?.inclusions || ['Turnstile QR Access', 'Locker & Shower']
+              }))
+            : [];
+
           const fitCfg = getFitnessConfig('zenfit-clinic');
           const allPasses = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.passes)
             ? (liveServices[0].metadata.passes as any[])
-            : fitCfg.passes;
+            : (livePassListings.length > 0 ? livePassListings : fitCfg.passes);
+
           const allTrainers = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.trainers)
             ? (liveServices[0].metadata.trainers as any[])
             : fitCfg.trainers;
+
           const allMembershipPlans = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.membershipPlans)
             ? (liveServices[0].metadata.membershipPlans as any[])
             : fitCfg.membershipPlans;
+
           const allPtPackages = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.ptPackages)
             ? (liveServices[0].metadata.ptPackages as any[])
             : fitCfg.ptPackages;
 
-          // Dynamically isolate passes based on pure Gym vs pure Yoga category
-          const categoryPasses = allPasses.filter((p: any) => {
-            if (isYogaCategory) {
-              return p.formatType === 'YOGA_CLASS';
-            } else {
-              return p.formatType !== 'YOGA_CLASS';
-            }
-          });
+          // Pure gym passes
+          const categoryPasses = allPasses.filter((p: any) => p.formatType !== 'YOGA_CLASS');
 
           const filteredPasses = categoryPasses.filter((p: any) => {
             if (fitnessFormatFilter === 'ALL') return true;
             return p.formatType === fitnessFormatFilter;
           });
 
-          // Active selection handling based on Gym Booking Mode
-          // Active selection handling based on Gym Booking Mode (Supports Unselecting!)
           const activePass = filteredPasses.find((p: any) => p.id === selectedFitnessPassId) || null;
           const activePlan = allMembershipPlans.find((m: any) => m.id === selectedGymPlanId) || null;
           const activePt = allPtPackages.find((pt: any) => pt.id === selectedGymPTId) || null;
           const activeTrainer = allTrainers.find((t: any) => t.id === selectedGymTrainerId) || null;
 
-          // Effective price calculation
           let effectivePrice = 0;
-          if (!isYogaCategory) {
-            if (gymBookingType === 'MEMBERSHIP') {
-              effectivePrice = (activePlan?.price || 0) + (activePt?.price || 0);
-            } else {
-              effectivePrice = activePass?.price || 0;
-            }
+          if (gymBookingType === 'MEMBERSHIP') {
+            effectivePrice = (activePlan?.price || 0) + (activePt?.price || 0);
           } else {
             effectivePrice = activePass?.price || 0;
           }
 
-          // Dynamic Gym Capacity Slots with real spots left
           const gymDynamicSlots = [
             { time: '05:30 AM', spotsLeft: 14, peak: false },
             { time: '06:45 AM', spotsLeft: 4, peak: true },
@@ -6273,12 +6919,10 @@ export default function VenueProfilePage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-white/10 pb-4">
                 <div>
                   <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                    {isYogaCategory ? 'Yoga Shala Mat & Batch Booking' : 'Gym Floor, Memberships & Personal Training'}
+                    Gym Floor, Memberships & Personal Training
                   </h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    {isYogaCategory
-                      ? 'Book daily yoga sessions, pranayama workshops & certified guru batches. Direct shala check-in.'
-                      : 'Book certified transformation memberships, daily workout passes & dedicated coach sessions. Instant turnstile QR entry.'}
+                    Book certified transformation memberships, daily workout passes & dedicated coach sessions. Instant turnstile QR entry.
                   </p>
                 </div>
 
@@ -6293,60 +6937,58 @@ export default function VenueProfilePage() {
               </div>
 
               {/* Gym Experience Mode Switcher (Memberships vs Daily Passes) */}
-              {!isYogaCategory && (
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-white/10 pb-3">
-                  <div className="inline-flex p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-white/10 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => setGymBookingType('DAY_PASS')}
-                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                        gymBookingType === 'DAY_PASS'
-                          ? 'bg-[#ff6325] text-white shadow-sm'
-                          : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
-                      }`}
-                    >
-                      Day Passes & Trials
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setGymBookingType('MEMBERSHIP')}
-                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                        gymBookingType === 'MEMBERSHIP'
-                          ? 'bg-[#033266] text-white shadow-sm'
-                          : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
-                      }`}
-                    >
-                      Monthly Memberships
-                    </button>
-                  </div>
-
-                  {gymBookingType === 'DAY_PASS' && (
-                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                      {[
-                        { id: 'ALL', label: 'All Passes' },
-                        { id: 'OPEN_GYM', label: 'Gym Floor' },
-                        { id: 'PERSONAL_TRAINING', label: '1-on-1 PT' }
-                      ].map((tab) => (
-                        <button
-                          key={tab.id}
-                          type="button"
-                          onClick={() => setFitnessFormatFilter(tab.id as any)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                            fitnessFormatFilter === tab.id
-                              ? 'bg-[#ff6325] text-white shadow-xs'
-                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-                          }`}
-                        >
-                          {tab.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-white/10 pb-3">
+                <div className="inline-flex p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-white/10 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setGymBookingType('DAY_PASS')}
+                    className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      gymBookingType === 'DAY_PASS'
+                        ? 'bg-[#ff6325] text-white shadow-sm'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                    }`}
+                  >
+                    Day Passes & Trials
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGymBookingType('MEMBERSHIP')}
+                    className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      gymBookingType === 'MEMBERSHIP'
+                        ? 'bg-[#033266] text-white shadow-sm'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                    }`}
+                  >
+                    Monthly Memberships
+                  </button>
                 </div>
-              )}
+
+                {gymBookingType === 'DAY_PASS' && (
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                    {[
+                      { id: 'ALL', label: 'All Passes' },
+                      { id: 'OPEN_GYM', label: 'Gym Floor' },
+                      { id: 'PERSONAL_TRAINING', label: '1-on-1 PT' }
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setFitnessFormatFilter(tab.id as any)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                          fitnessFormatFilter === tab.id
+                            ? 'bg-[#ff6325] text-white shadow-xs'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* SECTION: DAY PASS SELECTION - Compact 2-per-row grid matching Salon style */}
-              {(isYogaCategory || gymBookingType === 'DAY_PASS') && (
+              {gymBookingType === 'DAY_PASS' && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[360px] overflow-y-auto pr-1">
                     {filteredPasses.map((pass: any) => {
@@ -6371,9 +7013,16 @@ export default function VenueProfilePage() {
                           </div>
 
                           <div className="flex items-center gap-3 shrink-0">
-                            <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
-                              ₹{pass.price}
-                            </span>
+                            <div className="text-right">
+                              {pass.originalPrice && (
+                                <span className="text-[11px] text-slate-400 line-through block leading-tight">
+                                  ₹{pass.originalPrice}
+                                </span>
+                              )}
+                              <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
+                                ₹{pass.price}
+                              </span>
+                            </div>
                             <button
                               type="button"
                               onClick={(e) => {
@@ -6404,7 +7053,7 @@ export default function VenueProfilePage() {
               )}
 
               {/* SECTION: MEMBERSHIP PLANS GRID (Clean 2-per-row Compact Cards) */}
-              {!isYogaCategory && gymBookingType === 'MEMBERSHIP' && (
+              {gymBookingType === 'MEMBERSHIP' && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[360px] overflow-y-auto pr-1">
                     {allMembershipPlans.map((plan: any) => {
@@ -6480,7 +7129,7 @@ export default function VenueProfilePage() {
                 <div>
                   <div className="flex items-center justify-between mb-2.5">
                     <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                      {isYogaCategory ? '2. Select Yoga Guru' : '2. Dedicated Coach / Trainer'}
+                      2. Dedicated Coach / Trainer
                     </label>
                     <span className="text-[11px] text-slate-400 font-medium">
                       {selectedGymTrainerId ? 'Click to unselect' : 'Optional • Click to choose'}
@@ -6514,9 +7163,14 @@ export default function VenueProfilePage() {
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between gap-1">
-                              <span className="text-xs font-bold text-slate-900 dark:text-white truncate">{tr.name}</span>
-                              <span className="text-[10px] font-black text-amber-500 shrink-0">★ {tr.rating}</span>
+                            <div className="flex items-center gap-1.5">
+                              <h5 className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                                {tr.name}
+                              </h5>
+                              <div className="flex items-center text-[10px] font-black text-amber-500 shrink-0">
+                                <span>★</span>
+                                <span>{tr.rating}</span>
+                              </div>
                             </div>
                             <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium block truncate">
                               {tr.role?.split(',')[0]} • {tr.experienceYears}y exp
@@ -6600,13 +7254,13 @@ export default function VenueProfilePage() {
                             </button>
                           </div>
 
-                          <div className="grid grid-cols-7 gap-1 text-center mb-1">
-                            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
-                              <span key={d} className="text-[10px] font-black text-slate-400 py-1">{d}</span>
+                          <div className="grid grid-cols-7 gap-1 text-center font-bold text-[10px] text-slate-400 mb-2">
+                            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                              <div key={day}>{day}</div>
                             ))}
                           </div>
 
-                          <div className="grid grid-cols-7 gap-1">
+                          <div className="grid grid-cols-7 gap-1 text-center">
                             {(() => {
                               const y = fitnessCalMonth.getFullYear();
                               const m = fitnessCalMonth.getMonth();
@@ -6710,7 +7364,7 @@ export default function VenueProfilePage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-black text-slate-900 dark:text-white">
-                      {!isYogaCategory && gymBookingType === 'MEMBERSHIP'
+                      {gymBookingType === 'MEMBERSHIP'
                         ? (activePlan ? activePlan.name : 'Select a Membership Plan')
                         : (activePass ? activePass.name : 'Select a Day Pass / Trial')}
                     </span>
@@ -6729,12 +7383,12 @@ export default function VenueProfilePage() {
 
                 <button
                   type="button"
-                  disabled={!isYogaCategory && gymBookingType === 'MEMBERSHIP' ? !activePlan : !activePass}
+                  disabled={gymBookingType === 'MEMBERSHIP' ? !activePlan : !activePass}
                   onClick={() => {
-                    const chosenItem = !isYogaCategory && gymBookingType === 'MEMBERSHIP' ? activePlan : activePass;
+                    const chosenItem = gymBookingType === 'MEMBERSHIP' ? activePlan : activePass;
                     if (!chosenItem) return;
 
-                    const bookingTitle = !isYogaCategory && gymBookingType === 'MEMBERSHIP'
+                    const bookingTitle = gymBookingType === 'MEMBERSHIP'
                       ? `${venueName} — ${activePlan.name} (${activePlan.months}M)`
                       : `${venueName} — ${activePass.name}`;
 
@@ -6746,10 +7400,10 @@ export default function VenueProfilePage() {
                         isFitnessBooking: true,
                         fitnessBooking: {
                           venueName,
-                          passName: !isYogaCategory && gymBookingType === 'MEMBERSHIP' ? activePlan.name : activePass.name,
+                          passName: gymBookingType === 'MEMBERSHIP' ? activePlan.name : activePass.name,
                           bookingType: gymBookingType,
                           formatType: activePass?.formatType || 'GYM_MEMBERSHIP',
-                          planMonths: !isYogaCategory && gymBookingType === 'MEMBERSHIP' ? activePlan.months : 1,
+                          planMonths: gymBookingType === 'MEMBERSHIP' ? activePlan.months : 1,
                           slotTime: selectedFitnessTimeSlot,
                           slotDate: selectedDate || todayStr,
                           trainer: activeTrainer?.name || 'Floor Coach (General Access)',
@@ -6767,13 +7421,13 @@ export default function VenueProfilePage() {
                     router.push('/booking/checkout');
                   }}
                   className={`px-8 py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-wider shadow-md transition-all cursor-pointer w-full sm:w-auto flex items-center justify-center gap-2 ${
-                    (!isYogaCategory && gymBookingType === 'MEMBERSHIP' ? !activePlan : !activePass)
+                    (gymBookingType === 'MEMBERSHIP' ? !activePlan : !activePass)
                       ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed shadow-none'
                       : 'bg-[#ff6325] hover:bg-[#e04e13] text-white active:scale-95'
                   }`}
                 >
                   <span>
-                    {!isYogaCategory && gymBookingType === 'MEMBERSHIP'
+                    {gymBookingType === 'MEMBERSHIP'
                       ? (activePlan ? `Join Membership (₹${effectivePrice})` : 'Select Membership')
                       : (activePass ? `Book Gym Pass (₹${effectivePrice})` : 'Select Pass')}
                   </span>
@@ -6785,18 +7439,39 @@ export default function VenueProfilePage() {
         })()}
 
 
-        {/* ============================================================
-         * SECTION D5-D: RESTAURANT & TABLE RESERVATION FLOW
-         * ============================================================ */}
 {
   isDining && (() => {
+    // 1. Direct Real-time Dynamic Tables & Menu from Live DB Services
+    const liveDiningService = (liveServices && liveServices.length > 0)
+      ? liveServices.find((s: any) => s.metadata?.isDining || s.category?.toLowerCase().includes('dining') || s.category?.toLowerCase().includes('restaurant')) || liveServices[0]
+      : null;
+
+    const liveTables = (liveDiningService && Array.isArray(liveDiningService.listings) && liveDiningService.listings.length > 0)
+      ? liveDiningService.listings.map((l: any, idx: number) => {
+          const zone = l.metadata?.tableZone || l.tableZone || 'AC_INDOOR';
+          const icon = zone === 'ROOFTOP' ? '🌆' : zone === 'PRIVATE_DINING' ? '👑' : zone === 'GARDEN_PATIO' ? '🌿' : '🛋️';
+          return {
+            id: l.id || `table-live-${idx}`,
+            name: l.name,
+            capacity: `${l.minGuests || l.metadata?.minGuests || 1} - ${l.maxGuests || l.metadata?.maxGuests || 4} Guests`,
+            minGuests: l.minGuests || l.metadata?.minGuests || 1,
+            maxGuests: l.maxGuests || l.metadata?.maxGuests || 4,
+            zone: zone,
+            depositAmount: Number(l.price || l.basePrice || l.metadata?.depositAmount || 0),
+            badge: l.offerBadge || l.metadata?.highlightBadge || undefined,
+            icon,
+            description: l.description || l.metadata?.atmosphereTagline || `Comfortable table setup in ${zone.replace('_', ' ')}.`
+          };
+        })
+      : [];
+
     const diningCfg = getDiningConfig(cleanMerchantId);
-    let allTables = diningCfg.tableTypes || [];
-    let allSlots = diningCfg.timeSlots || [];
-    let popularMenu = diningCfg.popularMenu || [];
-    let activeDeals = diningCfg.bookingDeals || [];
-    let activeCuisines = diningCfg.cuisines || [];
-    let activeCostForTwo = diningCfg.costForTwo || 800;
+    let allTables = liveTables.length > 0 ? liveTables : (diningCfg.tableTypes || []);
+    let allSlots = liveDiningService?.metadata?.timeSlots || diningCfg.timeSlots || [];
+    let popularMenu = liveDiningService?.metadata?.popularMenu || diningCfg.popularMenu || [];
+    let activeDeals = liveDiningService?.metadata?.bookingDeals || diningCfg.bookingDeals || [];
+    let activeCuisines = liveDiningService?.metadata?.cuisines || diningCfg.cuisines || [];
+    let activeCostForTwo = liveDiningService?.metadata?.costForTwo || diningCfg.costForTwo || 800;
     let customSessionsList: any[] = [];
 
     if (typeof window !== 'undefined') {
@@ -7527,6 +8202,26 @@ export default function VenueProfilePage() {
   isPass && (() => {
     // Dynamic binding to live service metadata created by business partner
     const activeEntSvc = liveServices.find(s => s.metadata?.isEntertainment || s.category?.toLowerCase().includes('movie') || s.category?.toLowerCase().includes('cinema')) || liveServices[0];
+    
+    // Live movies directly from live backend listings or fallback to catalog
+    const liveMoviesList: MovieListingItem[] = (activeEntSvc?.listings && activeEntSvc.listings.length > 0)
+      ? activeEntSvc.listings.map((l: any, idx: number) => ({
+          id: l.id || `live-mov-${idx}`,
+          slug: (l.title || l.name || `movie-${idx}`).toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          title: l.title || l.name || 'Now Showing Feature',
+          posterUrl: l.image || l.posterUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600&auto=format&fit=crop&q=80',
+          backdropUrl: l.image || l.backdropUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1600&auto=format&fit=crop&q=80',
+          rating: Number(l.rating || 9.0),
+          votes: 'Verified Live',
+          certificate: l.certificate || 'UA16+',
+          runtime: l.runtime || '2h 45m',
+          languages: Array.isArray(l.languages) ? l.languages : ['Tamil', 'English', 'Hindi'],
+          formats: Array.isArray(l.formats) ? l.formats : ['IMAX 3D', 'Dolby Atmos 7.1'],
+          genres: Array.isArray(l.genres) ? l.genres : ['Action', 'Thriller', 'Sci-Fi'],
+          synopsis: l.description || 'Live screening at verified multiplex cinema.',
+          releaseDate: 'In Theatres Now'
+        }))
+      : NOW_SHOWING_MOVIES;
     const dynamicFormats: Array<{ id: string; label: string; sub: string; icon: string }> = (activeEntSvc?.metadata?.formats && Array.isArray(activeEntSvc.metadata.formats))
       ? activeEntSvc.metadata.formats.map((fmt: any) => {
         if (typeof fmt === 'string') {
@@ -7595,13 +8290,13 @@ export default function VenueProfilePage() {
         <div className="space-y-2 pb-4 border-b border-slate-200/80 dark:border-white/10">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <span>🎬</span> Now Showing At This Multiplex ({NOW_SHOWING_MOVIES.length} Movies)
+              <span>🎬</span> Now Showing At This Multiplex ({liveMoviesList.length} Movies)
             </span>
             <span className="text-[10px] font-bold text-[#ff6325]">Click any poster to switch show</span>
           </div>
 
           <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none">
-            {NOW_SHOWING_MOVIES.map((mov) => {
+            {liveMoviesList.map((mov) => {
               const isCur = activeMovie.id === mov.id || activeMovie.slug === mov.slug;
               return (
                 <button

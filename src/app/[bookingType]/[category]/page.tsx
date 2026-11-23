@@ -5297,23 +5297,41 @@ export default function ProviderDiscoveryPage() {
                       <Sparkles size={17} />
                     </div>
                     <div className="flex flex-col min-w-0 flex-1">
-                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">MEMBERSHIP PLAN</span>
+                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">
+                        {isExplicitYoga ? 'YOGA PASS / SADHANA' : 'MEMBERSHIP PLAN'}
+                      </span>
                       <span className="text-xs font-bold text-slate-800 dark:text-white truncate">
-                        {fitnessPlanFilter === 'TRIAL'
-                          ? '🔥 Free / Experience Trial Pass'
-                          : fitnessPlanFilter === 'DAILY'
-                          ? '🎟️ 1 Day Workout Pass'
-                          : fitnessPlanFilter === '1_MONTH'
-                          ? '📅 1 Month Standard'
-                          : fitnessPlanFilter === '3_MONTHS'
-                          ? '🚀 3 Months (Quarterly)'
-                          : fitnessPlanFilter === '6_MONTHS'
-                          ? '🏆 6 Months (Pro Pass)'
-                          : fitnessPlanFilter === '12_MONTHS'
-                          ? '👑 12 Months (Annual VIP)'
-                          : fitnessPlanFilter === 'PT'
-                          ? '🏋️ 1-on-1 Personal Trainer'
-                          : '✨ All Memberships & Passes'}
+                        {isExplicitYoga ? (
+                          fitnessPlanFilter === 'TRIAL'
+                            ? 'Trial Mat Drop-in Pass'
+                            : fitnessPlanFilter === 'DAILY'
+                            ? '1-Day Shala Experience Pass'
+                            : fitnessPlanFilter === '1_MONTH'
+                            ? '1 Month Shala Sadhana'
+                            : fitnessPlanFilter === '3_MONTHS'
+                            ? '3 Months Yogic Transformation'
+                            : fitnessPlanFilter === '6_MONTHS'
+                            ? '6 Months Yogic Immersion'
+                            : fitnessPlanFilter === 'PT'
+                            ? '1-on-1 Dedicated Yoga Guru'
+                            : 'All Yoga Passes & Sadhana'
+                        ) : (
+                          fitnessPlanFilter === 'TRIAL'
+                            ? 'Free / Experience Trial Pass'
+                            : fitnessPlanFilter === 'DAILY'
+                            ? '1 Day Workout Pass'
+                            : fitnessPlanFilter === '1_MONTH'
+                            ? '1 Month Standard'
+                            : fitnessPlanFilter === '3_MONTHS'
+                            ? '3 Months (Quarterly)'
+                            : fitnessPlanFilter === '6_MONTHS'
+                            ? '6 Months (Pro Pass)'
+                            : fitnessPlanFilter === '12_MONTHS'
+                            ? '12 Months (Annual VIP)'
+                            : fitnessPlanFilter === 'PT'
+                            ? '1-on-1 Personal Trainer'
+                            : 'All Memberships & Passes'
+                        )}
                       </span>
                     </div>
                     <ChevronDown size={13} className={`text-slate-400 transition-transform shrink-0 ${isFitnessPlanDropdownOpen ? 'rotate-180' : ''}`} />
@@ -5324,69 +5342,126 @@ export default function ProviderDiscoveryPage() {
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setIsFitnessPlanDropdownOpen(false)} />
                       <div className="absolute top-full left-0 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl p-2.5 z-50 space-y-1">
-                        {/* Section 1: Trials & Single Passes */}
-                        <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2.5 pt-1.5 pb-1">
-                          Trials & Daily Passes
-                        </div>
-                        {[
-                          { id: 'TRIAL', label: '1-Day Free / Experience Trial Pass', icon: '🔥', highlight: true },
-                          { id: 'DAILY', label: 'Single Day Workout Pass', icon: '🎟️' },
-                          { id: 'PT', label: '1-on-1 Personal Trainer Assessment', icon: '🏋️' }
-                        ].map((p: any) => (
-                          <button
-                            key={p.id}
-                            type="button"
-                            onClick={() => {
-                              setFitnessPlanFilter(p.id as any);
-                              setIsFitnessPlanDropdownOpen(false);
-                            }}
-                            className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
-                              fitnessPlanFilter === p.id
-                                ? 'bg-[#ff6325] text-white font-black'
-                                : p.highlight
-                                  ? 'bg-orange-50/80 dark:bg-orange-950/30 text-[#ff6325] hover:bg-orange-100 font-bold'
-                                  : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
-                            }`}
-                          >
-                            <span className="flex items-center gap-2">
-                              <span>{p.icon}</span>
-                              <span className="truncate">{p.label}</span>
-                            </span>
-                            {fitnessPlanFilter === p.id && <span>✓</span>}
-                          </button>
-                        ))}
+                        {isExplicitYoga ? (
+                          <>
+                            {/* Yoga Drop-in & Trials */}
+                            <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2.5 pt-1.5 pb-1">
+                              Drop-in Passes & Trials
+                            </div>
+                            {[
+                              { id: 'TRIAL', label: 'Trial Mat Drop-in Pass (₹299)', highlight: true },
+                              { id: 'DAILY', label: '1-Day Shala Experience (₹450)' },
+                              { id: 'PT', label: '1-on-1 Yoga Therapy Guru (₹850)' }
+                            ].map((p: any) => (
+                              <button
+                                key={p.id}
+                                type="button"
+                                onClick={() => {
+                                  setFitnessPlanFilter(p.id as any);
+                                  setIsFitnessPlanDropdownOpen(false);
+                                }}
+                                className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                                  fitnessPlanFilter === p.id
+                                    ? 'bg-[#ff6325] text-white font-black'
+                                    : p.highlight
+                                      ? 'bg-orange-50/80 dark:bg-orange-950/30 text-[#ff6325] hover:bg-orange-100 font-bold'
+                                      : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                                }`}
+                              >
+                                <span className="truncate">{p.label}</span>
+                                {fitnessPlanFilter === p.id && <span>✓</span>}
+                              </button>
+                            ))}
 
-                        {/* Section 2: Transformation Memberships */}
-                        <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2.5 pt-2.5 pb-1 border-t border-slate-100 dark:border-white/10 mt-1">
-                          Monthly Transformation Memberships
-                        </div>
-                        {[
-                          { id: '1_MONTH', label: '1 Month Membership (Standard)', icon: '📅' },
-                          { id: '3_MONTHS', label: '3 Months (Quarterly Transformation)', icon: '🚀' },
-                          { id: '6_MONTHS', label: '6 Months (Pro Fitness Pass)', icon: '🏆' },
-                          { id: '12_MONTHS', label: '12 Months (Annual VIP — Best Value)', icon: '👑' },
-                          { id: 'ALL', label: 'Browse All Membership Tiers', icon: '✨' },
-                        ].map((p) => (
-                          <button
-                            key={p.id}
-                            type="button"
-                            onClick={() => {
-                              setFitnessPlanFilter(p.id as any);
-                              setIsFitnessPlanDropdownOpen(false);
-                            }}
-                            className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
-                              fitnessPlanFilter === p.id
-                                ? 'bg-[#ff6325] text-white font-black'
-                                : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
-                            }`}
-                          >
-                            <span className="flex items-center gap-2">
-                              <span>{p.icon}</span>
-                              <span className="truncate">{p.label}</span>
-                            </span>
-                            {fitnessPlanFilter === p.id && <span>✓</span>}
-                          </button>
-                        ))}
+                            {/* Yoga Monthly Sadhana */}
+                            <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2.5 pt-2.5 pb-1 border-t border-slate-100 dark:border-white/10 mt-1">
+                              Monthly Shala Sadhana
+                            </div>
+                            {[
+                              { id: '1_MONTH', label: '1 Month Shala Sadhana (₹2,199)' },
+                              { id: '3_MONTHS', label: '3 Months Transformation (₹4,999)' },
+                              { id: '6_MONTHS', label: '6 Months Holistic Sadhana (₹8,999)' },
+                              { id: 'ALL', label: 'Browse All Yoga Passes' }
+                            ].map((p) => (
+                              <button
+                                key={p.id}
+                                type="button"
+                                onClick={() => {
+                                  setFitnessPlanFilter(p.id as any);
+                                  setIsFitnessPlanDropdownOpen(false);
+                                }}
+                                className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                                  fitnessPlanFilter === p.id
+                                    ? 'bg-[#ff6325] text-white font-black'
+                                    : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                                }`}
+                              >
+                                <span className="truncate">{p.label}</span>
+                                {fitnessPlanFilter === p.id && <span>✓</span>}
+                              </button>
+                            ))}
+                          </>
+                        ) : (
+                          <>
+                            {/* Gym Trials & Single Passes */}
+                            <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2.5 pt-1.5 pb-1">
+                              Trials & Daily Passes
+                            </div>
+                            {[
+                              { id: 'TRIAL', label: '1-Day Free / Experience Trial Pass', highlight: true },
+                              { id: 'DAILY', label: 'Single Day Workout Pass' },
+                              { id: 'PT', label: '1-on-1 Personal Trainer Assessment' }
+                            ].map((p: any) => (
+                              <button
+                                key={p.id}
+                                type="button"
+                                onClick={() => {
+                                  setFitnessPlanFilter(p.id as any);
+                                  setIsFitnessPlanDropdownOpen(false);
+                                }}
+                                className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                                  fitnessPlanFilter === p.id
+                                    ? 'bg-[#ff6325] text-white font-black'
+                                    : p.highlight
+                                      ? 'bg-orange-50/80 dark:bg-orange-950/30 text-[#ff6325] hover:bg-orange-100 font-bold'
+                                      : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                                }`}
+                              >
+                                <span className="truncate">{p.label}</span>
+                                {fitnessPlanFilter === p.id && <span>✓</span>}
+                              </button>
+                            ))}
+
+                            {/* Gym Transformation Memberships */}
+                            <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2.5 pt-2.5 pb-1 border-t border-slate-100 dark:border-white/10 mt-1">
+                              Monthly Transformation Memberships
+                            </div>
+                            {[
+                              { id: '1_MONTH', label: '1 Month Membership (Standard)' },
+                              { id: '3_MONTHS', label: '3 Months (Quarterly Transformation)' },
+                              { id: '6_MONTHS', label: '6 Months (Pro Fitness Pass)' },
+                              { id: '12_MONTHS', label: '12 Months (Annual VIP — Best Value)' },
+                              { id: 'ALL', label: 'Browse All Membership Tiers' },
+                            ].map((p) => (
+                              <button
+                                key={p.id}
+                                type="button"
+                                onClick={() => {
+                                  setFitnessPlanFilter(p.id as any);
+                                  setIsFitnessPlanDropdownOpen(false);
+                                }}
+                                className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                                  fitnessPlanFilter === p.id
+                                    ? 'bg-[#ff6325] text-white font-black'
+                                    : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                                }`}
+                              >
+                                <span className="truncate">{p.label}</span>
+                                {fitnessPlanFilter === p.id && <span>✓</span>}
+                              </button>
+                            ))}
+                          </>
+                        )}
                       </div>
                     </>
                   )}
@@ -5403,13 +5478,23 @@ export default function ProviderDiscoveryPage() {
                       <Clock size={17} />
                     </div>
                     <div className="flex flex-col min-w-0 flex-1">
-                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">SHIFT / TIME</span>
+                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">
+                        {isExplicitYoga ? 'SUNRISE / SUNSET BATCH' : 'SHIFT / TIME'}
+                      </span>
                       <span className="text-xs font-bold text-slate-800 dark:text-white truncate">
-                        {fitnessBatchFilter === 'MORNING'
-                          ? '🌅 Morning (05:30 AM – 10:30 AM)'
-                          : fitnessBatchFilter === 'EVENING'
-                          ? '🌆 Evening (04:30 PM – 10:00 PM)'
-                          : '⚡ Flexible All-Day Access'}
+                        {isExplicitYoga ? (
+                          fitnessBatchFilter === 'MORNING'
+                            ? 'Sunrise & Morning (06:00 AM – 09:00 AM)'
+                            : fitnessBatchFilter === 'EVENING'
+                            ? 'Sunset & Sound Bath (05:30 PM – 08:00 PM)'
+                            : 'All Day Shala Batches'
+                        ) : (
+                          fitnessBatchFilter === 'MORNING'
+                            ? 'Morning (05:30 AM – 10:30 AM)'
+                            : fitnessBatchFilter === 'EVENING'
+                            ? 'Evening (04:30 PM – 10:00 PM)'
+                            : 'Flexible All-Day Access'
+                        )}
                       </span>
                     </div>
                     <ChevronDown size={13} className={`text-slate-400 transition-transform shrink-0 ${isFitnessBatchDropdownOpen ? 'rotate-180' : ''}`} />
@@ -5421,12 +5506,12 @@ export default function ProviderDiscoveryPage() {
                       <div className="fixed inset-0 z-40" onClick={() => setIsFitnessBatchDropdownOpen(false)} />
                       <div className="absolute top-full right-0 mt-3 w-64 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl p-2 z-50 space-y-1">
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1.5">
-                          Workout Shift
+                          {isExplicitYoga ? 'Yoga Shala Batch' : 'Workout Shift'}
                         </div>
-                        {[
-                          { id: 'ALL', label: 'Flexible (All-Day Floor Access)', icon: '⚡' },
-                          { id: 'MORNING', label: 'Morning Shift (05:30 AM - 10:30 AM)', icon: '🌅' },
-                          { id: 'EVENING', label: 'Evening Shift (04:30 PM - 10:00 PM)', icon: '🌆' },
+                        {isExplicitYoga ? [
+                          { id: 'ALL', label: 'All Shala Batches & Sound Bath' },
+                          { id: 'MORNING', label: 'Sunrise & Morning (06:00 AM - 09:00 AM)' },
+                          { id: 'EVENING', label: 'Sunset & Nidra (05:30 PM - 08:00 PM)' },
                         ].map((b) => (
                           <button
                             key={b.id}
@@ -5441,10 +5526,28 @@ export default function ProviderDiscoveryPage() {
                                 : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
                             }`}
                           >
-                            <span className="flex items-center gap-2">
-                              <span>{b.icon}</span>
-                              <span className="truncate">{b.label}</span>
-                            </span>
+                            <span className="truncate">{b.label}</span>
+                            {fitnessBatchFilter === b.id && <span>✓</span>}
+                          </button>
+                        )) : [
+                          { id: 'ALL', label: 'Flexible (All-Day Floor Access)' },
+                          { id: 'MORNING', label: 'Morning Shift (05:30 AM - 10:30 AM)' },
+                          { id: 'EVENING', label: 'Evening Shift (04:30 PM - 10:00 PM)' },
+                        ].map((b) => (
+                          <button
+                            key={b.id}
+                            type="button"
+                            onClick={() => {
+                              setFitnessBatchFilter(b.id);
+                              setIsFitnessBatchDropdownOpen(false);
+                            }}
+                            className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                              fitnessBatchFilter === b.id
+                                ? 'bg-[#ff6325] text-white font-black'
+                                : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                            }`}
+                          >
+                            <span className="truncate">{b.label}</span>
                             {fitnessBatchFilter === b.id && <span>✓</span>}
                           </button>
                         ))}

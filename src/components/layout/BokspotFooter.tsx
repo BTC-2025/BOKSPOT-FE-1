@@ -26,7 +26,7 @@ export function BokspotFooter() {
             </h3>
             
             <p className="text-[13px] text-slate-600 dark:text-slate-400 font-normal leading-relaxed max-w-sm">
-              Discover, connect, and instantly book verified slots across stays, sports, events, and everyday services.
+              Discover, connect, and instantly book verified slots for every experience, space, and service.
             </p>
           </div>
 
