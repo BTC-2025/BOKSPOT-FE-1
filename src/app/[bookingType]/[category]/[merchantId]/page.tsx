@@ -77,10 +77,22 @@ export default function VenueProfilePage() {
   // PG Food Exclusion Discount Toggle state (Optional without food: -₹1,500/mo)
   const [isFoodExcluded, setIsFoodExcluded] = useState(false);
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const tomorrowDate = new Date();
-  tomorrowDate.setDate(tomorrowDate.getDate() + 2);
-  const tomorrowStr = tomorrowDate.toISOString().split('T')[0];
+  const todayStr = (() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  })();
+
+  const tomorrowStr = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  })();
 
   const [checkIn, setCheckIn] = useState(searchParams?.get('checkIn') || todayStr);
   const [checkOut, setCheckOut] = useState(searchParams?.get('checkOut') || tomorrowStr);
@@ -1785,8 +1797,8 @@ export default function VenueProfilePage() {
                   </div>
                 </div>
               </div>
-            ) : isAppointment || isHomeCall || isFitness || isYoga ? (
-              /* Dedicated Appointment / Home Services / Fitness Summary Bar */
+            ) : isFitness || isYoga ? (
+              /* Dedicated Gym & Fitness / Yoga Workout Summary Bar */
               <div className="flex flex-wrap items-center gap-6 text-xs">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
@@ -1794,10 +1806,48 @@ export default function VenueProfilePage() {
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
-                      {isHomeCall ? 'Service Date & Window' : isYoga ? 'Yoga Batch Date' : isFitness ? 'Gym Workout Date' : 'Consultation Date'}
+                      {isYoga ? 'Yoga Batch Date & Shift' : 'Gym Workout Date & Shift'}
                     </span>
                     <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
-                      {selectedDate || todayStr} • {isHomeCall ? (preferredHomeWindow || 'Morning (09:00 AM - 12:00 PM)') : isYoga ? (selectedFitnessTimeSlot || '06:00 AM Batch') : isFitness ? (selectedFitnessTimeSlot || '06:00 AM Batch') : (selectedApptSlot || '10:00 AM Slot')}
+                      {selectedDate || todayStr} • {selectedFitnessTimeSlot || '06:00 AM Batch'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="h-8 w-px bg-slate-200 dark:bg-white/10 hidden lg:block" />
+
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                    <Sparkles size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
+                      Workout Format & Mode
+                    </span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
+                      {isYoga
+                        ? (fitnessFormatFilter === 'PERSONAL_TRAINING' ? '1-on-1 Guru Session' : 'Group Yoga Batch')
+                        : (gymBookingType === 'MEMBERSHIP'
+                            ? 'Monthly Membership'
+                            : (fitnessFormatFilter === 'PERSONAL_TRAINING' ? '1-on-1 PT Session' : 'Daily Workout Pass & Trial'))}
+                      {' • Turnstile Pass'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : isAppointment || isHomeCall ? (
+              /* Dedicated Appointment / Home Services Summary Bar */
+              <div className="flex flex-wrap items-center gap-6 text-xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                    <Calendar size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
+                      {isHomeCall ? 'Service Date & Window' : 'Consultation Date'}
+                    </span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
+                      {selectedDate || todayStr} • {isHomeCall ? (preferredHomeWindow || 'Morning (09:00 AM - 12:00 PM)') : (selectedApptSlot || '10:00 AM Slot')}
                     </span>
                   </div>
                 </div>
@@ -2631,16 +2681,25 @@ export default function VenueProfilePage() {
                   const isYogaCategory = isYoga || cleanCat.includes('yoga') || cleanCat.includes('meditation');
                   return (
                     <div className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        {/* 1. Format / Class Type */}
+                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        {/* 1. Format / Plan Type */}
                         <div className="relative">
                           <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
-                            {isYogaCategory ? 'Yoga Batch Format' : 'Gym Workout Format'}
+                            {isYogaCategory ? 'Yoga Format' : 'Pass / Membership Type'}
                           </label>
                           <select
-                            value={fitnessFormatFilter}
-                            onChange={(e) => setFitnessFormatFilter(e.target.value as any)}
-                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white text-xs outline-none cursor-pointer"
+                            value={gymBookingType === 'MEMBERSHIP' ? 'MEMBERSHIP' : fitnessFormatFilter}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === 'MEMBERSHIP') {
+                                setGymBookingType('MEMBERSHIP');
+                                setFitnessFormatFilter('ALL');
+                              } else {
+                                setGymBookingType('DAY_PASS');
+                                setFitnessFormatFilter(val as any);
+                              }
+                            }}
+                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white text-xs outline-none cursor-pointer focus:border-[#ff6325] transition-colors"
                           >
                             {isYogaCategory ? (
                               <>
@@ -2650,9 +2709,14 @@ export default function VenueProfilePage() {
                               </>
                             ) : (
                               <>
-                                <option value="ALL">All Gym Passes</option>
-                                <option value="OPEN_GYM">Open Gym Floor Pass</option>
-                                <option value="PERSONAL_TRAINING">1-on-1 PT Session</option>
+                                <optgroup label="Trials & Day Passes">
+                                  <option value="ALL">1-Day Trial & Experience Pass</option>
+                                  <option value="OPEN_GYM">Open Gym Floor Pass</option>
+                                  <option value="PERSONAL_TRAINING">1-on-1 Personal Trainer</option>
+                                </optgroup>
+                                <optgroup label="Memberships">
+                                  <option value="MEMBERSHIP">Monthly Transformation Memberships</option>
+                                </optgroup>
                               </>
                             )}
                           </select>
@@ -2661,31 +2725,62 @@ export default function VenueProfilePage() {
                         {/* 2. Workout Date */}
                         <div className="relative">
                           <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
-                            {isYogaCategory ? 'Yoga Date' : 'Workout Date'}
+                            {isYogaCategory ? 'Yoga Start Date' : 'Workout Start Date'}
                           </label>
                           <input
                             type="date"
                             min={todayStr}
                             value={selectedDate || todayStr}
                             onChange={(e) => setSelectedDate(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 font-bold text-slate-900 dark:text-white text-xs outline-none"
+                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 font-bold text-slate-900 dark:text-white text-xs outline-none focus:border-[#ff6325] transition-colors cursor-pointer"
                           />
                         </div>
 
                         {/* 3. Session Timing */}
                         <div className="relative">
                           <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
-                            {isYogaCategory ? 'Yoga Batch Time' : 'Gym Shift / Time'}
+                            {isYogaCategory ? 'Yoga Batch Time' : 'Gym Shift / Batch'}
                           </label>
                           <select
                             value={selectedFitnessTimeSlot}
                             onChange={(e) => setSelectedFitnessTimeSlot(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white text-xs outline-none cursor-pointer"
+                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white text-xs outline-none cursor-pointer focus:border-[#ff6325] transition-colors"
                           >
-                            {['06:00 AM', '07:15 AM', '08:30 AM', '05:00 PM', '06:15 PM', '07:30 PM', '08:45 PM'].map((s) => (
+                            {['05:30 AM', '06:45 AM', '08:00 AM', '09:30 AM', '05:00 PM', '06:15 PM', '07:30 PM', '08:45 PM'].map((s) => (
                               <option key={s} value={s}>{s}</option>
                             ))}
                           </select>
+                        </div>
+
+                        {/* 4. Quick Date Buttons */}
+                        <div>
+                          <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
+                            Quick Select
+                          </label>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedDate(todayStr)}
+                              className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                (selectedDate || todayStr) === todayStr
+                                  ? 'bg-[#ff6325] text-white shadow-xs font-black'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200'
+                              }`}
+                            >
+                              Today
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedDate(tomorrowStr)}
+                              className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                selectedDate === tomorrowStr
+                                  ? 'bg-[#ff6325] text-white shadow-xs font-black'
+                                  : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200'
+                              }`}
+                            >
+                              Tomorrow
+                            </button>
+                          </div>
                         </div>
                       </div>
 
@@ -2702,7 +2797,7 @@ export default function VenueProfilePage() {
                           onClick={() => {
                             setIsEditSearchOpen(false);
                             const newQuery = new URLSearchParams(window.location.search);
-                            newQuery.set('date', selectedDate);
+                            newQuery.set('date', selectedDate || todayStr);
                             newQuery.set('slot', selectedFitnessTimeSlot);
                             window.history.replaceState(null, '', `?${newQuery.toString()}`);
                             const el = document.getElementById('fitness-booking-section');
