@@ -167,6 +167,12 @@ export function TopNav({
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      const target = event.target as HTMLElement;
+      // If clicking inside the virtual keyboard, do not close search bar or autocomplete dropdown
+      if (target && target.closest('.keyboard-floating-window')) {
+        return;
+      }
+
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setProfileOpen(false);
       }
@@ -833,7 +839,7 @@ export function TopNav({
             style={{
               paddingRight: !utilityDrawerOpen
                 ? '16px'
-                : activeUtilityTab
+                : activeUtilityTab && activeUtilityTab !== 'keyboard'
                   ? (activeUtilityTab === 'beta' ? '412px' : '392px')
                   : '72px'
             }}
