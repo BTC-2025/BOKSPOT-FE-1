@@ -6142,19 +6142,22 @@ export default function VenueProfilePage() {
           });
 
           // Active selection handling based on Gym Booking Mode
-          const activePass = filteredPasses.find((p: any) => p.id === selectedFitnessPassId) || filteredPasses[0] || allPasses[0];
-          const activePlan = allMembershipPlans.find((m: any) => m.id === selectedGymPlanId) || allMembershipPlans[1] || allMembershipPlans[0];
-          const activePt = allPtPackages.find((pt: any) => pt.id === selectedGymPTId) || allPtPackages[0];
-          const activeTrainer = allTrainers.find((t: any) => t.id === selectedGymTrainerId) || allTrainers[0];
+          // Active selection handling based on Gym Booking Mode (Supports Unselecting!)
+          const activePass = filteredPasses.find((p: any) => p.id === selectedFitnessPassId) || null;
+          const activePlan = allMembershipPlans.find((m: any) => m.id === selectedGymPlanId) || null;
+          const activePt = allPtPackages.find((pt: any) => pt.id === selectedGymPTId) || null;
+          const activeTrainer = allTrainers.find((t: any) => t.id === selectedGymTrainerId) || null;
 
           // Effective price calculation
-          let effectivePrice = activePass?.price || 299;
+          let effectivePrice = 0;
           if (!isYogaCategory) {
             if (gymBookingType === 'MEMBERSHIP') {
-              effectivePrice = (activePlan?.price || 1999) + (activePt?.price || 0);
+              effectivePrice = (activePlan?.price || 0) + (activePt?.price || 0);
             } else {
-              effectivePrice = activePass?.price || 299;
+              effectivePrice = activePass?.price || 0;
             }
+          } else {
+            effectivePrice = activePass?.price || 0;
           }
 
           // Dynamic Gym Capacity Slots with real spots left
@@ -6172,10 +6175,10 @@ export default function VenueProfilePage() {
           return (
             <div id="fitness-booking-section" className="space-y-6 mt-8 p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
               {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-white/10 pb-4">
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                    <span>{isYogaCategory ? '🧘' : '🏋️'}</span> {isYogaCategory ? 'Yoga Shala Mat & Batch Booking' : 'Gym Floor, Memberships & Personal Training'}
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                    {isYogaCategory ? 'Yoga Shala Mat & Batch Booking' : 'Gym Floor, Memberships & Personal Training'}
                   </h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     {isYogaCategory
@@ -6185,251 +6188,118 @@ export default function VenueProfilePage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-[#ff6325] border border-[#ff6325]/25 text-xs font-bold">
-                    <span>⚡ Instant QR / NFC Turnstile Pass</span>
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#ff6325]/10 text-[#ff6325] border border-[#ff6325]/25 text-xs font-bold">
+                    <span>Instant QR Turnstile Pass</span>
                   </div>
-                  <div className="hidden md:flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 text-[11px] font-bold">
-                    <span>🛡️ No Hidden Admission Fees</span>
+                  <div className="hidden md:flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-white/10 text-[11px] font-bold">
+                    <span>No Admission Fee</span>
                   </div>
                 </div>
               </div>
 
               {/* Gym Experience Mode Switcher (Memberships vs Daily Passes) */}
               {!isYogaCategory && (
-                <div className="p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800/80 inline-flex items-center gap-1 border border-slate-200/80 dark:border-white/10">
-                  <button
-                    type="button"
-                    onClick={() => setGymBookingType('MEMBERSHIP')}
-                    className={`px-4 sm:px-5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 ${
-                      gymBookingType === 'MEMBERSHIP'
-                        ? 'bg-[#ff6325] text-white shadow-sm'
-                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
-                    }`}
-                  >
-                    <span>🔥 Monthly Transformation Plans</span>
-                    <span className="text-[10px] bg-white/20 px-1.5 py-0.2 rounded-md font-mono">1M - 12M</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setGymBookingType('DAY_PASS')}
-                    className={`px-4 sm:px-5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 ${
-                      gymBookingType === 'DAY_PASS'
-                        ? 'bg-[#ff6325] text-white shadow-sm'
-                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
-                    }`}
-                  >
-                    <span>🎟️ 1-Day Trial & Experience Passes</span>
-                  </button>
-                </div>
-              )}
-
-              {/* SECTION: MEMBERSHIP PLANS GRID (Shown when MEMBERSHIP mode is active) */}
-              {!isYogaCategory && gymBookingType === 'MEMBERSHIP' && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                        1. Choose Transformation Membership Plan
-                      </label>
-                      <p className="text-[11px] text-slate-400 mt-0.5">All plans include unlimited gym floor, cardio deck, steam bath & smart locker.</p>
-                    </div>
-                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-200/50">
-                      ✓ Vacation Freeze Available
-                    </span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-white/10 pb-3">
+                  <div className="inline-flex p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-white/10 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setGymBookingType('DAY_PASS')}
+                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                        gymBookingType === 'DAY_PASS'
+                          ? 'bg-[#ff6325] text-white shadow-sm'
+                          : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                      }`}
+                    >
+                      Day Passes & Trials
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setGymBookingType('MEMBERSHIP')}
+                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                        gymBookingType === 'MEMBERSHIP'
+                          ? 'bg-[#033266] text-white shadow-sm'
+                          : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                      }`}
+                    >
+                      Monthly Memberships
+                    </button>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-                    {allMembershipPlans.map((plan: any) => {
-                      const isSelected = selectedGymPlanId === plan.id;
-                      return (
-                        <div
-                          key={plan.id}
-                          onClick={() => setSelectedGymPlanId(plan.id)}
-                          className={`relative p-4.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
-                            isSelected
-                              ? 'border-[#ff6325] bg-orange-50/30 dark:bg-[#ff6325]/10 ring-2 ring-[#ff6325]/30 shadow-md scale-[1.01]'
-                              : 'bg-slate-50/70 dark:bg-slate-800/60 border-slate-200/80 dark:border-white/10 hover:border-slate-300 hover:bg-white dark:hover:bg-slate-800'
-                          }`}
-                        >
-                          {plan.savingsBadge && (
-                            <div className="absolute -top-2.5 right-3">
-                              <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-[#ff6325] text-white shadow-xs">
-                                {plan.savingsBadge}
-                              </span>
-                            </div>
-                          )}
-
-                          <div>
-                            <div className="flex items-center justify-between">
-                              <h4 className="text-sm font-black text-slate-900 dark:text-white">{plan.name}</h4>
-                            </div>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
-                              {plan.description}
-                            </p>
-
-                            <div className="mt-3.5 pt-3 border-t border-slate-200/80 dark:border-white/10 flex items-baseline gap-2">
-                              <span className="text-xl font-black text-[#ff6325]">₹{plan.price}</span>
-                              {plan.originalPrice && (
-                                <span className="text-xs text-slate-400 line-through">₹{plan.originalPrice}</span>
-                              )}
-                              <span className="text-[10px] text-slate-500 font-bold ml-auto bg-slate-200/60 dark:bg-slate-700/60 px-2 py-0.5 rounded">
-                                ₹{plan.pricePerDay || Math.round(plan.price / (plan.months * 30))}/day
-                              </span>
-                            </div>
-
-                            {plan.features && plan.features.length > 0 && (
-                              <ul className="mt-3 space-y-1.5 border-t border-slate-200/60 dark:border-white/5 pt-2.5">
-                                {plan.features.slice(0, 3).map((f: string, idx: number) => (
-                                  <li key={idx} className="text-[10px] text-slate-600 dark:text-slate-300 flex items-center gap-1.5 font-medium">
-                                    <span className="text-emerald-500 font-bold">✓</span>
-                                    <span className="truncate">{f}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-
-                          <div className="mt-4 pt-2">
-                            <span className={`block w-full text-center text-[11px] font-extrabold py-2 rounded-xl transition-all ${
-                              isSelected
-                                ? 'bg-[#ff6325] text-white shadow-xs'
-                                : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/10'
-                            }`}>
-                              {isSelected ? '✓ Plan Selected' : 'Choose Plan'}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Optional PT Addon Selection */}
-                  <div className="mt-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-white/10">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                      <div>
-                        <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-                          <span>💪</span> Add Dedicated 1-on-1 Personal Training Package
-                        </span>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400">Pair your floor membership with private coaching & nutrition tracking.</p>
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">OPTIONAL ADD-ON</span>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                      {allPtPackages.map((pt: any) => {
-                        const isPtSelected = selectedGymPTId === pt.id;
-                        return (
-                          <div
-                            key={pt.id}
-                            onClick={() => setSelectedGymPTId(pt.id)}
-                            className={`p-3 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
-                              isPtSelected
-                                ? 'border-[#ff6325] bg-white dark:bg-slate-800 ring-2 ring-[#ff6325]/20 shadow-xs'
-                                : 'bg-white/80 dark:bg-slate-800/60 border-slate-200/80 dark:border-white/10 hover:border-slate-300'
-                            }`}
-                          >
-                            <div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs font-black text-slate-900 dark:text-white">{pt.title}</span>
-                                <span className="text-xs font-black text-[#ff6325]">
-                                  {pt.price === 0 ? 'Free' : `+₹${pt.price}`}
-                                </span>
-                              </div>
-                              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
-                                {pt.description}
-                              </p>
-                            </div>
-                            <div className="mt-2 text-right">
-                              <span className={`text-[9px] font-bold px-2 py-0.5 rounded ${
-                                isPtSelected ? 'bg-[#ff6325] text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'
-                              }`}>
-                                {isPtSelected ? '✓ Added' : '+ Add'}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* SECTION: DAY PASS SELECTION (Shown in DAY_PASS mode or pure Yoga) */}
-              {(isYogaCategory || gymBookingType === 'DAY_PASS') && (
-                <div className="space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                      {isYogaCategory ? '1. Select Yoga Batch or Session' : '1. Select Daily Workout Pass or Trial'}
-                    </label>
-
-                    {/* Format Filter Tabs */}
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {(isYogaCategory ? [
-                        { id: 'ALL', label: 'All Batches' },
-                        { id: 'YOGA_CLASS', label: '🧘 Group Yoga Batches' },
-                        { id: 'PERSONAL_TRAINING', label: '🕉️ 1-on-1 Guru Session' }
-                      ] : [
+                  {gymBookingType === 'DAY_PASS' && (
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                      {[
                         { id: 'ALL', label: 'All Passes' },
-                        { id: 'OPEN_GYM', label: '🏋️ Open Gym Floor' },
-                        { id: 'PERSONAL_TRAINING', label: '💪 1-on-1 PT' }
-                      ]).map((tab) => (
+                        { id: 'OPEN_GYM', label: 'Gym Floor' },
+                        { id: 'PERSONAL_TRAINING', label: '1-on-1 PT' }
+                      ].map((tab) => (
                         <button
                           key={tab.id}
                           type="button"
                           onClick={() => setFitnessFormatFilter(tab.id as any)}
-                          className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${fitnessFormatFilter === tab.id
-                            ? 'bg-[#ff6325] text-white shadow-xs'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-                            }`}
+                          className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                            fitnessFormatFilter === tab.id
+                              ? 'bg-[#ff6325] text-white shadow-xs'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                          }`}
                         >
                           {tab.label}
                         </button>
                       ))}
                     </div>
-                  </div>
+                  )}
+                </div>
+              )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* SECTION: DAY PASS SELECTION - Compact 2-per-row grid matching Salon style */}
+              {(isYogaCategory || gymBookingType === 'DAY_PASS') && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[360px] overflow-y-auto pr-1">
                     {filteredPasses.map((pass: any) => {
-                      const isSelected = (selectedFitnessPassId === pass.id) || (activePass?.id === pass.id);
+                      const isSelected = selectedFitnessPassId === pass.id;
                       return (
                         <div
                           key={pass.id}
-                          onClick={() => setSelectedFitnessPassId(pass.id)}
-                          className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${isSelected
-                            ? 'bg-orange-50/30 dark:bg-[#ff6325]/10 border-[#ff6325] ring-2 ring-[#ff6325]/20 shadow-xs'
-                            : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
-                            }`}
+                          onClick={() => setSelectedFitnessPassId(isSelected ? '' : pass.id)}
+                          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                            isSelected
+                              ? 'bg-[#ff6325]/10 dark:bg-[#ff6325]/15 border-[#ff6325] ring-1 ring-[#ff6325]/30 shadow-xs'
+                              : 'bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-white/10 hover:border-slate-300'
+                          }`}
                         >
-                          <div className="flex items-start gap-3">
-                            <span className="text-2xl shrink-0 mt-0.5">{pass.icon || (isYogaCategory ? '🧘' : '🏋️')}</span>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <h4 className="text-xs font-extrabold text-slate-900 dark:text-white">{pass.name}</h4>
-                                <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-200/80 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
-                                  {pass.durationMinutes >= 60 ? `${pass.durationMinutes / 60}h Session` : `${pass.durationMinutes}m`}
-                                </span>
-                              </div>
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug line-clamp-2">
-                                {pass.description}
-                              </p>
-                              {pass.amenities && (
-                                <div className="flex flex-wrap gap-1 mt-2">
-                                  {pass.amenities.map((am: string, idx: number) => (
-                                    <span key={idx} className="text-[9px] font-bold px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 rounded border border-emerald-200/50">
-                                      ✓ {am}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate">
+                              {pass.name}
+                            </h4>
+                            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium block mt-0.5">
+                              {pass.durationMinutes >= 60 ? `${pass.durationMinutes / 60}h session` : `${pass.durationMinutes} mins`} • Turnstile pass
+                            </span>
                           </div>
 
-                          <div className="text-right shrink-0">
-                            <span className="text-sm font-black text-[#ff6325]">₹{pass.price}</span>
-                            <span className={`block text-[10px] font-bold mt-1 px-2.5 py-1 rounded-lg ${isSelected ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-                              }`}>
-                              {isSelected ? '✓ Selected' : 'Choose'}
+                          <div className="flex items-center gap-3 shrink-0">
+                            <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
+                              ₹{pass.price}
                             </span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedFitnessPassId(isSelected ? '' : pass.id);
+                              }}
+                              className={`h-8 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                                isSelected
+                                  ? 'bg-[#ff6325] text-white font-black shadow-xs'
+                                  : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-[#ff6325] hover:text-white'
+                              }`}
+                            >
+                              {isSelected ? (
+                                <>
+                                  <Check size={13} className="stroke-[3]" />
+                                  <span>Selected</span>
+                                </>
+                              ) : (
+                                <span>Choose</span>
+                              )}
+                            </button>
                           </div>
                         </div>
                       );
@@ -6438,50 +6308,123 @@ export default function VenueProfilePage() {
                 </div>
               )}
 
-              {/* STEP 2: CERTIFIED COACHES & PERSONAL TRAINERS (Interactive Selection) */}
+              {/* SECTION: MEMBERSHIP PLANS GRID (Clean 2-per-row Compact Cards) */}
+              {!isYogaCategory && gymBookingType === 'MEMBERSHIP' && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[360px] overflow-y-auto pr-1">
+                    {allMembershipPlans.map((plan: any) => {
+                      const isSelected = selectedGymPlanId === plan.id;
+                      return (
+                        <div
+                          key={plan.id}
+                          onClick={() => setSelectedGymPlanId(isSelected ? '' : plan.id)}
+                          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                            isSelected
+                              ? 'bg-[#ff6325]/10 dark:bg-[#ff6325]/15 border-[#ff6325] ring-1 ring-[#ff6325]/30 shadow-xs'
+                              : 'bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-white/10 hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate">
+                                {plan.name}
+                              </h4>
+                              {plan.savingsBadge && (
+                                <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-[#ff6325] text-white">
+                                  {plan.savingsBadge}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium block mt-0.5">
+                              {plan.months} Month{plan.months > 1 ? 's' : ''} • ₹{Math.round(plan.price / (plan.months * 30))}/day
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-3 shrink-0">
+                            <div className="text-right">
+                              {plan.originalPrice && (
+                                <span className="text-[11px] text-slate-400 line-through block leading-tight">
+                                  ₹{plan.originalPrice}
+                                </span>
+                              )}
+                              <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
+                                ₹{plan.price}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedGymPlanId(isSelected ? '' : plan.id);
+                              }}
+                              className={`h-8 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                                isSelected
+                                  ? 'bg-[#ff6325] text-white font-black shadow-xs'
+                                  : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-[#ff6325] hover:text-white'
+                              }`}
+                            >
+                              {isSelected ? (
+                                <>
+                                  <Check size={13} className="stroke-[3]" />
+                                  <span>Selected</span>
+                                </>
+                              ) : (
+                                <span>Choose</span>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 2: CERTIFIED COACHES (Clean Compact Selector) */}
               {allTrainers && allTrainers.length > 0 && (
                 <div>
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-2.5">
                     <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                      {isYogaCategory ? '2. Choose Dedicated Yoga Guru' : '2. On-Floor Certified Coaches & Personal Trainers'}
+                      {isYogaCategory ? '2. Select Yoga Guru' : '2. Dedicated Coach / Trainer'}
                     </label>
-                    <span className="text-[11px] text-slate-400 font-medium">Click to select coach for your session</span>
+                    <span className="text-[11px] text-slate-400 font-medium">
+                      {selectedGymTrainerId ? 'Click to unselect' : 'Optional • Click to choose'}
+                    </span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 max-h-[220px] overflow-y-auto pr-1">
                     {allTrainers.map((tr: any) => {
                       const isTrainerActive = selectedGymTrainerId === tr.id;
                       return (
                         <div
                           key={tr.id}
-                          onClick={() => setSelectedGymTrainerId(tr.id)}
-                          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 ${
+                          onClick={() => setSelectedGymTrainerId(isTrainerActive ? '' : tr.id)}
+                          className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 ${
                             isTrainerActive
-                              ? 'border-[#ff6325] bg-orange-50/40 dark:bg-[#ff6325]/10 ring-2 ring-[#ff6325]/20 shadow-xs'
-                              : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                              ? 'border-[#ff6325] bg-[#ff6325]/10 dark:bg-[#ff6325]/15 ring-1 ring-[#ff6325]/30 shadow-xs'
+                              : 'bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-white/10 hover:border-slate-300'
                           }`}
                         >
-                          <div className="relative">
+                          <div className="relative shrink-0">
                             <img
                               src={tr.avatar}
                               alt={tr.name}
-                              className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-white dark:border-slate-700 shadow-xs"
+                              className="w-10 h-10 rounded-full object-cover border border-white dark:border-slate-700 shadow-xs"
                               onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80'; }}
                             />
                             {isTrainerActive && (
-                              <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#ff6325] text-white flex items-center justify-center text-[9px] font-black shadow-xs">
+                              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#ff6325] text-white flex items-center justify-center text-[9px] font-black shadow-xs">
                                 ✓
                               </div>
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-extrabold text-slate-900 dark:text-white truncate">{tr.name}</span>
-                              <span className="text-[10px] font-black text-amber-500">★ {tr.rating}</span>
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="text-xs font-bold text-slate-900 dark:text-white truncate">{tr.name}</span>
+                              <span className="text-[10px] font-black text-amber-500 shrink-0">★ {tr.rating}</span>
                             </div>
-                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">{tr.role}</span>
-                            <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold block mt-0.5">
-                              {tr.experienceYears}+ yrs exp • {tr.specialties?.slice(0, 2).join(', ')}
+                            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium block truncate">
+                              {tr.role?.split(',')[0]} • {tr.experienceYears}y exp
                             </span>
                           </div>
                         </div>
@@ -6491,8 +6434,8 @@ export default function VenueProfilePage() {
                 </div>
               )}
 
-              {/* STEP 3 & 4: DATE & CROWD TELEMETRY TIME SLOTS */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 pt-2 border-t border-slate-200/80 dark:border-white/10">
+              {/* STEP 3 & 4: DATE & WORKOUT BATCH TIME */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 pt-3 border-t border-slate-100 dark:border-white/10">
                 {/* Date Picker */}
                 <div className="lg:col-span-5 space-y-2">
                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
@@ -6506,7 +6449,7 @@ export default function VenueProfilePage() {
                         setFitnessCalMonth(isNaN(d.getTime()) ? new Date() : d);
                         setIsFitnessCalOpen(!isFitnessCalOpen);
                       }}
-                      className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white hover:border-[#ff6325] transition-all cursor-pointer shadow-xs"
+                      className="w-full bg-white dark:bg-slate-800/40 border border-slate-200/80 dark:border-white/10 rounded-2xl px-4 py-3 flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white hover:border-[#ff6325] transition-all cursor-pointer shadow-xs"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-xl bg-[#ff6325]/10 text-[#ff6325] flex items-center justify-center font-bold shrink-0">
@@ -6612,13 +6555,13 @@ export default function VenueProfilePage() {
                   </div>
                 </div>
 
-                {/* Telemetry Time Slots */}
+                {/* Workout Batch Time Pills */}
                 <div className="lg:col-span-7 space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                      4. Preferred Workout Batch & Live Floor Capacity
+                      4. Workout Batch Time
                     </label>
-                    <span className="text-[10px] text-slate-400">Live Telemetry</span>
+                    <span className="text-[11px] text-slate-400 font-medium">Instant turnstile access</span>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -6629,22 +6572,13 @@ export default function VenueProfilePage() {
                           key={slot.time}
                           type="button"
                           onClick={() => setSelectedFitnessTimeSlot(slot.time)}
-                          className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer relative ${
+                          className={`py-2.5 px-3 rounded-xl border text-center transition-all cursor-pointer ${
                             isSelected
-                              ? 'bg-[#ff6325] text-white border-transparent shadow-md'
-                              : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#ff6325] text-slate-900 dark:text-white'
+                              ? 'bg-[#ff6325] text-white border-[#ff6325] font-black shadow-xs'
+                              : 'bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-white/10 hover:border-slate-300 text-slate-800 dark:text-slate-200 font-bold'
                           }`}
                         >
-                          <span className="text-xs font-black block">{slot.time}</span>
-                          <span className={`text-[9px] font-bold block mt-1 ${
-                            isSelected
-                              ? 'text-white/90'
-                              : slot.spotsLeft <= 5
-                                ? 'text-amber-600 dark:text-amber-400'
-                                : 'text-emerald-600 dark:text-emerald-400'
-                          }`}>
-                            {slot.spotsLeft <= 5 ? `🟠 ${slot.spotsLeft} spots left` : `🟢 ${slot.spotsLeft} spots open`}
-                          </span>
+                          <span className="text-xs block tracking-tight">{slot.time}</span>
                         </button>
                       );
                     })}
@@ -6652,49 +6586,59 @@ export default function VenueProfilePage() {
                 </div>
               </div>
 
-              {/* Gym Facility Highlights Grid (BookMyService Standard) */}
-              <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-white/10">
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-2">
-                  Included Gym Equipment & Amenities
+              {/* Gym Facility Highlights (Minimalist Clean Chips) */}
+              <div className="pt-1">
+                <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 block mb-2 uppercase tracking-wider">
+                  Included Amenities
                 </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="flex flex-wrap gap-2">
                   {[
-                    { icon: '🏋️', label: 'Olympic Barbells & Rogue Racks' },
-                    { icon: '🏃', label: 'Hi-Tech Cardio & Sled Track' },
-                    { icon: '🚿', label: 'Steam Sauna & Luxury Showers' },
-                    { icon: '📊', label: 'InBody Body Composition Scan' },
-                    { icon: '🔒', label: 'RFID Smart Lockers' },
-                    { icon: '🥤', label: 'Whey Protein & Cold Brew Bar' },
-                    { icon: '❄️', label: 'Central Air Conditioning' },
-                    { icon: '🚗', label: 'Valet Parking & EV Charging' }
-                  ].map((amenity, idx) => (
-                    <div key={idx} className="flex items-center gap-2 p-2 rounded-xl bg-white dark:bg-slate-800/70 border border-slate-200/60 dark:border-white/5">
-                      <span className="text-base">{amenity.icon}</span>
-                      <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 truncate">{amenity.label}</span>
-                    </div>
+                    'Olympic Barbells & Rogue Racks',
+                    'Hi-Tech Cardio & Sled Track',
+                    'Steam Sauna & Luxury Showers',
+                    'InBody Composition Scan',
+                    'RFID Smart Lockers',
+                    'Valet Parking'
+                  ].map((label, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-slate-200/60 dark:border-white/5 text-[11px] font-medium text-slate-600 dark:text-slate-300"
+                    >
+                      ✓ {label}
+                    </span>
                   ))}
                 </div>
               </div>
 
-              {/* Sticky Summary / Checkout Dock */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-transparent border border-[#ff6325]/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+              {/* Gym Summary & Checkout Dock */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-black text-slate-900 dark:text-white">
-                      {!isYogaCategory && gymBookingType === 'MEMBERSHIP' ? activePlan.name : activePass.name}
+                      {!isYogaCategory && gymBookingType === 'MEMBERSHIP'
+                        ? (activePlan ? activePlan.name : 'Select a Membership Plan')
+                        : (activePass ? activePass.name : 'Select a Day Pass / Trial')}
                     </span>
-                    <span className="text-base font-black text-[#ff6325]">
-                      ₹{effectivePrice}
-                    </span>
+                    {effectivePrice > 0 && (
+                      <span className="text-base font-black text-[#ff6325]">
+                        ₹{effectivePrice}
+                      </span>
+                    )}
                   </div>
                   <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
-                    📅 {selectedDate || todayStr} at {selectedFitnessTimeSlot} • Coach: {activeTrainer.name} • Instant Turnstile Pass
+                    {selectedDate || todayStr} at {selectedFitnessTimeSlot}
+                    {activeTrainer ? ` • Coach: ${activeTrainer.name}` : ' • General Floor Access'}
+                    {' • Instant Turnstile Pass'}
                   </span>
                 </div>
 
                 <button
                   type="button"
+                  disabled={!isYogaCategory && gymBookingType === 'MEMBERSHIP' ? !activePlan : !activePass}
                   onClick={() => {
+                    const chosenItem = !isYogaCategory && gymBookingType === 'MEMBERSHIP' ? activePlan : activePass;
+                    if (!chosenItem) return;
+
                     const bookingTitle = !isYogaCategory && gymBookingType === 'MEMBERSHIP'
                       ? `${venueName} — ${activePlan.name} (${activePlan.months}M)`
                       : `${venueName} — ${activePass.name}`;
@@ -6709,13 +6653,13 @@ export default function VenueProfilePage() {
                           venueName,
                           passName: !isYogaCategory && gymBookingType === 'MEMBERSHIP' ? activePlan.name : activePass.name,
                           bookingType: gymBookingType,
-                          formatType: activePass.formatType,
+                          formatType: activePass?.formatType || 'GYM_MEMBERSHIP',
                           planMonths: !isYogaCategory && gymBookingType === 'MEMBERSHIP' ? activePlan.months : 1,
                           slotTime: selectedFitnessTimeSlot,
                           slotDate: selectedDate || todayStr,
-                          trainer: activeTrainer.name,
+                          trainer: activeTrainer?.name || 'Floor Coach (General Access)',
                           ptPackage: selectedGymPTId,
-                          durationMinutes: activePass.durationMinutes || 720
+                          durationMinutes: activePass?.durationMinutes || 720
                         }
                       }
                     });
@@ -6727,9 +6671,17 @@ export default function VenueProfilePage() {
                     });
                     router.push('/booking/checkout');
                   }}
-                  className="px-8 py-3.5 rounded-xl bg-[#ff6325] hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer w-full sm:w-auto flex items-center justify-center gap-2"
+                  className={`px-8 py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-wider shadow-md transition-all cursor-pointer w-full sm:w-auto flex items-center justify-center gap-2 ${
+                    (!isYogaCategory && gymBookingType === 'MEMBERSHIP' ? !activePlan : !activePass)
+                      ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed shadow-none'
+                      : 'bg-[#ff6325] hover:bg-[#e04e13] text-white active:scale-95'
+                  }`}
                 >
-                  <span>{!isYogaCategory && gymBookingType === 'MEMBERSHIP' ? `Join Membership (₹${effectivePrice})` : `Book Gym Pass (₹${effectivePrice})`}</span>
+                  <span>
+                    {!isYogaCategory && gymBookingType === 'MEMBERSHIP'
+                      ? (activePlan ? `Join Membership (₹${effectivePrice})` : 'Select Membership')
+                      : (activePass ? `Book Gym Pass (₹${effectivePrice})` : 'Select Pass')}
+                  </span>
                   <span>→</span>
                 </button>
               </div>
