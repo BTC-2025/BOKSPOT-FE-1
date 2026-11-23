@@ -199,7 +199,7 @@ export const MASTER_WELLNESS_CONFIG: Record<string, WellnessVenueConfig> = {
       },
       {
         id: 'trt-bridal-package',
-        name: 'Bridal Glow & Skin Rejuvenation Ritual',
+        name: 'Bridal Glow & Skin Rejuvenation Package',
         category: 'BRIDAL',
         price: 4999,
         originalPrice: 6500,
@@ -207,7 +207,7 @@ export const MASTER_WELLNESS_CONFIG: Record<string, WellnessVenueConfig> = {
         genderTarget: 'WOMEN',
         serviceMode: 'IN_SALON',
         icon: '👰‍♀️',
-        description: 'Complete pre-bridal ritual: luxury facial, body polishing, hair keratin & nail art.',
+        description: 'Complete pre-bridal package: luxury facial, body polishing, hair keratin & nail art.',
         popular: true
       }
     ],

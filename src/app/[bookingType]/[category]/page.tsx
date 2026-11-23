@@ -1842,7 +1842,7 @@ export default function ProviderDiscoveryPage() {
   // Fitness / Gym / Yoga Dedicated Search States
   const isExplicitGym = category === 'gym' || category.includes('gym');
   const isExplicitYoga = category === 'yoga' || category.includes('yoga');
-  const [fitnessPlanFilter, setFitnessPlanFilter] = useState<'ALL' | 'DAILY' | '1_MONTH' | '3_MONTHS' | '6_MONTHS' | '12_MONTHS' | 'PT'>('1_MONTH');
+  const [fitnessPlanFilter, setFitnessPlanFilter] = useState<'ALL' | 'TRIAL' | 'DAILY' | '1_MONTH' | '3_MONTHS' | '6_MONTHS' | '12_MONTHS' | 'PT'>('1_MONTH');
   const [fitnessBatchFilter, setFitnessBatchFilter] = useState<string>('ALL'); // 'ALL', 'MORNING', 'EVENING'
   const [isFitnessPlanDropdownOpen, setIsFitnessPlanDropdownOpen] = useState(false);
   const [isFitnessBatchDropdownOpen, setIsFitnessBatchDropdownOpen] = useState(false);
@@ -5299,7 +5299,11 @@ export default function ProviderDiscoveryPage() {
                     <div className="flex flex-col min-w-0 flex-1">
                       <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">MEMBERSHIP PLAN</span>
                       <span className="text-xs font-bold text-slate-800 dark:text-white truncate">
-                        {fitnessPlanFilter === '1_MONTH'
+                        {fitnessPlanFilter === 'TRIAL'
+                          ? '🔥 Free / Experience Trial Pass'
+                          : fitnessPlanFilter === 'DAILY'
+                          ? '🎟️ 1 Day Workout Pass'
+                          : fitnessPlanFilter === '1_MONTH'
                           ? '📅 1 Month Standard'
                           : fitnessPlanFilter === '3_MONTHS'
                           ? '🚀 3 Months (Quarterly)'
@@ -5307,11 +5311,9 @@ export default function ProviderDiscoveryPage() {
                           ? '🏆 6 Months (Pro Pass)'
                           : fitnessPlanFilter === '12_MONTHS'
                           ? '👑 12 Months (Annual VIP)'
-                          : fitnessPlanFilter === 'DAILY'
-                          ? '🎟️ 1 Day Workout Pass'
                           : fitnessPlanFilter === 'PT'
                           ? '🏋️ 1-on-1 Personal Trainer'
-                          : '✨ All Memberships'}
+                          : '✨ All Memberships & Passes'}
                       </span>
                     </div>
                     <ChevronDown size={13} className={`text-slate-400 transition-transform shrink-0 ${isFitnessPlanDropdownOpen ? 'rotate-180' : ''}`} />
@@ -5321,17 +5323,48 @@ export default function ProviderDiscoveryPage() {
                   {isFitnessPlanDropdownOpen && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setIsFitnessPlanDropdownOpen(false)} />
-                      <div className="absolute top-full left-0 mt-3 w-72 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl p-2.5 z-50 space-y-1">
-                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1">
-                          {isExplicitGym ? 'Gym Memberships & Passes' : 'Yoga Shala Plans'}
+                      <div className="absolute top-full left-0 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl p-2.5 z-50 space-y-1">
+                        {/* Section 1: Trials & Single Passes */}
+                        <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2.5 pt-1.5 pb-1">
+                          Trials & Daily Passes
+                        </div>
+                        {[
+                          { id: 'TRIAL', label: '1-Day Free / Experience Trial Pass', icon: '🔥', highlight: true },
+                          { id: 'DAILY', label: 'Single Day Workout Pass', icon: '🎟️' },
+                          { id: 'PT', label: '1-on-1 Personal Trainer Assessment', icon: '🏋️' }
+                        ].map((p: any) => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => {
+                              setFitnessPlanFilter(p.id as any);
+                              setIsFitnessPlanDropdownOpen(false);
+                            }}
+                            className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                              fitnessPlanFilter === p.id
+                                ? 'bg-[#ff6325] text-white font-black'
+                                : p.highlight
+                                  ? 'bg-orange-50/80 dark:bg-orange-950/30 text-[#ff6325] hover:bg-orange-100 font-bold'
+                                  : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                            }`}
+                          >
+                            <span className="flex items-center gap-2">
+                              <span>{p.icon}</span>
+                              <span className="truncate">{p.label}</span>
+                            </span>
+                            {fitnessPlanFilter === p.id && <span>✓</span>}
+                          </button>
+                        ))}
+
+                        {/* Section 2: Transformation Memberships */}
+                        <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2.5 pt-2.5 pb-1 border-t border-slate-100 dark:border-white/10 mt-1">
+                          Monthly Transformation Memberships
                         </div>
                         {[
                           { id: '1_MONTH', label: '1 Month Membership (Standard)', icon: '📅' },
                           { id: '3_MONTHS', label: '3 Months (Quarterly Transformation)', icon: '🚀' },
                           { id: '6_MONTHS', label: '6 Months (Pro Fitness Pass)', icon: '🏆' },
                           { id: '12_MONTHS', label: '12 Months (Annual VIP — Best Value)', icon: '👑' },
-                          { id: 'DAILY', label: 'Single Day Workout Pass', icon: '🎟️' },
-                          { id: 'PT', label: '1-on-1 Personal Trainer Package', icon: '🏋️' },
                           { id: 'ALL', label: 'Browse All Membership Tiers', icon: '✨' },
                         ].map((p) => (
                           <button
@@ -7182,7 +7215,7 @@ export default function ProviderDiscoveryPage() {
                               : isDiningCategory
                               ? `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?date=${encodeURIComponent(sportsSlotDate || todayStr)}&session=${encodeURIComponent(diningMealSession)}&guests=${diningGuestsCount}&zone=${encodeURIComponent(diningSeatingZone)}`
                               : isSalonCategory
-                              ? `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?date=${encodeURIComponent(sportsSlotDate || todayStr)}&city=${encodeURIComponent(queryCity || city || '')}&venue=${encodeURIComponent(queryVenue || m.name || '')}&gender=${encodeURIComponent(salonGenderFilter)}&service=${encodeURIComponent(salonSelectedTreatment || '')}&timeSlot=${encodeURIComponent(salonTimeSlot)}&slot=${encodeURIComponent(salonTimeSlot === 'CUSTOM' ? salonCustomTime : (salonTimeSlot === 'MORNING' ? '10:00 AM' : salonTimeSlot === 'AFTERNOON' ? '02:00 PM' : salonTimeSlot === 'EVENING' ? '06:00 PM' : '10:00 AM'))}`
+                              ? `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?date=${encodeURIComponent(sportsSlotDate || todayStr)}&city=${encodeURIComponent(queryCity || city || '')}&venue=${encodeURIComponent(queryVenue || m.name || '')}&gender=${encodeURIComponent(salonGenderFilter)}&service=${encodeURIComponent(salonServiceInput || '')}&timeSlot=${encodeURIComponent(salonTimeSlot)}&slot=${encodeURIComponent(salonTimeSlot === 'CUSTOM' ? salonCustomTime : (salonTimeSlot === 'MORNING' ? '10:00 AM' : salonTimeSlot === 'AFTERNOON' ? '02:00 PM' : salonTimeSlot === 'EVENING' ? '06:00 PM' : '10:00 AM'))}`
                               : `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?date=${encodeURIComponent(sportsSlotDate || queryDate || new Date().toISOString().split('T')[0])}&city=${encodeURIComponent(queryCity || city || '')}&venue=${encodeURIComponent(queryVenue || m.name || '')}`
                             }
                             className="block h-full"

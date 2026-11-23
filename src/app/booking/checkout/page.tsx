@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Shield, CreditCard, Clock, MapPin, ArrowLeft, ChevronRight, AlertCircle, Check, User, Phone, Home, Bed, Users, Sparkles } from 'lucide-react';
+import { Shield, CreditCard, Clock, MapPin, ArrowLeft, ChevronRight, AlertCircle, Check, User, Phone, Home, Bed, Users, Sparkles, Ticket, Utensils, Scissors, Wrench, Dumbbell, Stethoscope, CheckCircle2, Lock } from 'lucide-react';
 import { useBookingFlowStore, useUserStore } from '../../../lib/store';
 import { useRouter } from 'next/navigation';
 
@@ -468,18 +468,18 @@ export default function CheckoutPage() {
                       </span>
                     ) : (
                       <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-orange-50 text-orange-700 border border-orange-200/60">
-                        {isEntertainmentBooking ? '🎬 Cinema & Event M-Ticket' : isPgStay ? 'PG / Hostel Stay' : isTurfBooking ? 'Turf / Sports Slot' : isMiniSpace ? 'Cloakroom Locker' : 'Service Booking'}
+                        {isEntertainmentBooking ? 'Cinema & Event M-Ticket' : isPgStay ? 'PG / Hostel Stay' : isTurfBooking ? 'Turf / Sports Slot' : isMiniSpace ? 'Cloakroom Locker' : 'Service Booking'}
                       </span>
                     )}
                     <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
-                      <span>✓</span> Verified Partner
+                      <CheckCircle2 size={12} /> Verified Partner
                     </span>
                   </div>
                   <h2 className="font-black text-lg sm:text-xl text-slate-900 tracking-tight leading-snug">
                     {listing?.name || selectedService.metadata?.pgBooking?.roomType || serviceDisplayName}
                   </h2>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">
-                    {isLuxeBlind ? '🔒 Exact luxury hotel name & address revealed instantly upon booking' : merchantDisplayName}
+                  <p className="text-xs text-slate-500 font-medium mt-0.5 flex items-center gap-1">
+                    {isLuxeBlind ? <><Lock size={12} className="text-amber-500 shrink-0" /> Exact luxury hotel name & address revealed instantly upon booking</> : merchantDisplayName}
                   </p>
                 </div>
               </div>
@@ -490,7 +490,7 @@ export default function CheckoutPage() {
                   <div className="p-4 rounded-xl bg-gradient-to-r from-purple-900/10 via-slate-900/5 to-orange-500/10 border border-purple-300/40 dark:border-purple-500/30">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-black text-purple-900 dark:text-purple-300 flex items-center gap-1.5 uppercase tracking-wide">
-                        <span>🎟️</span> Contactless Digital M-Ticket Pass
+                        <Ticket size={14} /> Contactless Digital M-Ticket Pass
                       </span>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                         Instant Turnstile QR
@@ -521,7 +521,7 @@ export default function CheckoutPage() {
                     {/* Pre-ordered Concessions */}
                     {entBooking.fnbAddons && (entBooking.fnbAddons.popcorn || entBooking.fnbAddons.nachos || entBooking.fnbAddons.beverage) && (
                       <div className="mt-2.5 pt-2 border-t border-purple-200/40 flex items-center gap-2 flex-wrap text-xs">
-                        <span className="text-[10px] font-black uppercase text-purple-800 dark:text-purple-300">🍿 In-Seat F&B:</span>
+                        <span className="text-[10px] font-black uppercase text-purple-800 dark:text-purple-300">In-Seat Refreshments:</span>
                         {entBooking.fnbAddons.popcorn && (
                           <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 text-[11px] font-bold">Tub Popcorn + Coke</span>
                         )}
@@ -543,7 +543,7 @@ export default function CheckoutPage() {
                   <div className="p-4 bg-orange-50/70 border border-orange-200/80 rounded-2xl space-y-2.5">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-black text-[#ff6325] uppercase tracking-wider flex items-center gap-1.5">
-                        🍽️ {selectedService.metadata.dining.restaurantName || 'Restaurant Table Reservation'}
+                        <Utensils size={14} /> {selectedService.metadata.dining.restaurantName || 'Restaurant Table Reservation'}
                       </span>
                       <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-600 text-white uppercase tracking-wider">
                         {selectedService.metadata.dining.depositAmount === 0 ? 'Free Reservation' : 'Deposit Adjustable'}
@@ -571,7 +571,7 @@ export default function CheckoutPage() {
 
                     {selectedService.metadata.dining.celebrationType && selectedService.metadata.dining.celebrationType !== 'NONE' && (
                       <div className="p-2 rounded-xl bg-amber-100/70 text-amber-900 text-xs font-bold flex items-center gap-1.5">
-                        <span>✨</span>
+                        <Sparkles size={13} className="text-amber-600" />
                         <span>Celebration Setup: {selectedService.metadata.dining.celebrationType}</span>
                       </div>
                     )}
@@ -604,12 +604,12 @@ export default function CheckoutPage() {
                     <div className="p-4 bg-orange-50/70 dark:bg-slate-900/50 border border-orange-200/80 rounded-2xl space-y-2.5">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-black text-[#ff6325] uppercase tracking-wider flex items-center gap-1.5">
-                          💇 {wData.venueName || wData.salonName || 'Salon & Luxury Spa Appointment'}
+                          <Scissors size={14} /> {wData.venueName || wData.salonName || 'Salon & Luxury Spa Appointment'}
                         </span>
                         <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
                           isHomeVisit ? 'bg-purple-600 text-white' : 'bg-emerald-600 text-white'
                         }`}>
-                          {isHomeVisit ? '🏠 Doorstep Home Visit' : '🏢 In-Salon Chair'}
+                          {isHomeVisit ? 'Doorstep Home Visit' : 'In-Salon Chair'}
                         </span>
                       </div>
 
@@ -622,7 +622,7 @@ export default function CheckoutPage() {
                           <span className="text-[10px] text-slate-400 font-bold uppercase block">Date & Time</span>
                           <strong className="text-slate-800 dark:text-slate-200">{wData.slotDate || wData.appointmentDate || wData.date} at {wData.slotTime || wData.appointmentSlot || wData.time}</strong>
                           {(wData.totalDuration || wData.durationMinutes) && (
-                            <span className="text-[10px] text-slate-500 block">⏱️ {wData.totalDuration || wData.durationMinutes} mins total duration</span>
+                            <span className="text-[10px] text-slate-500 block">{wData.totalDuration || wData.durationMinutes} mins total duration</span>
                           )}
                         </div>
 
@@ -643,12 +643,12 @@ export default function CheckoutPage() {
                             {treatments.length > 0 ? (
                               treatments.map((t: any, idx: number) => (
                                 <span key={idx} className="px-2.5 py-1 rounded-md bg-white dark:bg-slate-800 border border-orange-200 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-200 text-[11px] shadow-2xs">
-                                  ✨ {typeof t === 'string' ? t : t.name} {t.price ? `(₹${t.price})` : ''}
+                                  {typeof t === 'string' ? t : t.name} {t.price ? `(₹${t.price})` : ''}
                                 </span>
                               ))
                             ) : (
                               <span className="px-2.5 py-1 rounded-md bg-white dark:bg-slate-800 border border-orange-200 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-200 text-[11px] shadow-2xs">
-                                ✨ {wData.treatmentName || selectedService.name}
+                                {wData.treatmentName || selectedService.name}
                               </span>
                             )}
                           </div>
@@ -674,7 +674,7 @@ export default function CheckoutPage() {
                     <div className="p-4 bg-blue-50/70 border border-blue-200/80 rounded-2xl space-y-2.5">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-black text-blue-700 uppercase tracking-wider flex items-center gap-1.5">
-                          🛠️ {hData.venueName || 'Doorstep Service Booking'}
+                          <Wrench size={14} /> {hData.venueName || 'Doorstep Service Booking'}
                         </span>
                         <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-600 text-white uppercase tracking-wider">
                           Doorstep Professional
@@ -709,7 +709,7 @@ export default function CheckoutPage() {
                   <div className="p-4 bg-emerald-50/70 border border-emerald-200/80 rounded-2xl space-y-2.5">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1.5">
-                        🏋️ {selectedService.metadata.fitness.gymName || 'Fitness Pass / Class'}
+                        <Dumbbell size={14} /> {selectedService.metadata.fitness.gymName || 'Fitness Pass / Class'}
                       </span>
                       <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-600 text-white uppercase tracking-wider">
                         Turnstile Pass Active
@@ -732,8 +732,8 @@ export default function CheckoutPage() {
                       <div>
                         <span className="text-[10px] text-slate-400 font-bold uppercase block">Amenities</span>
                         <span className="text-slate-800 font-bold">
-                          {selectedService.metadata.fitness.lockerIncluded ? '🔒 Digital Locker' : ''}
-                          {selectedService.metadata.fitness.proteinShakeIncluded ? ' • 🥤 Whey Shake' : ''}
+                          {selectedService.metadata.fitness.lockerIncluded ? 'Digital Locker' : ''}
+                          {selectedService.metadata.fitness.proteinShakeIncluded ? ' • Whey Shake' : ''}
                         </span>
                       </div>
                     </div>
@@ -747,7 +747,7 @@ export default function CheckoutPage() {
                   <div className="p-4 bg-blue-50/70 border border-blue-200/80 rounded-2xl space-y-2.5">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-black text-blue-600 uppercase tracking-wider flex items-center gap-1.5">
-                        🩺 {selectedService.metadata.doctor.clinicName || 'Doctor Consultation'}
+                        <Stethoscope size={14} /> {selectedService.metadata.doctor.clinicName || 'Doctor Consultation'}
                       </span>
                       <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-600 text-white uppercase tracking-wider">
                         OPD Token #{selectedService.metadata.doctor.tokenNumber} Reserved
@@ -764,7 +764,7 @@ export default function CheckoutPage() {
                         <span className="text-[10px] text-slate-400 font-bold uppercase block">Slot & Mode</span>
                         <strong className="text-slate-800">{selectedService.metadata.doctor.date} at {selectedService.metadata.doctor.timeSlot}</strong>
                         <span className="text-[10px] text-blue-600 font-bold block">
-                          {selectedService.metadata.doctor.consultationMode === 'IN_CLINIC' ? `🏥 In-Clinic (${selectedService.metadata.doctor.opdRoom})` : '📱 Video Consultation'}
+                          {selectedService.metadata.doctor.consultationMode === 'IN_CLINIC' ? `In-Clinic (${selectedService.metadata.doctor.opdRoom})` : 'Video Consultation'}
                         </span>
                       </div>
                       <div>
@@ -790,7 +790,7 @@ export default function CheckoutPage() {
                   <div className="p-4 bg-amber-50/70 border border-amber-200/80 rounded-2xl space-y-2.5">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-black text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
-                        🛠️ {selectedService.metadata.homeService?.serviceName || selectedService.metadata.homeCallBooking?.issueCategory || 'Doorstep Home Service'}
+                        <Wrench size={14} /> {selectedService.metadata.homeService?.serviceName || selectedService.metadata.homeCallBooking?.issueCategory || 'Doorstep Home Service'}
                       </span>
                       <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-600 text-white uppercase tracking-wider">
                         30-Day Guarantee
@@ -812,8 +812,8 @@ export default function CheckoutPage() {
                       </div>
                       <div className="col-span-2">
                         <span className="text-[10px] text-slate-400 font-bold uppercase block">Service Address</span>
-                        <span className="text-slate-800 font-bold block truncate">
-                          📍 {selectedService.metadata.homeService?.serviceAddress || selectedService.metadata.homeCallBooking?.serviceAddress || 'Customer Doorstep'}
+                        <span className="text-slate-800 font-bold block truncate flex items-center gap-1">
+                          <MapPin size={12} className="shrink-0 text-amber-600" /> {selectedService.metadata.homeService?.serviceAddress || selectedService.metadata.homeCallBooking?.serviceAddress || 'Customer Doorstep'}
                         </span>
                       </div>
                       {Array.isArray(selectedService.metadata.homeService?.addons) && selectedService.metadata.homeService.addons.length > 0 && (
@@ -838,18 +838,18 @@ export default function CheckoutPage() {
                 <div className="pt-3 border-t border-slate-100 space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs font-bold px-3 py-1 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200/80 flex items-center gap-1.5">
-                      {selectedService.metadata.pgBooking.foodExcluded ? '🍳 Mess Excluded' : '🍛 3 Meals Included (Homely Food)'}
+                      {selectedService.metadata.pgBooking.foodExcluded ? 'Mess Excluded' : '3 Meals Included (Homely Food)'}
                     </span>
                     <span className={`text-xs font-bold px-3 py-1 rounded-lg border flex items-center gap-1.5 ${
                       selectedService.metadata.pgBooking.paymentType === 'FULL_MONTH_RENT'
                         ? 'bg-blue-50 text-blue-700 border-blue-200'
                         : 'bg-amber-50 text-amber-800 border-amber-200'
                     }`}>
-                      {selectedService.metadata.pgBooking.paymentType === 'FULL_MONTH_RENT' ? '💳 1st Month Full Rent' : `🔒 Token Advance: ₹${selectedService.metadata.pgBooking.tokenPaid || 999}`}
+                      {selectedService.metadata.pgBooking.paymentType === 'FULL_MONTH_RENT' ? '1st Month Full Rent' : `Token Advance: ₹${selectedService.metadata.pgBooking.tokenPaid || 999}`}
                     </span>
                     {selectedService.metadata.pgBooking.durationMonths && (
                       <span className="text-xs font-bold px-3 py-1 bg-orange-50 text-[#ff6325] rounded-lg border border-orange-200/80 flex items-center gap-1.5">
-                        ⏳ {selectedService.metadata.pgBooking.durationMonths} Months Stay
+                        <Clock size={12} /> {selectedService.metadata.pgBooking.durationMonths} Months Stay
                         {selectedService.metadata.pgBooking.tenureDiscountPct > 0 && ` (${selectedService.metadata.pgBooking.tenureDiscountPct}% OFF applied)`}
                       </span>
                     )}
@@ -864,7 +864,7 @@ export default function CheckoutPage() {
                       <div className="flex flex-wrap gap-2">
                         {selectedService.metadata.pgBooking.selectedAddons.map((add: any, i: number) => (
                           <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-orange-200 rounded-lg text-xs font-bold text-gray-800 shadow-2xs">
-                            <span>{add.icon || '✨'}</span>
+                            <Sparkles size={12} className="text-orange-500" />
                             <span>{add.name}</span>
                             <span className="text-orange-600 font-extrabold ml-0.5">(+₹{Number(add.price).toLocaleString()})</span>
                           </span>
@@ -914,7 +914,7 @@ export default function CheckoutPage() {
                 <div className="p-3.5 bg-orange-50/60 rounded-xl border border-orange-200/70 space-y-2.5 mt-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-black uppercase text-orange-950 tracking-wider flex items-center gap-1.5">
-                      <span>✨</span> Selected Add-ons / Inclusions ({selectedAddons.length}):
+                      <Sparkles size={12} className="text-[#ff6325]" /> Selected Add-ons / Inclusions ({selectedAddons.length}):
                     </span>
                     {availableAddons && availableAddons.length > 0 && (
                       <button
@@ -922,7 +922,7 @@ export default function CheckoutPage() {
                         onClick={() => setIsEditingAddons(!isEditingAddons)}
                         className="px-2.5 py-1 rounded-lg text-xs font-black bg-white hover:bg-orange-100 text-[#ff6325] border border-orange-200 shadow-2xs transition-all cursor-pointer flex items-center gap-1"
                       >
-                        <span>{isEditingAddons ? '✓ Done' : '✏️ Edit Add-ons'}</span>
+                        <span>{isEditingAddons ? 'Done' : 'Edit Add-ons'}</span>
                       </button>
                     )}
                   </div>
@@ -934,7 +934,7 @@ export default function CheckoutPage() {
                         if (!add) return null;
                         return (
                           <span key={idx} className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-orange-200 rounded-lg text-xs font-bold text-gray-800 shadow-2xs">
-                            <span>{add.icon || '🏸'}</span>
+                            <Sparkles size={11} className="text-orange-500" />
                             <span>{add.name}</span>
                             <span className="text-orange-600 font-extrabold ml-0.5">(+₹{Number(add.price).toLocaleString()})</span>
                           </span>

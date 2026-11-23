@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { SERVICE_GROUPS, GROUP_EMOJIS, getHrefForCategoryItem, SERVICE_SYNONYMS } from '../../lib/searchData';
+import { SERVICE_GROUPS, getHrefForCategoryItem, SERVICE_SYNONYMS } from '../../lib/searchData';
 
 function getGroupHref(title: string): string {
   const cleanTitle = title.toLowerCase();
@@ -617,7 +617,6 @@ export default function CategoriesPage() {
                           <h3 className="font-extrabold text-xs text-[color:var(--color-on-surface)] group-hover:text-[color:var(--color-primary)] transition-colors truncate">
                             {item.name}
                           </h3>
-                          <span className="text-xs shrink-0">{item.emoji}</span>
                         </div>
                         <p className="text-[10px] text-[color:var(--color-outline)] font-medium truncate mt-0.5">
                           {item.groupTitle} &bull; {item.subCategoryName}

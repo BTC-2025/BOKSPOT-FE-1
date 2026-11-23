@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Calendar, ChevronRight } from 'lucide-react';
+import { Calendar, ChevronRight, MapPin } from 'lucide-react';
 
 interface WellnessSlotModalProps {
   isOpen: boolean;
@@ -313,29 +313,34 @@ export const WellnessSlotModal: React.FC<WellnessSlotModalProps> = ({
           {/* Step 3: If Home Visit Mode ➔ Doorstep Address Input */}
           {serviceMode === 'HOME_VISIT' && (
             <div
-              className={`p-4 rounded-2xl space-y-2.5 transition-all ${
+              className={`p-4 rounded-2xl space-y-3 transition-all ${
                 addressError && !homeAddress.trim()
-                  ? 'bg-rose-500/10 border-2 border-rose-500'
-                  : 'bg-amber-500/10 border border-amber-500/30'
+                  ? 'bg-rose-50 dark:bg-rose-950/20 border-2 border-rose-500'
+                  : 'bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10'
               }`}
             >
               <div className="flex items-center justify-between text-xs">
-                <span className="font-black text-amber-800 dark:text-amber-200">
-                  🏠 3. Doorstep Visit Address (Required)
+                <div className="flex items-center gap-2">
+                  <MapPin size={15} className="text-[#ff6325] shrink-0" />
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    Doorstep Visit Address <span className="text-rose-500">*</span>
+                  </span>
+                </div>
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                  Min Order: <strong className="text-slate-800 dark:text-slate-200">₹{homeMinOrderValue}</strong>
                 </span>
-                <span className="text-[11px] font-bold text-slate-500">Min Order: ₹{homeMinOrderValue}</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 <input
                   type="text"
                   value={homeAddress}
                   onChange={(e) => onChangeHomeAddress(e.target.value)}
                   placeholder="Flat / House No., Building Name *"
-                  className={`bg-white dark:bg-slate-900 border rounded-xl px-3 py-2 text-xs outline-none ${
+                  className={`bg-white dark:bg-slate-900 border rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-[#ff6325] transition-colors ${
                     addressError && !homeAddress.trim()
                       ? 'border-rose-500 ring-1 ring-rose-500'
-                      : 'border-amber-300 dark:border-amber-800/50'
+                      : 'border-slate-200 dark:border-white/15'
                   }`}
                 />
                 <input
@@ -343,20 +348,20 @@ export const WellnessSlotModal: React.FC<WellnessSlotModalProps> = ({
                   value={homeLandmark}
                   onChange={(e) => onChangeHomeLandmark(e.target.value)}
                   placeholder="Street, Landmark *"
-                  className="bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-800/50 rounded-xl px-3 py-2 text-xs outline-none"
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-[#ff6325] transition-colors"
                 />
                 <input
                   type="tel"
                   value={homePhone}
                   onChange={(e) => onChangeHomePhone(e.target.value)}
                   placeholder="Contact Mobile Number *"
-                  className="bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-800/50 rounded-xl px-3 py-2 text-xs outline-none"
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-[#ff6325] transition-colors"
                 />
               </div>
 
               {addressError && !homeAddress.trim() && (
                 <p className="text-[11px] font-bold text-rose-600">
-                  ⚠️ Please enter your House / Flat Address to proceed.
+                  Please enter your House / Flat Address to proceed.
                 </p>
               )}
             </div>
