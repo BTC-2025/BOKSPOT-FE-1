@@ -218,6 +218,10 @@ export default function VenueProfilePage() {
   const [apptCalMonth, setApptCalMonth] = useState<Date>(() => new Date());
 
   // ── Dedicated Salon & Spa / Wellness Appointment Flow States ──
+  const queryParamGender = searchParams?.get('gender');
+  const queryParamService = searchParams?.get('service');
+  const queryParamTimeSlot = searchParams?.get('timeSlot');
+
   const [wellnessServiceMode, setWellnessServiceMode] = useState<'IN_SALON' | 'HOME_VISIT'>('IN_SALON');
   const [wellnessHomeAddress, setWellnessHomeAddress] = useState<string>('');
   const [wellnessHomeLandmark, setWellnessHomeLandmark] = useState<string>('');
@@ -225,9 +229,20 @@ export default function VenueProfilePage() {
   const [selectedWellnessStylist, setSelectedWellnessStylist] = useState<string>('Any Available Professional (Fastest Slot)');
   const [isCustomStylistExpanded, setIsCustomStylistExpanded] = useState<boolean>(false);
   const [selectedTreatments, setSelectedTreatments] = useState<string[]>(['trt-haircut-men']);
-  const [wellnessGenderFilter, setWellnessGenderFilter] = useState<'ALL' | 'MEN' | 'WOMEN'>('ALL');
+  const [wellnessGenderFilter, setWellnessGenderFilter] = useState<'ALL' | 'MEN' | 'WOMEN'>(() => {
+    if (queryParamGender === 'MEN') return 'MEN';
+    if (queryParamGender === 'WOMEN') return 'WOMEN';
+    return 'ALL';
+  });
   const [wellnessActiveTab, setWellnessActiveTab] = useState<'ALL' | 'HAIR' | 'BEARD' | 'SKIN_FACIAL' | 'SPA_MASSAGE' | 'BRIDAL'>('ALL');
   const [wellnessSlotSession, setWellnessSlotSession] = useState<'ALL' | 'MORNING' | 'AFTERNOON' | 'EVENING'>('ALL');
+  const [wellnessTimeFilter, setWellnessTimeFilter] = useState<'ANY' | 'MORNING' | 'AFTERNOON' | 'EVENING' | 'CUSTOM'>(() => {
+    if (queryParamTimeSlot === 'MORNING' || queryParamTimeSlot === 'AFTERNOON' || queryParamTimeSlot === 'EVENING' || queryParamTimeSlot === 'CUSTOM') {
+      return queryParamTimeSlot;
+    }
+    return 'ANY';
+  });
+  const [wellnessCustomTime, setWellnessCustomTime] = useState<string>(() => queryParamSlot || '10:00 AM');
   const [wellnessAddressError, setWellnessAddressError] = useState<boolean>(false);
   const [isWellnessSlotModalOpen, setIsWellnessSlotModalOpen] = useState<boolean>(false);
   const [isWellnessCalOpen, setIsWellnessCalOpen] = useState<boolean>(false);
@@ -1519,7 +1534,7 @@ export default function VenueProfilePage() {
         {/* ============================================================
          * SECTION C: CONTEXTUAL SUMMARY BAR & EDIT SEARCH DOCK (ALL BOOKINGS)
          * ============================================================ */}
-        <div className="mb-6 sticky top-[98px] z-30 pt-3 pb-2 -mt-3 bg-[#f8fafc] dark:bg-[#090b10] transition-all flex flex-col items-center">
+        <div className="mb-6 z-20 transition-all flex flex-col items-center">
           <div className={`p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-md flex items-center justify-between gap-4 transition-all ${isFacility ? 'w-fit max-w-full' : 'w-full'}`}>
             {isPgStay ? (
               <div className="flex flex-wrap items-center gap-6 text-xs">
@@ -1737,8 +1752,8 @@ export default function VenueProfilePage() {
                   </div>
                 </div>
               </div>
-            ) : isAppointment || isHomeCall || isWellness || isFitness || isYoga ? (
-              /* Dedicated Appointment / Home Services / Wellness / Fitness Summary Bar */
+            ) : isWellness ? (
+              /* Dedicated Salon & Spa / Wellness Appointment Summary Bar */
               <div className="flex flex-wrap items-center gap-6 text-xs">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
@@ -1746,7 +1761,40 @@ export default function VenueProfilePage() {
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
-                      {isHomeCall ? 'Service Date & Window' : isYoga ? 'Yoga Batch Date' : isFitness ? 'Gym Workout Date' : isWellness ? 'Salon Appointment Date' : 'Consultation Date'}
+                      Salon Appointment Date
+                    </span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
+                      {selectedDate || todayStr} • {wellnessTimeFilter === 'ANY' ? 'Any Time Window' : wellnessTimeFilter === 'MORNING' ? 'Morning (6am - 12pm)' : wellnessTimeFilter === 'AFTERNOON' ? 'Afternoon (12pm - 5pm)' : wellnessTimeFilter === 'EVENING' ? 'Evening (5pm - 12am)' : (selectedApptSlot || wellnessCustomTime || '10:00 AM Slot')}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="h-8 w-px bg-slate-200 dark:bg-white/10 hidden lg:block" />
+
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                    <Users size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
+                      For Whom & Mode
+                    </span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
+                      {wellnessGenderFilter === 'WOMEN' ? "Women's Beauty & Spa" : wellnessGenderFilter === 'MEN' ? "Men's Grooming" : "All / Unisex"} • {wellnessServiceMode === 'HOME_VISIT' ? 'Doorstep Home Service' : 'In-Salon Visit'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : isAppointment || isHomeCall || isFitness || isYoga ? (
+              /* Dedicated Appointment / Home Services / Fitness Summary Bar */
+              <div className="flex flex-wrap items-center gap-6 text-xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#033266]/10 dark:bg-[#ff6325]/15 text-[#033266] dark:text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                    <Calendar size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
+                      {isHomeCall ? 'Service Date & Window' : isYoga ? 'Yoga Batch Date' : isFitness ? 'Gym Workout Date' : 'Consultation Date'}
                     </span>
                     <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
                       {selectedDate || todayStr} • {isHomeCall ? (preferredHomeWindow || 'Morning (09:00 AM - 12:00 PM)') : isYoga ? (selectedFitnessTimeSlot || '06:00 AM Batch') : isFitness ? (selectedFitnessTimeSlot || '06:00 AM Batch') : (selectedApptSlot || '10:00 AM Slot')}
@@ -2671,7 +2719,7 @@ export default function VenueProfilePage() {
               ) : isWellness ? (
                 /* ================= Dedicated Salon & Spa Appointment Editor (Matching Search Dock) ================= */
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {/* 1. Category / Service Type (Salon vs Spa) */}
                     <div>
                       <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
@@ -2682,8 +2730,8 @@ export default function VenueProfilePage() {
                         onChange={(e) => setWellnessServiceMode(e.target.value as any)}
                         className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white text-xs outline-none cursor-pointer"
                       >
-                        <option value="IN_SALON">🏢 In-Salon Visit</option>
-                        <option value="HOME_VISIT">🏠 Doorstep Home Service</option>
+                        <option value="IN_SALON">In-Salon Visit</option>
+                        <option value="HOME_VISIT">Doorstep Home Service</option>
                       </select>
                     </div>
 
@@ -2697,9 +2745,9 @@ export default function VenueProfilePage() {
                         onChange={(e) => setWellnessGenderFilter(e.target.value as any)}
                         className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white text-xs outline-none cursor-pointer"
                       >
-                        <option value="ALL">✨ All / Unisex</option>
-                        <option value="WOMEN">👩 Women's Beauty & Spa</option>
-                        <option value="MEN">🧔 Men's Grooming</option>
+                        <option value="ALL">All / Unisex</option>
+                        <option value="WOMEN">Women's Beauty & Spa</option>
+                        <option value="MEN">Men's Grooming</option>
                       </select>
                     </div>
 
@@ -2716,22 +2764,129 @@ export default function VenueProfilePage() {
                         className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 font-bold text-slate-900 dark:text-white text-xs outline-none"
                       />
                     </div>
+                  </div>
 
-                    {/* 4. Preferred Slot */}
-                    <div>
-                      <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-1">
-                        Time Slot Window
-                      </label>
-                      <select
-                        value={selectedApptSlot || '10:00 AM'}
-                        onChange={(e) => setSelectedApptSlot(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 font-bold text-slate-900 dark:text-white text-xs outline-none cursor-pointer"
+                  {/* 4. Fresha-Style Preferred Time Slot Selector */}
+                  <div className="pt-2 border-t border-slate-100 dark:border-white/10">
+                    <label className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block mb-2">
+                      Select Time Slot
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      {/* Any time */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setWellnessTimeFilter('ANY');
+                          setSelectedApptSlot('10:00 AM');
+                        }}
+                        className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
+                          wellnessTimeFilter === 'ANY'
+                            ? 'bg-[#6366f1]/10 border-[#6366f1] text-[#6366f1] ring-2 ring-[#6366f1]/20 font-bold'
+                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 font-semibold'
+                        }`}
                       >
-                        {['09:00 AM', '10:00 AM', '11:30 AM', '02:00 PM', '04:30 PM', '06:00 PM', '07:30 PM'].map((s) => (
-                          <option key={s} value={s}>{s}</option>
-                        ))}
-                      </select>
+                        <span className="text-xs leading-tight">Any time</span>
+                      </button>
+
+                      {/* Morning */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setWellnessTimeFilter('MORNING');
+                          setSelectedApptSlot('10:00 AM');
+                        }}
+                        className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
+                          wellnessTimeFilter === 'MORNING'
+                            ? 'bg-[#6366f1]/10 border-[#6366f1] text-[#6366f1] ring-2 ring-[#6366f1]/20 font-bold'
+                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                        }`}
+                      >
+                        <span className="text-xs font-semibold leading-tight">Morning</span>
+                        <span className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">6am - 12pm</span>
+                      </button>
+
+                      {/* Afternoon */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setWellnessTimeFilter('AFTERNOON');
+                          setSelectedApptSlot('02:00 PM');
+                        }}
+                        className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
+                          wellnessTimeFilter === 'AFTERNOON'
+                            ? 'bg-[#6366f1]/10 border-[#6366f1] text-[#6366f1] ring-2 ring-[#6366f1]/20 font-bold'
+                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                        }`}
+                      >
+                        <span className="text-xs font-semibold leading-tight">Afternoon</span>
+                        <span className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">12pm - 5pm</span>
+                      </button>
+
+                      {/* Evening */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setWellnessTimeFilter('EVENING');
+                          setSelectedApptSlot('06:00 PM');
+                        }}
+                        className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
+                          wellnessTimeFilter === 'EVENING'
+                            ? 'bg-[#6366f1]/10 border-[#6366f1] text-[#6366f1] ring-2 ring-[#6366f1]/20 font-bold'
+                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                        }`}
+                      >
+                        <span className="text-xs font-semibold leading-tight">Evening</span>
+                        <span className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">5pm - 12am</span>
+                      </button>
+
+                      {/* Custom */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setWellnessTimeFilter('CUSTOM');
+                        }}
+                        className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
+                          wellnessTimeFilter === 'CUSTOM'
+                            ? 'bg-[#6366f1]/10 border-[#6366f1] text-[#6366f1] ring-2 ring-[#6366f1]/20 font-bold'
+                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 font-semibold'
+                        }`}
+                      >
+                        <span className="text-xs leading-tight">Custom</span>
+                      </button>
                     </div>
+
+                    {/* Custom Hour Grid */}
+                    {wellnessTimeFilter === 'CUSTOM' && (
+                      <div className="mt-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 space-y-1.5 animate-in fade-in zoom-in-95 duration-100">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                          Pick Preferred Hour
+                        </span>
+                        <div className="grid grid-cols-4 sm:grid-cols-7 gap-1 max-h-32 overflow-y-auto">
+                          {[
+                            '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM',
+                            '12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM',
+                            '04:00 PM', '05:00 PM', '06:00 PM', '07:00 PM',
+                            '08:00 PM', '09:00 PM'
+                          ].map((tVal) => (
+                            <button
+                              key={tVal}
+                              type="button"
+                              onClick={() => {
+                                setWellnessCustomTime(tVal);
+                                setSelectedApptSlot(tVal);
+                              }}
+                              className={`py-1 rounded-lg text-xs font-semibold text-center transition-colors ${
+                                (wellnessCustomTime === tVal || selectedApptSlot === tVal)
+                                  ? 'bg-[#6366f1] text-white font-bold'
+                                  : 'bg-white dark:bg-slate-700/60 text-slate-700 dark:text-slate-200 hover:bg-slate-100'
+                              }`}
+                            >
+                              {tVal}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/10">
@@ -2750,6 +2905,7 @@ export default function VenueProfilePage() {
                         newQuery.set('date', selectedDate);
                         newQuery.set('slot', selectedApptSlot || '10:00 AM');
                         newQuery.set('gender', wellnessGenderFilter);
+                        newQuery.set('timeSlot', wellnessTimeFilter);
                         window.history.replaceState(null, '', `?${newQuery.toString()}`);
                         const el = document.getElementById('wellness-booking-section');
                         el?.scrollIntoView({ behavior: 'smooth' });
@@ -3262,8 +3418,6 @@ export default function VenueProfilePage() {
          * SECTION B: OPTION 1 — 2-SIDES SPLIT HERO (Left: 58% Gallery | Right: 42% Overview & Map)
          * ============================================================ */}
         <div className="mb-8 grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-
-          {/* Side 1: Left 58% (lg:col-span-7) — Modern Dynamic Photo Gallery */}
           <div className="lg:col-span-7 relative rounded-3xl overflow-hidden border border-slate-200/90 dark:border-white/10 shadow-sm bg-slate-100 dark:bg-slate-900 flex flex-col justify-between">
             {/* Desktop Dynamic Bento Layout (370px height for optimal proportion) */}
             <div className="hidden md:block h-[370px] p-2.5">
@@ -3551,10 +3705,10 @@ export default function VenueProfilePage() {
             {/* Middle: Amenities Grid & Check-in Pill */}
             <div className="space-y-3">
               <span className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block tracking-wider">
-                {isFacility ? 'Venue Highlights & Amenities' : 'Property Highlights & Inclusions'}
+                {isFacility ? 'Venue Highlights & Amenities' : isWellness ? 'Salon Highlights & Amenities' : 'Property Highlights & Inclusions'}
               </span>
               <div className="grid grid-cols-2 gap-2.5">
-                {(amenities && amenities.length > 0 ? amenities.slice(0, 6) : ['Free High-Speed Wi-Fi', 'Swimming Pool', 'Air Conditioned', '24/7 Front Desk', 'Private Bath', 'Daily Housekeeping']).map((am: string, idx: number) => (
+                {(amenities && amenities.length > 0 ? amenities.slice(0, 6) : isWellness ? ['Private Spa Suites', '100% Organic Products', 'Air Conditioned', 'Certified Stylists', 'Complimentary Green Tea', 'Valet Parking'] : ['Free High-Speed Wi-Fi', 'Swimming Pool', 'Air Conditioned', '24/7 Front Desk', 'Private Bath', 'Daily Housekeeping']).map((am: string, idx: number) => (
                   <div key={idx} className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-white/5 shadow-2xs">
                     <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0 stroke-[2.5]" />
                     <span className="truncate text-[11px]">{am}</span>
@@ -3562,12 +3716,12 @@ export default function VenueProfilePage() {
                 ))}
               </div>
 
-              {/* Timings Bar: Operating Hours for Facility/Turf, Check-in/out for Stays */}
-              {isFacility ? (
+              {/* Timings Bar: Operating Hours for Facility/Turf/Salon, Check-in/out for Stays */}
+              {isFacility || isWellness ? (
                 <div className="px-3.5 py-2.5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40 flex items-center justify-between text-xs font-bold text-emerald-800 dark:text-emerald-300">
                   <span className="flex items-center gap-1.5">
-                    <span>🕒 Operating Hours:</span>
-                    <strong className="font-extrabold">{firstSvc?.metadata?.operatingHours || firstListing?.metadata?.operatingHours || (finalMerchantObj.operatingHours && !finalMerchantObj.operatingHours.includes('Front Desk') ? finalMerchantObj.operatingHours : '06:00 AM – 11:00 PM')}</strong>
+                    <span>Operating Hours:</span>
+                    <strong className="font-extrabold">{firstSvc?.metadata?.operatingHours || firstListing?.metadata?.operatingHours || finalMerchantObj.operatingHours || '09:00 AM – 09:00 PM'}</strong>
                   </span>
                   <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-md bg-emerald-200/60 dark:bg-emerald-800/60 text-emerald-900 dark:text-emerald-100">
                     Open Daily
@@ -3575,7 +3729,7 @@ export default function VenueProfilePage() {
                 </div>
               ) : (
                 <div className="px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
-                  <span className="flex items-center gap-1.5">🕒 Check-in: <strong className="text-slate-800 dark:text-slate-200 font-extrabold">{finalMerchantObj.metadata?.checkInTime || '12:00 PM'}</strong></span>
+                  <span className="flex items-center gap-1.5">Check-in: <strong className="text-slate-800 dark:text-slate-200 font-extrabold">{finalMerchantObj.metadata?.checkInTime || '12:00 PM'}</strong></span>
                   <span>•</span>
                   <span className="flex items-center gap-1.5">Check-out: <strong className="text-slate-800 dark:text-slate-200 font-extrabold">{finalMerchantObj.metadata?.checkOutTime || '11:00 AM'}</strong></span>
                 </div>
@@ -5374,184 +5528,122 @@ export default function VenueProfilePage() {
                 : dynamicSlots;
 
           return (
-            <div id="wellness-booking-section" className="space-y-6 mt-8 p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
-              {/* Header & Service Mode Dual Switcher */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-white/10 pb-6">
+            <div id="wellness-booking-section" className="space-y-6 mt-8 p-5 sm:p-7 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
+              {/* Header & Service Mode Dual Switcher (BokSpot Brand Theme) */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-white/10 pb-5">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">✨</span>
-                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-                      Salon, Spa & Doorstep Grooming
-                    </h2>
-                  </div>
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                    Services & Treatments
+                  </h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Select beauty & spa rituals. Browse catalog below and pick your preferred time slot.
+                    {wellnessServiceMode === 'HOME_VISIT'
+                      ? 'Certified beauticians & therapists visit your doorstep at your preferred time.'
+                      : 'Select treatments below to book your verified salon appointment.'}
                   </p>
                 </div>
 
-                {/* Service Mode Switcher Tabs */}
+                {/* Service Mode Switcher Tabs (In-Salon vs Doorstep Home Visit) */}
                 {homeVisitAllowed && (
-                  <div className="inline-flex p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 shrink-0">
+                  <div className="inline-flex p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-white/10 shrink-0">
                     <button
                       type="button"
                       onClick={() => setWellnessServiceMode('IN_SALON')}
-                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 ${wellnessServiceMode === 'IN_SALON'
-                        ? 'bg-white dark:bg-slate-900 text-[#ff6325] shadow-sm'
+                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${wellnessServiceMode === 'IN_SALON'
+                        ? 'bg-[#033266] text-white shadow-sm'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                         }`}
                     >
-                      <span>🏢 In-Salon Visit</span>
-                      <span className="hidden sm:inline text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-extrabold dark:bg-emerald-950/60 dark:text-emerald-400">Chair</span>
+                      <span>In-Salon Visit</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setWellnessServiceMode('HOME_VISIT')}
-                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 ${wellnessServiceMode === 'HOME_VISIT'
+                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${wellnessServiceMode === 'HOME_VISIT'
                         ? 'bg-[#ff6325] text-white shadow-sm'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                         }`}
                     >
-                      <span>🏠 Doorstep Home Visit</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-white/20 text-white font-extrabold">Urban Style</span>
+                      <span>Doorstep Service</span>
                     </button>
                   </div>
                 )}
               </div>
 
-              {/* Mode-Specific Assurance Banner */}
-              {wellnessServiceMode === 'IN_SALON' ? (
-                <div className="flex flex-wrap items-center gap-2 sm:gap-4 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-white/5 text-xs text-slate-700 dark:text-slate-300 font-medium">
-                  <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold">
-                    <CheckCircle2 size={16} /> 100% Sanitized Equipment & Single-Use Capes
-                  </div>
-                  <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-bold">
-                    <CheckCircle2 size={16} /> Guaranteed Zero Waiting Time
-                  </div>
-                  <div className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400 font-bold">
-                    <CheckCircle2 size={16} /> Private AC Luxury Treatment Suites
-                  </div>
-                </div>
-              ) : (
-                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-wrap items-center justify-between gap-2 text-xs">
-                  <div className="flex items-center gap-2 font-black text-amber-700 dark:text-amber-300">
-                    <span>🛡️ Urban Doorstep Service Assurance</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-200 font-extrabold">
-                      Min Order: ₹{homeMinOrderValue}
-                    </span>
+              {/* Mode-Specific Context Banner */}
+              {wellnessServiceMode === 'HOME_VISIT' && (
+                <div className="p-3.5 rounded-2xl bg-[#ff6325]/10 border border-[#ff6325]/25 flex flex-wrap items-center justify-between gap-2 text-xs animate-in fade-in duration-150">
+                  <div className="flex items-center gap-2 font-bold text-[#ff6325]">
+                    <CheckCircle2 size={16} className="text-[#ff6325] shrink-0" />
+                    <span>Doorstep Visit • Professional brings sanitized single-use kits & disposable towels</span>
                   </div>
                   <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
-                    {totalSelectedPrice >= 999 ? '🎉 Free Doorstep Visit (Order > ₹999)' : `Convenience Fee: ₹${homeConvenienceFee}`}
+                    {totalSelectedPrice >= 999 ? 'Free Doorstep Visit (Order > ₹999)' : `Convenience Fee: ₹${homeConvenienceFee}`}
                   </span>
                 </div>
               )}
 
-              {/* Step 1: Gender / Audience Segment Selector */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                    1. Choose Category & Target Audience
-                  </label>
-                  <span className="text-[11px] font-bold text-slate-500">
-                    Showing: <span className="text-[#ff6325] font-black">{wellnessGenderFilter}</span>
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              {/* BokSpot Brand Category Navigation Bar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-white/5 pb-3">
+                {/* Clean Sub-Category Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                   {[
-                    { id: 'ALL', label: 'All Services', icon: '✨' },
-                    { id: 'MEN', label: "Men's Grooming", icon: '🧔' },
-                    { id: 'WOMEN', label: "Women's Beauty", icon: '💇‍♀️' }
-                  ].map((g) => (
-                    <button
-                      key={g.id}
-                      type="button"
-                      onClick={() => setWellnessGenderFilter(g.id as any)}
-                      className={`p-3 rounded-2xl border text-center transition-all cursor-pointer flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 ${wellnessGenderFilter === g.id
-                        ? 'bg-[#ff6325]/10 border-[#ff6325] text-[#ff6325] font-black ring-2 ring-[#ff6325]/20'
-                        : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300'
-                        }`}
-                    >
-                      <span className="text-base sm:text-lg">{g.icon}</span>
-                      <span className="text-xs font-extrabold">{g.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Step 2: Multi-Service Menu Selection */}
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                    2. Select Treatments & Services ({selectedTreatments.length} chosen • {totalSelectedDuration} mins)
-                  </label>
-
-                  {/* Sub-Category Filter Tabs */}
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {[
-                      { id: 'ALL', label: 'All' },
-                      { id: 'HAIR', label: '✂️ Hair' },
-                      { id: 'BEARD', label: '🧔 Beard' },
-                      { id: 'SKIN_FACIAL', label: '✨ Facials' },
-                      { id: 'SPA_MASSAGE', label: '💆 Massage & Spa' },
-                      { id: 'BRIDAL', label: '👑 Packages' }
-                    ].map((tab) => (
+                    { id: 'ALL', label: 'All Services' },
+                    { id: 'HAIR', label: 'Hair & Styling' },
+                    { id: 'BEARD', label: 'Beard Grooming' },
+                    { id: 'SKIN_FACIAL', label: 'Facials & Skin' },
+                    { id: 'SPA_MASSAGE', label: 'Massage & Spa' },
+                    { id: 'BRIDAL', label: 'Packages' }
+                  ].map((tab) => {
+                    const isTabActive = wellnessActiveTab === tab.id;
+                    return (
                       <button
                         key={tab.id}
                         type="button"
                         onClick={() => setWellnessActiveTab(tab.id as any)}
-                        className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${wellnessActiveTab === tab.id
-                          ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                        className={`px-3.5 py-1.5 rounded-full text-xs whitespace-nowrap transition-all cursor-pointer ${isTabActive
+                          ? 'bg-[#ff6325] text-white font-black shadow-xs'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-200 dark:hover:bg-slate-700'
                           }`}
                       >
                         {tab.label}
                       </button>
+                    );
+                  })}
+                </div>
+
+                {/* For Whom Filter */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[11px] text-slate-400 font-medium">For:</span>
+                  <div className="inline-flex p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-white/5">
+                    {[
+                      { id: 'ALL', label: 'All' },
+                      { id: 'WOMEN', label: 'Women' },
+                      { id: 'MEN', label: 'Men' }
+                    ].map((g) => (
+                      <button
+                        key={g.id}
+                        type="button"
+                        onClick={() => setWellnessGenderFilter(g.id as any)}
+                        className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${wellnessGenderFilter === g.id
+                          ? 'bg-white dark:bg-slate-700 text-[#ff6325] shadow-2xs font-black'
+                          : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                          }`}
+                      >
+                        {g.label}
+                      </button>
                     ))}
                   </div>
                 </div>
+              </div>
 
-                {/* Selected Rituals Mini Drawer */}
-                {selectedTreatmentObjects.length > 0 && (
-                  <div className="p-3 rounded-2xl bg-[#ff6325]/10 border border-[#ff6325]/25 flex flex-wrap items-center gap-2 animate-in fade-in duration-200">
-                    <span className="text-[11px] font-black text-[#ff6325] uppercase tracking-wider mr-1">
-                      In Cart ({selectedTreatmentObjects.length}):
-                    </span>
-                    {selectedTreatmentObjects.map(t => (
-                      <span key={t.id} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white dark:bg-slate-900 border border-[#ff6325]/30 text-xs font-black text-slate-900 dark:text-white shadow-xs">
-                        <span>{t.icon || '✨'}</span>
-                        <span className="truncate max-w-[150px]">{t.name}</span>
-                        <span className="text-[10px] text-slate-400 font-bold">({t.durationMinutes}m)</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedTreatments(selectedTreatments.filter(id => id !== t.id));
-                          }}
-                          className="w-4 h-4 rounded-full bg-slate-150 dark:bg-slate-800 text-slate-500 hover:text-red-500 hover:bg-red-50 flex items-center justify-center font-black text-xs cursor-pointer ml-0.5"
-                          title="Remove service"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => setSelectedTreatments([])}
-                      className="text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-red-500 underline ml-auto cursor-pointer"
-                    >
-                      Clear Cart
-                    </button>
+              {/* Clean Compact 2-Column Service Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {filteredTreatments.length === 0 ? (
+                  <div className="col-span-full py-8 text-center text-xs text-slate-400">
+                    No services found matching this category or gender filter.
                   </div>
-                )}
-
-                {/* Empty State Prompt if 0 Selected */}
-                {selectedTreatments.length === 0 && (
-                  <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-center text-xs font-bold text-amber-800 dark:text-amber-300">
-                    👉 Please select at least one grooming or spa ritual below to book an appointment slot.
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  {filteredTreatments.map((trt: any) => {
+                ) : (
+                  filteredTreatments.map((trt: any) => {
                     const isSelected = selectedTreatments.includes(trt.id);
                     return (
                       <div
@@ -5563,102 +5655,100 @@ export default function VenueProfilePage() {
                             setSelectedTreatments([...selectedTreatments, trt.id]);
                           }
                         }}
-                        className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start justify-between gap-3 relative overflow-hidden ${isSelected
-                          ? 'bg-[#ff6325]/5 dark:bg-[#ff6325]/10 border-[#ff6325] ring-2 ring-[#ff6325]/20 shadow-xs'
-                          : 'bg-slate-50/80 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                        className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${isSelected
+                          ? 'bg-[#ff6325]/10 dark:bg-[#ff6325]/15 border-[#ff6325] ring-1 ring-[#ff6325]/30 shadow-xs'
+                          : 'bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
                           }`}
                       >
-                        {trt.popular && (
-                          <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-500 to-orange-500 text-white text-[9px] font-black px-2.5 py-0.5 rounded-bl-xl tracking-wider uppercase shadow-xs">
-                            🔥 Popular
-                          </div>
-                        )}
-
-                        <div className="flex items-start gap-3 min-w-0 flex-1">
-                          <span className="text-2xl shrink-0 mt-0.5 p-2 rounded-xl bg-white dark:bg-slate-900 shadow-xs border border-slate-200/60 dark:border-white/5">
-                            {trt.icon || '✨'}
+                        {/* Service Title & Duration */}
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate">
+                            {trt.name}
+                          </h4>
+                          <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium block mt-0.5">
+                            {trt.durationMinutes} mins
                           </span>
-                          <div className="min-w-0 flex-1 pr-2">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h4 className="text-xs font-black text-slate-900 dark:text-white">{trt.name}</h4>
-                            </div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-200/80 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
-                                ⏱️ {trt.durationMinutes} min
-                              </span>
-                              {trt.serviceMode === 'BOTH' && (
-                                <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
-                                  ✓ Salon & Home
-                                </span>
-                              )}
-                              {trt.serviceMode === 'IN_SALON' && (
-                                <span className="text-[9px] font-bold text-slate-400">
-                                  🏢 In-Salon Only
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 leading-snug line-clamp-2">
-                              {trt.description}
-                            </p>
-                          </div>
                         </div>
 
-                        <div className="text-right shrink-0 self-center">
-                          <div className="flex items-baseline justify-end gap-1.5">
-                            {trt.originalPrice && trt.originalPrice > trt.price && (
-                              <span className="text-[11px] text-slate-400 line-through">₹{trt.originalPrice}</span>
-                            )}
-                            <span className="text-sm font-black text-[#ff6325]">₹{trt.price}</span>
-                          </div>
-                          <span className={`block text-[11px] font-black mt-1.5 px-3 py-1 rounded-xl transition-all ${isSelected
-                            ? 'bg-[#ff6325] text-white shadow-xs'
-                            : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300'
-                            }`}>
-                            {isSelected ? '✓ Added' : '+ Add'}
+                        {/* Price & Add Button */}
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
+                            ₹{trt.price}
                           </span>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (isSelected) {
+                                setSelectedTreatments(selectedTreatments.filter(id => id !== trt.id));
+                              } else {
+                                setSelectedTreatments([...selectedTreatments, trt.id]);
+                              }
+                            }}
+                            className={`h-8 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${isSelected
+                              ? 'bg-[#ff6325] text-white font-black shadow-xs'
+                              : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-[#ff6325] hover:text-white'
+                              }`}
+                          >
+                            {isSelected ? (
+                              <>
+                                <Check size={13} className="stroke-[3]" />
+                                <span>Added</span>
+                              </>
+                            ) : (
+                              <>
+                                <Plus size={13} className="stroke-[2.5]" />
+                                <span>Add</span>
+                              </>
+                            )}
+                          </button>
                         </div>
                       </div>
                     );
-                  })}
-                </div>
+                  })
+                )}
               </div>
 
-              {/* Selected Summary Card / Dock (Clean Light Theme) */}
+              {/* Inline Bottom Cart Summary & Continue Button - Directly Below Services (No Floating Overlay) */}
               {selectedTreatmentObjects.length > 0 && (
-                <div className="w-full mt-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-orange-50 via-white to-orange-50/50 dark:from-slate-900 dark:via-[#0f1624] dark:to-slate-900 border border-[#ff6325]/30 dark:border-[#ff6325]/20 shadow-md flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 transition-all">
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#ff6325] to-[#e04e13] text-white flex items-center justify-center font-black text-xl shrink-0 shadow-md shadow-[#ff6325]/25">
-                      ✂️
-                    </div>
+                <div className="mt-5 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-black text-slate-900 dark:text-white truncate">
-                          {selectedTreatmentObjects.length} Service{selectedTreatmentObjects.length > 1 ? 's' : ''} Selected
-                        </h4>
-                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                          ⏱️ {totalSelectedDuration} mins
+                        <span className="text-sm font-black text-slate-900 dark:text-white">
+                          {selectedTreatmentObjects.length} service{selectedTreatmentObjects.length > 1 ? 's' : ''} selected
+                        </span>
+                        <span className="text-xs text-slate-400">•</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                          {totalSelectedDuration} mins
+                        </span>
+                        <span className="text-xs text-slate-400">•</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#ff6325]/10 text-[#ff6325]">
+                          {wellnessServiceMode === 'HOME_VISIT' ? 'Doorstep Service' : 'In-Salon Visit'}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 mt-1 text-xs">
-                        <span className="text-slate-500 dark:text-slate-400 font-medium">Total:</span>
-                        <span className="text-base font-black text-[#ff6325]">
-                          ₹{grandTotalPayable.toLocaleString()}
-                        </span>
-                        <span className="text-slate-300 dark:text-slate-700">•</span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-[#ff6325]/10 text-[#ff6325] border border-[#ff6325]/20">
-                          {wellnessServiceMode === 'HOME_VISIT' ? '🏠 Doorstep Visit' : '🪑 In-Salon Chair'}
-                        </span>
+                      <div className="text-base sm:text-lg font-black text-[#ff6325] mt-0.5">
+                        Total: ₹{grandTotalPayable.toLocaleString()}
                       </div>
                     </div>
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => setIsWellnessSlotModalOpen(true)}
-                    className="w-full sm:w-auto px-7 py-3 rounded-2xl bg-gradient-to-r from-[#ff6325] to-[#e04e13] hover:from-[#e04e13] hover:to-[#c83f08] text-white font-black text-xs uppercase tracking-wider shrink-0 transition-all shadow-lg shadow-[#ff6325]/30 active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+                    onClick={() => {
+                      if (!selectedApptSlot) {
+                        setSelectedApptSlot('10:00 AM');
+                      }
+                      if (!selectedDate) {
+                        setSelectedDate(todayStr);
+                      }
+                      setIsWellnessSlotModalOpen(true);
+                    }}
+                    className="w-full sm:w-auto px-8 py-3 rounded-xl bg-[#ff6325] hover:bg-[#e04e13] active:scale-95 text-white font-black text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer flex items-center justify-center gap-2 shrink-0"
                   >
-                    <span>SELECT DATE & SLOT</span>
-                    <ChevronRight size={16} />
+                    <span>Continue</span>
+                    <ChevronRight size={15} />
                   </button>
                 </div>
               )}

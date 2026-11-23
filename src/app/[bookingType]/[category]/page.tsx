@@ -81,12 +81,12 @@ const CATEGORY_NAMES: Record<string, string> = {
 
   // Lifestyle & Local Services
   dining: 'Restaurant Table Reservation',
-  salons: 'Salon / Spa Appointment',
-  spa: 'Spa & Wellness Rituals',
-  gym: 'Gym Floor & Membership Booking',
-  'gym-yoga': 'Gym Floor & Membership Booking',
-  yoga: 'Yoga Shala & Meditation Batches',
-  'yoga-meditation': 'Yoga Shala & Meditation Batches',
+  salons: 'Salon & Spa Appointment',
+  spa: 'Spa & Wellness Treatments',
+  gym: 'Gym & Fitness Center',
+  'gym-yoga': 'Gym & Fitness Center',
+  yoga: 'Yoga & Meditation Sessions',
+  'yoga-meditation': 'Yoga & Meditation Sessions',
   doctor: 'Doctor Appointment',
   electrician: 'Electrician Booking',
   plumber: 'Plumber Booking',
@@ -202,55 +202,165 @@ export function getCategoryHeroTheme(category: string, bookingType: string, city
     };
   }
 
-  // 4. LIFESTYLE, HEALTHCARE & WELLNESS
-  if (
-    normType.includes('lifestyle') ||
-    ['dining', 'salons', 'gym-yoga', 'doctor', 'pet-grooming', 'studio', 'electrician', 'plumber', 'cleaning'].includes(normCat)
-  ) {
-    let img = 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1920&q=80&auto=format&fit=crop';
-    if (normCat.includes('doctor')) {
-      img = 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=1920&q=80&auto=format&fit=crop';
-    } else if (normCat.includes('dining')) {
-      img = 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1920&q=80&auto=format&fit=crop';
-    } else if (normCat.includes('gym')) {
-      img = 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1920&q=80&auto=format&fit=crop';
-    }
-
+  // 4. SALON & SPA
+  if (['salons', 'salon', 'spa'].includes(normCat) || (normType.includes('lifestyle') && (normCat.includes('salon') || normCat.includes('spa')))) {
     return {
-      bgImage: img,
-      subtitle: 'VERIFIED SPECIALISTS • ZERO WAITING TIME',
+      bgImage: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1920&q=80&auto=format&fit=crop',
+      subtitle: 'VERIFIED STYLISTS & THERAPISTS • ZERO WAITING TIME',
       title: `Book ${cName} in ${cityName}`,
-      description: `Connect with certified practitioners, stylists, and local master professionals with doorstep & clinic booking.`,
+      description: `Connect with top-rated salons, expert stylists, and luxury spas for beauty treatments & pampering in ${cityName}.`,
       badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
-      whereLabel: 'LOCATION / CLINIC',
-      wherePlaceholder: `Search clinics, salons, or locations in ${cityName}...`,
+      whereLabel: 'SALON / SPA LOCATION',
+      wherePlaceholder: `Search salons, wellness spas, or areas in ${cityName}...`,
       searchBtnLabel: 'Book Appointment',
     };
   }
 
-  // 5. STAYS & ACCOMMODATION (Default hotel reference)
+  // 5. DOCTOR & CLINIC HEALTHCARE
+  if (normCat.includes('doctor') || normCat.includes('clinic') || normCat.includes('hospital')) {
+    return {
+      bgImage: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=1920&q=80&auto=format&fit=crop',
+      subtitle: 'VERIFIED SPECIALISTS • CONFIRMED APPOINTMENTS',
+      title: `Book ${cName} in ${cityName}`,
+      description: `Consult top certified doctors, medical practitioners, and specialist clinics with verified appointment slots.`,
+      badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
+      whereLabel: 'CLINIC / HOSPITAL / AREA',
+      wherePlaceholder: `Search doctors, clinics, or specialties in ${cityName}...`,
+      searchBtnLabel: 'Book Consultation',
+    };
+  }
+
+  // 6. DINING & RESTAURANTS
+  if (normCat.includes('dining') || normCat.includes('restaurant') || normCat.includes('cafe')) {
+    return {
+      bgImage: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1920&q=80&auto=format&fit=crop',
+      subtitle: 'PREMIUM RESTAURANTS • INSTANT TABLE RESERVATION',
+      title: `Reserve ${cName} in ${cityName}`,
+      description: `Book fine-dining tables, rooftop lounges, and top-rated restaurants with guaranteed seating in ${cityName}.`,
+      badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
+      whereLabel: 'RESTAURANT / CUISINE / AREA',
+      wherePlaceholder: `Search restaurants, cafes, or culinary spots in ${cityName}...`,
+      searchBtnLabel: 'Reserve Table',
+    };
+  }
+
+  // 7. GYM, FITNESS & YOGA
+  if (normCat.includes('gym') || normCat.includes('yoga') || normCat.includes('fitness')) {
+    return {
+      bgImage: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1920&q=80&auto=format&fit=crop',
+      subtitle: 'CERTIFIED TRAINERS • FLEXIBLE PASSES & SESSIONS',
+      title: `Book ${cName} in ${cityName}`,
+      description: `Access premium fitness gyms, yoga shalas, and certified personal trainers with day passes & memberships.`,
+      badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
+      whereLabel: 'GYM / STUDIO LOCATION',
+      wherePlaceholder: `Search gyms, yoga centers, or trainers in ${cityName}...`,
+      searchBtnLabel: 'Explore Fitness',
+    };
+  }
+
+  // 8. HOME & LOCAL SERVICES (Electrician, Plumber, Cleaning, Studio)
+  if (['electrician', 'plumber', 'cleaning', 'technician', 'studio'].includes(normCat)) {
+    return {
+      bgImage: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1920&q=80&auto=format&fit=crop',
+      subtitle: 'VERIFIED EXPERTS • DOORSTEP SERVICE AT YOUR CONVENIENCE',
+      title: `Book ${cName} in ${cityName}`,
+      description: `Hire vetted technicians, experienced handymen, and professional home service experts with guaranteed pricing.`,
+      badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
+      whereLabel: 'SERVICE LOCATION / AREA',
+      wherePlaceholder: `Enter your locality or area in ${cityName}...`,
+      searchBtnLabel: 'Book Service',
+    };
+  }
+
+  // 9. PERSONAL & CARE SERVICES (Pet Grooming, Babysitting, Elder Care)
+  if (['pet-grooming', 'babysitting', 'elder-care', 'event-organizer'].includes(normCat)) {
+    return {
+      bgImage: 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=1920&q=80&auto=format&fit=crop',
+      subtitle: 'TRUSTED CAREGIVERS • CERTIFIED PROFESSIONALS',
+      title: `Book ${cName} in ${cityName}`,
+      description: `Find trusted caregivers, certified pet groomers, and personalized assistance professionals in ${cityName}.`,
+      badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
+      whereLabel: 'LOCATION / AREA',
+      wherePlaceholder: `Search by locality or neighborhood in ${cityName}...`,
+      searchBtnLabel: 'Book Care Specialist',
+    };
+  }
+
+  // 10. TRAVEL & TRANSPORT (Flights, Trains, Buses, Cabs, Ferry)
+  if (
+    normType.includes('travel') ||
+    ['cabs', 'flights', 'trains', 'buses', 'ferry', 'shuttle', 'helicopter'].includes(normCat)
+  ) {
+    return {
+      bgImage: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1920&q=80&auto=format&fit=crop',
+      subtitle: 'VERIFIED FLEET • ZERO SURCHARGE GUARANTEE',
+      title: `Book ${cName} in ${cityName}`,
+      description: `Instant confirmed tickets and chauffeur rides across local routes and interstate destinations from ${cityName}.`,
+      badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
+      whereLabel: 'DESTINATION / PICKUP',
+      wherePlaceholder: `Where do you want to travel from ${cityName}?`,
+      searchBtnLabel: 'Search Routes',
+    };
+  }
+
+  // 11. COWORKING & WORKSPACES
+  if (
+    normType.includes('coworking') ||
+    ['coworking', 'meeting-room', 'podcast', 'conference', 'training'].includes(normCat)
+  ) {
+    return {
+      bgImage: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&q=80&auto=format&fit=crop',
+      subtitle: 'FLEXIBLE DESKS • HIGH-SPEED CONNECTIVITY',
+      title: `Book ${cName} in ${cityName}`,
+      description: `Reserve ergonomic hot desks, private cabins, modern meeting rooms, and production studios in ${cityName}.`,
+      badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
+      whereLabel: 'HUB / TECH PARK / AREA',
+      wherePlaceholder: `Search coworking hubs or business centers in ${cityName}...`,
+      searchBtnLabel: 'Explore Workspaces',
+    };
+  }
+
+  // 12. RELIGIOUS SERVICES (Darshan, Pooja, Pilgrimage)
+  if (
+    normType.includes('darshan') ||
+    normType.includes('pooja') ||
+    ['darshan', 'pooja', 'pilgrimage'].includes(normCat)
+  ) {
+    return {
+      bgImage: 'https://images.unsplash.com/photo-1609766857041-ed402ea8069a?w=1920&q=80&auto=format&fit=crop',
+      subtitle: 'SACRED SLOTS • HASSLE-FREE DEVOTIONAL DARSHAN',
+      title: `Book ${cName} in ${cityName}`,
+      description: `Confirmed sanctum entry, specialized pooja rituals, and sacred pilgrimage passes with verified coordinators.`,
+      badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
+      whereLabel: 'TEMPLE / DEITY / REGION',
+      wherePlaceholder: `Search temple, deity or shrine in ${cityName}...`,
+      searchBtnLabel: 'Book Darshan Slot',
+    };
+  }
+
+  // 13. STAYS & ACCOMMODATION (Hotels, Resorts, Villas, Hostels, PG)
   if (
     normType.includes('stay') ||
     ['hotels', 'resorts', 'villas', 'hostels', 'pg-hostels', 'camping'].includes(normCat)
   ) {
     return {
       bgImage: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1920&q=80&auto=format&fit=crop',
-      subtitle: 'PREMIUM STAYS • BETTER EXPERIENCES',
+      subtitle: 'PREMIUM STAYS • VERIFIED HOSPITALITY',
       title: `Find Your Perfect Stay in ${cityName}`,
       description: `Discover handpicked ${cName.toLowerCase()} & verified stays in ${cityName} for your next getaway or living arrangement.`,
       badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
-      whereLabel: 'WHERE',
+      whereLabel: 'WHERE / DESTINATION',
       wherePlaceholder: 'Search destination, hotel or city...',
       searchBtnLabel: 'Search Stays',
     };
   }
 
-  // 6. DEFAULT / ALL OTHER 54 CATEGORIES
+  // 14. DEFAULT / ALL OTHER 54 CATEGORIES
   return {
     bgImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80&auto=format&fit=crop',
-    subtitle: 'CURATED CHOICES • VERIFIED DISPATCH',
+    subtitle: 'CURATED CHOICES • INSTANT BOOKING CONFIRMATION',
     title: `Find & Book ${cName} in ${cityName}`,
-    description: `Curated top-rated choices and verified dispatcher portal in ${cityName} with instant confirmation.`,
+    description: `Curated top-rated verified service providers and direct reservations in ${cityName} with instant confirmation.`,
     badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
     whereLabel: 'SEARCH / AREA',
     wherePlaceholder: `Search ${cName} in ${cityName}...`,
@@ -1744,6 +1854,9 @@ export default function ProviderDiscoveryPage() {
   const [salonServiceInput, setSalonServiceInput] = useState<string>(''); // e.g. 'Haircut', 'Massage', 'Facial'
   const [isSalonServiceDropdownOpen, setIsSalonServiceDropdownOpen] = useState(false);
   const [isSalonGenderDropdownOpen, setIsSalonGenderDropdownOpen] = useState(false);
+  const [salonTimeSlot, setSalonTimeSlot] = useState<'ANY' | 'MORNING' | 'AFTERNOON' | 'EVENING' | 'CUSTOM'>('ANY');
+  const [salonCustomTime, setSalonCustomTime] = useState<string>('10:00 AM');
+  const [isSalonCustomTimeOpen, setIsSalonCustomTimeOpen] = useState(false);
 
   // Dining Dedicated Search States
   const todayStr = new Date().toISOString().split('T')[0];
@@ -4604,11 +4717,10 @@ export default function ProviderDiscoveryPage() {
                               isCity: true
                             }))
                             : [
-                              { label: city || 'Chennai', type: 'Current City', icon: '📍', isCity: true },
+                              { label: city || 'Chennai', type: 'Current City', isCity: true },
                               ...POPULAR_CITIES.filter(p => p.name !== city).slice(0, 3).map(p => ({
                                 label: p.name,
                                 type: 'Popular City',
-                                icon: '📍',
                                 isCity: true
                               }))
                             ];
@@ -4625,7 +4737,6 @@ export default function ProviderDiscoveryPage() {
                             .map((s: any) => ({
                               label: s.branchName || s.merchant?.name || s.name,
                               type: s.name || 'Verified Salon / Spa',
-                              icon: '✨',
                               isCity: false
                             }));
 
@@ -4651,7 +4762,7 @@ export default function ProviderDiscoveryPage() {
                               className="w-full text-left flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 cursor-pointer transition-colors"
                             >
                               <span className="flex items-center gap-2 font-semibold truncate">
-                                <span>{item.icon}</span>
+                                {item.isCity ? <MapPin size={13} className="text-[#ff6325] shrink-0" /> : <Sparkles size={13} className="text-amber-500 shrink-0" />}
                                 <span className="truncate">{item.label}</span>
                               </span>
                               <span className="text-[10px] text-slate-400 shrink-0 font-medium ml-2">{item.type}</span>
@@ -4671,7 +4782,7 @@ export default function ProviderDiscoveryPage() {
                     </div>
                     <div className="flex flex-col min-w-0 flex-1">
                       <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">
-                        {salonTypeFilter === 'SPA' ? 'SPA & MASSAGE' : salonTypeFilter === 'SALON' ? 'SALON & GROOMING' : 'SERVICE / RITUAL'}
+                        {salonTypeFilter === 'SPA' ? 'SPA & WELLNESS' : salonTypeFilter === 'SALON' ? 'SALON & GROOMING' : 'SERVICE / TREATMENT'}
                       </span>
                       <div className="relative flex items-center">
                         <input
@@ -4727,40 +4838,47 @@ export default function ProviderDiscoveryPage() {
                         {/* Clean Tab Segment: All, Salon, Spa */}
                         <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800">
                           {[
-                            { id: 'ALL', label: 'All Services', icon: '✨' },
-                            { id: 'SALON', label: 'Salon', icon: '✂️' },
-                            { id: 'SPA', label: 'Spa & Sauna', icon: '🧖' },
+                            { id: 'ALL', label: 'All Services' },
+                            { id: 'SALON', label: 'Salon' },
+                            { id: 'SPA', label: 'Spa & Wellness' },
                           ].map(t => (
                             <button
                               key={t.id}
                               type="button"
-                              onClick={() => setSalonTypeFilter(t.id as any)}
+                              onClick={() => {
+                                setSalonTypeFilter(t.id as any);
+                                // If the current typed service belongs to a different type, reset it for clean UX
+                                if (t.id === 'SPA' && ['haircut', 'beard', 'manicure', 'pedicure', 'bridal'].some(w => salonServiceInput.toLowerCase().includes(w))) {
+                                  setSalonServiceInput('');
+                                } else if (t.id === 'SALON' && ['massage', 'thai', 'steam', 'sauna'].some(w => salonServiceInput.toLowerCase().includes(w))) {
+                                  setSalonServiceInput('');
+                                }
+                              }}
                               className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 ${
                                 salonTypeFilter === t.id
                                   ? 'bg-[#ff6325] text-white shadow-xs font-black'
                                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                               }`}
                             >
-                              <span>{t.icon}</span>
                               <span className="truncate">{t.label}</span>
                             </button>
                           ))}
                         </div>
 
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pt-1">
-                          Popular Treatments & Rituals
+                          Popular Treatments & Services
                         </div>
                         <div className="grid grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-0.5">
                           {[
-                            { label: 'Haircut & Styling', icon: '✂️', type: 'SALON' },
-                            { label: 'Beard Grooming', icon: '🧔', type: 'SALON' },
-                            { label: 'Facial & Clean Up', icon: '✨', type: 'SALON' },
-                            { label: 'Full Body Massage', icon: '💆', type: 'SPA' },
-                            { label: 'Thai Therapy', icon: '🧘', type: 'SPA' },
-                            { label: 'Hair Spa & Keratin', icon: '🧴', type: 'SALON' },
-                            { label: 'Pedicure & Manicure', icon: '💅', type: 'SALON' },
-                            { label: 'Aromatherapy Steam', icon: '🧖', type: 'SPA' },
-                            { label: 'Bridal Makeover', icon: '👰', type: 'SALON' },
+                            { label: 'Haircut & Styling', type: 'SALON' },
+                            { label: 'Beard Grooming', type: 'SALON' },
+                            { label: 'Facial & Clean Up', type: 'SALON' },
+                            { label: 'Full Body Massage', type: 'SPA' },
+                            { label: 'Thai Therapy', type: 'SPA' },
+                            { label: 'Hair Spa & Keratin', type: 'SALON' },
+                            { label: 'Pedicure & Manicure', type: 'SALON' },
+                            { label: 'Aromatherapy Steam', type: 'SPA' },
+                            { label: 'Bridal Makeover', type: 'SALON' },
                           ]
                             .filter(i => salonTypeFilter === 'ALL' || i.type === salonTypeFilter)
                             .map((item) => (
@@ -4777,7 +4895,6 @@ export default function ProviderDiscoveryPage() {
                                     : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 bg-slate-50/50 dark:bg-white/5'
                                 }`}
                               >
-                                <span>{item.icon}</span>
                                 <span className="truncate">{item.label}</span>
                               </button>
                             ))}
@@ -4801,12 +4918,12 @@ export default function ProviderDiscoveryPage() {
                       <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">FOR WHOM</span>
                       <span className="text-xs font-bold text-slate-800 dark:text-white truncate">
                         {salonGenderFilter === 'WOMEN'
-                          ? "👩 Women"
+                          ? "Women"
                           : salonGenderFilter === 'MEN'
-                          ? "🧔 Men"
+                          ? "Men"
                           : salonGenderFilter === 'KIDS'
-                          ? "🧒 Kids"
-                          : '✨ All / Unisex'}
+                          ? "Kids"
+                          : 'All / Unisex'}
                       </span>
                     </div>
                     <ChevronDown size={13} className={`text-slate-400 transition-transform shrink-0 ${isSalonGenderDropdownOpen ? 'rotate-180' : ''}`} />
@@ -4821,10 +4938,10 @@ export default function ProviderDiscoveryPage() {
                           Target Audience
                         </div>
                         {[
-                          { id: 'ALL', label: 'All Services (Unisex)', icon: '✨' },
-                          { id: 'WOMEN', label: "Women's Beauty & Spa", icon: '👩' },
-                          { id: 'MEN', label: "Men's Grooming", icon: '🧔' },
-                          { id: 'KIDS', label: 'Kids & Teens Care', icon: '🧒' },
+                          { id: 'ALL', label: 'All Services (Unisex)' },
+                          { id: 'WOMEN', label: "Women's Beauty & Spa" },
+                          { id: 'MEN', label: "Men's Grooming" },
+                          { id: 'KIDS', label: 'Kids & Teens Care' },
                         ].map((g) => (
                           <button
                             key={g.id}
@@ -4839,11 +4956,8 @@ export default function ProviderDiscoveryPage() {
                                 : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
                             }`}
                           >
-                            <span className="flex items-center gap-2">
-                              <span>{g.icon}</span>
-                              <span>{g.label}</span>
-                            </span>
-                            {salonGenderFilter === g.id && <span>✓</span>}
+                            <span>{g.label}</span>
+                            {salonGenderFilter === g.id && <span className="text-emerald-500 font-bold">✓</span>}
                           </button>
                         ))}
                       </div>
@@ -4851,7 +4965,7 @@ export default function ProviderDiscoveryPage() {
                   )}
                 </div>
 
-                {/* 4. Service Date (Today, Tomorrow, Custom) */}
+                {/* 4. Service Date & Time (Fresha Style Time Selector) */}
                 <div className="flex-1 relative px-3.5 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-full transition-colors group">
                   <button
                     type="button"
@@ -4859,12 +4973,17 @@ export default function ProviderDiscoveryPage() {
                     className="flex items-center gap-2 w-full text-left cursor-pointer"
                   >
                     <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
-                      <Calendar size={17} />
+                      <Clock size={17} />
                     </div>
                     <div className="flex flex-col min-w-0 flex-1">
-                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">DATE</span>
+                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">DATE & TIME</span>
                       <span className="text-xs font-bold text-slate-800 dark:text-white truncate">
                         {sportsSlotDate === todayStr ? 'Today' : sportsSlotDate === tomorrowStr ? 'Tomorrow' : sportsSlotDate}
+                        {salonTimeSlot !== 'ANY' ? ` • ${
+                          salonTimeSlot === 'MORNING' ? 'Morning' :
+                          salonTimeSlot === 'AFTERNOON' ? 'Afternoon' :
+                          salonTimeSlot === 'EVENING' ? 'Evening' : salonCustomTime
+                        }` : ' • Any time'}
                       </span>
                     </div>
                   </button>
@@ -4872,9 +4991,9 @@ export default function ProviderDiscoveryPage() {
                   {isSportsDatePickerOpen && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setIsSportsDatePickerOpen(false)} />
-                      <div className="absolute top-full right-0 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-white/15 shadow-2xl p-4 z-50 text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
+                      <div className="absolute top-full right-0 mt-2 w-96 sm:w-[430px] max-h-[85vh] overflow-y-auto bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-white/15 shadow-2xl p-3.5 z-50 text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
                         {/* Month Header */}
-                        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-2 mb-3 border border-slate-150/60 dark:border-white/5">
+                        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-2xl px-2.5 py-1.5 mb-2 border border-slate-150/60 dark:border-white/5">
                           <button
                             type="button"
                             onClick={() => {
@@ -4882,9 +5001,9 @@ export default function ProviderDiscoveryPage() {
                               newD.setMonth(newD.getMonth() - 1);
                               setCalendarViewDate(newD);
                             }}
-                            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
+                            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
                           >
-                            <ChevronLeft size={16} />
+                            <ChevronLeft size={15} />
                           </button>
                           <span className="font-extrabold text-xs sm:text-sm tracking-tight text-slate-900 dark:text-white">
                             {calendarViewDate.toLocaleString('default', { month: 'long' })} {calendarViewDate.getFullYear()}
@@ -4896,16 +5015,16 @@ export default function ProviderDiscoveryPage() {
                               newD.setMonth(newD.getMonth() + 1);
                               setCalendarViewDate(newD);
                             }}
-                            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
+                            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
                           >
-                            <ChevronRight size={16} />
+                            <ChevronRight size={15} />
                           </button>
                         </div>
 
                         {/* Day of Week */}
-                        <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-400 mb-2">
+                        <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 mb-1">
                           {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
-                            <div key={day} className="py-1">{day}</div>
+                            <div key={day} className="py-0.5">{day}</div>
                           ))}
                         </div>
 
@@ -4919,7 +5038,7 @@ export default function ProviderDiscoveryPage() {
 
                             const cells = [];
                             for (let i = 0; i < firstDayIndex; i++) {
-                              cells.push(<div key={`empty-${i}`} className="h-8 w-8" />);
+                              cells.push(<div key={`empty-${i}`} className="h-7 w-7" />);
                             }
 
                             for (let day = 1; day <= totalDays; day++) {
@@ -4936,9 +5055,8 @@ export default function ProviderDiscoveryPage() {
                                   disabled={isPast}
                                   onClick={() => {
                                     setSportsSlotDate(dateStr);
-                                    setIsSportsDatePickerOpen(false);
                                   }}
-                                  className={`h-8 w-8 mx-auto rounded-full text-xs font-bold flex items-center justify-center transition-all ${
+                                  className={`h-7 w-7 mx-auto rounded-full text-[11px] font-bold flex items-center justify-center transition-all ${
                                     isSelected
                                       ? 'bg-[#ff6325] text-white shadow-sm font-black'
                                       : isPast
@@ -4952,6 +5070,150 @@ export default function ProviderDiscoveryPage() {
                             }
                             return cells;
                           })()}
+                        </div>
+
+                        {/* ── FRESHA SIGNATURE "SELECT TIME" SECTION ── */}
+                        <div className="mt-4 pt-3.5 border-t border-slate-150 dark:border-white/10 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-900 dark:text-white">
+                              Select time
+                            </span>
+                            {salonTimeSlot === 'CUSTOM' && (
+                              <span className="text-[10px] font-bold text-[#ff6325] bg-[#ff6325]/10 px-2 py-0.5 rounded-md">
+                                {salonCustomTime}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Fresha Pill Group */}
+                          <div className="grid grid-cols-5 gap-1.5 pt-1">
+                            {/* 1. Any time */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSalonTimeSlot('ANY');
+                                setIsSalonCustomTimeOpen(false);
+                              }}
+                              className={`py-2 px-1 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center min-h-[50px] ${
+                                salonTimeSlot === 'ANY'
+                                  ? 'bg-[#ede9fe] dark:bg-purple-950/40 border-[#6366f1] dark:border-purple-500 text-[#5b21b6] dark:text-purple-300 ring-2 ring-[#6366f1]/20 font-bold'
+                                  : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 font-semibold'
+                              }`}
+                            >
+                              <span className="text-xs leading-tight">Any time</span>
+                            </button>
+
+                            {/* 2. Morning */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSalonTimeSlot('MORNING');
+                                setIsSalonCustomTimeOpen(false);
+                              }}
+                              className={`py-2 px-1 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center min-h-[50px] ${
+                                salonTimeSlot === 'MORNING'
+                                  ? 'bg-[#ede9fe] dark:bg-purple-950/40 border-[#6366f1] dark:border-purple-500 text-[#5b21b6] dark:text-purple-300 ring-2 ring-[#6366f1]/20 font-bold'
+                                  : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                              }`}
+                            >
+                              <span className="text-xs font-semibold leading-tight">Morning</span>
+                              <span className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">6am - 12pm</span>
+                            </button>
+
+                            {/* 3. Afternoon */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSalonTimeSlot('AFTERNOON');
+                                setIsSalonCustomTimeOpen(false);
+                              }}
+                              className={`py-2 px-1 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center min-h-[50px] ${
+                                salonTimeSlot === 'AFTERNOON'
+                                  ? 'bg-[#ede9fe] dark:bg-purple-950/40 border-[#6366f1] dark:border-purple-500 text-[#5b21b6] dark:text-purple-300 ring-2 ring-[#6366f1]/20 font-bold'
+                                  : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                              }`}
+                            >
+                              <span className="text-xs font-semibold leading-tight">Afternoon</span>
+                              <span className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">12pm - 5pm</span>
+                            </button>
+
+                            {/* 4. Evening */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSalonTimeSlot('EVENING');
+                                setIsSalonCustomTimeOpen(false);
+                              }}
+                              className={`py-2 px-1 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center min-h-[50px] ${
+                                salonTimeSlot === 'EVENING'
+                                  ? 'bg-[#ede9fe] dark:bg-purple-950/40 border-[#6366f1] dark:border-purple-500 text-[#5b21b6] dark:text-purple-300 ring-2 ring-[#6366f1]/20 font-bold'
+                                  : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                              }`}
+                            >
+                              <span className="text-xs font-semibold leading-tight">Evening</span>
+                              <span className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">5pm - 12am</span>
+                            </button>
+
+                            {/* 5. Custom */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSalonTimeSlot('CUSTOM');
+                                setIsSalonCustomTimeOpen(!isSalonCustomTimeOpen);
+                              }}
+                              className={`py-2 px-1 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center min-h-[50px] ${
+                                salonTimeSlot === 'CUSTOM'
+                                  ? 'bg-[#ede9fe] dark:bg-purple-950/40 border-[#6366f1] dark:border-purple-500 text-[#5b21b6] dark:text-purple-300 ring-2 ring-[#6366f1]/20 font-bold'
+                                  : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 font-semibold'
+                              }`}
+                            >
+                              <span className="text-xs leading-tight">Custom</span>
+                            </button>
+                          </div>
+
+                          {/* Custom Time Selector Dropdown */}
+                          {salonTimeSlot === 'CUSTOM' && isSalonCustomTimeOpen && (
+                            <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 space-y-1.5 animate-in fade-in zoom-in-95 duration-100">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                                Pick Preferred Hour
+                              </span>
+                              <div className="grid grid-cols-4 gap-1 max-h-32 overflow-y-auto">
+                                {[
+                                  '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM',
+                                  '12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM',
+                                  '04:00 PM', '05:00 PM', '06:00 PM', '07:00 PM',
+                                  '08:00 PM', '09:00 PM'
+                                ].map((tVal) => (
+                                  <button
+                                    key={tVal}
+                                    type="button"
+                                    onClick={() => {
+                                      setSalonCustomTime(tVal);
+                                      setIsSalonCustomTimeOpen(false);
+                                    }}
+                                    className={`py-1 rounded-lg text-xs font-semibold text-center transition-colors ${
+                                      salonCustomTime === tVal
+                                        ? 'bg-[#6366f1] text-white font-bold'
+                                        : 'bg-white dark:bg-slate-700/60 text-slate-700 dark:text-slate-200 hover:bg-slate-100'
+                                    }`}
+                                  >
+                                    {tVal}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Done Button */}
+                          <div className="pt-2 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => setIsSportsDatePickerOpen(false)}
+                              className="px-4 py-1.5 rounded-xl bg-[#ff6325] hover:bg-[#e0531b] text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+                            >
+                              Apply
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </>
@@ -6919,6 +7181,8 @@ export default function ProviderDiscoveryPage() {
                               ? `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?checkIn=${checkInDate}&checkOut=${checkOutDate}&adults=${adults}&children=${children}&childAges=${encodeURIComponent(JSON.stringify(childAges))}&rooms=${rooms}&pets=${pets}&petCount=${petCount}${isCardSecret ? '&isLuxury=true' : ''}`
                               : isDiningCategory
                               ? `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?date=${encodeURIComponent(sportsSlotDate || todayStr)}&session=${encodeURIComponent(diningMealSession)}&guests=${diningGuestsCount}&zone=${encodeURIComponent(diningSeatingZone)}`
+                              : isSalonCategory
+                              ? `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?date=${encodeURIComponent(sportsSlotDate || todayStr)}&city=${encodeURIComponent(queryCity || city || '')}&venue=${encodeURIComponent(queryVenue || m.name || '')}&gender=${encodeURIComponent(salonGenderFilter)}&service=${encodeURIComponent(salonSelectedTreatment || '')}&timeSlot=${encodeURIComponent(salonTimeSlot)}&slot=${encodeURIComponent(salonTimeSlot === 'CUSTOM' ? salonCustomTime : (salonTimeSlot === 'MORNING' ? '10:00 AM' : salonTimeSlot === 'AFTERNOON' ? '02:00 PM' : salonTimeSlot === 'EVENING' ? '06:00 PM' : '10:00 AM'))}`
                               : `/${bookingType}/${category}/${m.id || m.slug || 'merchant'}?date=${encodeURIComponent(sportsSlotDate || queryDate || new Date().toISOString().split('T')[0])}&city=${encodeURIComponent(queryCity || city || '')}&venue=${encodeURIComponent(queryVenue || m.name || '')}`
                             }
                             className="block h-full"
@@ -6970,11 +7234,11 @@ export default function ProviderDiscoveryPage() {
                                       <span className={`px-2.5 py-0.5 rounded-full text-white text-[10px] font-black uppercase tracking-wider backdrop-blur-md shadow-sm ${
                                         pgGenderVal === 'ladies' ? 'bg-pink-600/95 ring-1 ring-white/20' : pgGenderVal === 'gents' ? 'bg-blue-600/95 ring-1 ring-white/20' : 'bg-purple-600/95 ring-1 ring-white/20'
                                       }`}>
-                                        {pgGenderVal === 'ladies' ? '🚺 Ladies PG' : pgGenderVal === 'gents' ? '🚹 Gents PG' : '👥 Coliving'}
+                                        {pgGenderVal === 'ladies' ? 'Ladies PG' : pgGenderVal === 'gents' ? 'Gents PG' : 'Coliving'}
                                       </span>
                                       {pgFoodVal && (
                                         <span className="px-2 py-0.5 rounded-full bg-emerald-600/95 text-white text-[9px] font-bold backdrop-blur-md shadow-sm hidden sm:inline-block">
-                                          🍲 3 Meals
+                                          3 Meals
                                         </span>
                                       )}
                                     </div>
@@ -7091,32 +7355,32 @@ export default function ProviderDiscoveryPage() {
                                         pgGenderVal === 'gents' ? 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-400/30' :
                                         'bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-400/30'
                                       }`}>
-                                        {pgGenderVal === 'ladies' ? '🚺 Ladies PG' : pgGenderVal === 'gents' ? '🚹 Gents Only PG' : '👥 Coliving Stay'}
+                                        {pgGenderVal === 'ladies' ? 'Ladies PG' : pgGenderVal === 'gents' ? 'Gents Only PG' : 'Coliving Stay'}
                                       </span>
                                       <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-400/30 flex items-center gap-1">
-                                        <span>🍲</span> {pgFoodVal ? '3 Meals Included' : 'Self-Cooking'}
+                                        {pgFoodVal ? '3 Meals Included' : 'Self-Cooking'}
                                       </span>
                                       <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 hidden sm:inline-flex items-center gap-1">
-                                        <span>🔒</span> {pgCurfewVal}
+                                        {pgCurfewVal}
                                       </span>
                                       {pgGenderVal === 'ladies' && (livePgConfig?.hasLadyWarden !== false && m?.metadata?.hasLadyWarden !== false) && (
                                         <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#ff6325]/10 text-[#ff6325] border border-[#ff6325]/30 flex items-center gap-1">
-                                          <span>👩‍💼</span> Lady Warden
+                                          Lady Warden
                                         </span>
                                       )}
                                       {pgGenderVal === 'ladies' && (livePgConfig?.hasPackedLunchBox || m?.metadata?.hasPackedLunchBox) && (
                                         <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#ff6325]/10 text-[#ff6325] border border-[#ff6325]/30 hidden sm:inline-flex items-center gap-1">
-                                          <span>🍱</span> Lunch Box
+                                          Lunch Box
                                         </span>
                                       )}
                                       {(pgGenderVal === 'coliving' || pgGenderVal === 'unisex') && (livePgConfig?.hasCoworkingLounge !== false && m?.metadata?.hasCoworkingLounge !== false) && (
                                         <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-400/30 flex items-center gap-1">
-                                          <span>💻</span> Coworking
+                                          Coworking
                                         </span>
                                       )}
                                       {(pgGenderVal === 'coliving' || pgGenderVal === 'unisex') && (livePgConfig?.hasFullPowerBackup !== false && m?.metadata?.hasFullPowerBackup !== false) && (
                                         <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-400/30 hidden sm:inline-flex items-center gap-1">
-                                          <span>⚡</span> 100% Backup
+                                          100% Backup
                                         </span>
                                       )}
                                     </div>
