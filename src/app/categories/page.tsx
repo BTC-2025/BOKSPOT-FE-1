@@ -362,7 +362,10 @@ function getServiceSubtitle(name: string): string {
 }
 
 import { motion } from 'framer-motion';
-import { Sparkles, ArrowRight, Compass, Search, SlidersHorizontal } from 'lucide-react';
+import {
+  Sparkles, ArrowRight, Compass, Search, SlidersHorizontal,
+  LayoutGrid, Car, Bed, Trophy, Film, Flower2, Laptop, Landmark, Bike, PawPrint
+} from 'lucide-react';
 
 export default function CategoriesPage() {
   const router = useRouter();
@@ -430,16 +433,16 @@ export default function CategoriesPage() {
 
   // Bento Primary Highlights - ALL 9 Categories + "All" option
   const BENTO_CATEGORIES = [
-    { title: 'All Services', tag: 'ALL', icon: 'apps', emoji: '✨', desc: 'Browse entire directory', border: 'hover:border-[#ff6325]/50', badge: '55 TOTAL' },
-    { title: 'Travel & Cabs', tag: 'Travel', icon: 'directions_car', emoji: '🚕', desc: 'Rides, flights & buses', border: 'hover:border-sky-500/50', badge: '9 SERVICES' },
-    { title: 'Stay & Accommodation', tag: 'Stay & Accommodation', icon: 'hotel', emoji: '🏨', desc: 'Resorts, villas & homestays', border: 'hover:border-amber-500/50', badge: '5 TYPES' },
-    { title: 'Sports & Turfs', tag: 'Sports', icon: 'sports_soccer', emoji: '⚽', desc: 'Football, cricket & courts', border: 'hover:border-emerald-500/50', badge: '7 ARENAS' },
-    { title: 'Entertainment', tag: 'Entertainment', icon: 'movie', emoji: '🎬', desc: 'Cinema, concerts & events', border: 'hover:border-fuchsia-500/50', badge: '7 SHOWS' },
-    { title: 'Lifestyle & Spa', tag: 'Lifestyle Services', icon: 'spa', emoji: '💇', desc: 'Dining, wellness & beauty', border: 'hover:border-rose-500/50', badge: '10 BOOKINGS' },
-    { title: 'Coworking & Office', tag: 'Business', icon: 'laptop_mac', emoji: '💼', desc: 'Desks, meeting & studios', border: 'hover:border-cyan-500/50', badge: '5 WORKSPACES' },
-    { title: 'Darshan & Pooja', tag: 'Religious Services', icon: 'account_balance', emoji: '🛕', desc: 'Temple darshan & pilgrimage', border: 'hover:border-orange-500/50', badge: '3 PASSES' },
-    { title: 'Equipment Rentals', tag: 'Equipment Rentals', icon: 'shopping_bag', emoji: '🚲', desc: 'Bikes, cameras & audio', border: 'hover:border-yellow-500/50', badge: '5 RENTALS' },
-    { title: 'Personal Services', tag: 'Personal Services', icon: 'pets', emoji: '🐶', desc: 'Pet groom, care & babysit', border: 'hover:border-purple-500/50', badge: '4 SERVICES' },
+    { title: 'All Services', tag: 'ALL', Icon: LayoutGrid, desc: 'Browse entire directory', border: 'hover:border-[#ff6325]/50', badge: '55 TOTAL' },
+    { title: 'Travel & Cabs', tag: 'Travel', Icon: Car, desc: 'Rides, flights & buses', border: 'hover:border-sky-500/50', badge: '9 SERVICES' },
+    { title: 'Stay & Accommodation', tag: 'Stay & Accommodation', Icon: Bed, desc: 'Resorts, villas & homestays', border: 'hover:border-amber-500/50', badge: '5 TYPES' },
+    { title: 'Sports & Turfs', tag: 'Sports', Icon: Trophy, desc: 'Football, cricket & courts', border: 'hover:border-emerald-500/50', badge: '7 ARENAS' },
+    { title: 'Entertainment', tag: 'Entertainment', Icon: Film, desc: 'Cinema, concerts & events', border: 'hover:border-fuchsia-500/50', badge: '7 SHOWS' },
+    { title: 'Lifestyle & Spa', tag: 'Lifestyle Services', Icon: Flower2, desc: 'Dining, wellness & beauty', border: 'hover:border-rose-500/50', badge: '10 BOOKINGS' },
+    { title: 'Coworking & Office', tag: 'Business', Icon: Laptop, desc: 'Desks, meeting & studios', border: 'hover:border-cyan-500/50', badge: '5 WORKSPACES' },
+    { title: 'Darshan & Pooja', tag: 'Religious Services', Icon: Landmark, desc: 'Temple darshan & pilgrimage', border: 'hover:border-orange-500/50', badge: '3 PASSES' },
+    { title: 'Equipment Rentals', tag: 'Equipment Rentals', Icon: Bike, desc: 'Bikes, cameras & audio', border: 'hover:border-yellow-500/50', badge: '5 RENTALS' },
+    { title: 'Personal Services', tag: 'Personal Services', Icon: PawPrint, desc: 'Pet groom, care & babysit', border: 'hover:border-purple-500/50', badge: '4 SERVICES' },
   ];
 
   return (
@@ -504,6 +507,7 @@ export default function CategoriesPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 pt-1">
             {BENTO_CATEGORIES.map((bento) => {
               const isSelected = activeGroup === bento.tag;
+              const IconComponent = bento.Icon;
               return (
                 <button
                   key={bento.title}
@@ -514,7 +518,15 @@ export default function CategoriesPage() {
                     }`}
                 >
                   <div className="flex items-center justify-between w-full mb-2">
-                    <span className="text-2xl filter drop-shadow-sm group-hover:scale-110 transition-transform">{bento.emoji}</span>
+                    <IconComponent
+                      size={22}
+                      strokeWidth={1.8}
+                      className={`transition-all duration-200 group-hover:scale-110 ${
+                        isSelected
+                          ? 'text-[color:var(--color-primary)]'
+                          : 'text-slate-600 dark:text-slate-300 group-hover:text-[color:var(--color-primary)]'
+                      }`}
+                    />
                     <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg border shrink-0 ${isSelected
                       ? 'bg-[color:var(--color-primary)] text-white border-[color:var(--color-primary)]'
                       : 'bg-black/5 dark:bg-white/10 text-[color:var(--color-outline)] border-black/5 dark:border-white/10 font-bold'
