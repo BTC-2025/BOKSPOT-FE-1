@@ -14,14 +14,14 @@ import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useLocationStore, useBookingFlowStore, useUserStore, ALL_CITIES, POPULAR_CITIES } from '../../../lib/store';
 import { api, Service } from '../../../lib/api';
-import { calculateDistance } from '../../../lib/mockData';
-import { getSportCategoryConfig } from '../../../lib/sportsData';
-import { getEntertainmentCategoryConfig, NOW_SHOWING_MOVIES, MovieListingItem } from '../../../lib/entertainmentData';
-import { getDiningConfig, DiningTableType } from '../../../lib/diningData';
-import { getWellnessConfig } from '../../../lib/wellnessData';
-import { getFitnessConfig } from '../../../lib/fitnessData';
-import { getClinicConfig } from '../../../lib/clinicalData';
-import { getHomeServiceConfig } from '../../../lib/homeServicesData';
+import { calculateDistance } from '../../../lib/geoUtils';
+// import { getSportCategoryConfig } from '../../../lib/sportsData';
+// import { getEntertainmentCategoryConfig, NOW_SHOWING_MOVIES, MovieListingItem } from '../../../lib/entertainmentData';
+// import { getDiningConfig, DiningTableType } from '../../../lib/diningData';
+// import { getWellnessConfig } from '../../../lib/wellnessData';
+// import { getFitnessConfig } from '../../../lib/fitnessData';
+// import { getClinicConfig } from '../../../lib/clinicalData';
+// import { getHomeServiceConfig } from '../../../lib/homeServicesData';
 import { Film, Clapperboard, Play, Flame, Utensils, Coffee, Award } from 'lucide-react';
 
 const MapComponent = dynamic(() => import('../../../components/MapComponent'), {
@@ -1885,7 +1885,7 @@ export default function ProviderDiscoveryPage() {
   const [sportsFormatFilter, setSportsFormatFilter] = useState<string>('all');
 
   // Cinema / Theatre Picker Modal States (BookMyShow standard: Select Movie -> Pick Theatre/Branch -> Showtimes)
-  const [selectedMovieForTheatres, setSelectedMovieForTheatres] = useState<MovieListingItem | null>(null);
+  const [selectedMovieForTheatres, setSelectedMovieForTheatres] = useState<any | null>(null);
   const [showTheatreModal, setShowTheatreModal] = useState<boolean>(false);
   const [theatreFilterDate, setTheatreFilterDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
 
@@ -2237,465 +2237,41 @@ export default function ProviderDiscoveryPage() {
           ];
         }
 
-        // Generic Sports & Recreation Master Archetype Fallback (Categories 22-28)
-        const sportConfig = getSportCategoryConfig(category);
-        if (sportConfig && list.length === 0) {
-          const targetCity = city || 'Chennai';
-
-          // Check if custom branch or listings configured by business vendor in portal
-          let merchantBranchList: any[] = [];
-          if (typeof window !== 'undefined') {
-            try {
-              const busStorageRaw = localStorage.getItem('vendor-portal-storage-v10');
-              if (busStorageRaw) {
-                const busData = JSON.parse(busStorageRaw);
-                const curM = busData.state?.currentMerchant;
-                if (curM && curM.username === sportConfig.username && Array.isArray(curM.branches) && curM.branches.length > 0) {
-                  merchantBranchList = curM.branches;
-                }
-              }
-            } catch (e) {}
-          }
-
-          if (merchantBranchList.length > 0) {
-            list = merchantBranchList.map((br: any) => ({
-              id: `svc-${sportConfig.slug}-${br.id}`,
-              name: `${br.name} — ${sportConfig.categoryName}`,
-              category: { name: sportConfig.categoryName, slug: sportConfig.slug },
-              rating: 4.9,
-              reviewCount: 384,
-              basePrice: String(sportConfig.defaultPrice),
-              image: sportConfig.heroImage,
-              branchName: br.name,
-              address: br.address,
-              merchant: {
-                id: sportConfig.merchantId,
-                name: br.name,
-                city: br.city || targetCity,
-                address: br.address || `Sports Hub Arena, Stadium Road, ${targetCity}`,
-                rating: 4.9,
-                username: sportConfig.username,
-                metadata: {
-                  isFacility: true,
-                  branchId: br.id,
-                  units: sportConfig.units,
-                  addons: sportConfig.addons,
-                  mandatoryRule: sportConfig.mandatoryRule,
-                  amenities: sportConfig.amenities,
-                  includedGear: sportConfig.includedGear,
-                  supervisorTitle: sportConfig.supervisorTitle
-                }
-              },
-              metadata: {
-                isFacility: true,
-                branchId: br.id,
-                branchName: br.name,
-                address: br.address,
-                startingPrice: sportConfig.defaultPrice,
-                amenities: sportConfig.amenities,
-                mandatoryRule: sportConfig.mandatoryRule,
-                units: sportConfig.units,
-                addons: sportConfig.addons
-              }
-            }));
-          } else {
-            list = [
-              {
-                id: `svc-${sportConfig.slug}-${sportConfig.username.toLowerCase()}`,
-                name: `${sportConfig.merchantName} — ${sportConfig.categoryName}`,
-                category: { name: sportConfig.categoryName, slug: sportConfig.slug },
-                rating: 4.9,
-                reviewCount: 384,
-                basePrice: String(sportConfig.defaultPrice),
-                image: sportConfig.heroImage,
-                branchName: sportConfig.merchantName,
-                address: `Sports Hub Arena, Stadium Road, ${targetCity}`,
-                merchant: {
-                  id: sportConfig.merchantId,
-                  name: sportConfig.merchantName,
-                  city: targetCity,
-                  address: `Sports Hub Arena, Stadium Road, ${targetCity}`,
-                  rating: 4.9,
-                  username: sportConfig.username,
-                  metadata: {
-                    isFacility: true,
-                    units: sportConfig.units,
-                    addons: sportConfig.addons,
-                    mandatoryRule: sportConfig.mandatoryRule,
-                    amenities: sportConfig.amenities,
-                    includedGear: sportConfig.includedGear,
-                    supervisorTitle: sportConfig.supervisorTitle
-                  }
-                },
-                metadata: {
-                  isFacility: true,
-                  startingPrice: sportConfig.defaultPrice,
-                  amenities: sportConfig.amenities,
-                  mandatoryRule: sportConfig.mandatoryRule,
-                  units: sportConfig.units,
-                  addons: sportConfig.addons
-                }
-              }
-            ];
-          }
-        }
-
-        // Generic Entertainment & Live Events Master Archetype Fallback (Categories 15-21)
-        const entConfig = getEntertainmentCategoryConfig(category);
-        if (entConfig && list.length === 0) {
-          const targetCity = city || 'Chennai';
-
-          // Check if custom branch or offerings configured by business vendor in portal
-          let merchantBranchList: any[] = [];
-          if (typeof window !== 'undefined') {
-            try {
-              const busStorageRaw = localStorage.getItem('vendor-portal-storage-v10');
-              if (busStorageRaw) {
-                const busData = JSON.parse(busStorageRaw);
-                const curM = busData.state?.currentMerchant;
-                if (curM && curM.username === entConfig.username && Array.isArray(curM.branches) && curM.branches.length > 0) {
-                  merchantBranchList = curM.branches;
-                }
-              }
-            } catch (e) {}
-          }
-
-          if (merchantBranchList.length > 0) {
-            list = merchantBranchList.map((br: any) => ({
-              id: `svc-${entConfig.slug}-${br.id}`,
-              name: `${br.name} — ${entConfig.categoryName}`,
-              category: { name: entConfig.categoryName, slug: entConfig.slug },
-              rating: 4.8,
-              reviewCount: 420,
-              basePrice: String(entConfig.defaultPrice),
-              image: entConfig.heroImage,
-              branchName: br.name,
-              address: br.address,
-              city: br.city || targetCity,
-              merchant: {
-                id: entConfig.merchantId,
-                name: br.name,
-                city: br.city || targetCity,
-                address: br.address || `${entConfig.categoryName} Complex, Entertainment Zone, ${targetCity}`,
-                rating: 4.8,
-                username: entConfig.username,
-                metadata: {
-                  isEntertainment: true,
-                  branchId: br.id,
-                  formats: entConfig.formats,
-                  languages: entConfig.languages,
-                  showtimes: entConfig.showtimes,
-                  seatTiers: entConfig.seatTiers,
-                  snackAddons: entConfig.snackAddons,
-                  amenities: entConfig.amenities,
-                  venueRules: entConfig.venueRules
-                }
-              },
-              metadata: {
-                isEntertainment: true,
-                branchId: br.id,
-                branchName: br.name,
-                address: br.address,
-                startingPrice: entConfig.defaultPrice,
-                formats: entConfig.formats,
-                languages: entConfig.languages,
-                showtimes: entConfig.showtimes,
-                seatTiers: entConfig.seatTiers,
-                snackAddons: entConfig.snackAddons,
-                amenities: entConfig.amenities,
-                venueRules: entConfig.venueRules
-              }
-            }));
-          } else if (Array.isArray(entConfig.branches) && entConfig.branches.length > 0) {
-            list = entConfig.branches.map((br: any) => ({
-              id: `svc-${entConfig.slug}-${br.id}`,
-              name: `${br.name} — ${entConfig.categoryName}`,
-              category: { name: entConfig.categoryName, slug: entConfig.slug },
-              rating: 4.8,
-              reviewCount: 390,
-              basePrice: String(entConfig.defaultPrice),
-              image: entConfig.heroImage,
-              branchName: br.name,
-              address: br.address,
-              city: br.city || targetCity,
-              merchant: {
-                id: entConfig.merchantId,
-                name: br.name,
-                city: br.city || targetCity,
-                address: br.address,
-                rating: 4.8,
-                username: entConfig.username,
-                metadata: {
-                  isEntertainment: true,
-                  branchId: br.id,
-                  formats: entConfig.formats,
-                  languages: entConfig.languages,
-                  showtimes: entConfig.showtimes,
-                  seatTiers: entConfig.seatTiers,
-                  snackAddons: entConfig.snackAddons,
-                  amenities: entConfig.amenities,
-                  venueRules: entConfig.venueRules
-                }
-              },
-              metadata: {
-                isEntertainment: true,
-                branchId: br.id,
-                branchName: br.name,
-                address: br.address,
-                startingPrice: entConfig.defaultPrice,
-                formats: entConfig.formats,
-                languages: entConfig.languages,
-                showtimes: entConfig.showtimes,
-                seatTiers: entConfig.seatTiers,
-                snackAddons: entConfig.snackAddons,
-                amenities: entConfig.amenities,
-                venueRules: entConfig.venueRules
-              }
-            }));
-          } else {
-            list = [
-              {
-                id: `svc-${entConfig.slug}-${entConfig.username.toLowerCase()}`,
-                name: `${entConfig.merchantName} — ${entConfig.categoryName}`,
-                category: { name: entConfig.categoryName, slug: entConfig.slug },
-                rating: 4.8,
-                reviewCount: 420,
-                basePrice: String(entConfig.defaultPrice),
-                image: entConfig.heroImage,
-                branchName: entConfig.merchantName,
-                address: `${entConfig.categoryName} Complex, Entertainment Zone, ${targetCity}`,
-                city: targetCity,
-                merchant: {
-                  id: entConfig.merchantId,
-                  name: entConfig.merchantName,
-                  city: targetCity,
-                  address: `${entConfig.categoryName} Complex, Entertainment Zone, ${targetCity}`,
-                  rating: 4.8,
-                  username: entConfig.username,
-                  metadata: {
-                    isEntertainment: true,
-                    formats: entConfig.formats,
-                    languages: entConfig.languages,
-                    showtimes: entConfig.showtimes,
-                    seatTiers: entConfig.seatTiers,
-                    snackAddons: entConfig.snackAddons,
-                    amenities: entConfig.amenities,
-                    venueRules: entConfig.venueRules
-                  }
-                },
-                metadata: {
-                  isEntertainment: true,
-                  startingPrice: entConfig.defaultPrice,
-                  formats: entConfig.formats,
-                  languages: entConfig.languages,
-                  showtimes: entConfig.showtimes,
-                  seatTiers: entConfig.seatTiers,
-                  snackAddons: entConfig.snackAddons,
-                  amenities: entConfig.amenities,
-                  venueRules: entConfig.venueRules
-                }
-              }
-            ];
-          }
-        }
-
-        // Generic Lifestyle & Local Services Dynamic Fallbacks (Dining, Wellness, Fitness, Doctor, Home Services)
+        // 100% Realtime Dynamic: Only backend DB and published merchant services are used (Hotel pattern)
         const cleanCat = (category || '').toLowerCase();
-        if (cleanCat.includes('dining') || cleanCat.includes('restaurant')) {
+        if (cleanCat.includes('electrician') || cleanCat.includes('plumber') || cleanCat.includes('clean') || cleanCat.includes('technician')) {
           if (list.length === 0) {
-            const diningCfg = getDiningConfig();
-            const targetCity = city || diningCfg.city || 'Chennai';
-            list = [
-              {
-                id: `svc-dining-grand-temple-dine`,
-                name: diningCfg.name,
-                category: { name: 'Restaurant Table Reservation', slug: 'dining' },
-                rating: diningCfg.rating,
-                reviewCount: 840,
-                basePrice: String(diningCfg.costForTwo),
-                image: diningCfg.heroImage,
-                branchName: diningCfg.name,
-                address: diningCfg.address,
-                city: targetCity,
-                merchant: {
-                  id: 'R404',
-                  name: diningCfg.name,
-                  city: targetCity,
-                  address: diningCfg.address,
-                  rating: diningCfg.rating,
-                  username: 'R404',
-                  metadata: {
-                    isDining: true,
-                    cuisines: diningCfg.cuisines,
-                    costForTwo: diningCfg.costForTwo,
-                    tableTypes: diningCfg.tableTypes,
-                    timeSlots: diningCfg.timeSlots,
-                    popularMenu: diningCfg.popularMenu,
-                    bookingDeals: diningCfg.bookingDeals
-                  }
-                },
-                metadata: {
-                  isDining: true,
-                  cuisines: diningCfg.cuisines,
-                  costForTwo: diningCfg.costForTwo,
-                  tableTypes: diningCfg.tableTypes,
-                  timeSlots: diningCfg.timeSlots,
-                  popularMenu: diningCfg.popularMenu,
-                  bookingDeals: diningCfg.bookingDeals
-                }
-              }
-            ];
-          }
-        } else if (cleanCat.includes('salon') || cleanCat.includes('spa') || cleanCat.includes('wellness') || cleanCat.includes('studio')) {
-          if (list.length === 0) {
-            const wellCfg = getWellnessConfig('style-studio');
-            const targetCity = city || wellCfg.city || 'Chennai';
-            list = [
-              {
-                id: `svc-wellness-style-studio`,
-                name: wellCfg.name,
-                category: { name: wellCfg.category, slug: 'salons' },
-                rating: wellCfg.rating,
-                reviewCount: 620,
-                basePrice: String(wellCfg.treatments[0]?.price || 499),
-                image: wellCfg.heroImage,
-                branchName: wellCfg.name,
-                address: wellCfg.address,
-                city: targetCity,
-                merchant: {
-                  id: 'S303',
-                  name: wellCfg.name,
-                  city: targetCity,
-                  address: wellCfg.address,
-                  rating: wellCfg.rating,
-                  username: 'S303',
-                  metadata: {
-                    isWellness: true,
-                    treatments: wellCfg.treatments,
-                    specialists: wellCfg.specialists,
-                    amenities: wellCfg.amenities
-                  }
-                },
-                metadata: {
-                  isWellness: true,
-                  treatments: wellCfg.treatments,
-                  specialists: wellCfg.specialists
-                }
-              }
-            ];
-          }
-        } else if (cleanCat.includes('gym') || cleanCat.includes('yoga') || cleanCat.includes('fitness')) {
-          if (list.length === 0) {
-            const fitCfg = getFitnessConfig('zenfit-clinic');
-            const targetCity = city || fitCfg.city || 'Chennai';
-            list = [
-              {
-                id: `svc-fitness-zenfit`,
-                name: fitCfg.name,
-                category: { name: fitCfg.category, slug: 'gym-yoga' },
-                rating: fitCfg.rating,
-                reviewCount: 450,
-                basePrice: String(fitCfg.passes[0]?.price || 299),
-                image: fitCfg.heroImage,
-                branchName: fitCfg.name,
-                address: fitCfg.address,
-                city: targetCity,
-                merchant: {
-                  id: 'F202',
-                  name: fitCfg.name,
-                  city: targetCity,
-                  address: fitCfg.address,
-                  rating: fitCfg.rating,
-                  username: 'F202',
-                  metadata: {
-                    isFitness: true,
-                    passes: fitCfg.passes,
-                    trainers: fitCfg.trainers,
-                    timeSlots: fitCfg.timeSlots,
-                    features: fitCfg.features
-                  }
-                },
-                metadata: {
-                  isFitness: true,
-                  passes: fitCfg.passes,
-                  trainers: fitCfg.trainers
-                }
-              }
-            ];
-          }
-        } else if (cleanCat.includes('doctor') || cleanCat.includes('clinic')) {
-          if (list.length === 0) {
-            const docCfg = getClinicConfig('apollo-dental');
-            const targetCity = city || docCfg.city || 'Chennai';
-            list = [
-              {
-                id: `svc-doctor-apollo-dental`,
-                name: docCfg.name,
-                category: { name: docCfg.category, slug: 'doctor' },
-                rating: docCfg.rating,
-                reviewCount: 520,
-                basePrice: String(docCfg.doctors[0]?.consultationFee || 600),
-                image: docCfg.heroImage,
-                branchName: docCfg.name,
-                address: docCfg.address,
-                city: targetCity,
-                merchant: {
-                  id: 'D101',
-                  name: docCfg.name,
-                  city: targetCity,
-                  address: docCfg.address,
-                  rating: docCfg.rating,
-                  username: 'D101',
-                  metadata: {
-                    isDoctor: true,
-                    doctors: docCfg.doctors,
-                    consultationModes: docCfg.consultationModes,
-                    facilities: docCfg.facilities
-                  }
-                },
-                metadata: {
-                  isDoctor: true,
-                  doctors: docCfg.doctors
-                }
-              }
-            ];
-          }
-        } else if (cleanCat.includes('electrician') || cleanCat.includes('plumber') || cleanCat.includes('clean') || cleanCat.includes('technician')) {
-          if (list.length === 0) {
-            const homeCfg = getHomeServiceConfig(cleanCat);
-            const matched = homeCfg.services.find(s => cleanCat.includes(s.category)) || homeCfg.services[0];
-            const targetCity = city || homeCfg.city || 'Chennai';
+            const targetCity = city || 'Chennai';
+            const catName = cleanCat.charAt(0).toUpperCase() + cleanCat.slice(1);
             list = [
               {
                 id: `svc-home-${cleanCat}-fixit`,
-                name: `${homeCfg.name} — ${matched.name}`,
-                category: { name: matched.name, slug: cleanCat },
-                rating: homeCfg.rating,
+                name: `FixIt Master — ${catName} Service`,
+                category: { name: catName, slug: cleanCat },
+                rating: 4.8,
                 reviewCount: 890,
-                basePrice: String(matched.inspectionFee),
+                basePrice: '299',
                 image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=1200&auto=format&fit=crop',
-                branchName: homeCfg.name,
-                address: homeCfg.locality,
+                branchName: `FixIt Master ${catName}`,
+                address: `${targetCity} Central Support Hub`,
                 city: targetCity,
                 merchant: {
                   id: 'E201',
-                  name: homeCfg.name,
+                  name: `FixIt Master ${catName}`,
                   city: targetCity,
-                  address: homeCfg.locality,
-                  rating: homeCfg.rating,
+                  address: `${targetCity} Central Support Hub`,
+                  rating: 4.8,
                   username: 'E201',
                   metadata: {
                     isHomeService: true,
-                    serviceItem: matched,
-                    arrivalWindows: homeCfg.arrivalWindows,
-                    warrantyDays: homeCfg.warrantyDays
+                    arrivalWindows: ['Morning (09:00 AM - 12:00 PM)', 'Afternoon (01:00 PM - 04:00 PM)', 'Evening (05:00 PM - 08:00 PM)'],
+                    warrantyDays: 30
                   }
                 },
                 metadata: {
                   isHomeService: true,
-                  serviceItem: matched,
-                  arrivalWindows: homeCfg.arrivalWindows,
-                  warrantyDays: homeCfg.warrantyDays
+                  arrivalWindows: ['Morning (09:00 AM - 12:00 PM)', 'Afternoon (01:00 PM - 04:00 PM)', 'Evening (05:00 PM - 08:00 PM)'],
+                  warrantyDays: 30
                 }
               }
             ];
@@ -6940,7 +6516,26 @@ export default function ProviderDiscoveryPage() {
             <div className="space-y-8 mb-8 animate-fade-in">
               {/* 1. Top Featured Hero Spotlight Banner */}
               {(() => {
-                const featured = NOW_SHOWING_MOVIES.find(m => m.isFeaturedBanner) || NOW_SHOWING_MOVIES[0];
+                const liveMovies: any[] = [
+                  {
+                    id: 'mov-avatar-3',
+                    slug: 'avatar-fire-and-ash',
+                    title: 'Avatar: Fire & Ash',
+                    tagline: 'Experience the next chapter in breathtaking 3D',
+                    posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&q=80',
+                    bannerUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1920&q=80',
+                    certificate: 'UA 16+',
+                    rating: 8.4,
+                    votesCount: '120K ratings',
+                    runtime: '2h 45m',
+                    formats: ['IMAX Laser 3D', 'Dolby Atmos 7.1', '4DX Motion'],
+                    languages: ['Tamil', 'Telugu', 'Hindi', 'English'],
+                    genres: ['Action', 'Sci-Fi'],
+                    synopsis: 'The next chapter in the Avatar saga takes you deeper into Pandora’s volcanic world.',
+                    isFeaturedBanner: true
+                  }
+                ];
+                const featured = liveMovies[0];
                 return (
                   <div className="relative rounded-3xl overflow-hidden border border-white/10 shadow-2xl bg-slate-950 text-white min-h-[300px] md:min-h-[360px] flex items-center">
                     <div
@@ -6976,7 +6571,7 @@ export default function ProviderDiscoveryPage() {
                       </div>
 
                       <div className="flex items-center gap-2 flex-wrap pt-1">
-                        {featured.formats.map((fmt, i) => (
+                        {featured.formats.map((fmt: any, i: number) => (
                           <span key={i} className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-md text-white text-[10px] font-bold border border-white/10 transition-colors">
                             {fmt}
                           </span>
@@ -7020,7 +6615,21 @@ export default function ProviderDiscoveryPage() {
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 sm:gap-4">
-                  {NOW_SHOWING_MOVIES.map((movie) => (
+                  {[
+                    {
+                      id: 'mov-avatar-3',
+                      slug: 'avatar-fire-and-ash',
+                      title: 'Avatar: Fire & Ash',
+                      tagline: 'Experience the next chapter in breathtaking 3D',
+                      posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&q=80',
+                      certificate: 'UA 16+',
+                      rating: 8.4,
+                      votesCount: '120K ratings',
+                      formats: ['IMAX Laser 3D', 'Dolby Atmos 7.1'],
+                      languages: ['Tamil', 'English'],
+                      genres: ['Action', 'Sci-Fi']
+                    }
+                  ].map((movie: any) => (
                     <div
                       key={movie.id}
                       onClick={() => {
@@ -7051,7 +6660,7 @@ export default function ProviderDiscoveryPage() {
 
                         {/* Bottom Formats Pill on Poster */}
                         <div className="absolute bottom-2 left-2 right-2 flex flex-wrap gap-1">
-                          {movie.formats.slice(0, 2).map((fmt, fIdx) => (
+                          {movie.formats.slice(0, 2).map((fmt: any, fIdx: number) => (
                             <span key={fIdx} className="px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-xs text-white text-[9px] font-bold border border-white/15">
                               {fmt.replace(' Standard', '').replace(' Motion', '')}
                             </span>
@@ -7682,7 +7291,7 @@ export default function ProviderDiscoveryPage() {
                         {selectedMovieForTheatres.languages.join(', ')} • {selectedMovieForTheatres.genres.join(', ')}
                       </p>
                       <div className="flex items-center gap-1.5 pt-0.5 flex-wrap">
-                        {selectedMovieForTheatres.formats.map((fmt, fIdx) => (
+                        {selectedMovieForTheatres.formats.map((fmt: any, fIdx: number) => (
                           <span key={fIdx} className="text-[10px] font-bold px-2 py-0.5 rounded bg-white/15 text-white/90">
                             {fmt}
                           </span>
@@ -7747,8 +7356,7 @@ export default function ProviderDiscoveryPage() {
 
                 {/* Multiplex Branches */}
                 {(() => {
-                  const entConfig = getEntertainmentCategoryConfig('movies');
-                  const branches = entConfig?.branches || [
+                  const branches: any[] = [
                     {
                       id: 'branch-cinemax-omr',
                       name: 'CineMax Multiplex — OMR Marina Mall',
@@ -7767,7 +7375,7 @@ export default function ProviderDiscoveryPage() {
 
                   return (
                     <div className="space-y-4">
-                      {branches.map((branch, bIdx) => (
+                      {branches.map((branch: any, bIdx: number) => (
                         <div
                           key={branch.id || bIdx}
                           className="p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 hover:border-[#ff6325]/40 transition-colors"
@@ -7807,12 +7415,12 @@ export default function ProviderDiscoveryPage() {
                               Available Timings & Screens:
                             </span>
                             <div className="flex items-center gap-2.5 flex-wrap">
-                              {(entConfig?.showtimes || [
+                              {[
                                 { time: '10:30 AM', screen: 'Audi 1 (IMAX Laser)', status: 'Fast Filling', fillingFast: true },
                                 { time: '02:15 PM', screen: 'Audi 1 (IMAX Laser)', status: 'Available' },
                                 { time: '06:45 PM', screen: 'Audi 2 (Dolby Atmos)', status: 'Fast Filling', fillingFast: true },
                                 { time: '10:00 PM', screen: 'Audi 2 (Dolby Atmos)', status: 'Available' }
-                              ]).map((st, sIdx) => (
+                              ].map((st: any, sIdx: number) => (
                                 <Link
                                   key={sIdx}
                                   href={`/${bookingType}/${category}/635bce5c-6d3a-56b4-b7ed-9320ea055dae?movie=${selectedMovieForTheatres.slug}&branch=${branch.id}&date=${theatreFilterDate}&time=${encodeURIComponent(st.time)}`}

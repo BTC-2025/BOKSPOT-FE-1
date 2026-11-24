@@ -10,7 +10,7 @@ import { SubnavManagerModal } from '../components/shortcuts/SubnavManagerModal';
 import { ActionModalManager } from '../components/shortcuts/ActionModalManager';
 import { useBookingFlowStore, useLocationStore } from '../lib/store';
 import { useShortcutStore, AVAILABLE_SHORTCUTS, SUBNAV_CATEGORIES } from '../store/useShortcutStore';
-import { calculateDistance, getProvidersByCategory } from '../lib/mockData';
+import { calculateDistance } from '../lib/geoUtils';
 import { api } from '../lib/api';
 import { CarouselSections } from '../components/home/CarouselSections';
 import { ConciergeJourneys } from '../components/home/ConciergeJourneys';
@@ -21,7 +21,13 @@ import { AdBanner } from '../components/home/AdBanner';
 import { HorizontalQuickShortcuts } from '../components/home/HorizontalQuickShortcuts';
 import { MegaMenuSubnav } from '../components/home/MegaMenuSubnav';
 import { CategoryCard, SectionHeader, StatCard, WishlistButton, CartAddButton } from '../components/home/HomeShared';
-import { CITY_COORDINATES, EXPLORE_SECTIONS, RECOMMENDED_ITEMS, CONCIERGE_JOURNEYS_POOL, MOCK_ADS, MOCK_ACTIVITIES, getCombinedConciergePool } from '../lib/homeData';
+// Live activity notification ticker pool
+const LIVE_ACTIVITIES_POOL = [
+  { id: 'act-1', user: 'Ananya S.', city: 'Chennai', action: 'reserved table at', item: 'Grand Temple Restaurant', merchant: 'Mylapore', time: 'Just now', emoji: '🍽️', link: '/lifestyle-local/dining' },
+  { id: 'act-2', user: 'Karthik V.', city: 'Chennai', action: 'booked 7v7 slot at', item: 'Sunstone Football Turf', merchant: 'OMR', time: '1 min ago', emoji: '⚽', link: '/sports-turf/football-turf' },
+  { id: 'act-3', user: 'Sneha R.', city: 'Bangalore', action: 'booked haircut & spa at', item: 'Style Studio', merchant: 'Indiranagar', time: '3 mins ago', emoji: '💇', link: '/lifestyle-local/salons' },
+  { id: 'act-4', user: 'Arun M.', city: 'Chennai', action: 'scheduled consultation at', item: 'Apollo Dental', merchant: 'Anna Nagar', time: '5 mins ago', emoji: '🩺', link: '/lifestyle-local/doctor' }
+];
 
 
 
@@ -90,8 +96,8 @@ export default function HomePage() {
   useEffect(() => {
     const initialDelay = setTimeout(() => {
       if (!activityDismissed) {
-        const randomIdx = Math.floor(Math.random() * MOCK_ACTIVITIES.length);
-        setCurrentActivity(MOCK_ACTIVITIES[randomIdx]);
+        const randomIdx = Math.floor(Math.random() * LIVE_ACTIVITIES_POOL.length);
+        setCurrentActivity(LIVE_ACTIVITIES_POOL[randomIdx]);
         setShowActivity(true);
       }
     }, 6000);
@@ -100,8 +106,8 @@ export default function HomePage() {
       setShowActivity(false);
       setTimeout(() => {
         if (!activityDismissed) {
-          const randomIdx = Math.floor(Math.random() * MOCK_ACTIVITIES.length);
-          setCurrentActivity(MOCK_ACTIVITIES[randomIdx]);
+          const randomIdx = Math.floor(Math.random() * LIVE_ACTIVITIES_POOL.length);
+          setCurrentActivity(LIVE_ACTIVITIES_POOL[randomIdx]);
           setShowActivity(true);
         }
       }, 500);

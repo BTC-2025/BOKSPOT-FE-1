@@ -22,7 +22,7 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
-import { MOCK_SERVICES } from './mockData';
+// Mock services removed - 100% dynamic backend sync
 
 // ---- Category Mappings & Mock Generators ----
 const SLUG_TO_CATEGORY: Record<string, string> = {
@@ -230,11 +230,12 @@ export const api = {
               : Array.isArray(body.data)
                 ? body.data
                 : body.data?.services || [];
-          // Check vendor-portal-storage-v10 for local merchant customizations
+          // Check vendor-portal-storage-v10 for local merchant customizations & live services created in Business Portal
           let localVendorMap: Record<string, any> = {};
+          let localVendorServices: any[] = [];
           if (typeof window !== 'undefined') {
             try {
-              const rawVp = localStorage.getItem('vendor-portal-storage-v10');
+              const rawVp = localStorage.getItem('vendor-portal-storage-v10') || localStorage.getItem('vendor-portal-storage-v9');
               if (rawVp) {
                 const parsedVp = JSON.parse(rawVp);
                 const curM = parsedVp.state?.currentMerchant;
@@ -246,13 +247,57 @@ export const api = {
                 Object.keys(customM).forEach(k => {
                   localVendorMap[k] = { ...(localVendorMap[k] || {}), ...customM[k] };
                 });
+
+                // Merge services created in Business Portal (workspace/my-services)
+                if (Array.isArray(parsedVp.state?.services)) {
+                  localVendorServices = parsedVp.state.services;
+                }
+
+                // Check for custom service override keys in localStorage (e.g. custom_service_override_*)
+                for (let i = 0; i < localStorage.length; i++) {
+                  const key = localStorage.key(i);
+                  if (key && key.startsWith('custom_service_override_')) {
+                    try {
+                      const item = JSON.parse(localStorage.getItem(key) || '{}');
+                      if (item && item.id) {
+                        const existingLocalIdx = localVendorServices.findIndex(ls => ls.id === item.id);
+                        if (existingLocalIdx !== -1) {
+                          localVendorServices[existingLocalIdx] = { ...localVendorServices[existingLocalIdx], ...item };
+                        } else {
+                          localVendorServices.push(item);
+                        }
+                      }
+                    } catch {}
+                  }
+                }
               }
             } catch (e) {
               console.warn('Error reading vendor portal storage:', e);
             }
           }
 
-          const mappedServices = servicesArray.map((srv: any) => {
+          // Combine backend services with any locally created/updated vendor services
+          const combinedServices = [...servicesArray];
+          localVendorServices.forEach((localS: any) => {
+            const existingIdx = combinedServices.findIndex((s: any) => 
+              s.id === localS.id || 
+              (s.name && localS.name && s.name.toLowerCase() === localS.name.toLowerCase()) ||
+              (s.category && localS.category && s.category.toLowerCase() === localS.category.toLowerCase() && (s.merchantId === localS.merchantId || !localS.merchantId))
+            );
+            if (existingIdx !== -1) {
+              // Update with local listings which contain latest vendor edits
+              combinedServices[existingIdx] = {
+                ...combinedServices[existingIdx],
+                ...localS,
+                listings: (localS.listings && localS.listings.length > 0) ? localS.listings : combinedServices[existingIdx].listings,
+                metadata: { ...(combinedServices[existingIdx].metadata || {}), ...(localS.metadata || {}), listings: localS.listings }
+              };
+            } else {
+              combinedServices.push(localS);
+            }
+          });
+
+          const mappedServices = combinedServices.map((srv: any) => {
             const mId = srv.merchantId || srv.merchant?.id;
             const mName = srv.metadata?.merchantName || srv.merchant?.name || 'Merchant';
             const localCustom = (mId && localVendorMap[mId]) || localVendorMap[mName.toLowerCase()] || {};
@@ -283,6 +328,7 @@ export const api = {
               reviewCount: srv.reviewCount || 10,
               isFeatured: srv.isFeatured || false,
               metadata: { ...srv.metadata, ...localCustom.metadata, isPetFriendly: localCustom.isPetFriendly ?? srv.metadata?.isPetFriendly },
+              listings: srv.listings || srv.metadata?.listings || localCustom.listings || [],
               branchName: srv.branchName || srv.metadata?.branchName || srv.metadata?.facilityName,
               address: srv.address || srv.metadata?.address || srv.metadata?.facilityAddress,
               merchantId: mId,
@@ -430,6 +476,7 @@ export const api = {
             reviewCount: srv.reviewCount || 10,
             isFeatured: srv.isFeatured || false,
             metadata: srv.metadata || {},
+            listings: srv.listings || srv.metadata?.listings || [],
             merchant: srv.metadata?.merchantName || srv.merchant?.name || 'Merchant',
             merchantObj: srv.merchant ? {
               ...srv.merchant,
@@ -545,8 +592,8 @@ export const api = {
             }
           }
 
-          // Check vendor-portal-storage-v9
-          const vPortRaw = localStorage.getItem('vendor-portal-storage-v9');
+          // Check vendor-portal-storage-v10 & v9
+          const vPortRaw = localStorage.getItem('vendor-portal-storage-v10') || localStorage.getItem('vendor-portal-storage-v9');
           if (vPortRaw) {
             const vPort = JSON.parse(vPortRaw);
             const vendorServices = vPort.state?.services || [];
@@ -567,9 +614,10 @@ export const api = {
                 reviewCount: foundS.reviewCount || 10,
                 isFeatured: false,
                 metadata: foundS.metadata || {},
-                merchant: foundS.merchant?.name || 'Grand Hotel',
+                listings: foundS.listings || foundS.metadata?.listings || [],
+                merchant: foundS.merchant?.name || 'Merchant',
                 city: 'Chennai',
-                category: foundS.category || 'Hotel Booking',
+                category: foundS.category || 'Booking',
                 rawConfig: foundS
               };
             }
@@ -579,42 +627,7 @@ export const api = {
         }
       }
 
-      // Check mock services
-      const mockFound = MOCK_SERVICES.find(s => s.id === id);
-      if (mockFound) {
-        return {
-          id: mockFound.id,
-          name: mockFound.name,
-          slug: mockFound.id,
-          description: (mockFound as any).description || mockFound.name,
-          shortDescription: mockFound.name,
-          serviceType: mockFound.category,
-          basePrice: String(mockFound.price),
-          currency: 'INR',
-          durationMinutes: mockFound.duration,
-          images: [mockFound.image],
-          image: mockFound.image,
-          rating: mockFound.rating,
-          reviewCount: mockFound.reviews,
-          isFeatured: true,
-          merchant: {
-            id: `mer-${mockFound.merchant.toLowerCase().replace(/\s+/g, '-')}`,
-            name: mockFound.merchant,
-            slug: mockFound.merchant.toLowerCase().replace(/\s+/g, '-'),
-            city: mockFound.city,
-            rating: mockFound.rating,
-            images: [mockFound.image],
-            latitude: mockFound.lat || 13.0827,
-            longitude: mockFound.lng || 80.2707
-          },
-          category: {
-            id: `cat-${mockFound.category.toLowerCase().replace(/\s+/g, '-')}`,
-            name: mockFound.category,
-            slug: mockFound.category.toLowerCase().replace(/\s+/g, '-')
-          },
-          metadata: mockFound.metadata || {}
-        };
-      }
+      // Pure dynamic sync - mock lookup removed
 
 
       // Dynamic fallback for any svc-* to never break customer experience

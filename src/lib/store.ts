@@ -6,7 +6,24 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import axios from 'axios';
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000/api/v1';
-import { MockService, MOCK_SERVICES } from './mockData';
+
+export interface ServiceItem {
+  id: string;
+  name: string;
+  merchant?: string;
+  price?: number;
+  rating?: number;
+  reviews?: number;
+  duration?: number;
+  city?: string;
+  image?: string;
+  category?: string;
+  lat?: number;
+  lng?: number;
+  desc?: string;
+  customCommissionRate?: number;
+  metadata?: Record<string, any>;
+}
 
 interface UserState {
   user: any | null;
@@ -145,7 +162,7 @@ interface BookingFlowState {
   notes: string;
   bookingResult: any | null;
   bookings: PersistedBooking[];
-  services: MockService[];
+  services: ServiceItem[];
   merchants: PersistedMerchant[];
   vendorRequests: VendorRequest[];
   userTickets: UserTicket[];
@@ -162,8 +179,8 @@ interface BookingFlowState {
   updateBooking: (bookingId: string, updates: Partial<PersistedBooking>, syncToBackend?: boolean) => Promise<void>;
   cancelBooking: (bookingId: string) => Promise<void>;
   completeBooking: (bookingId: string) => Promise<void>;
-  addService: (service: MockService) => void;
-  updateService: (service: MockService) => void;
+  addService: (service: ServiceItem) => void;
+  updateService: (service: ServiceItem) => void;
   deleteService: (serviceId: string) => void;
   addMerchant: (merchant: PersistedMerchant) => void;
   toggleMerchantStatus: (merchantId: string) => void;
@@ -182,7 +199,7 @@ export const useBookingFlowStore = create<BookingFlowState>()((set, get) => ({
   notes: '',
   bookingResult: null,
   bookings: [],
-  services: MOCK_SERVICES,
+  services: [],
   merchants: [
     { id: '1', name: 'Apollo Dental Care', category: 'Doctor Appointment', status: 'ACTIVE', rating: 4.8, email: 'info@apollodental.com', phone: '+91 98765 43210', city: 'Chennai', address: '42 Anna Nagar Main Road', description: 'Apollo Dental Care is a state-of-the-art dental clinic providing top-tier oral care services.', vendorId: '2026050001', latitude: 13.0827, longitude: 80.2707 },
     { id: '2', name: 'ZenFit', category: 'Gym / Yoga Slot Booking', status: 'ACTIVE', rating: 4.9, email: 'zenfit@fitness.com', phone: '+91 98765 54321', city: 'Chennai', address: '15 T Nagar High Road', description: 'ZenFit is a wellness and fitness club offering personal training and group yoga sessions.', vendorId: '2026050002', latitude: 13.078, longitude: 80.268 },

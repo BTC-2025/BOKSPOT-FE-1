@@ -3,7 +3,7 @@
 import { MapPin, Star, Navigation, Compass, Loader, ArrowRight, Grid, List as ListIcon, Search } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { useLocationStore, useBookingFlowStore } from '../../lib/store';
-import { calculateDistance, getProvidersByCategory } from '../../lib/mockData';
+import { calculateDistance } from '../../lib/geoUtils';
 import { api } from '../../lib/api';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -135,7 +135,7 @@ export default function MapsPage() {
       return services;
     }
     return services.filter((s) => {
-      const sCity = s.city.toLowerCase();
+      const sCity = (s.city || '').toLowerCase();
       const userCity = (city || 'Chennai').toLowerCase();
       return userCity.includes(sCity) || sCity.includes(userCity);
     });
@@ -222,40 +222,8 @@ export default function MapsPage() {
     
     list.push(...mappedReal);
 
-    // 2. Next, generate dynamic mock providers (avoiding duplicates)
-    categoriesToGenerate.forEach((cat, idx) => {
-      const providers = getProvidersByCategory(cat.slug, cat.name, city);
-      providers.forEach((p, pIdx) => {
-        const seedLat = idx * 17 + pIdx;
-        const seedLng = idx * 31 + pIdx * 3;
-        const lat = cityCenter.lat + (pseudoRandom(seedLat) - 0.5) * 0.035;
-        const lng = cityCenter.lng + (pseudoRandom(seedLng) - 0.5) * 0.035;
-
-        const itemVal = {
-          id: p.id,
-          name: p.name,
-          merchant: p.name,
-          price: parseFloat(p.price.replace('₹', '')) || 499,
-          rating: p.rating,
-          reviews: p.reviewCount,
-          duration: 60,
-          city: city,
-          image: p.image,
-          category: cat.name,
-          lat: lat,
-          lng: lng,
-          address: p.address,
-          distance: calculateDistance(activeMapCenter[0], activeMapCenter[1], lat, lng),
-        };
-
-        if (!list.some(existing => existing.id === itemVal.id || existing.name === itemVal.name)) {
-          list.push(itemVal);
-        }
-      });
-    });
-
     // Merge actual store bookings/services matching current selection from local flow storage
-    const storeServices = cityServices.filter((s) => matchesCategory(activeCategory, s.category));
+    const storeServices = cityServices.filter((s) => matchesCategory(activeCategory, s.category || ''));
 
     storeServices.forEach((s) => {
       if (!list.some((item) => item.id === s.id)) {

@@ -6,7 +6,6 @@ import { ArrowLeft, ChevronRight, MapPin } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useLocationStore } from '../../lib/store';
-import { getProvidersByCategory } from '../../lib/mockData';
 
 const CATEGORY_DATA: Record<string, {
   name: string; emoji: string; gradient: string; desc: string;

@@ -5,8 +5,7 @@ import dynamic from 'next/dynamic';
 import { Star, ArrowRight } from 'lucide-react';
 import { useLocationStore } from '../../lib/store';
 import { api } from '../../lib/api';
-import { calculateDistance, getProvidersByCategory } from '../../lib/mockData';
-import { CITY_COORDINATES } from '../../lib/homeData';
+import { calculateDistance, CITY_COORDINATES } from '../../lib/geoUtils';
 import { motion } from 'framer-motion';
 
 const MapComponent = dynamic(() => import('../MapComponent'), {
@@ -128,53 +127,6 @@ const cityCenter = useMemo(() => {
       }));
 
     list.push(...mappedReal);
-
-    // 2. Next, generate dynamic mock providers (avoiding duplicates)
-    const categoriesToMap = [
-      { slug: 'doctor', name: 'Hospitals', emoji: '🏥' },
-      { slug: 'dining', name: 'Restaurants', emoji: '🍽️' },
-      { slug: 'salons', name: 'Salons', emoji: '💇' },
-      { slug: 'hotels', name: 'Hotels', emoji: '🏨' },
-      { slug: 'football-turf', name: 'Turfs', emoji: '⚽' }
-    ];
-
-    const pseudoRandom = (seed: number) => {
-      const x = Math.sin(seed) * 10000;
-      return x - Math.floor(x);
-    };
-
-    categoriesToMap.forEach((cat, idx) => {
-      const providers = getProvidersByCategory(cat.slug, cat.name, city);
-      if (providers) {
-        providers.forEach((p, pIdx) => {
-          const seedLat = idx * 17 + pIdx;
-          const seedLng = idx * 31 + pIdx * 3;
-          // Generate realistic offsets within a local radius (~2 km) around cityCenter
-          const lat = cityCenter.lat + (pseudoRandom(seedLat) - 0.5) * 0.022;
-          const lng = cityCenter.lng + (pseudoRandom(seedLng) - 0.5) * 0.022;
-
-          const itemVal = {
-            id: p.id,
-            name: p.name,
-            merchant: p.name,
-            price: formatRealisticPrice(p.price, cat.name, p.name),
-            rating: p.rating,
-            reviews: p.reviewCount,
-            category: cat.name,
-            emoji: getCategoryEmoji(cat.name, p.name),
-            lat: lat,
-            lng: lng,
-            address: p.address,
-            distance: calculateDistance(activeMapCenter[0], activeMapCenter[1], lat, lng)
-          };
-
-          if (!list.some(existing => existing.id === itemVal.id || existing.name === itemVal.name)) {
-            list.push(itemVal);
-          }
-        });
-      }
-    });
-
     return list.sort((a, b) => (a.distance || 0) - (b.distance || 0));
   }, [city, cityCenter, activeMapCenter, realServices]);
 

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { Search, SlidersHorizontal, MapPin, Star, Clock, ChevronDown, Grid3X3, Grid, List, Filter } from 'lucide-react';
 import { useLocationStore, useBookingFlowStore } from '../../lib/store';
-import { calculateDistance } from '../../lib/mockData';
+import { calculateDistance } from '../../lib/geoUtils';
 import { api } from '../../lib/api';
 
 export default function SearchPage() {

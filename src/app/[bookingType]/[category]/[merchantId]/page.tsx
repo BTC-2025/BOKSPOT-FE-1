@@ -8,14 +8,14 @@ import { ArrowLeft, Map, Clock, CheckCircle2, ChevronRight, ChevronLeft, Chevron
 import { api } from '@/lib/api';
 import { useLocationStore, useBookingFlowStore, ALL_CITIES, POPULAR_CITIES } from '@/lib/store';
 import { BokspotLoader } from '@/components/ui/BokspotLoader';
-import { getSportCategoryConfig } from '@/lib/sportsData';
-import { getEntertainmentCategoryConfig, getMovieBySlugOrId, NOW_SHOWING_MOVIES, MovieListingItem } from '@/lib/entertainmentData';
-import { getDiningConfig } from '@/lib/diningData';
-import { getWellnessConfig } from '@/lib/wellnessData';
-import { getFitnessConfig } from '@/lib/fitnessData';
-import { getYogaConfig } from '@/lib/yogaData';
-import { getClinicConfig } from '@/lib/clinicalData';
-import { getHomeServiceConfig } from '@/lib/homeServicesData';
+// import { getSportCategoryConfig } from '@/lib/sportsData';
+// import { getEntertainmentCategoryConfig, getMovieBySlugOrId, NOW_SHOWING_MOVIES, MovieListingItem } from '@/lib/entertainmentData';
+// import { getDiningConfig } from '@/lib/diningData';
+// import { getWellnessConfig } from '@/lib/wellnessData';
+// import { getFitnessConfig } from '@/lib/fitnessData';
+// import { getYogaConfig } from '@/lib/yogaData';
+// import { getClinicConfig } from '@/lib/clinicalData';
+// import { getHomeServiceConfig } from '@/lib/homeServicesData';
 
 const CATEGORY_NAMES: Record<string, string> = {
   // Travel & Transport
@@ -50,7 +50,7 @@ export default function VenueProfilePage() {
   const { city, setCity, setLocation } = useLocationStore();
   const { setSelectedService, setSelectedSlot, bookings } = useBookingFlowStore();
   const searchParams = useSearchParams();
-  const isEntertainment = Boolean(getEntertainmentCategoryConfig(category)) || (bookingType || '').toLowerCase().includes('entertainment') || ['movies', 'theatre', 'concerts', 'events', 'exhibitions', 'workshops'].includes((category || '').toLowerCase());
+  const isEntertainment = (bookingType || '').toLowerCase().includes('entertainment') || ['movies', 'theatre', 'concerts', 'events', 'exhibitions', 'workshops'].includes((category || '').toLowerCase());
   const isPgStay = !isEntertainment && (category === 'pg-hostels' || category === 'hostels' || (bookingType === 'stay-accommodation' && (rawCategory?.includes('pg') || rawCategory?.includes('hostel'))));
   const isFacility = !isEntertainment && (category === 'football-turf' || category === 'cricket-ground' || category === 'badminton' || category === 'tennis' || category === 'basketball' || category === 'swimming' || category === 'play-arena' || category === 'studio' || category === 'photo-studios' || category === 'dance-studio' || category === 'meeting-room' || category === 'podcast' || category === 'gaming' || bookingType === 'sports-turf');
   const isDoctor = category === 'doctor';
@@ -180,13 +180,19 @@ export default function VenueProfilePage() {
 
   // ── Selected Movie Context (BookMyShow Flow) ──
   const movieParam = searchParams?.get('movie');
-  const [activeMovie, setActiveMovie] = useState<MovieListingItem>(() => getMovieBySlugOrId(movieParam || 'avatar-fire-and-ash'));
-
-  useEffect(() => {
-    if (movieParam) {
-      setActiveMovie(getMovieBySlugOrId(movieParam));
-    }
-  }, [movieParam]);
+  const [activeMovie, setActiveMovie] = useState<any>(() => ({
+    id: 'mov-avatar-3',
+    slug: 'avatar-fire-and-ash',
+    title: 'Avatar: Fire & Ash',
+    posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&q=80',
+    rating: 8.4,
+    certificate: 'UA 16+',
+    runtime: '2h 45m',
+    languages: ['Tamil', 'English', 'Hindi'],
+    formats: ['IMAX Laser 3D', 'Dolby Atmos 7.1'],
+    genres: ['Action', 'Sci-Fi'],
+    synopsis: 'Live cinema experience.'
+  }));
 
   // Lock background body scroll whenever modal is open
   useEffect(() => {
@@ -639,6 +645,23 @@ export default function VenueProfilePage() {
         const mData = mDataRes;
 
         if (active && res && res.data) {
+          // If merchant is Arena 5 Turf / T102 or Sunstone, also check matching service from localStorage overrides directly
+          let extraLiveListings: any[] = [];
+          if (typeof window !== 'undefined') {
+            try {
+              for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && (k.startsWith('custom_service_override_') || k.startsWith('custom_listing_override_'))) {
+                  const itm = JSON.parse(localStorage.getItem(k) || '{}');
+                  if (itm && (itm.listings || itm.name)) {
+                    if (Array.isArray(itm.listings)) extraLiveListings.push(...itm.listings);
+                    else if (itm.name) extraLiveListings.push(itm);
+                  }
+                }
+              }
+            } catch {}
+          }
+
           const merchantServices = res.data.filter((s: any) => {
             const isMatchMerchant = (s.merchantId === merchantId) || (s.merchantObj?.id === merchantId) || (s.merchant === merchantId) || (s.merchantObj?.name === merchantId) || (s.merchant === decodeURIComponent(merchantId));
 
@@ -699,6 +722,22 @@ export default function VenueProfilePage() {
             if (fallbackCategoryMatch.length > 0) {
               finalServices = fallbackCategoryMatch;
             }
+          }
+
+          // Merge any extra newly created listings directly into finalServices
+          if (extraLiveListings.length > 0 && finalServices.length > 0) {
+            const currentListings = finalServices[0].listings || finalServices[0].metadata?.listings || [];
+            const mergedList = [...currentListings];
+            extraLiveListings.forEach((ext: any) => {
+              if (!mergedList.some((m: any) => m.id === ext.id || (m.name && ext.name && m.name.toLowerCase() === ext.name.toLowerCase()))) {
+                mergedList.push(ext);
+              }
+            });
+            finalServices[0] = {
+              ...finalServices[0],
+              listings: mergedList,
+              metadata: { ...(finalServices[0].metadata || {}), listings: mergedList }
+            };
           }
 
           // 100% Realtime Dynamic: Only backend DB and published merchant services are used (Hotel pattern)
@@ -1541,7 +1580,7 @@ export default function VenueProfilePage() {
                             setSelectedShowDate(val);
                             setSportsSlotDate(val);
                           }}
-                          className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${(selectedShowDate || sportsSlotDate) === tomorrowDate.toISOString().split('T')[0] ? 'bg-[#ff6325] text-white' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700'
+                          className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${(selectedShowDate || sportsSlotDate) === (() => { const td = new Date(); td.setDate(td.getDate() + 1); return td.toISOString().split('T')[0]; })() ? 'bg-[#ff6325] text-white' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700'
                             }`}
                         >
                           Tomorrow
@@ -3429,7 +3468,7 @@ export default function VenueProfilePage() {
 
             {/* Mandatory Venue Rule Pill Banner */}
             {(() => {
-              const rule = firstListing?.metadata?.mandatoryRule || firstSvc?.metadata?.mandatoryRule || getSportCategoryConfig(category)?.mandatoryRule;
+              const rule = firstListing?.metadata?.mandatoryRule || firstSvc?.metadata?.mandatoryRule;
               if (!rule) return null;
               return (
                 <div className="p-3 sm:p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-amber-900 dark:text-amber-200">
@@ -3448,7 +3487,7 @@ export default function VenueProfilePage() {
             {(() => {
               const allAvailablePitches: any[] = [];
               liveServices.forEach((svc: any) => {
-                const svcListings = svc.metadata?.listings || svc.rawConfig?.metadata?.listings || [];
+                const svcListings = (Array.isArray(svc.listings) && svc.listings.length > 0) ? svc.listings : (svc.metadata?.listings || svc.rawConfig?.metadata?.listings || []);
                 if (svcListings.length > 0) {
                   svcListings.forEach((lst: any) => {
                     allAvailablePitches.push({
@@ -3956,15 +3995,9 @@ export default function VenueProfilePage() {
               // Sum any selected addons
               const activeListingObj = selectedTurfService?.rawListing || liveServices[0]?.metadata?.listings?.[0] || {};
               const activeMetaObj = activeListingObj.metadata || {};
-              const sportFallbackCfg = getSportCategoryConfig(category);
-              const defaultAddonsList = sportFallbackCfg?.addons || [
-                { id: 'referee', name: 'Certified Match Referee', price: 300, icon: '👨‍⚖️', desc: 'Official qualified referee for 60 mins match management & fair play.' },
-                { id: 'video', name: 'High-Res Match Video Recording', price: 500, icon: '📹', desc: 'Full match recording delivered via HD cloud link within 24 hours.' },
-                { id: 'drinks', name: 'Chilled Energy Drinks (Pack of 6)', price: 250, icon: '🧴', desc: 'Ice-chilled electrolyte sports beverages ready at bench.' }
-              ];
               const availableAddons = (Array.isArray(activeMetaObj.addons) && activeMetaObj.addons.length > 0)
                 ? activeMetaObj.addons
-                : defaultAddonsList;
+                : (Array.isArray(liveServices[0]?.addOns) ? liveServices[0].addOns : []);
 
               const addonsTotal = selectedTurfAddons.reduce((sum, addName) => {
                 const found = availableAddons.find((a: any) => a.name === addName);
@@ -4856,7 +4889,7 @@ export default function VenueProfilePage() {
                 {(() => {
                   const liveDocListings = (liveServices && liveServices.length > 0 && liveServices[0]?.listings && liveServices[0].listings.length > 0)
                     ? liveServices[0].listings.map((l: any, idx: number) => ({
-                        name: l.title || l.name || Doctor ,
+                        name: l.title || l.name || `Doctor ${idx + 1}`,
                         fee: Number(l.price || l.basePrice || 600),
                         exp: l.subtitle || l.description || 'Verified Specialist • Live OPD'
                       }))
@@ -4870,7 +4903,7 @@ export default function VenueProfilePage() {
                           { name: 'Dr. Rajesh Kumar (Senior Consultant)', fee: 600, exp: '14+ yrs exp • MBBS, MD' },
                           { name: 'Dr. Priya Sundaram (Associate Specialist)', fee: 450, exp: '8+ yrs exp • DNB, Fellow' }
                         ];
-                  return liveDocListings.map(spec => (
+                  return liveDocListings.map((spec: any) => (
                   <div
                     key={spec.name}
                     onClick={() => setSelectedPractitioner(spec.name)}
@@ -5107,7 +5140,17 @@ export default function VenueProfilePage() {
          * SECTION D5-B: LUXURY SALON, SPA & DOORSTEP WELLNESS TREATMENTS
          * ============================================================ */}
         {isWellness && (() => {
-          const wellCfg = getWellnessConfig(cleanMerchantId);
+          const defaultWellnessTreatments = [
+            { id: 'trt-haircut-men', name: 'Signature Precision Haircut & Styling', category: 'HAIR', price: 499, originalPrice: 650, durationMinutes: 30, genderTarget: 'MEN', serviceMode: 'BOTH', icon: '✂️', description: 'Scalp assessment, master scissor cut, refreshing hair wash & blow-dry styling.', popular: true },
+            { id: 'trt-beard-spa', name: 'Royal Beard Sculpting & Hot Towel Treatment', category: 'BEARD', price: 349, originalPrice: 450, durationMinutes: 20, genderTarget: 'MEN', serviceMode: 'BOTH', icon: '🧔', description: 'Razor sharp beard contouring, organic argan oil massage and hot steam towel infusion.', popular: true },
+            { id: 'trt-hair-women', name: 'Couture Haircut & Deep Conditioning Keratin', category: 'HAIR', price: 899, originalPrice: 1200, durationMinutes: 45, genderTarget: 'WOMEN', serviceMode: 'BOTH', icon: '💇‍♀️', description: 'Personalized haircut by creative director with deep restorative hair spa mask.', popular: true },
+            { id: 'trt-facial-gold', name: '24K Gold Luxury Radiance Facial', category: 'SKIN_FACIAL', price: 1499, originalPrice: 2000, durationMinutes: 60, genderTarget: 'UNISEX', serviceMode: 'BOTH', icon: '✨', description: 'Radiance booster facial utilizing pure 24k gold leaf and micro-collagen infusion.', popular: true }
+          ];
+          const defaultWellnessSpecialists = [
+            { id: 'spc-arun', name: 'Arun Varma', role: 'Creative Hair Director', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80', rating: 4.9, experienceYears: 10, specialties: ['Advanced Styling', 'Precision Cuts', 'Beard Artistry'] },
+            { id: 'spc-priya', name: 'Priya Sundaram', role: 'Senior Aesthetician & Spa Director', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80', rating: 4.9, experienceYears: 8, specialties: ['Aroma Massages', 'Gold Facials', 'Skin Peels'] }
+          ];
+
           // Dynamic Backend DB integration: pull live listings or metadata treatments first
           const dbTreatments = (liveServices && liveServices.length > 0 && liveServices[0]?.listings && liveServices[0].listings.length > 0)
             ? liveServices[0].listings.map((l: any, idx: number) => ({
@@ -5123,15 +5166,15 @@ export default function VenueProfilePage() {
               }))
             : (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.treatments)
               ? (liveServices[0].metadata.treatments as any[])
-              : wellCfg.treatments;
+              : defaultWellnessTreatments;
           const allTreatments = dbTreatments;
           const allSpecialists = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.specialists)
             ? (liveServices[0].metadata.specialists as any[])
-            : wellCfg.specialists;
+            : (merchantData?.metadata?.specialists || defaultWellnessSpecialists);
 
-          const homeVisitAllowed = wellCfg.homeVisitEnabled !== false;
-          const homeMinOrderValue = wellCfg.homeMinOrderValue || 399;
-          const homeConvenienceFee = wellCfg.homeConvenienceFee || 49;
+          const homeVisitAllowed = liveServices[0]?.metadata?.homeVisitEnabled !== false;
+          const homeMinOrderValue = liveServices[0]?.metadata?.homeMinOrderValue || 399;
+          const homeConvenienceFee = liveServices[0]?.metadata?.homeConvenienceFee || 49;
 
           // Filter by Gender & Category & Service Mode
           const filteredTreatments = allTreatments.filter((t: any) => {
@@ -5802,13 +5845,20 @@ export default function VenueProfilePage() {
                 }))
               : [];
 
-            const yogaCfg = getYogaConfig(cleanMerchantId);
+            const defaultGurus = [
+              { id: 'guru-shanti', name: 'Acharya Shanti Vardhan', lineage: 'Rishikesh Alliance (12+ yrs)', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80', specialties: ['Hatha Flow', 'Pranayama Kriya'] },
+              { id: 'guru-ananya', name: 'Yogini Ananya Devi', lineage: 'Mysore Ashtanga Shala (9+ yrs)', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80', specialties: ['Ashtanga Vinyasa', 'Yin Yoga'] }
+            ];
+            const defaultYogaPlans = [
+              { id: 'plan-yoga-1m', name: 'Monthly Sadhana Pass (Unlimited Batches)', price: 2999, originalPrice: 3800, durationMonths: 1, validityDays: 30, perk: 'Complimentary Copper Water Vessel' },
+              { id: 'plan-yoga-3m', name: 'Quarterly Transformation Immersion', price: 7499, originalPrice: 9500, durationMonths: 3, validityDays: 90, perk: 'Free Private Chakra Alignment Session' }
+            ];
             const allGurus = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.gurus)
               ? (liveServices[0].metadata.gurus as any[])
-              : yogaCfg.gurus;
+              : defaultGurus;
             const allMembershipPlans = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.membershipPlans)
               ? (liveServices[0].metadata.membershipPlans as any[])
-              : yogaCfg.membershipPlans;
+              : defaultYogaPlans;
 
             // Live Circadian Shala Schedule (prioritizes live vendor listings)
             const shalaBatches = liveYogaListings.length > 0 ? liveYogaListings : [
@@ -5862,7 +5912,7 @@ export default function VenueProfilePage() {
               }
             ];
 
-            const activeBatch = shalaBatches.find(b => b.id === selectedYogaBatchId) || shalaBatches[0];
+            const activeBatch = shalaBatches.find((b: any) => b.id === selectedYogaBatchId) || shalaBatches[0];
             const activePlan = allMembershipPlans.find((m: any) => m.id === selectedGymPlanId) || allMembershipPlans[0];
 
             // Visual Mat Studio Layout (Rows: Front row near Guru, Center Row, Garden/Window Row)
@@ -5975,7 +6025,7 @@ export default function VenueProfilePage() {
 
                       {/* Timetable Schedule Cards */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {shalaBatches.map((batch) => {
+                        {shalaBatches.map((batch: any) => {
                           const isSelected = selectedYogaBatchId === batch.id;
                           return (
                             <div
@@ -6362,22 +6412,38 @@ export default function VenueProfilePage() {
               }))
             : [];
 
-          const fitCfg = getFitnessConfig('zenfit-clinic');
+          const defaultGymPasses = [
+            { id: 'pass-open-gym', name: 'Day Pass (Full Open Gym & Steam)', price: 299, originalPrice: 400, formatType: 'OPEN_GYM', durationMinutes: 720, description: 'Unlimited floor access to cardio, strength & sauna.', inclusions: ['Locker with Key', 'Steam Bath Access', 'RO Water'] },
+            { id: 'pass-hiit-crossfit', name: 'CrossFit & Functional Training Session', price: 399, originalPrice: 500, formatType: 'PERSONAL_TRAINING', durationMinutes: 60, description: 'Coach-led high intensity functional session.', inclusions: ['Kettlebells & Rigs', 'Tire Flips', 'Trainer Guidance'] }
+          ];
+          const defaultGymTrainers = [
+            { id: 'trn-vikram', name: 'Vikram Sethi', title: 'Head Strength & Conditioning Coach', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80', experienceYears: 10, certs: 'CSCS / ACE Certified' },
+            { id: 'trn-sneha', name: 'Sneha Kapoor', title: 'Elite Functional & Calisthenics Trainer', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80', experienceYears: 7, certs: 'Kettlebell Specialist' }
+          ];
+          const defaultGymMembershipPlans = [
+            { id: 'gym-plan-1m', name: '1-Month Unlimited All-Access Pass', price: 2499, originalPrice: 3000, durationMonths: 1, validityDays: 30, discountBadge: 'Standard' },
+            { id: 'gym-plan-3m', name: '3-Month Muscle Building & Fat Loss Immersion', price: 5999, originalPrice: 7500, durationMonths: 3, validityDays: 90, discountBadge: 'Most Popular' }
+          ];
+          const defaultPtPackages = [
+            { id: 'pt-12', name: '12-Session 1-on-1 Transformation Tier', price: 7999, sessionsCount: 12, validityDays: 45, level: 'Beginner / Intermediate' },
+            { id: 'pt-24', name: '24-Session Elite Athlete Protocol', price: 14499, sessionsCount: 24, validityDays: 90, level: 'Advanced Hypertrophy' }
+          ];
+
           const allPasses = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.passes)
             ? (liveServices[0].metadata.passes as any[])
-            : (livePassListings.length > 0 ? livePassListings : fitCfg.passes);
+            : (livePassListings.length > 0 ? livePassListings : defaultGymPasses);
 
           const allTrainers = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.trainers)
             ? (liveServices[0].metadata.trainers as any[])
-            : fitCfg.trainers;
+            : defaultGymTrainers;
 
           const allMembershipPlans = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.membershipPlans)
             ? (liveServices[0].metadata.membershipPlans as any[])
-            : fitCfg.membershipPlans;
+            : defaultGymMembershipPlans;
 
           const allPtPackages = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.ptPackages)
             ? (liveServices[0].metadata.ptPackages as any[])
-            : fitCfg.ptPackages;
+            : defaultPtPackages;
 
           // Pure gym passes
           const categoryPasses = allPasses.filter((p: any) => p.formatType !== 'YOGA_CLASS');
@@ -6962,13 +7028,26 @@ export default function VenueProfilePage() {
         })
       : [];
 
-    const diningCfg = getDiningConfig(cleanMerchantId);
-    let allTables = liveTables.length > 0 ? liveTables : (diningCfg.tableTypes || []);
-    let allSlots = liveDiningService?.metadata?.timeSlots || diningCfg.timeSlots || [];
-    let popularMenu = liveDiningService?.metadata?.popularMenu || diningCfg.popularMenu || [];
-    let activeDeals = liveDiningService?.metadata?.bookingDeals || diningCfg.bookingDeals || [];
-    let activeCuisines = liveDiningService?.metadata?.cuisines || diningCfg.cuisines || [];
-    let activeCostForTwo = liveDiningService?.metadata?.costForTwo || diningCfg.costForTwo || 800;
+    const defaultDiningTables = [
+      { id: 'tbl-cozy-2', name: 'Cozy Couple Table (2 Seater)', capacity: '1 - 2 Guests', minGuests: 1, maxGuests: 2, zone: 'ROOFTOP' as const, depositAmount: 0, badge: 'Romantic Rooftop', icon: '🍷', description: 'Intimate candlelit table overlooking panoramic city skyline views.' },
+      { id: 'tbl-family-4', name: 'Family Booth Dining (4 Seater)', capacity: '3 - 4 Guests', minGuests: 3, maxGuests: 4, zone: 'AC_INDOOR' as const, depositAmount: 0, badge: 'Most Popular', icon: '🛋️', description: 'Plush cushioned booth seating in the central air-conditioned royal dining hall.' },
+      { id: 'tbl-large-6', name: 'Celebration Grand Table (6 - 8 Seater)', capacity: '5 - 8 Guests', minGuests: 5, maxGuests: 8, zone: 'AC_INDOOR' as const, depositAmount: 200, badge: 'Celebrations', icon: '🎂', description: 'Spacious extended table ideal for family reunions, birthdays & gatherings.' },
+      { id: 'tbl-pdr', name: 'Royal Private Dining Suite (PDR)', capacity: '8 - 14 Guests', minGuests: 8, maxGuests: 14, zone: 'PRIVATE_DINING' as const, depositAmount: 500, badge: 'Ultra Luxury', icon: '👑', description: 'Exclusive sound-insulated VIP room with dedicated butler & custom curated menu.' }
+    ];
+    const defaultDiningSlots = [
+      { time: '12:00 PM', session: 'LUNCH', discountOffer: 'Flat 20% Off on Food Bill', isFastFilling: false },
+      { time: '12:45 PM', session: 'LUNCH', discountOffer: 'Flat 15% Off', isFastFilling: true },
+      { time: '01:30 PM', session: 'LUNCH', discountOffer: 'Flat 15% Off', isFastFilling: true },
+      { time: '07:00 PM', session: 'DINNER', discountOffer: 'Complimentary Welcome Mocktail', isFastFilling: false },
+      { time: '07:45 PM', session: 'DINNER', discountOffer: 'Prime Slot (Full Menu Available)', isFastFilling: true },
+      { time: '08:30 PM', session: 'DINNER', discountOffer: 'Live Acoustic Music Session', isFastFilling: true }
+    ];
+    let allTables = liveTables.length > 0 ? liveTables : (liveDiningService?.metadata?.tableTypes || defaultDiningTables);
+    let allSlots = liveDiningService?.metadata?.timeSlots || defaultDiningSlots;
+    let popularMenu = liveDiningService?.metadata?.popularMenu || [];
+    let activeDeals = liveDiningService?.metadata?.bookingDeals || [];
+    let activeCuisines = liveDiningService?.metadata?.cuisines || (merchantData?.metadata?.cuisines || ['South Indian Heritage', 'Chettinad Gourmet', 'North Indian']);
+    let activeCostForTwo = liveDiningService?.metadata?.costForTwo || liveDiningService?.basePrice || 800;
     let customSessionsList: any[] = [];
 
     if (typeof window !== 'undefined') {
@@ -7012,7 +7091,7 @@ export default function VenueProfilePage() {
           if (customSessionsList.length > 0) {
             customSessionsList.forEach((cs: any) => {
               const sessionKey = cs.name.toUpperCase().includes('BREAKFAST') ? 'BREAKFAST' : cs.name.toUpperCase().includes('TEA') ? 'HIGH_TEA' : cs.name.toUpperCase();
-              if (!allSlots.some(s => s.session === sessionKey)) {
+              if (!allSlots.some((s: any) => s.session === sessionKey)) {
                 allSlots.push({
                   time: cs.opensAt || '08:00 AM',
                   session: sessionKey as any,
@@ -7442,13 +7521,13 @@ export default function VenueProfilePage() {
         </div>
         {/* Bottom Reservation Action Summary */}
         {(() => {
-          const popularMenu = diningCfg.popularMenu || [];
+          const preOrderMenu = liveDiningService?.metadata?.popularMenu || [];
           const preOrderTotal = selectedPreOrderItems.reduce((acc, itm) => {
-            const m = popularMenu.find((p) => p.id === itm.id);
+            const m = preOrderMenu.find((p: any) => p.id === itm.id);
             return acc + (m ? m.price * itm.qty : 0);
           }, 0);
           const finalPayableAtBooking = reservationDeposit + preOrderTotal;
-          const activeDeal = (diningCfg.bookingDeals || []).find((d) => d.id === selectedDiningDealId);
+          const activeDeal = (liveDiningService?.metadata?.bookingDeals || []).find((d: any) => d.id === selectedDiningDealId);
 
           return (
             <div className="pt-5 border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/80 dark:bg-slate-800/60 p-4 sm:p-5 rounded-3xl">
@@ -7477,7 +7556,7 @@ export default function VenueProfilePage() {
                 type="button"
                 onClick={() => {
                   const effectiveMerchantId = merchantId || 'R404';
-                  const effectiveMerchantName = venueName || diningCfg.name;
+                  const effectiveMerchantName = venueName || liveDiningService?.name || 'Restaurant';
 
                   setSelectedService({
                     id: `dining-table-${activeTable?.id || '2-cozy'}`,
@@ -7701,7 +7780,7 @@ export default function VenueProfilePage() {
     const activeEntSvc = liveServices.find(s => s.metadata?.isEntertainment || s.category?.toLowerCase().includes('movie') || s.category?.toLowerCase().includes('cinema')) || liveServices[0];
     
     // Live movies directly from live backend listings or fallback to catalog
-    const liveMoviesList: MovieListingItem[] = (activeEntSvc?.listings && activeEntSvc.listings.length > 0)
+    const liveMoviesList: any[] = (activeEntSvc?.listings && activeEntSvc.listings.length > 0)
       ? activeEntSvc.listings.map((l: any, idx: number) => ({
           id: l.id || `live-mov-${idx}`,
           slug: (l.title || l.name || `movie-${idx}`).toLowerCase().replace(/[^a-z0-9]+/g, '-'),
@@ -7718,7 +7797,23 @@ export default function VenueProfilePage() {
           synopsis: l.description || 'Live screening at verified multiplex cinema.',
           releaseDate: 'In Theatres Now'
         }))
-      : NOW_SHOWING_MOVIES;
+      : [
+          {
+            id: 'mov-avatar-3',
+            slug: 'avatar-fire-and-ash',
+            title: 'Avatar: Fire & Ash',
+            posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&q=80',
+            backdropUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600&q=80',
+            rating: 8.4,
+            certificate: 'UA 16+',
+            runtime: '2h 45m',
+            languages: ['Tamil', 'English', 'Hindi'],
+            formats: ['IMAX Laser 3D', 'Dolby Atmos 7.1'],
+            genres: ['Action', 'Sci-Fi'],
+            synopsis: 'Live screening at verified multiplex cinema.',
+            releaseDate: 'Now Showing'
+          }
+        ];
     const dynamicFormats: Array<{ id: string; label: string; sub: string; icon: string }> = (activeEntSvc?.metadata?.formats && Array.isArray(activeEntSvc.metadata.formats))
       ? activeEntSvc.metadata.formats.map((fmt: any) => {
         if (typeof fmt === 'string') {
@@ -10101,29 +10196,23 @@ export default function VenueProfilePage() {
 }
                   </AnimatePresence >
 
-  {/* ── INTERACTIVE TURF MATCH ADD-ONS WORKFLOW MODAL (Resort-Style) ── */ }
+  {/* ── INTERACTIVE TURF MATCH ADD-ONS WORKFLOW MODAL (Resort-Style) ── */}
   <AnimatePresence>
-{
-  isTurfAddonModalOpen && selectedHourSlot && pricingResult && (() => {
-    const baseSlotCost = Number(pricingResult.finalPayable) || 1350;
-    const activeListingObj = selectedTurfService?.rawListing || liveServices[0]?.metadata?.listings?.[0] || {};
-    const activeMetaObj = activeListingObj.metadata || {};
-    const sportFallbackCfg = getSportCategoryConfig(category);
-    const defaultAddonsList = sportFallbackCfg?.addons || [
-      { id: 'referee', name: 'Certified Match Referee', price: 300, icon: '👨‍⚖️', desc: 'Official qualified referee for 60 mins match management & fair play.' },
-      { id: 'video', name: 'High-Res Match Video Recording', price: 500, icon: '📹', desc: 'Full match recording delivered via HD cloud link within 24 hours.' },
-      { id: 'drinks', name: 'Chilled Energy Drinks (Pack of 6)', price: 250, icon: '🧴', desc: 'Ice-chilled electrolyte sports beverages ready at bench.' }
-    ];
+    {isTurfAddonModalOpen && selectedHourSlot && pricingResult && (() => {
+      const baseSlotCost = Number(pricingResult.finalPayable) || 1350;
+      const activeListingObj = selectedTurfService?.rawListing || liveServices[0]?.metadata?.listings?.[0] || {};
+      const activeMetaObj = activeListingObj.metadata || {};
+      const rawAddons = (Array.isArray(activeMetaObj.addons) && activeMetaObj.addons.length > 0)
+        ? activeMetaObj.addons
+        : (Array.isArray(liveServices[0]?.addOns) ? liveServices[0].addOns : []);
 
-    const availableAddons = (Array.isArray(activeMetaObj.addons) && activeMetaObj.addons.length > 0)
-      ? activeMetaObj.addons.map((a: any, i: number) => ({
+      const availableAddons = rawAddons.map((a: any, i: number) => ({
         id: a.id || a.name || `addon-${i}`,
         name: a.name || 'Custom Add-on',
         price: Number(a.price) || 0,
         icon: a.icon || '⭐',
         desc: a.desc || a.description || 'Enhance your session experience.'
-      }))
-      : defaultAddonsList;
+      }));
 
     const addonsTotal = selectedTurfAddons.reduce((sum, addName) => {
       const found = availableAddons.find((a: any) => a.name === addName);
