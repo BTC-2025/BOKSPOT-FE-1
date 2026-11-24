@@ -94,6 +94,7 @@ export function TopNav({
   const profileRefMobile = useRef<HTMLDivElement>(null);
   const locationRef = useRef<HTMLDivElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const { theme, setTheme } = useUIStore();
 
@@ -501,26 +502,42 @@ export function TopNav({
               {/* Search Icon Container Wrapper */}
               <div className="relative" ref={searchContainerRef}>
                 <div
-                  className={`custom-nav-icon-container shadow-md transition-all duration-300 ${searchOpen ? 'w-52 xl:w-64 px-3 py-1' : 'w-8 h-8 justify-center'
-                    }`}
+                  onClick={() => {
+                    if (!searchOpen) {
+                      setSearchOpen(true);
+                      setShowSuggestions(true);
+                      setTimeout(() => searchInputRef.current?.focus(), 50);
+                    }
+                  }}
+                  className={`custom-nav-icon-container shadow-md transition-all duration-300 cursor-pointer ${
+                    searchOpen ? 'w-52 xl:w-64 px-3 py-1' : 'w-8 h-8 justify-center'
+                  }`}
                 >
                   <button
-                    onClick={() => {
-                      setSearchOpen(!searchOpen);
-                      if (!searchOpen) {
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (searchOpen) {
+                        setSearchOpen(false);
+                        setShowSuggestions(false);
+                      } else {
+                        setSearchOpen(true);
                         setShowSuggestions(true);
+                        setTimeout(() => searchInputRef.current?.focus(), 50);
                       }
                     }}
-                    className="custom-nav-icon-btn p-1 shrink-0"
+                    className="custom-nav-icon-btn p-1 shrink-0 cursor-pointer"
                     aria-label="Search"
                   >
                     <Search size={14} strokeWidth={2.5} className="text-white stroke-white" />
                   </button>
                   <div
-                    className={`overflow-hidden transition-all duration-300 flex items-center ${searchOpen ? 'w-36 xl:w-48 opacity-100 ml-2' : 'w-0 opacity-0'
-                      }`}
+                    className={`overflow-hidden transition-all duration-300 flex items-center ${
+                      searchOpen ? 'w-36 xl:w-48 opacity-100 ml-2' : 'w-0 opacity-0'
+                    }`}
                   >
                     <input
+                      ref={searchInputRef}
                       type="text"
                       placeholder="Search..."
                       value={searchQuery}
@@ -531,7 +548,6 @@ export function TopNav({
                       onFocus={() => setShowSuggestions(true)}
                       className="bg-transparent border-none outline-none text-xs !text-white placeholder-white/80 w-full font-bold caret-white selection:bg-white/30 selection:text-white"
                       onKeyDown={handleSearchInputKeyDown}
-                      autoFocus={searchOpen}
                     />
                   </div>
                 </div>

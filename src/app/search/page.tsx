@@ -51,13 +51,28 @@ export default function SearchPage() {
       const distance = calculateDistance(latitude, longitude, svc.lat, svc.lng);
       matchesLocation = distance <= 100; // Show services within 100 km
     } else {
-      matchesLocation = svc.city.toLowerCase() === (city || 'Chennai').toLowerCase();
+      const svcCity = String(svc.city || svc.address?.city || 'Chennai').toLowerCase();
+      matchesLocation = !city || svcCity === city.toLowerCase();
     }
 
-    const matchesSearch = 
-      svc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      svc.merchant.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      svc.category.toLowerCase().includes(searchQuery.toLowerCase());
+    const q = searchQuery.toLowerCase().trim();
+    const svcName = String(svc.name || '').toLowerCase();
+    const svcMerchant = String(
+      (typeof svc.merchant === 'string' ? svc.merchant : svc.merchant?.name) ||
+      svc.merchantObj?.name ||
+      svc.merchantName ||
+      ''
+    ).toLowerCase();
+    const svcCategory = String(
+      (typeof svc.category === 'string' ? svc.category : svc.category?.name) ||
+      svc.categoryObj?.name ||
+      ''
+    ).toLowerCase();
+
+    const matchesSearch = !q ||
+      svcName.includes(q) ||
+      svcMerchant.includes(q) ||
+      svcCategory.includes(q);
     let matchesCategory = false;
     if (selectedCategory === 'All') {
       matchesCategory = true;
@@ -103,12 +118,18 @@ export default function SearchPage() {
 
   const uniqueMerchants = new Map();
   sortedServices.forEach(svc => {
-    let key = svc.merchantObj?.id || svc.merchant;
+    let key = svc.merchantObj?.id || (typeof svc.merchant === 'string' ? svc.merchant : svc.merchant?.id) || svc.id || `merchant-${Math.random()}`;
     // DEMO HACK: Split the single demo merchant into multiple visual cards so filters can be tested
     if (key === '2cf63fd7-6710-4ac6-a3fa-8cbda29fdc0e') {
-      key = key + '-' + svc.category;
-      if (svc.categoryObj?.slug === 'hotels') svc.merchantObj.name = 'Grand Hotel';
-      if (svc.categoryObj?.slug === 'doctor') svc.merchantObj.name = 'Apollo Hospital';
+      key = key + '-' + (typeof svc.category === 'string' ? svc.category : svc.category?.slug || 'all');
+      if (svc.categoryObj?.slug === 'hotels') {
+        if (!svc.merchantObj) svc.merchantObj = {};
+        svc.merchantObj.name = 'Grand Hotel';
+      }
+      if (svc.categoryObj?.slug === 'doctor') {
+        if (!svc.merchantObj) svc.merchantObj = {};
+        svc.merchantObj.name = 'Apollo Hospital';
+      }
     }
     
     if (!uniqueMerchants.has(key)) {
