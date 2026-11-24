@@ -17,12 +17,14 @@ function SuccessPageContent() {
   const isCinemaPass = Boolean(booking?.metadata?.isEntertainmentBooking || booking?.metadata?.entertainmentBooking || booking?.serviceName?.toLowerCase().includes('movie') || booking?.serviceName?.toLowerCase().includes('avatar'));
   const isDiningTable = Boolean(booking?.metadata?.isDining || booking?.metadata?.dining || booking?.category?.toLowerCase().includes('dine') || booking?.category?.toLowerCase().includes('restaurant'));
   const isSalonAppointment = Boolean(booking?.metadata?.isWellness || booking?.metadata?.wellness || booking?.category?.toLowerCase().includes('salon') || booking?.category?.toLowerCase().includes('spa'));
-  const isFitnessBooking = Boolean(booking?.metadata?.isFitness || booking?.metadata?.fitness || booking?.category?.toLowerCase().includes('gym') || booking?.category?.toLowerCase().includes('yoga') || booking?.category?.toLowerCase().includes('fitness'));
+  const isYogaBooking = Boolean(booking?.metadata?.isYogaBooking || booking?.metadata?.yogaBooking || booking?.category?.toLowerCase().includes('yoga') || booking?.serviceName?.toLowerCase().includes('yoga') || booking?.serviceName?.toLowerCase().includes('sadhana'));
+  const isFitnessBooking = !isYogaBooking && Boolean(booking?.metadata?.isFitness || booking?.metadata?.fitness || booking?.category?.toLowerCase().includes('gym') || booking?.category?.toLowerCase().includes('fitness'));
   const isDoctorAppointment = Boolean(booking?.metadata?.isDoctor || booking?.metadata?.doctor || booking?.category?.toLowerCase().includes('doc') || booking?.category?.toLowerCase().includes('clinic') || booking?.category?.toLowerCase().includes('dental'));
   const isHomeService = Boolean(booking?.metadata?.isHomeService || booking?.metadata?.homeService || booking?.metadata?.homeCallBooking || booking?.category?.toLowerCase().includes('electrician') || booking?.category?.toLowerCase().includes('plumber') || booking?.category?.toLowerCase().includes('clean') || booking?.category?.toLowerCase().includes('technician'));
   const entMeta = booking?.metadata?.entertainmentBooking || booking?.metadata || {};
   const diningMeta = booking?.metadata?.dining || {};
   const wellnessMeta = booking?.metadata?.wellness || {};
+  const yogaMeta = booking?.metadata?.yogaBooking || {};
   const fitnessMeta = booking?.metadata?.fitness || {};
   const doctorMeta = booking?.metadata?.doctor || {};
   const homeMeta = booking?.metadata?.homeService || booking?.metadata?.homeCallBooking || {};
@@ -123,6 +125,14 @@ Thank you for booking with BETA!
               </span>
             </div>
           )}
+          {isYogaBooking && (
+            <div className="flex justify-between items-center py-0.5 border-b border-[color:var(--color-outline-variant)]/10 pb-2">
+              <span className="text-[color:var(--color-on-surface-variant)]">Yoga Shala & Mat</span>
+              <span className="font-bold text-[#ff6325]">
+                {yogaMeta.batchTitle || 'Yoga Session'} • Mat {yogaMeta.matSpot || 'M-01'}
+              </span>
+            </div>
+          )}
           {isFitnessBooking && (
             <div className="flex justify-between items-center py-0.5 border-b border-[color:var(--color-outline-variant)]/10 pb-2">
               <span className="text-[color:var(--color-on-surface-variant)]">Fitness Pass & Coach</span>
@@ -171,6 +181,8 @@ Thank you for booking with BETA!
               ? 'Show this Table Booking Pass at the restaurant reception for priority seating'
               : isSalonAppointment
               ? 'Show this Appointment QR at the salon front desk to occupy your private chair'
+              : isYogaBooking
+              ? 'Scan this QR code at the Shala reception or present to your Yoga Acharya for cork mat check-in'
               : isFitnessBooking
               ? 'Scan this QR code at the gym turnstile gate or present to yoga instructor'
               : isDoctorAppointment

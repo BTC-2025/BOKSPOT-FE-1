@@ -362,9 +362,9 @@ function getServiceSubtitle(name: string): string {
 }
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import {
-  Sparkles, ArrowRight, Compass, Search, SlidersHorizontal,
-  LayoutGrid, Car, Bed, Trophy, Film, Flower2, Laptop, Landmark, Bike, PawPrint
+  Sparkles, ArrowRight, Compass, Search, SlidersHorizontal, ChevronRight
 } from 'lucide-react';
 
 export default function CategoriesPage() {
@@ -431,18 +431,108 @@ export default function CategoriesPage() {
     )
   );
 
-  // Bento Primary Highlights - ALL 9 Categories + "All" option
-  const BENTO_CATEGORIES = [
-    { title: 'All Services', tag: 'ALL', Icon: LayoutGrid, desc: 'Browse entire directory', border: 'hover:border-[#ff6325]/50', badge: '55 TOTAL' },
-    { title: 'Travel & Cabs', tag: 'Travel', Icon: Car, desc: 'Rides, flights & buses', border: 'hover:border-sky-500/50', badge: '9 SERVICES' },
-    { title: 'Stay & Accommodation', tag: 'Stay & Accommodation', Icon: Bed, desc: 'Resorts, villas & homestays', border: 'hover:border-amber-500/50', badge: '5 TYPES' },
-    { title: 'Sports & Turfs', tag: 'Sports', Icon: Trophy, desc: 'Football, cricket & courts', border: 'hover:border-emerald-500/50', badge: '7 ARENAS' },
-    { title: 'Entertainment', tag: 'Entertainment', Icon: Film, desc: 'Cinema, concerts & events', border: 'hover:border-fuchsia-500/50', badge: '7 SHOWS' },
-    { title: 'Lifestyle & Spa', tag: 'Lifestyle Services', Icon: Flower2, desc: 'Dining, wellness & beauty', border: 'hover:border-rose-500/50', badge: '10 BOOKINGS' },
-    { title: 'Coworking & Office', tag: 'Business', Icon: Laptop, desc: 'Desks, meeting & studios', border: 'hover:border-cyan-500/50', badge: '5 WORKSPACES' },
-    { title: 'Darshan & Pooja', tag: 'Religious Services', Icon: Landmark, desc: 'Temple darshan & pilgrimage', border: 'hover:border-orange-500/50', badge: '3 PASSES' },
-    { title: 'Equipment Rentals', tag: 'Equipment Rentals', Icon: Bike, desc: 'Bikes, cameras & audio', border: 'hover:border-yellow-500/50', badge: '5 RENTALS' },
-    { title: 'Personal Services', tag: 'Personal Services', Icon: PawPrint, desc: 'Pet groom, care & babysit', border: 'hover:border-purple-500/50', badge: '4 SERVICES' },
+  // Bento Primary Highlights - Exact Reference Styling
+  interface BentoCategory {
+    title: string;
+    tag: string;
+    iconSrc: string;
+    desc: string;
+    badge: string;
+    badgeClass: string;
+    bgGlow: string;
+  }
+
+  const BENTO_CATEGORIES: BentoCategory[] = [
+    {
+      title: 'All Services',
+      tag: 'ALL',
+      iconSrc: '/images/user_icons/all-services.png',
+      desc: 'Browse entire directory',
+      badge: '55 TOTAL',
+      badgeClass: 'bg-[#ff6325] text-white border-[#ff6325]',
+      bgGlow: 'from-[#ff6325]/15 via-[#ff6325]/5 to-transparent',
+    },
+    {
+      title: 'Travel & Cabs',
+      tag: 'Travel',
+      iconSrc: '/images/user_icons/travel-cabs.png',
+      desc: 'Rides, flights & buses',
+      badge: '9 SERVICES',
+      badgeClass: 'bg-[#e0f2fe] dark:bg-sky-950/60 text-[#0284c7] dark:text-sky-300 border-[#bae6fd] dark:border-sky-800',
+      bgGlow: 'from-sky-500/10 via-sky-500/3 to-transparent',
+    },
+    {
+      title: 'Stay & Accommodation',
+      tag: 'Stay & Accommodation',
+      iconSrc: '/images/user_icons/stay-accommodation.png',
+      desc: 'Resorts, Villas & homestays',
+      badge: '5 TYPES',
+      badgeClass: 'bg-[#ffedd5] dark:bg-amber-950/60 text-[#ea580c] dark:text-amber-300 border-[#fed7aa] dark:border-amber-800',
+      bgGlow: 'from-amber-500/10 via-amber-500/3 to-transparent',
+    },
+    {
+      title: 'Sports & Turfs',
+      tag: 'Sports',
+      iconSrc: '/images/user_icons/sports-turfs.png',
+      desc: 'Football, cricket & courts',
+      badge: '7 ARENAS',
+      badgeClass: 'bg-[#dcfce7] dark:bg-emerald-950/60 text-[#16a34a] dark:text-emerald-300 border-[#bbf7d0] dark:border-emerald-800',
+      bgGlow: 'from-emerald-500/10 via-emerald-500/3 to-transparent',
+    },
+    {
+      title: 'Entertainment',
+      tag: 'Entertainment',
+      iconSrc: '/images/user_icons/entertainment.png',
+      desc: 'Cinema, concerts & events',
+      badge: '7 SHOWS',
+      badgeClass: 'bg-[#fce7f3] dark:bg-pink-950/60 text-[#db2777] dark:text-pink-300 border-[#fbcfe8] dark:border-pink-800',
+      bgGlow: 'from-pink-500/10 via-pink-500/3 to-transparent',
+    },
+    {
+      title: 'Lifestyle & Spa',
+      tag: 'Lifestyle Services',
+      iconSrc: '/images/user_icons/lifestyle-spa.png',
+      desc: 'Dining, wellness & beauty',
+      badge: '10 BOOKINGS',
+      badgeClass: 'bg-[#ccfbf1] dark:bg-teal-950/60 text-[#0d9488] dark:text-teal-300 border-[#99f6e4] dark:border-teal-800',
+      bgGlow: 'from-teal-500/10 via-teal-500/3 to-transparent',
+    },
+    {
+      title: 'Coworking & Office',
+      tag: 'Business',
+      iconSrc: '/images/user_icons/coworking-office.png',
+      desc: 'Desks, meeting & studios',
+      badge: '5 WORKSPACES',
+      badgeClass: 'bg-[#f3e8ff] dark:bg-purple-950/60 text-[#9333ea] dark:text-purple-300 border-[#e9d5ff] dark:border-purple-800',
+      bgGlow: 'from-purple-500/10 via-purple-500/3 to-transparent',
+    },
+    {
+      title: 'Darshan & Pooja',
+      tag: 'Religious Services',
+      iconSrc: '/images/user_icons/darshan-pooja.png',
+      desc: 'Temple darshan & pilgrimage',
+      badge: '3 PASSES',
+      badgeClass: 'bg-[#ffedd5] dark:bg-orange-950/60 text-[#ea580c] dark:text-orange-300 border-[#fed7aa] dark:border-orange-800',
+      bgGlow: 'from-orange-500/12 via-orange-500/3 to-transparent',
+    },
+    {
+      title: 'Equipment Rentals',
+      tag: 'Equipment Rentals',
+      iconSrc: '/images/user_icons/equipment-rentals-v2.png',
+      desc: 'Bikes, cameras & audio',
+      badge: '5 RENTALS',
+      badgeClass: 'bg-[#e0f2fe] dark:bg-sky-950/60 text-[#0284c7] dark:text-sky-300 border-[#bae6fd] dark:border-sky-800',
+      bgGlow: 'from-sky-500/10 via-sky-500/3 to-transparent',
+    },
+    {
+      title: 'Personal Services',
+      tag: 'Personal Services',
+      iconSrc: '/images/user_icons/personal-services-v2.png',
+      desc: 'Pet groom, care & babysit',
+      badge: '4 SERVICES',
+      badgeClass: 'bg-[#f3e8ff] dark:bg-purple-950/60 text-[#9333ea] dark:text-purple-300 border-[#e9d5ff] dark:border-purple-800',
+      bgGlow: 'from-purple-500/10 via-purple-500/3 to-transparent',
+    },
   ];
 
   return (
@@ -503,47 +593,94 @@ export default function CategoriesPage() {
             </div>
           </div>
 
-          {/* ── BENTO BOX TILES GRID (Apple Squircle Glassmorphism) ── */}
+          {/* ── BENTO CATEGORY CARDS GRID (Larger 3D Icons, Sleek & Compact Card Height) ── */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 pt-1">
-            {BENTO_CATEGORIES.map((bento) => {
+            {BENTO_CATEGORIES.map((bento, idx) => {
               const isSelected = activeGroup === bento.tag;
-              const IconComponent = bento.Icon;
+              const isEven = idx % 2 === 0;
+
+              // Alternating Hover Colors:
+              // Even cards -> Bokspot Warm Orange hover accent
+              // Odd cards -> Bokspot Deep Navy / Sky Blue hover accent
+              const hoverCardStyle = isEven
+                ? 'hover:border-[#ff6325]/70 hover:shadow-[0_8px_22px_rgba(255,99,37,0.14)]'
+                : 'hover:border-[#0a3161]/70 dark:hover:border-sky-400 hover:shadow-[0_8px_22px_rgba(10,49,97,0.14)] dark:hover:shadow-[0_8px_22px_rgba(56,189,248,0.18)]';
+
+              const hoverTitleColor = isEven
+                ? 'group-hover:text-[#ff6325]'
+                : 'group-hover:text-[#0a3161] dark:group-hover:text-sky-400';
+
+              const hoverChevron = isEven
+                ? 'group-hover:bg-[#ff6325] group-hover:text-white group-hover:shadow-xs'
+                : 'group-hover:bg-[#0a3161] dark:group-hover:bg-sky-500 group-hover:text-white group-hover:shadow-xs';
+
               return (
                 <button
                   key={bento.title}
                   onClick={() => handleSelectCategory(bento.tag)}
-                  className={`group relative p-3.5 rounded-2xl border text-left flex flex-col justify-between transition-all duration-300 cursor-pointer overflow-hidden min-h-[94px] backdrop-blur-xl ${isSelected
-                    ? 'bg-gradient-to-br from-[color:var(--color-primary)]/15 via-white dark:via-[#161c2b] to-white/80 dark:to-[#121722] border-[color:var(--color-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.08)] dark:shadow-[0_12px_32px_rgba(0,0,0,0.5)] scale-[1.02] ring-1 ring-[color:var(--color-primary)]/40'
-                    : `bg-white/70 dark:bg-[#121722]/70 hover:bg-white dark:hover:bg-[#161c2b] border-black/5 dark:border-white/10 ${bento.border} hover:-translate-y-1 shadow-[0_2px_12px_rgba(0,0,0,0.02)]`
-                    }`}
+                  className={`group relative p-3 sm:p-3.5 rounded-[20px] border text-left flex flex-col justify-between transition-all duration-200 cursor-pointer overflow-hidden min-h-[118px] sm:min-h-[122px] ${
+                    isSelected
+                      ? 'bg-white/70 dark:bg-[#161c2b]/70 backdrop-blur-xl border-[#ff6325] shadow-[0_8px_24px_rgba(255,99,37,0.16)] ring-1.5 ring-[#ff6325]/45'
+                      : `bg-white/80 dark:bg-[#121722]/80 backdrop-blur-md hover:bg-white dark:hover:bg-[#171d2b] border-slate-200/70 dark:border-white/10 ${hoverCardStyle} shadow-[0_2px_8px_rgba(0,0,0,0.02)]`
+                  }`}
                 >
-                  <div className="flex items-center justify-between w-full mb-2">
-                    <IconComponent
-                      size={22}
-                      strokeWidth={1.8}
-                      className={`transition-all duration-200 group-hover:scale-110 ${
+                  {/* Category-Specific Soft Atmospheric Gradient Wash */}
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-br ${bento.bgGlow} pointer-events-none transition-opacity duration-300 ${
+                      isSelected ? 'opacity-100' : 'opacity-70 group-hover:opacity-100'
+                    }`}
+                  />
+
+                  {/* Top Row: Prominent 3D Illustration on Left (Enlarged), Pill Badge on Right */}
+                  <div className="relative z-10 flex items-start justify-between w-full mb-1">
+                    <div className="relative w-15 h-15 sm:w-16 sm:h-16 shrink-0 flex items-center justify-center">
+                      <Image
+                        src={bento.iconSrc}
+                        alt={bento.title}
+                        width={64}
+                        height={64}
+                        className="w-full h-full object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.12)] transition-transform duration-200 group-hover:scale-105"
+                        priority
+                      />
+                    </div>
+                    <span
+                      className={`text-[8.5px] font-bold tracking-wider px-2.5 py-0.5 rounded-full border shrink-0 transition-all ${
                         isSelected
-                          ? 'text-[color:var(--color-primary)]'
-                          : 'text-slate-600 dark:text-slate-300 group-hover:text-[color:var(--color-primary)]'
+                          ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
+                          : `${bento.badgeClass} border-slate-200/90 dark:border-white/15`
                       }`}
-                    />
-                    <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg border shrink-0 ${isSelected
-                      ? 'bg-[color:var(--color-primary)] text-white border-[color:var(--color-primary)]'
-                      : 'bg-black/5 dark:bg-white/10 text-[color:var(--color-outline)] border-black/5 dark:border-white/10 font-bold'
-                      }`}>
+                    >
                       {bento.badge}
                     </span>
                   </div>
-                  <div>
-                    <h3 className={`font-semibold text-xs transition-colors leading-tight ${isSelected
-                      ? 'text-[color:var(--color-primary)] font-bold'
-                      : 'text-[color:var(--color-on-surface)] group-hover:text-[color:var(--color-primary)]'
-                      }`}>
-                      {bento.title}
-                    </h3>
-                    <p className="text-[10px] text-[color:var(--color-outline)] mt-0.5 line-clamp-1 font-medium">
-                      {bento.desc}
-                    </p>
+
+                  {/* Bottom Row: Title + Description on Left, Circular Chevron on Bottom-Right */}
+                  <div className="relative z-10 flex items-end justify-between w-full gap-2">
+                    <div className="min-w-0 pr-1">
+                      <h3
+                        className={`font-bold text-[12.5px] sm:text-[13px] tracking-tight leading-snug transition-colors line-clamp-1 ${
+                          isSelected
+                            ? 'text-[#ff6325] font-extrabold'
+                            : `text-slate-800 dark:text-slate-100 ${hoverTitleColor}`
+                        }`}
+                      >
+                        {bento.title}
+                      </h3>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1 font-normal">
+                        {bento.desc}
+                      </p>
+                    </div>
+
+                    {/* Circular Chevron Button Indicator */}
+                    <div
+                      className={`w-6.5 h-6.5 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${
+                        isSelected
+                          ? 'bg-[#ff6325] text-white shadow-xs'
+                          : `bg-slate-100/90 dark:bg-white/10 text-slate-400 dark:text-slate-300 ${hoverChevron}`
+                      }`}
+                    >
+                      <ChevronRight size={13} strokeWidth={2.5} />
+                    </div>
                   </div>
                 </button>
               );

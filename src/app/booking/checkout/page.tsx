@@ -703,6 +703,44 @@ export default function CheckoutPage() {
                 );
               })()}
 
+              {/* Yoga Shala & Mat Spot Specs Banner */}
+              {(selectedService.metadata?.isYogaBooking || selectedService.metadata?.yogaBooking) && (
+                <div className="pt-3 border-t border-slate-100 space-y-2">
+                  <div className="p-4 bg-amber-50/70 border border-amber-200/80 rounded-2xl space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+                        <Sparkles size={14} className="text-[#ff6325]" /> {selectedService.metadata.yogaBooking?.venueName || 'Yoga Shala Sanctuary'}
+                      </span>
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#ff6325] text-white uppercase tracking-wider">
+                        Mat {selectedService.metadata.yogaBooking?.matSpot || 'M-01'} Reserved
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Batch & Style</span>
+                        <strong className="text-slate-800">{selectedService.metadata.yogaBooking?.batchTitle || 'Sunrise Hatha Flow'}</strong>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Guru & Guide</span>
+                        <strong className="text-slate-800">{selectedService.metadata.yogaBooking?.guru || 'Senior Shala Acharya'}</strong>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Schedule</span>
+                        <strong className="text-slate-800">{selectedService.metadata.yogaBooking?.slotDate} • {selectedService.metadata.yogaBooking?.slotTime?.split('–')[0]?.trim()}</strong>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Inclusions</span>
+                        <span className="text-slate-800 font-bold">
+                          Cork Mat {selectedService.metadata.yogaBooking?.matSpot}
+                          {selectedService.metadata.yogaBooking?.eyePillowAddon ? ' • Eye Pillow' : ''}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Gym, Yoga & Fitness Pass Specs Banner */}
               {selectedService.metadata?.fitness && (
                 <div className="pt-3 border-t border-slate-100 space-y-2">

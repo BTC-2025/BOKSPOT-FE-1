@@ -5830,19 +5830,22 @@ export default function VenueProfilePage() {
 
           if (isYogaCategory) {
             // 1. Direct real-time dynamic listings created in Vendor Business Portal
-            const liveYogaListings = (liveServices && liveServices.length > 0 && Array.isArray(liveServices[0]?.listings) && liveServices[0].listings.length > 0)
-              ? liveServices[0].listings.map((l: any, idx: number) => ({
-                  id: l.id || `batch-live-${idx}`,
-                  time: l.metadata?.time || l.schedule || (idx === 0 ? '06:00 AM – 07:15 AM' : idx === 1 ? '07:30 AM – 08:45 AM' : '05:30 PM – 06:45 PM'),
-                  title: l.name,
-                  guru: l.metadata?.guru || { name: l.metadata?.instructor || 'Senior Shala Acharya', lineage: 'Certified Lineage', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80' },
-                  level: l.metadata?.level || 'All Levels',
-                  discipline: l.metadata?.discipline || 'HATHA FLOW',
-                  intensity: l.metadata?.intensity || 'Mindful Flow',
-                  price: Number(l.price || l.basePrice || 399),
-                  spotsAvailable: Number(l.metadata?.spotsLeft || l.maxCapacity || 8),
-                  totalCapacity: Number(l.maxCapacity || 14)
-                }))
+            const liveYogaListings = (liveServices && liveServices.length > 0)
+              ? liveServices.flatMap((svc: any, sIdx: number) => {
+                  const svcListings = Array.isArray(svc?.listings) && svc.listings.length > 0 ? svc.listings : [svc];
+                  return svcListings.map((l: any, idx: number) => ({
+                    id: l.id || `batch-live-${sIdx}-${idx}`,
+                    time: l.metadata?.time || l.schedule || (idx === 0 ? '06:00 AM – 07:15 AM' : idx === 1 ? '07:30 AM – 08:45 AM' : '05:30 PM – 06:45 PM'),
+                    title: l.name || svc.name || 'Yoga Shala Batch',
+                    guru: l.metadata?.guru || { name: l.metadata?.instructor || svc.metadata?.instructor || 'Senior Shala Acharya', lineage: 'Certified Lineage', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80' },
+                    level: l.metadata?.level || 'All Levels',
+                    discipline: l.metadata?.discipline || 'HATHA FLOW',
+                    intensity: l.metadata?.intensity || 'Mindful Flow',
+                    price: Number(l.price || l.basePrice || svc.price || 399),
+                    spotsAvailable: Number(l.metadata?.spotsLeft || l.maxCapacity || 8),
+                    totalCapacity: Number(l.maxCapacity || 14)
+                  }));
+                })
               : [];
 
             const defaultGurus = [
@@ -6351,6 +6354,7 @@ export default function VenueProfilePage() {
                   <button
                     type="button"
                     onClick={() => {
+                      const resolvedMerchantId = merchantId || 'merchant-yoga-1';
                       const bookingTitle = yogaSadhanaTab === 'MONTHLY_SADHANA'
                         ? `${venueName} — ${activePlan.name} (${activePlan.months}M Sadhana)`
                         : `${venueName} — ${activeBatch.title} (Mat ${selectedYogaMatSpot})`;
@@ -6359,10 +6363,16 @@ export default function VenueProfilePage() {
                         id: `yoga-${Date.now()}`,
                         name: bookingTitle,
                         price: effectivePrice,
+                        merchantId: resolvedMerchantId,
+                        merchantName: venueName,
+                        category: 'Yoga Booking',
                         metadata: {
                           isYogaBooking: true,
+                          venueName,
+                          merchantId: resolvedMerchantId,
                           yogaBooking: {
                             venueName,
+                            merchantId: resolvedMerchantId,
                             batchTitle: activeBatch.title,
                             matSpot: selectedYogaMatSpot,
                             herbalBrew: selectedYogaBrew,
