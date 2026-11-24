@@ -271,6 +271,7 @@ export default function VenueProfilePage() {
   const [gymBookingType, setGymBookingType] = useState<'MEMBERSHIP' | 'DAY_PASS'>('MEMBERSHIP');
   // ── Dedicated Pure Yoga Shala Flow States (Mat Spot, Live Schedule, Rituals) ──
   const [selectedYogaBatchId, setSelectedYogaBatchId] = useState<string>('batch-sunrise');
+  const [isYogaDrawerOpen, setIsYogaDrawerOpen] = useState<boolean>(false);
   const [selectedYogaFormat, setSelectedYogaFormat] = useState<string>('ALL');
   const [yogaMatOption, setYogaMatOption] = useState<'BRING_OWN_MAT' | 'RENT_STUDIO_MAT'>('BRING_OWN_MAT');
   const [selectedYogaBrew, setSelectedYogaBrew] = useState<'ASHWAGANDHA_TULSI' | 'DETOX_GREEN' | 'WARM_TURMERIC_GOLD'>('ASHWAGANDHA_TULSI');
@@ -6137,170 +6138,27 @@ export default function VenueProfilePage() {
                                     </span>
                                   </div>
                                 </div>
-                                <div className="text-right">
+                                <div className="flex items-center gap-3">
                                   <span className="text-sm font-black text-slate-900 dark:text-white">
                                     ₹{batch.price}
                                   </span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedYogaBatchId(batch.id);
+                                      setIsYogaDrawerOpen(true);
+                                    }}
+                                    className="px-3.5 py-1.5 rounded-xl font-black text-xs uppercase tracking-wider bg-[#ff6325] hover:bg-[#e04e13] text-white shadow-xs hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-1"
+                                  >
+                                    <span>Book</span>
+                                    <span>→</span>
+                                  </button>
                                 </div>
                               </div>
                             </div>
                           );
                         })}
-                      </div>
-                    </div>
-
-                    {/* STEP 2: OPEN STUDIO FLOOR PRACTICE & MAT PREFERENCE */}
-                    <div className="space-y-3 pt-2 border-t border-amber-900/10 dark:border-white/10">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-full bg-[#ff6325] text-white flex items-center justify-center text-[10px] font-black">
-                            2
-                          </span>
-                          <div>
-                            <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">
-                              Studio Floor Practice &amp; Mat Preference
-                            </h3>
-                            <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
-                              Open bamboo floor practice. Choose your mat preference for the session.
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Real-world Yoga Mat Options (Bring Own Mat vs Rent Studio Cork Mat) */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div
-                          onClick={() => setYogaMatOption('BRING_OWN_MAT')}
-                          className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
-                            yogaMatOption === 'BRING_OWN_MAT'
-                              ? 'bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-500 ring-1 ring-emerald-500/40 shadow-xs'
-                              : 'bg-white dark:bg-slate-800/40 border-slate-200 dark:border-white/10 hover:border-slate-300'
-                          }`}
-                        >
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 shrink-0 ${
-                            yogaMatOption === 'BRING_OWN_MAT' ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-400'
-                          }`}>
-                            {yogaMatOption === 'BRING_OWN_MAT' && <span className="text-xs font-black">✓</span>}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-black text-slate-900 dark:text-white">
-                                Bring My Own Mat
-                              </span>
-                              <span className="text-[10px] font-extrabold px-2 py-0.2 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">
-                                FREE
-                              </span>
-                            </div>
-                            <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-1 leading-snug">
-                              Bring your personal yoga mat. Studio wooden floor spot and yoga props (cork blocks, straps) are free to use.
-                            </span>
-                          </div>
-                        </div>
-
-                        <div
-                          onClick={() => setYogaMatOption('RENT_STUDIO_MAT')}
-                          className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
-                            yogaMatOption === 'RENT_STUDIO_MAT'
-                              ? 'bg-orange-50/70 dark:bg-orange-950/20 border-[#ff6325] ring-1 ring-[#ff6325]/40 shadow-xs'
-                              : 'bg-white dark:bg-slate-800/40 border-slate-200 dark:border-white/10 hover:border-slate-300'
-                          }`}
-                        >
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 shrink-0 ${
-                            yogaMatOption === 'RENT_STUDIO_MAT' ? 'border-[#ff6325] bg-[#ff6325] text-white' : 'border-slate-400'
-                          }`}>
-                            {yogaMatOption === 'RENT_STUDIO_MAT' && <span className="text-xs font-black">✓</span>}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-black text-slate-900 dark:text-white">
-                                Reserve Studio Eco-Cork Mat
-                              </span>
-                              <span className="text-[10px] font-extrabold px-2 py-0.2 rounded-full bg-orange-100 text-[#ff6325] dark:bg-orange-950/60 dark:text-orange-300">
-                                +₹60
-                              </span>
-                            </div>
-                            <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-1 leading-snug">
-                              Pre-sanitized high-density 5mm organic cork mat &amp; antibacterial towel laid out and reserved for you.
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* STEP 3: POST-SADHANA HERBAL DETOX BREW & SENSORY ADDONS */}
-                    <div className="space-y-3 pt-2 border-t border-amber-900/10 dark:border-white/10">
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-[#ff6325] text-white flex items-center justify-center text-[10px] font-black">
-                          3
-                        </span>
-                        <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">
-                          Select Post-Practice Ayurvedic Herbal Brew (Included)
-                        </h3>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                        {[
-                          {
-                            id: 'ASHWAGANDHA_TULSI',
-                            name: 'Ashwagandha & Holy Tulsi Elixir',
-                            desc: 'Deep restorative nervous system calming after asanas'
-                          },
-                          {
-                            id: 'DETOX_GREEN',
-                            name: 'Cold-Pressed Triphala & Lemongrass',
-                            desc: 'Metabolism detox, gut cleansing and vital hydration'
-                          },
-                          {
-                            id: 'WARM_TURMERIC_GOLD',
-                            name: 'Golden Saffron & Vedic Turmeric',
-                            desc: 'Anti-inflammatory joint lubrication & pranic flow'
-                          }
-                        ].map((brew) => {
-                          const isBrewActive = selectedYogaBrew === brew.id;
-                          return (
-                            <div
-                              key={brew.id}
-                              onClick={() => setSelectedYogaBrew(brew.id as any)}
-                              className={`p-3 rounded-2xl border transition-all cursor-pointer ${
-                                isBrewActive
-                                  ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/20 ring-1 ring-emerald-500/40 shadow-xs'
-                                  : 'bg-white dark:bg-slate-800/40 border-slate-200 dark:border-white/10 hover:border-slate-300'
-                              }`}
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs font-black text-slate-900 dark:text-white">
-                                  {brew.name}
-                                </span>
-                                {isBrewActive && (
-                                  <span className="text-xs font-black text-emerald-600">✓</span>
-                                )}
-                              </div>
-                              <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-1 leading-snug">
-                                {brew.desc}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Optional Add-on: Organic French Lavender Eye Pillow */}
-                      <div className="p-3 rounded-2xl bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-white/10 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            checked={yogaEyePillowAddon}
-                            onChange={(e) => setYogaEyePillowAddon(e.target.checked)}
-                            className="w-4 h-4 text-[#ff6325] rounded-md border-slate-300 cursor-pointer"
-                          />
-                          <div>
-                            <span className="text-xs font-bold text-slate-900 dark:text-white block">
-                              Organic Flaxseed & Lavender Eye Pillow for Shavasana (+₹120)
-                            </span>
-                            <span className="text-[11px] text-slate-400 block">
-                              Gently weighted aromatherapy cushion blocking light for deep nervous-system relaxation.
-                            </span>
-                          </div>
-                        </div>
                       </div>
                     </div>
                   </>
@@ -6386,81 +6244,301 @@ export default function VenueProfilePage() {
                   </div>
                 </div>
 
-                {/* BOTTOM SUMMARY & CHECKOUT DOCK */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-black text-slate-900 dark:text-white">
-                        {yogaSadhanaTab === 'MONTHLY_SADHANA'
-                          ? activePack?.name
-                          : yogaSadhanaTab === 'PACK_5'
-                          ? activePack?.name
-                          : `${activeBatch.title} • ${yogaMatOption === 'RENT_STUDIO_MAT' ? 'Reserved Cork Mat' : 'Bring Own Mat'}`}
-                      </span>
-                      <span className="text-base font-black text-[#ff6325]">
-                        ₹{effectivePrice}
+                {/* BOTTOM SUMMARY DOCK (FOR MULTI-CLASS PACKS) */}
+                {yogaSadhanaTab !== 'SINGLE_SESSION' && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-black text-slate-900 dark:text-white">
+                          {activePack?.name}
+                        </span>
+                        <span className="text-base font-black text-[#ff6325]">
+                          ₹{effectivePrice}
+                        </span>
+                      </div>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
+                        {selectedDate || todayStr} • {activePack?.validity} • All Daily Morning & Evening Batches
                       </span>
                     </div>
-                    <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
-                      {selectedDate || todayStr} at {yogaSadhanaTab === 'SINGLE_SESSION' ? activeBatch.time : 'Flexible Pass Batches'}
-                      {yogaSadhanaTab === 'SINGLE_SESSION' ? ` • Guru: ${activeBatch.guru.name} • ${yogaMatOption === 'RENT_STUDIO_MAT' ? 'Eco-Cork Mat (+₹60)' : 'Own Mat (Free)'}` : ` • ${activePack.validity}`}
-                    </span>
-                  </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const resolvedMerchantId = merchantId || 'merchant-yoga-1';
-                      const bookingTitle = yogaSadhanaTab === 'SINGLE_SESSION'
-                        ? `${venueName} — ${activeBatch.title} (${yogaMatOption === 'RENT_STUDIO_MAT' ? 'Cork Mat' : 'Personal Mat'})`
-                        : `${venueName} — ${activePack.name} (${yogaSadhanaTab === 'PACK_5' ? '5 Sessions' : '30-Day Sadhana'})`;
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const resolvedMerchantId = merchantId || 'merchant-yoga-1';
+                        const bookingTitle = `${venueName} — ${activePack.name} (${yogaSadhanaTab === 'PACK_5' ? '5 Sessions' : '30-Day Sadhana'})`;
 
-                      setSelectedService({
-                        id: `yoga-${Date.now()}`,
-                        name: bookingTitle,
-                        price: effectivePrice,
-                        merchantId: resolvedMerchantId,
-                        merchantName: venueName,
-                        category: 'Yoga Booking',
-                        metadata: {
-                          isYogaBooking: true,
-                          venueName,
+                        setSelectedService({
+                          id: `yoga-${Date.now()}`,
+                          name: bookingTitle,
+                          price: effectivePrice,
                           merchantId: resolvedMerchantId,
-                          yogaBooking: {
+                          merchantName: venueName,
+                          category: 'Yoga Booking',
+                          metadata: {
+                            isYogaBooking: true,
                             venueName,
                             merchantId: resolvedMerchantId,
-                            batchTitle: yogaSadhanaTab === 'SINGLE_SESSION' ? activeBatch.title : activePack.name,
-                            matOption: yogaMatOption,
-                            herbalBrew: selectedYogaBrew,
-                            eyePillowAddon: yogaEyePillowAddon,
-                            guru: yogaSadhanaTab === 'SINGLE_SESSION' ? activeBatch.guru.name : 'Senior Studio Guru',
-                            slotTime: yogaSadhanaTab === 'SINGLE_SESSION' ? activeBatch.time : 'All Daily Batches',
-                            slotDate: selectedDate || todayStr,
-                            bookingType: yogaSadhanaTab,
-                            durationMinutes: 75
+                            yogaBooking: {
+                              venueName,
+                              merchantId: resolvedMerchantId,
+                              batchTitle: activePack.name,
+                              matOption: yogaMatOption,
+                              herbalBrew: selectedYogaBrew,
+                              eyePillowAddon: yogaEyePillowAddon,
+                              guru: 'Senior Studio Guru',
+                              slotTime: 'All Daily Batches',
+                              slotDate: selectedDate || todayStr,
+                              bookingType: yogaSadhanaTab,
+                              durationMinutes: 75
+                            }
                           }
-                        }
-                      });
-                      setSelectedSlot({
-                        id: `slot-yoga-${Date.now()}`,
-                        timeStr: `${selectedDate || todayStr} at ${yogaSadhanaTab === 'SINGLE_SESSION' ? activeBatch.time : 'Any Morning/Evening Batch'}`,
-                        date: selectedDate || todayStr,
-                        available: true
-                      });
-                      router.push('/booking/checkout');
-                    }}
-                    className="px-8 py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-wider shadow-md bg-[#ff6325] hover:bg-[#e04e13] text-white active:scale-95 transition-all cursor-pointer w-full sm:w-auto flex items-center justify-center gap-2"
-                  >
-                    <span>
-                      {yogaSadhanaTab === 'MONTHLY_SADHANA'
-                        ? `Join Monthly Sadhana (₹${effectivePrice})`
-                        : yogaSadhanaTab === 'PACK_5'
-                        ? `Get 5-Class Pack (₹${effectivePrice})`
-                        : `Confirm Studio Spot (₹${effectivePrice})`}
-                    </span>
-                    <span>→</span>
-                  </button>
-                </div>
+                        });
+                        setSelectedSlot({
+                          id: `slot-yoga-${Date.now()}`,
+                          timeStr: `${selectedDate || todayStr} at Any Morning/Evening Batch`,
+                          date: selectedDate || todayStr,
+                          available: true
+                        });
+                        router.push('/booking/checkout');
+                      }}
+                      className="px-8 py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-wider shadow-md bg-[#ff6325] hover:bg-[#e04e13] text-white active:scale-95 transition-all cursor-pointer w-full sm:w-auto flex items-center justify-center gap-2"
+                    >
+                      <span>
+                        {yogaSadhanaTab === 'MONTHLY_SADHANA'
+                          ? `Join Monthly Sadhana (₹${effectivePrice})`
+                          : `Get 5-Class Pack (₹${effectivePrice})`}
+                      </span>
+                      <span>→</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* TOP-APP STYLE SLIDE-OVER / MODAL DRAWER FOR YOGA SESSION CUSTOMIZATION */}
+                {isYogaDrawerOpen && (
+                  <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
+                    {/* Backdrop */}
+                    <div
+                      className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+                      onClick={() => setIsYogaDrawerOpen(false)}
+                    />
+
+                    {/* Modal Content */}
+                    <div className="relative w-full sm:max-w-xl bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 z-10 max-h-[92vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-6 duration-200">
+                      {/* Header */}
+                      <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-white/10 flex items-start justify-between bg-orange-50/50 dark:bg-slate-800/40">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-orange-100 dark:bg-orange-950/60 text-[#ff6325]">
+                              Step 2: Session Options
+                            </span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                              {selectedDate || todayStr}
+                            </span>
+                          </div>
+                          <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                            {activeBatch.title}
+                          </h3>
+                          <div className="flex items-center gap-3 mt-1 text-xs text-slate-600 dark:text-slate-300">
+                            <span>🕒 {activeBatch.time} ({activeBatch.duration})</span>
+                            <span>•</span>
+                            <span>🧘 {activeBatch.guru.name}</span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsYogaDrawerOpen(false)}
+                          className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      {/* Body Scrollable Options */}
+                      <div className="p-4 sm:p-6 overflow-y-auto space-y-6">
+                        {/* 1. Mat Preference */}
+                        <div>
+                          <label className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white block mb-2">
+                            Mat Preference
+                          </label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div
+                              onClick={() => setYogaMatOption('BRING_OWN_MAT')}
+                              className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
+                                yogaMatOption === 'BRING_OWN_MAT'
+                                  ? 'bg-emerald-50/80 dark:bg-emerald-950/20 border-emerald-500 ring-1 ring-emerald-500 shadow-xs'
+                                  : 'bg-white dark:bg-slate-800/50 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-black text-slate-900 dark:text-white">
+                                  Bring My Own Mat
+                                </span>
+                                <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400">
+                                  FREE
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                                Bring your personal yoga mat. Wooden floor spot reserved.
+                              </p>
+                            </div>
+
+                            <div
+                              onClick={() => setYogaMatOption('RENT_STUDIO_MAT')}
+                              className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
+                                yogaMatOption === 'RENT_STUDIO_MAT'
+                                  ? 'bg-orange-50/80 dark:bg-orange-950/20 border-[#ff6325] ring-1 ring-[#ff6325] shadow-xs'
+                                  : 'bg-white dark:bg-slate-800/50 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-black text-slate-900 dark:text-white">
+                                  Reserve Studio Cork Mat
+                                </span>
+                                <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-orange-100 dark:bg-orange-950/50 text-[#ff6325]">
+                                  +₹60
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                                High-density 5mm organic cork mat & sanitized towel laid out for you.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 2. Herbal Brew Selection */}
+                        <div>
+                          <label className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white block mb-1">
+                            Post-Practice Ayurvedic Herbal Brew
+                          </label>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 block mb-2">
+                            Freshly brewed and served hot right after Shavasana (Included free)
+                          </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            {[
+                              { id: 'TULSI_ASHWAGANDHA', name: 'Tulsi & Ashwagandha', tag: 'Restorative & Calming' },
+                              { id: 'TRIPHALA_LEMONGRASS', name: 'Triphala & Lemongrass', tag: 'Gut Detox & Glow' },
+                              { id: 'TURMERIC_SAFFRON', name: 'Golden Vedic Turmeric', tag: 'Anti-Inflammatory' }
+                            ].map((brew) => {
+                              const isSelected = selectedYogaBrew === brew.id;
+                              return (
+                                <div
+                                  key={brew.id}
+                                  onClick={() => setSelectedYogaBrew(brew.id as any)}
+                                  className={`p-3 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
+                                    isSelected
+                                      ? 'bg-amber-50/80 dark:bg-amber-950/20 border-amber-500 ring-1 ring-amber-500'
+                                      : 'bg-white dark:bg-slate-800/40 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                                  }`}
+                                >
+                                  <div>
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs font-black text-slate-900 dark:text-white">
+                                        {brew.name}
+                                      </span>
+                                      {isSelected && <span className="text-amber-600 text-xs font-bold">✓</span>}
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                      {brew.tag}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* 3. Optional Shavasana Eye Pillow Addon */}
+                        <div
+                          onClick={() => setYogaEyePillowAddon(!yogaEyePillowAddon)}
+                          className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
+                            yogaEyePillowAddon
+                              ? 'bg-purple-50/80 dark:bg-purple-950/20 border-purple-500 ring-1 ring-purple-500'
+                              : 'bg-white dark:bg-slate-800/40 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              checked={yogaEyePillowAddon}
+                              onChange={() => {}}
+                              className="w-4 h-4 rounded text-[#ff6325] focus:ring-0 cursor-pointer pointer-events-none"
+                            />
+                            <div>
+                              <span className="text-xs font-black text-slate-900 dark:text-white block">
+                                Organic Lavender & Flaxseed Eye Pillow (+₹120)
+                              </span>
+                              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                                Weighted aromatherapy cushion for deep parasympathetic relaxation
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-xs font-black text-purple-600 dark:text-purple-400 whitespace-nowrap ml-2">
+                            +₹120
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Modal Footer CTA */}
+                      <div className="p-4 sm:p-5 border-t border-slate-100 dark:border-white/10 bg-slate-50/80 dark:bg-slate-800/80 flex items-center justify-between gap-4">
+                        <div>
+                          <span className="text-[10px] uppercase font-black text-slate-400 block tracking-wider">
+                            Total Payable
+                          </span>
+                          <span className="text-xl font-black text-[#ff6325]">
+                            ₹{effectivePrice}
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const resolvedMerchantId = merchantId || 'merchant-yoga-1';
+                            const bookingTitle = `${venueName} — ${activeBatch.title} (${yogaMatOption === 'RENT_STUDIO_MAT' ? 'Cork Mat' : 'Personal Mat'})`;
+
+                            setSelectedService({
+                              id: `yoga-${Date.now()}`,
+                              name: bookingTitle,
+                              price: effectivePrice,
+                              merchantId: resolvedMerchantId,
+                              merchantName: venueName,
+                              category: 'Yoga Booking',
+                              metadata: {
+                                isYogaBooking: true,
+                                venueName,
+                                merchantId: resolvedMerchantId,
+                                yogaBooking: {
+                                  venueName,
+                                  merchantId: resolvedMerchantId,
+                                  batchTitle: activeBatch.title,
+                                  matOption: yogaMatOption,
+                                  herbalBrew: selectedYogaBrew,
+                                  eyePillowAddon: yogaEyePillowAddon,
+                                  guru: activeBatch.guru.name,
+                                  slotTime: activeBatch.time,
+                                  slotDate: selectedDate || todayStr,
+                                  bookingType: yogaSadhanaTab,
+                                  durationMinutes: 75
+                                }
+                              }
+                            });
+                            setSelectedSlot({
+                              id: `slot-yoga-${Date.now()}`,
+                              timeStr: `${selectedDate || todayStr} at ${activeBatch.time}`,
+                              date: selectedDate || todayStr,
+                              available: true
+                            });
+                            setIsYogaDrawerOpen(false);
+                            router.push('/booking/checkout');
+                          }}
+                          className="px-6 sm:px-8 py-3.5 rounded-xl font-black text-xs uppercase tracking-wider shadow-md bg-[#ff6325] hover:bg-[#e04e13] text-white active:scale-95 transition-all cursor-pointer flex items-center gap-2"
+                        >
+                          <span>Confirm & Proceed to Pay</span>
+                          <span>→</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           }
