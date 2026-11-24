@@ -593,8 +593,8 @@ export default function CategoriesPage() {
             </div>
           </div>
 
-          {/* ── BENTO CATEGORY CARDS GRID (Larger 3D Icons, Sleek & Compact Card Height) ── */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 pt-1">
+          {/* ── BENTO CATEGORY CARDS GRID (Horizontal Sleek Style - Icon Left, Text Middle, Badge Top-Right) ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 pt-1">
             {BENTO_CATEGORIES.map((bento, idx) => {
               const isSelected = activeGroup === bento.tag;
               const isEven = idx % 2 === 0;
@@ -618,7 +618,7 @@ export default function CategoriesPage() {
                 <button
                   key={bento.title}
                   onClick={() => handleSelectCategory(bento.tag)}
-                  className={`group relative p-3 sm:p-3.5 rounded-[20px] border text-left flex flex-col justify-between transition-all duration-200 cursor-pointer overflow-hidden min-h-[118px] sm:min-h-[122px] ${
+                  className={`group relative p-2.5 sm:p-3 rounded-[20px] border text-left flex items-center gap-2.5 sm:gap-3 transition-all duration-200 cursor-pointer overflow-hidden min-h-[76px] sm:min-h-[82px] ${
                     isSelected
                       ? 'bg-white/70 dark:bg-[#161c2b]/70 backdrop-blur-xl border-[#ff6325] shadow-[0_8px_24px_rgba(255,99,37,0.16)] ring-1.5 ring-[#ff6325]/45'
                       : `bg-white/80 dark:bg-[#121722]/80 backdrop-blur-md hover:bg-white dark:hover:bg-[#171d2b] border-slate-200/70 dark:border-white/10 ${hoverCardStyle} shadow-[0_2px_8px_rgba(0,0,0,0.02)]`
@@ -631,20 +631,10 @@ export default function CategoriesPage() {
                     }`}
                   />
 
-                  {/* Top Row: Prominent 3D Illustration on Left (Enlarged), Pill Badge on Right */}
-                  <div className="relative z-10 flex items-start justify-between w-full mb-1">
-                    <div className="relative w-15 h-15 sm:w-16 sm:h-16 shrink-0 flex items-center justify-center">
-                      <Image
-                        src={bento.iconSrc}
-                        alt={bento.title}
-                        width={64}
-                        height={64}
-                        className="w-full h-full object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.12)] transition-transform duration-200 group-hover:scale-105"
-                        priority
-                      />
-                    </div>
+                  {/* Badge positioned at Top-Right */}
+                  <div className="absolute top-2 right-2.5 z-20">
                     <span
-                      className={`text-[8.5px] font-bold tracking-wider px-2.5 py-0.5 rounded-full border shrink-0 transition-all ${
+                      className={`text-[8px] font-bold tracking-wider px-2 py-0.5 rounded-full border shrink-0 transition-all ${
                         isSelected
                           ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
                           : `${bento.badgeClass} border-slate-200/90 dark:border-white/15`
@@ -654,32 +644,44 @@ export default function CategoriesPage() {
                     </span>
                   </div>
 
-                  {/* Bottom Row: Title + Description on Left, Circular Chevron on Bottom-Right */}
-                  <div className="relative z-10 flex items-end justify-between w-full gap-2">
-                    <div className="min-w-0 pr-1">
-                      <h3
-                        className={`font-bold text-[12.5px] sm:text-[13px] tracking-tight leading-snug transition-colors line-clamp-1 ${
-                          isSelected
-                            ? 'text-[#ff6325] font-extrabold'
-                            : `text-slate-800 dark:text-slate-100 ${hoverTitleColor}`
-                        }`}
-                      >
-                        {bento.title}
-                      </h3>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1 font-normal">
-                        {bento.desc}
-                      </p>
-                    </div>
+                  {/* Left: 3D Illustration */}
+                  <div className="relative z-10 w-13 h-13 sm:w-14 sm:h-14 shrink-0 flex items-center justify-center">
+                    <Image
+                      src={bento.iconSrc}
+                      alt={bento.title}
+                      width={56}
+                      height={56}
+                      className="w-full h-full object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.12)] transition-transform duration-200 group-hover:scale-105"
+                      priority
+                    />
+                  </div>
 
-                    {/* Circular Chevron Button Indicator */}
+                  {/* Middle: Title + Description */}
+                  <div className="relative z-10 flex-1 min-w-0 pr-6 pt-1">
+                    <h3
+                      className={`font-bold text-[12px] sm:text-[12.5px] tracking-tight leading-tight transition-colors truncate ${
+                        isSelected
+                          ? 'text-[#ff6325] font-extrabold'
+                          : `text-slate-800 dark:text-slate-100 ${hoverTitleColor}`
+                      }`}
+                    >
+                      {bento.title}
+                    </h3>
+                    <p className="text-[9.5px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1 font-normal">
+                      {bento.desc}
+                    </p>
+                  </div>
+
+                  {/* Bottom-Right: Circular Chevron Arrow */}
+                  <div className="absolute bottom-2 right-2.5 z-20">
                     <div
-                      className={`w-6.5 h-6.5 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${
+                      className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${
                         isSelected
                           ? 'bg-[#ff6325] text-white shadow-xs'
                           : `bg-slate-100/90 dark:bg-white/10 text-slate-400 dark:text-slate-300 ${hoverChevron}`
                       }`}
                     >
-                      <ChevronRight size={13} strokeWidth={2.5} />
+                      <ChevronRight size={11} strokeWidth={2.5} />
                     </div>
                   </div>
                 </button>
