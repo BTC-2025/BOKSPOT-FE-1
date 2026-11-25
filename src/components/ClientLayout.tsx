@@ -52,6 +52,29 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const isExcluded = pathname?.startsWith('/sales') || pathname?.startsWith('/superadmin');
   const isCheckout = pathname?.startsWith('/booking/checkout') || pathname?.startsWith('/booking/payment');
 
+  // Industry Standard: On Page Refresh & Initial Load, always start from the top
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'manual';
+      }
+      window.scrollTo(0, 0);
+
+      // Guard against late hydrating DOM elements jumping to bottom
+      const frame = requestAnimationFrame(() => {
+        window.scrollTo(0, 0);
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+  }, []);
+
+  // On client-side route change, scroll to top
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname]);
+
   // Clean native browser history without synthetic popstate interventions
 
   useEffect(() => {

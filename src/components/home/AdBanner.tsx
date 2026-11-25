@@ -75,7 +75,7 @@ export function AdBanner() {
                     <div className="flex items-center gap-2.5 flex-wrap">
                       <Link
                         href={ad.href}
-                        className="px-5 py-2 rounded-full text-xs font-black tracking-wider bg-gradient-to-r from-[#ff6325] to-[#ea580c] hover:brightness-110 text-white transition-all shadow-[0_4px_16px_rgba(255,99,37,0.35)] hover:shadow-[0_6px_20px_rgba(255,99,37,0.5)] active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                        className="px-5 py-2 rounded-full text-xs font-black tracking-wider bg-[#0a3161] hover:bg-[#ff6325] text-white transition-all shadow-[0_4px_16px_rgba(10,49,97,0.45)] hover:shadow-[0_6px_20px_rgba(255,99,37,0.5)] active:scale-95 flex items-center gap-1.5 cursor-pointer"
                       >
                         <span>{ad.actionText.toUpperCase()}</span>
                         <span className="material-symbols-outlined text-[14px]">arrow_forward</span>

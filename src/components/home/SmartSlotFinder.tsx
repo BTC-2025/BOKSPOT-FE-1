@@ -121,6 +121,18 @@ export function SmartSlotFinder() {
     };
   }, []);
 
+  // Lock background scroll when Category Modal is open
+  useEffect(() => {
+    if (isCategoryModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isCategoryModalOpen]);
+
   // Spot / Venue Name (Optional Search filter)
   const [selectedVenue, setSelectedVenue] = useState<string>('');
 
@@ -222,19 +234,19 @@ export function SmartSlotFinder() {
         <div className="flex items-center justify-between pb-2.5 border-b border-[color:var(--color-outline-variant)]/20 shrink-0">
           <div className="flex items-center gap-2">
             <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff6325] opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#ff6325]" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0a3161] opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#0a3161]" />
             </span>
             <h3 className="text-xs md:text-sm font-bold tracking-tight text-[#0A3161] dark:text-white flex items-center gap-1.5">
               <span>Instant Slot Finder</span>
-              <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#ff6325]/15 text-[#ff6325] uppercase tracking-wider">
+              <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider backdrop-blur-md bg-[#0a3161]/15 dark:bg-[#0a3161]/35 text-[#0a3161] dark:text-blue-300 border border-[#0a3161]/25 shadow-xs">
                 Live
               </span>
             </h3>
           </div>
           <button
             onClick={() => setIsCategoryModalOpen(true)}
-            className="text-[10px] uppercase font-semibold tracking-wider text-[#0A3161] dark:text-blue-300 hover:text-[#ff6325] transition-colors flex items-center gap-1 cursor-pointer"
+            className="text-[10px] uppercase font-semibold tracking-wider text-[#0A3161] dark:text-blue-300 hover:text-[#0A3161]/80 hover:brightness-125 transition-colors flex items-center gap-1 cursor-pointer"
           >
             <span>9 Categories</span>
             <span className="material-symbols-outlined text-[13px]">tune</span>
@@ -256,26 +268,51 @@ export function SmartSlotFinder() {
 
             <div className="grid grid-cols-2 gap-2">
               {/* Category Button */}
-              <button
-                type="button"
-                onClick={() => setIsCategoryModalOpen(true)}
-                className={`h-9 px-2.5 rounded-xl border flex items-center justify-between transition-all cursor-pointer group min-w-0 ${
-                  activeCategory
-                    ? 'border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.04] hover:border-[#0A3161]/50'
-                    : 'border-dashed border-[#0A3161]/40 bg-[#0A3161]/5 hover:bg-[#0A3161]/10 text-[#0A3161] dark:text-blue-300'
-                }`}
-                title={activeCategory ? `${activeCategory.label} - Click to switch category` : 'Choose booking category'}
-              >
-                <div className="flex items-center gap-1.5 min-w-0 truncate">
-                  <span className="text-sm shrink-0">{activeCategory ? activeCategory.emoji : '🎯'}</span>
-                  <span className={`text-xs font-semibold truncate ${activeCategory ? 'text-[#0A3161] dark:text-white' : 'text-[#0A3161] dark:text-blue-300'}`}>
-                    {activeCategory ? activeCategory.label : 'Select Category'}
-                  </span>
-                </div>
-                <span className="material-symbols-outlined text-[15px] text-[#0A3161] dark:text-blue-300 shrink-0 ml-1 group-hover:rotate-180 transition-transform">
-                  swap_vert
-                </span>
-              </button>
+              {(() => {
+                const icon3DMap: Record<string, string> = {
+                  'travel-transport': '/images/user_icons/travel-cabs.png',
+                  'stay-accommodation': '/images/user_icons/stay-accommodation.png',
+                  'entertainment-events': '/images/user_icons/entertainment.png',
+                  'sports-turf': '/images/user_icons/sports-turfs.png',
+                  'lifestyle-local': '/images/user_icons/lifestyle-spa.png',
+                  'business-professional': '/images/user_icons/coworking-office.png',
+                  'religious-government': '/images/user_icons/darshan-pooja.png',
+                  'rental-equipment': '/images/user_icons/equipment-rentals-v2.png',
+                  'personal-misc': '/images/user_icons/personal-services-v2.png',
+                };
+                const active3DIcon = selectedCatId ? icon3DMap[selectedCatId] : null;
+
+                return (
+                  <button
+                    type="button"
+                    onClick={() => setIsCategoryModalOpen(true)}
+                    className={`h-9 px-2.5 rounded-xl border flex items-center justify-between transition-all cursor-pointer group min-w-0 ${
+                      activeCategory
+                        ? 'border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.04] hover:border-[#0A3161]/50'
+                        : 'border-dashed border-[#0A3161]/40 bg-[#0A3161]/5 hover:bg-[#0A3161]/10 text-[#0A3161] dark:text-blue-300'
+                    }`}
+                    title={activeCategory ? `${activeCategory.label} - Click to switch category` : 'Choose booking category'}
+                  >
+                    <div className="flex items-center gap-1.5 min-w-0 truncate">
+                      {active3DIcon ? (
+                        <img 
+                          src={active3DIcon} 
+                          alt={activeCategory?.label || 'Category'} 
+                          className="w-4 h-4 object-contain shrink-0 drop-shadow-xs" 
+                        />
+                      ) : (
+                        <span className="text-sm shrink-0">{activeCategory ? activeCategory.emoji : '🎯'}</span>
+                      )}
+                      <span className={`text-xs font-semibold truncate ${activeCategory ? 'text-[#0A3161] dark:text-white' : 'text-[#0A3161] dark:text-blue-300'}`}>
+                        {activeCategory ? activeCategory.label : 'Select Category'}
+                      </span>
+                    </div>
+                    <span className="material-symbols-outlined text-[15px] text-[#0A3161] dark:text-blue-300 shrink-0 ml-1 group-hover:rotate-180 transition-transform">
+                      swap_vert
+                    </span>
+                  </button>
+                );
+              })()}
 
               {/* Sub-Service Custom Themed Dropdown */}
               <div className="relative" ref={serviceContainerRef}>
@@ -290,14 +327,14 @@ export function SmartSlotFinder() {
                   }}
                   className={`w-full h-9 px-3 rounded-xl border flex items-center justify-between transition-all cursor-pointer shadow-xs min-w-0 ${
                     activeService
-                      ? 'border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] text-slate-800 dark:text-white hover:border-[#ff6325]/50'
+                      ? 'border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] text-slate-800 dark:text-white hover:border-[#0A3161]/50'
                       : 'border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-slate-400 hover:border-slate-400'
                   }`}
                 >
                   <span className={`truncate text-xs ${activeService ? 'font-semibold text-slate-800 dark:text-white' : 'font-medium text-slate-400'}`}>
                     {activeService ? activeService.label : (selectedCatId ? 'Select Service' : 'Choose Category First')}
                   </span>
-                  <span className={`material-symbols-outlined text-[16px] text-slate-400 shrink-0 ml-1 transition-transform duration-200 ${isServiceDropdownOpen ? 'rotate-180 text-[#ff6325]' : ''}`}>
+                  <span className={`material-symbols-outlined text-[16px] text-slate-400 shrink-0 ml-1 transition-transform duration-200 ${isServiceDropdownOpen ? 'rotate-180 text-[#0A3161]' : ''}`}>
                     arrow_drop_down
                   </span>
                 </button>
@@ -325,13 +362,13 @@ export function SmartSlotFinder() {
                             }}
                             className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-medium flex items-center justify-between gap-2 transition-colors cursor-pointer ${
                               isSelected
-                                ? 'bg-[#ff6325]/10 text-[#ff6325] font-bold'
+                                ? 'bg-[#0A3161]/10 text-[#0A3161] font-bold'
                                 : 'text-slate-700 dark:text-slate-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
                             }`}
                           >
                             <span className="truncate">{service.label}</span>
                             {isSelected && (
-                              <span className="material-symbols-outlined text-[14px] text-[#ff6325] shrink-0">
+                              <span className="material-symbols-outlined text-[14px] text-[#0A3161] shrink-0">
                                 check
                               </span>
                             )}
@@ -448,7 +485,7 @@ export function SmartSlotFinder() {
                 <button
                   type="button"
                   onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-                  className="w-full h-9 pl-3 pr-8 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] text-slate-800 dark:text-white text-xs font-bold hover:border-[#ff6325]/50 flex items-center justify-between transition-all cursor-pointer shadow-xs"
+                  className="w-full h-9 pl-3 pr-8 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] text-slate-800 dark:text-white text-xs font-bold hover:border-[#0A3161]/50 flex items-center justify-between transition-all cursor-pointer shadow-xs"
                 >
                   <span>
                     {(() => {
@@ -456,7 +493,7 @@ export function SmartSlotFinder() {
                       return `${d}-${m}-${y}`;
                     })()}
                   </span>
-                  <span className={`material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[16px] transition-colors ${isCalendarOpen ? 'text-[#ff6325]' : 'text-slate-400'}`}>
+                  <span className={`material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[16px] transition-colors ${isCalendarOpen ? 'text-[#0A3161]' : 'text-slate-400'}`}>
                     calendar_today
                   </span>
                 </button>
@@ -577,10 +614,10 @@ export function SmartSlotFinder() {
                                 }}
                                 className={`h-6 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center cursor-pointer ${
                                   isSelected
-                                    ? 'bg-[#ff6325] text-white shadow-xs'
+                                    ? 'bg-[#0A3161] text-white shadow-xs'
                                     : isPast
                                     ? 'text-slate-300 dark:text-slate-700 cursor-not-allowed'
-                                    : 'text-slate-700 dark:text-slate-300 hover:bg-[#ff6325]/15 hover:text-[#ff6325]'
+                                    : 'text-slate-700 dark:text-slate-300 hover:bg-[#0A3161]/15 hover:text-[#0A3161]'
                                 }`}
                               >
                                 {d}
@@ -600,7 +637,7 @@ export function SmartSlotFinder() {
                             setCalendarViewDate(new Date());
                             setIsCalendarOpen(false);
                           }}
-                          className="text-[#ff6325] hover:underline cursor-pointer"
+                          className="text-[#0A3161] dark:text-blue-400 hover:underline cursor-pointer"
                         >
                           Select Today
                         </button>
@@ -680,10 +717,10 @@ export function SmartSlotFinder() {
                   <button
                     type="button"
                     onClick={() => setIsTimePickerOpen(!isTimePickerOpen)}
-                    className="w-full h-9 pl-3 pr-7 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] text-slate-800 dark:text-white text-xs font-semibold focus:outline-hidden hover:border-[#ff6325]/50 flex items-center justify-between transition-all cursor-pointer shadow-xs min-w-0"
+                    className="w-full h-9 pl-3 pr-7 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#1a202c] text-slate-800 dark:text-white text-xs font-semibold focus:outline-hidden hover:border-[#0A3161]/50 flex items-center justify-between transition-all cursor-pointer shadow-xs min-w-0"
                   >
                     <span className="truncate">{selectedSlot}</span>
-                    <span className={`material-symbols-outlined text-[16px] text-slate-400 shrink-0 transition-transform ${isTimePickerOpen ? 'rotate-180 text-[#ff6325]' : ''}`}>
+                    <span className={`material-symbols-outlined text-[16px] text-slate-400 shrink-0 transition-transform ${isTimePickerOpen ? 'rotate-180 text-[#0A3161]' : ''}`}>
                       schedule
                     </span>
                   </button>
@@ -695,13 +732,13 @@ export function SmartSlotFinder() {
                       <div className="absolute right-0 top-full mt-1.5 w-72 z-[100] bg-white dark:bg-[#121722] border border-black/10 dark:border-white/10 rounded-2xl shadow-2xl p-3 animate-in fade-in zoom-in-95 duration-150 space-y-3">
                         <div className="flex items-center justify-between border-b border-black/5 dark:border-white/5 pb-1.5">
                           <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[13px] text-[#ff6325]">schedule</span>
+                            <span className="material-symbols-outlined text-[13px] text-[#0A3161]">schedule</span>
                             <span>Choose Timing Window</span>
                           </span>
                           <button
                             type="button"
                             onClick={() => setIsTimePickerOpen(false)}
-                            className="text-[10px] font-bold text-[#ff6325] hover:underline cursor-pointer"
+                            className="text-[10px] font-bold text-[#0A3161] hover:underline cursor-pointer"
                           >
                             Done
                           </button>
@@ -729,8 +766,8 @@ export function SmartSlotFinder() {
                                   }}
                                   className={`p-1.5 rounded-xl text-left border transition-all cursor-pointer ${
                                     isSelected
-                                      ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
-                                      : 'border-black/5 dark:border-white/5 bg-slate-50 dark:bg-slate-800/50 hover:border-[#ff6325]/40 text-slate-700 dark:text-slate-200'
+                                      ? 'bg-[#0A3161] text-white border-[#0A3161] shadow-xs'
+                                      : 'border-black/5 dark:border-white/5 bg-slate-50 dark:bg-slate-800/50 hover:border-[#0A3161]/40 text-slate-700 dark:text-slate-200'
                                   } ${idx === 0 ? 'col-span-2' : ''}`}
                                 >
                                   <span className="text-[11px] font-bold block truncate">{slot.label.split(' (')[0]}</span>
@@ -762,8 +799,8 @@ export function SmartSlotFinder() {
                                   }}
                                   className={`py-1 rounded-lg text-[10px] font-bold transition-all text-center cursor-pointer border ${
                                     isSelected
-                                      ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
-                                      : 'border-transparent hover:border-[#ff6325]/40 bg-black/[0.03] dark:bg-white/[0.04] text-slate-700 dark:text-slate-200'
+                                      ? 'bg-[#0A3161] text-white border-[#0A3161] shadow-xs'
+                                      : 'border-transparent hover:border-[#0A3161]/40 bg-black/[0.03] dark:bg-white/[0.04] text-slate-700 dark:text-slate-200'
                                   }`}
                                 >
                                   {hr}
@@ -1033,8 +1070,8 @@ export function SmartSlotFinder() {
                       onClick={() => setPitchFormat(fmt.id)}
                       className={`h-8 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
                         pitchFormat === fmt.id
-                          ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
-                          : 'bg-white dark:bg-[#1a202c] text-slate-700 dark:text-slate-300 border-black/10 dark:border-white/10 hover:border-[#ff6325]/40'
+                          ? 'bg-[#0A3161] text-white border-[#0A3161] shadow-xs'
+                          : 'bg-white dark:bg-[#1a202c] text-slate-700 dark:text-slate-300 border-black/10 dark:border-white/10 hover:border-[#0A3161]/40'
                       }`}
                     >
                       {fmt.label}
@@ -1090,8 +1127,8 @@ export function SmartSlotFinder() {
                       onClick={() => setAppointmentFor(opt.id)}
                       className={`h-8 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
                         appointmentFor === opt.id
-                          ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
-                          : 'bg-white dark:bg-[#1a202c] text-slate-700 dark:text-slate-300 border-black/10 dark:border-white/10 hover:border-[#ff6325]/40'
+                          ? 'bg-[#0A3161] text-white border-[#0A3161] shadow-xs'
+                          : 'bg-white dark:bg-[#1a202c] text-slate-700 dark:text-slate-300 border-black/10 dark:border-white/10 hover:border-[#0A3161]/40'
                       }`}
                     >
                       {opt.label}
@@ -1159,6 +1196,19 @@ export function SmartSlotFinder() {
             <div className="p-6 grid grid-cols-1 sm:grid-cols-3 gap-3 max-h-[65vh] overflow-y-auto custom-scrollbar">
               {SUBNAV_CATEGORIES.map((cat) => {
                 const isSelected = cat.id === selectedCatId;
+                const icon3DMap: Record<string, string> = {
+                  'travel-transport': '/images/user_icons/travel-cabs.png',
+                  'stay-accommodation': '/images/user_icons/stay-accommodation.png',
+                  'entertainment-events': '/images/user_icons/entertainment.png',
+                  'sports-turf': '/images/user_icons/sports-turfs.png',
+                  'lifestyle-local': '/images/user_icons/lifestyle-spa.png',
+                  'business-professional': '/images/user_icons/coworking-office.png',
+                  'religious-government': '/images/user_icons/darshan-pooja.png',
+                  'rental-equipment': '/images/user_icons/equipment-rentals-v2.png',
+                  'personal-misc': '/images/user_icons/personal-services-v2.png',
+                };
+                const icon3d = icon3DMap[cat.id];
+
                 return (
                   <button
                     key={cat.id}
@@ -1170,7 +1220,15 @@ export function SmartSlotFinder() {
                     }`}
                   >
                     <div className="flex items-center justify-between w-full">
-                      <span className="text-2xl">{cat.emoji}</span>
+                      {icon3d ? (
+                        <img 
+                          src={icon3d} 
+                          alt={cat.label} 
+                          className="w-8 h-8 object-contain drop-shadow-sm group-hover:scale-110 transition-transform duration-300" 
+                        />
+                      ) : (
+                        <span className="text-2xl">{cat.emoji}</span>
+                      )}
                       {isSelected && (
                         <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-[#ff6325] text-white">
                           Active

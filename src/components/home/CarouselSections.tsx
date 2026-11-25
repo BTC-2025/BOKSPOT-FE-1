@@ -56,8 +56,8 @@ export function CarouselSections() {
               Curated bookings, premium stays, express transit & exclusive events tailored for you
             </p>
           </div>
-          <Link 
-            href="/search" 
+          <Link
+            href="/search"
             className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold text-[color:var(--color-primary)] hover:bg-[color:var(--color-primary)]/10 border border-[color:var(--color-primary)]/20 transition-all duration-300"
           >
             <span>View All</span>
@@ -89,14 +89,9 @@ export function CarouselSections() {
             className="flex gap-4.5 pb-6 pt-1 overflow-x-auto snap-x scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-1"
           >
             {RECOMMENDED_ITEMS.map((item: any, idx: number) => {
-              const isEven = idx % 2 === 1; // 0: Blue, 1: Orange, 2: Blue, 3: Orange
-              const cardBorderClass = isEven
-                ? 'border-[#ff6325]/30 hover:border-[#ff6325] hover:shadow-[0_14px_30px_rgba(255,99,37,0.14)]'
-                : 'border-[#0A3161]/30 hover:border-[#0A3161] hover:shadow-[0_14px_30px_rgba(10,49,97,0.16)]';
-              const titleHoverClass = isEven ? 'group-hover:text-[#ff6325]' : 'group-hover:text-[#0A3161]';
-              const ctaButtonClass = isEven
-                ? 'bg-[#ff6325] hover:bg-[#ea580c] text-white shadow-[0_2px_8px_rgba(255,99,37,0.3)]'
-                : 'bg-[#0A3161] hover:bg-[#072449] text-white shadow-[0_2px_8px_rgba(10,49,97,0.3)]';
+              const cardBorderClass = 'border-[#ff6325]/30 hover:border-[#ff6325] hover:shadow-[0_14px_30px_rgba(255,99,37,0.14)]';
+              const titleHoverClass = 'group-hover:text-[#ff6325]';
+              const ctaButtonClass = 'bg-[#ff6325] hover:bg-[#ea580c] text-white shadow-[0_2px_8px_rgba(255,99,37,0.3)]';
 
               return (
                 <Link
@@ -105,7 +100,7 @@ export function CarouselSections() {
                   className="w-[240px] sm:w-[260px] lg:w-[calc(25%-12px)] shrink-0 group flex flex-col snap-start"
                 >
                   <div className={`relative bg-[color:var(--color-surface)] dark:bg-[color:var(--color-surface-container)] rounded-[22px] overflow-hidden border ${cardBorderClass} shadow-[0_4px_16px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)] dark:hover:shadow-[0_16px_36px_rgba(0,0,0,0.4)] transition-all duration-400 flex flex-col h-[300px] hover:-translate-y-1`}>
-                    
+
                     {/* Image Section */}
                     <div className="relative h-[155px] w-full overflow-hidden bg-slate-900">
                       <img
@@ -117,7 +112,7 @@ export function CarouselSections() {
                         }}
                         className="w-full h-full object-cover group-hover:scale-106 transition-transform duration-500 ease-out"
                       />
-                      
+
                       {/* Modern gradient scrim */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-black/25 pointer-events-none" />
 
@@ -233,8 +228,8 @@ export function CarouselSections() {
                 </p>
               </div>
 
-              <Link 
-                href={sec.href} 
+              <Link
+                href={sec.href}
                 className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold text-[color:var(--color-primary)] hover:bg-[color:var(--color-primary)]/10 border border-[color:var(--color-primary)]/20 transition-all duration-300"
               >
                 <span>View All Trending</span>
@@ -244,128 +239,123 @@ export function CarouselSections() {
 
             {/* Seamless Open Track with Floating Arrows */}
             <div className="relative group">
-                {/* Left Arrow */}
-                <button
-                  onClick={() => scrollTrending('left')}
-                  aria-label="Scroll left"
-                  className="absolute -left-4 top-[45%] -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-slate-900/90 backdrop-blur-xl border border-white/15 flex items-center justify-center shadow-2xl hover:scale-110 hover:border-orange-500/50 transition-all opacity-0 group-hover:opacity-100 text-white"
-                >
-                  <span className="material-symbols-outlined text-[22px]">chevron_left</span>
-                </button>
+              {/* Left Arrow */}
+              <button
+                onClick={() => scrollTrending('left')}
+                aria-label="Scroll left"
+                className="absolute -left-4 top-[45%] -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-slate-900/90 backdrop-blur-xl border border-white/15 flex items-center justify-center shadow-2xl hover:scale-110 hover:border-orange-500/50 transition-all opacity-0 group-hover:opacity-100 text-white"
+              >
+                <span className="material-symbols-outlined text-[22px]">chevron_left</span>
+              </button>
 
-                {/* Right Arrow */}
-                <button
-                  onClick={() => scrollTrending('right')}
-                  aria-label="Scroll right"
-                  className="absolute -right-4 top-[45%] -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-slate-900/90 backdrop-blur-xl border border-white/15 flex items-center justify-center shadow-2xl hover:scale-110 hover:border-orange-500/50 transition-all opacity-0 group-hover:opacity-100 text-white"
-                >
-                  <span className="material-symbols-outlined text-[22px]">chevron_right</span>
-                </button>
+              {/* Right Arrow */}
+              <button
+                onClick={() => scrollTrending('right')}
+                aria-label="Scroll right"
+                className="absolute -right-4 top-[45%] -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-slate-900/90 backdrop-blur-xl border border-white/15 flex items-center justify-center shadow-2xl hover:scale-110 hover:border-orange-500/50 transition-all opacity-0 group-hover:opacity-100 text-white"
+              >
+                <span className="material-symbols-outlined text-[22px]">chevron_right</span>
+              </button>
 
-                <div
-                  ref={trendingScrollRef}
-                  className="flex gap-5 overflow-x-auto pb-4 pt-1 scroll-smooth snap-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-1"
-                >
-                  {sec.items.map((item: any, idx: number) => {
-                    const isEven = idx % 2 === 1; // 0: Blue, 1: Orange, 2: Blue, etc.
-                    const cardBorderClass = isEven
-                      ? 'border-[#ff6325]/30 hover:border-[#ff6325] hover:shadow-[0_14px_35px_rgba(255,99,37,0.18)]'
-                      : 'border-[#0A3161]/30 hover:border-[#0A3161] hover:shadow-[0_14px_35px_rgba(10,49,97,0.18)]';
-                    const titleHoverClass = isEven ? 'group-hover:text-[#ff6325]' : 'group-hover:text-[#0A3161]';
-                    const ctaButtonClass = isEven
-                      ? 'bg-[#ff6325] hover:bg-[#ea580c] text-white shadow-xs'
-                      : 'bg-[#0A3161] hover:bg-[#072449] text-white shadow-xs';
+              <div
+                ref={trendingScrollRef}
+                className="flex gap-5 overflow-x-auto pb-4 pt-1 scroll-smooth snap-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-1"
+              >
+                {sec.items.map((item: any, idx: number) => {
+                  const cardBorderClass = 'border-[#0A3161]/30 hover:border-[#0A3161] hover:shadow-[0_14px_35px_rgba(10,49,97,0.18)]';
+                  const titleHoverClass = 'group-hover:text-[#0A3161]';
+                  const ctaButtonClass = 'bg-[#0A3161] hover:bg-[#072449] text-white shadow-xs';
 
-                    return (
-                      <Link
-                        key={item.id}
-                        href={item.link}
-                        className="w-[245px] sm:w-[260px] shrink-0 snap-start group flex flex-col"
-                      >
-                        <div className={`relative bg-[color:var(--color-surface)] dark:bg-[#161c2b]/95 rounded-[22px] overflow-hidden border ${cardBorderClass} shadow-[0_4px_16px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-400 flex flex-col h-[310px] hover:-translate-y-1`}>
-                          
-                          {/* Image Section */}
-                          <div className="relative h-[160px] w-full shrink-0 overflow-hidden bg-slate-900">
-                            <img
-                              src={item.image}
-                              alt={item.title}
-                              loading="lazy"
-                              onError={(e: any) => {
-                                e.currentTarget.src = 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop&q=80';
-                              }}
-                              className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/35 pointer-events-none" />
-                            
-                            {/* Rank Ribbon Badge (#1, #2, #3) */}
-                            <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5">
-                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md bg-gradient-to-r from-orange-500 to-rose-600 text-white shadow-md shadow-orange-500/30 flex items-center gap-1">
-                                <span>#{idx + 1} Trending</span>
-                              </span>
-                            </div>
+                  return (
+                    <Link
+                      key={item.id}
+                      href={item.link}
+                      className="w-[245px] sm:w-[260px] shrink-0 snap-start group flex flex-col"
+                    >
+                      <div className={`relative bg-[color:var(--color-surface)] dark:bg-[#161c2b]/95 rounded-[22px] overflow-hidden border ${cardBorderClass} shadow-[0_4px_16px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-400 flex flex-col h-[310px] hover:-translate-y-1`}>
 
-                            {/* Wishlist Button - Top Right */}
-                            <WishlistButton item={item} />
+                        {/* Image Section */}
+                        <div className="relative h-[160px] w-full shrink-0 overflow-hidden bg-slate-900">
+                          <img
+                            src={item.image}
+                            alt={item.title}
+                            loading="lazy"
+                            onError={(e: any) => {
+                              e.currentTarget.src = 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop&q=80';
+                            }}
+                            className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/35 pointer-events-none" />
 
-                            {/* Image Footer: Category & Price Tag */}
-                            <div className="absolute bottom-2.5 inset-x-2.5 z-10 flex items-center justify-between gap-1.5 pointer-events-none">
-                              {item.badge ? (
-                                <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider backdrop-blur-md shadow-sm border border-white/20 flex items-center gap-1 ${item.badgeBg || 'bg-rose-500 text-white'}`}>
-                                  {item.badge}
-                                </span>
-                              ) : <span />}
-
-                              <div className="flex items-baseline gap-0.5 px-2.5 py-0.5 rounded-lg backdrop-blur-xl bg-slate-900/90 border border-orange-500/30 text-white shadow-md">
-                                <span className="text-[12px] font-black tracking-tight text-orange-400">{item.price}</span>
-                              </div>
-                            </div>
+                          {/* Rank Ribbon Badge (#1, #2, #3) */}
+                          <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md bg-gradient-to-r from-orange-500 to-rose-600 text-white shadow-md shadow-orange-500/30 flex items-center gap-1">
+                              <span>#{idx + 1} Trending</span>
+                            </span>
                           </div>
 
-                          {/* Card Info Body */}
-                          <div className="p-3 flex-1 flex flex-col justify-between bg-[color:var(--color-surface)] dark:bg-[#161c2b]">
-                            <div>
-                              <div className="flex items-start justify-between gap-1.5">
-                                <h3 className={`font-bold text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 ${titleHoverClass} transition-colors`}>
-                                  {item.title}
-                                </h3>
-                                <div className="flex text-amber-400 shrink-0">
-                                  {[...Array(item.stars || 5)].map((_, i) => (
-                                    <Star key={i} className="w-2.5 h-2.5 fill-current" />
-                                  ))}
-                                </div>
-                              </div>
+                          {/* Wishlist Button - Top Right */}
+                          <WishlistButton item={item} />
 
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1 font-medium truncate">
-                                <span className="material-symbols-outlined text-[13px] text-[#0A3161] dark:text-blue-400 shrink-0">location_on</span>
-                                <span className="truncate">{item.location}</span>
-                              </p>
-                            </div>
+                          {/* Image Footer: Category & Price Tag */}
+                          <div className="absolute bottom-2.5 inset-x-2.5 z-10 flex items-center justify-between gap-1.5 pointer-events-none">
+                            {item.badge ? (
+                              <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider backdrop-blur-md shadow-sm border border-white/20 flex items-center gap-1 ${item.badgeBg || 'bg-rose-500 text-white'}`}>
+                                {item.badge}
+                              </span>
+                            ) : <span />}
 
-                            <div className="flex items-center justify-between pt-2 mt-1 border-t border-[color:var(--color-outline-variant)]/20 dark:border-white/[0.06]">
-                              <div className="flex items-center gap-1 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
-                                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                                <span className="text-[10px] font-black text-amber-600 dark:text-amber-400">
-                                  {item.ratingScore}
-                                </span>
-                                <span className="text-[9px] text-[color:var(--color-outline)] font-medium">
-                                  ({item.usersCount})
-                                </span>
-                              </div>
-
-                              <div className={`flex items-center gap-1 px-3 py-1 rounded-full ${ctaButtonClass} hover:brightness-105 transition-all font-bold text-[10px]`}>
-                                <span>Instant Book</span>
-                                <span className="material-symbols-outlined text-[11px] group-hover:translate-x-0.5 transition-transform">
-                                  bolt
-                                </span>
-                              </div>
+                            <div className="flex items-baseline gap-0.5 px-2.5 py-0.5 rounded-lg backdrop-blur-xl bg-slate-900/90 border border-orange-500/30 text-white shadow-md">
+                              <span className="text-[12px] font-black tracking-tight text-orange-400">{item.price}</span>
                             </div>
                           </div>
                         </div>
-                      </Link>
-                    );
-                  })}
-                </div>
+
+                        {/* Card Info Body */}
+                        <div className="p-3 flex-1 flex flex-col justify-between bg-[color:var(--color-surface)] dark:bg-[#161c2b]">
+                          <div>
+                            <div className="flex items-start justify-between gap-1.5">
+                              <h3 className={`font-bold text-[13px] leading-snug text-[#0A3161] dark:text-white line-clamp-1 ${titleHoverClass} transition-colors`}>
+                                {item.title}
+                              </h3>
+                              <div className="flex text-amber-400 shrink-0">
+                                {[...Array(item.stars || 5)].map((_, i) => (
+                                  <Star key={i} className="w-2.5 h-2.5 fill-current" />
+                                ))}
+                              </div>
+                            </div>
+
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1 font-medium truncate">
+                              <span className="material-symbols-outlined text-[13px] text-[#0A3161] dark:text-blue-400 shrink-0">location_on</span>
+                              <span className="truncate">{item.location}</span>
+                            </p>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-2 mt-1 border-t border-[color:var(--color-outline-variant)]/20 dark:border-white/[0.06]">
+                            <div className="flex items-center gap-1 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
+                              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                              <span className="text-[10px] font-black text-amber-600 dark:text-amber-400">
+                                {item.ratingScore}
+                              </span>
+                              <span className="text-[9px] text-[color:var(--color-outline)] font-medium">
+                                ({item.usersCount})
+                              </span>
+                            </div>
+
+                            <div className={`flex items-center gap-1 px-3 py-1 rounded-full ${ctaButtonClass} hover:brightness-105 transition-all font-bold text-[10px]`}>
+                              <span>Instant Book</span>
+                              <span className="material-symbols-outlined text-[11px] group-hover:translate-x-0.5 transition-transform">
+                                bolt
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
+            </div>
           </section>
         );
       })()}
@@ -400,8 +390,8 @@ export function CarouselSections() {
                   </div>
                 </div>
 
-                <Link 
-                  href={sec.href} 
+                <Link
+                  href={sec.href}
                   className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold text-[#ff6325] hover:bg-[#ff6325]/10 border border-[#ff6325]/30 transition-all duration-300"
                 >
                   <span>All Events</span>
@@ -433,11 +423,8 @@ export function CarouselSections() {
                   ref={eventsScrollRef}
                   className="flex gap-5 overflow-x-auto pb-4 pt-1 custom-scrollbar scroll-smooth snap-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-1"
                 >
-                  {sec.items.map((item: any, idx: number) => {
-                    const isOrange = idx % 2 === 1; // 0: Blue, 1: Orange, 2: Blue, 3: Orange
-                    const cardBorderClass = isOrange
-                      ? 'border-[#ff6325]/30 hover:border-[#ff6325] hover:shadow-[0_14px_30px_rgba(255,99,37,0.14)]'
-                      : 'border-[#0A3161]/30 hover:border-[#0A3161] hover:shadow-[0_14px_30px_rgba(10,49,97,0.16)]';
+                  {sec.items.map((item: any) => {
+                    const cardBorderClass = 'border-[#ff6325]/30 hover:border-[#ff6325] hover:shadow-[0_14px_30px_rgba(255,99,37,0.14)]';
 
                     return (
                       <Link
@@ -447,7 +434,7 @@ export function CarouselSections() {
                       >
                         {/* Ticket Card Architecture with Perforated Look & Pass Entry Pill */}
                         <div className={`relative bg-[color:var(--color-surface)] dark:bg-[#101c1c]/90 rounded-[22px] overflow-hidden border ${cardBorderClass} shadow-[0_4px_16px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)] dark:hover:shadow-[0_16px_36px_rgba(0,0,0,0.4)] transition-all duration-400 flex flex-col h-[320px] hover:-translate-y-1`}>
-                          
+
                           {/* Wide Image Header */}
                           <div className="relative h-[155px] w-full shrink-0 overflow-hidden bg-slate-950">
                             <img
@@ -461,8 +448,8 @@ export function CarouselSections() {
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
                             <WishlistButton item={item} />
-                            
-                            {/* Event Category Tag */}
+
+                            e                            {/* Event Category Tag */}
                             <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5">
                               <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md bg-[#0A3161]/90 text-white border border-[#0A3161]/50 shadow-sm flex items-center gap-1">
                                 <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />

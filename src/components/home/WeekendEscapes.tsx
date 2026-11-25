@@ -268,7 +268,7 @@ export function WeekendEscapes() {
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#ff6325] text-white hover:brightness-105 transition-all duration-300 font-bold text-[10px] shadow-xs">
+                        <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#0a3161] hover:bg-[#ff6325] text-white transition-all duration-300 font-bold text-[10px] shadow-xs">
                           <span>Book Stay</span>
                           <ArrowRight className="w-2.5 h-2.5 group-hover:translate-x-0.5 transition-transform" />
                         </div>
