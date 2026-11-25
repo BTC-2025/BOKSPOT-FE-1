@@ -5587,18 +5587,34 @@ export default function VenueProfilePage() {
             const liveYogaListings = (liveServices && liveServices.length > 0)
               ? liveServices.flatMap((svc: any, sIdx: number) => {
                   const svcListings = Array.isArray(svc?.listings) && svc.listings.length > 0 ? svc.listings : [svc];
-                  return svcListings.map((l: any, idx: number) => ({
-                    id: l.id || `batch-live-${sIdx}-${idx}`,
-                    time: l.metadata?.time || l.schedule || (idx === 0 ? '06:00 AM – 07:15 AM' : idx === 1 ? '07:30 AM – 08:45 AM' : '05:30 PM – 06:45 PM'),
-                    title: l.name || svc.name || 'Yoga Shala Batch',
-                    guru: l.metadata?.guru || { name: l.metadata?.instructor || svc.metadata?.instructor || 'Senior Shala Acharya', lineage: 'Certified Lineage', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80' },
-                    level: l.metadata?.level || 'All Levels',
-                    discipline: l.metadata?.discipline || 'HATHA FLOW',
-                    intensity: l.metadata?.intensity || 'Mindful Flow',
-                    price: Number(l.price || l.basePrice || svc.price || 399),
-                    spotsAvailable: Number(l.metadata?.spotsLeft || l.maxCapacity || 8),
-                    totalCapacity: Number(l.maxCapacity || 14)
-                  }));
+                  return svcListings.map((l: any, idx: number) => {
+                    const lMeta = l.metadata || {};
+                    const guruName = lMeta.leadGuru || lMeta.guruName || lMeta.instructor || lMeta.guru?.name || svc.metadata?.instructor || 'Senior Shala Acharya';
+                    const guruLineage = lMeta.yogaCertifications || lMeta.lineage || lMeta.qualification || lMeta.guru?.lineage || 'Certified Lineage';
+                    const guruAvatar = lMeta.guruAvatar || lMeta.guru?.avatar || l.imageUrl || svc.imageUrl || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80';
+                    const timeWindow = lMeta.batchSchedule || lMeta.schedule || lMeta.time || (idx === 0 ? '06:00 AM – 07:15 AM' : idx === 1 ? '07:30 AM – 08:45 AM' : '05:30 PM – 06:45 PM');
+                    const discipline = (lMeta.yogaStyle || lMeta.discipline || 'Hatha Flow').toUpperCase();
+                    const intensity = lMeta.intensity || lMeta.level || 'Mindful Flow';
+                    const capacity = Number(lMeta.maxMatCapacity || lMeta.maxCapacity || l.maxCapacity || 16);
+                    const spotsLeft = Number(lMeta.spotsLeft || lMeta.spotsAvailable || Math.max(1, capacity - (idx * 2)));
+
+                    return {
+                      id: l.id || `batch-live-${sIdx}-${idx}`,
+                      time: timeWindow,
+                      title: l.name || svc.name || 'Yoga Shala Batch',
+                      guru: {
+                        name: guruName,
+                        lineage: guruLineage,
+                        avatar: guruAvatar
+                      },
+                      level: lMeta.level || 'All Levels',
+                      discipline: discipline,
+                      intensity: intensity,
+                      price: Number(l.price || l.basePrice || svc.price || 399),
+                      spotsAvailable: spotsLeft,
+                      totalCapacity: capacity
+                    };
+                  });
                 })
               : [];
 
