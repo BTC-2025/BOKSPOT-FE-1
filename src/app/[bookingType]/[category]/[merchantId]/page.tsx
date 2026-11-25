@@ -5688,30 +5688,27 @@ export default function VenueProfilePage() {
               }
             ];
 
-            const CLASS_PACKS = [
+            // Dynamic Vendor Multi-Class / Monthly Membership Passes
+            const vendorConfiguredPasses = (liveServices || []).flatMap((svc: any) => {
+              const svcPasses = svc?.metadata?.classPasses || [];
+              const listingPasses = (svc?.listings || []).flatMap((l: any) => l.metadata?.classPasses || []);
+              return [...svcPasses, ...listingPasses];
+            });
+
+            // Fallback default passes if none configured by vendor
+            const defaultClassPacks = [
               {
-                id: 'pack-drop-in',
-                name: 'Single Drop-in Class',
-                tag: 'SINGLE_SESSION',
-                sessions: '1 Class',
-                price: 399,
-                validity: 'Valid for selected batch date',
-                perk: 'Free post-practice Ayurvedic brew'
-              },
-              {
-                id: 'pack-5-classes',
+                id: 'pass-5-classes',
                 name: '5-Class Flexible Shala Pack',
-                tag: 'PACK_5',
                 sessions: '5 Classes',
                 price: 1799,
                 originalPrice: 2250,
                 validity: '45 Days Validity across all batches',
-                perk: 'Free Shavasana Lavender Eye Pillow included'
+                perk: 'Flexible morning & evening shala access'
               },
               {
-                id: 'pack-monthly-unlimited',
+                id: 'pass-monthly-unlimited',
                 name: 'Monthly Unlimited Sadhana Pass',
-                tag: 'MONTHLY_SADHANA',
                 sessions: 'Unlimited',
                 price: 2999,
                 originalPrice: 3800,
@@ -5720,8 +5717,20 @@ export default function VenueProfilePage() {
               }
             ];
 
+            const CLASS_PACKS: any[] = vendorConfiguredPasses.length > 0
+              ? vendorConfiguredPasses.map((p: any, idx: number) => ({
+                  id: p.id || `pass-${idx}`,
+                  name: p.name || `Class Pass #${idx + 1}`,
+                  sessions: p.sessions || 'Unlimited',
+                  price: Number(p.price) || 0,
+                  originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
+                  validity: p.validity || 'Standard Validity',
+                  perk: p.perk || 'Full Shala Access'
+                }))
+              : defaultClassPacks;
+
             const activeBatch = shalaBatches.find((b: any) => b.id === selectedYogaBatchId) || shalaBatches[0];
-            const activePack = CLASS_PACKS.find(p => p.tag === yogaSadhanaTab) || CLASS_PACKS[0];
+            const activePack = CLASS_PACKS.find(p => p.id === yogaSadhanaTab) || CLASS_PACKS[0] || defaultClassPacks[0];
 
             // Filter batches by selected format (Cult.fit Standard)
             const filteredShalaBatches = selectedYogaFormat === 'ALL'
@@ -5764,40 +5773,32 @@ export default function VenueProfilePage() {
                     </p>
                   </div>
 
-                  {/* Mode Toggle: Single Class vs 5-Class Pack vs Monthly Sadhana */}
+                  {/* Mode Toggle: Style A - Clean 2-Tab Split */}
                   <div className="inline-flex p-1 rounded-2xl bg-amber-100/60 dark:bg-slate-800 border border-amber-900/15 dark:border-white/10 shrink-0">
                     <button
                       type="button"
                       onClick={() => setYogaSadhanaTab('SINGLE_SESSION')}
-                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
                         yogaSadhanaTab === 'SINGLE_SESSION'
                           ? 'bg-[#ff6325] text-white shadow-xs'
                           : 'text-slate-700 dark:text-slate-300 hover:text-slate-900'
                       }`}
                     >
-                      Daily Drop-in Class
+                      Daily Drop-in Batches ({filteredShalaBatches.length})
                     </button>
                     <button
                       type="button"
-                      onClick={() => setYogaSadhanaTab('PACK_5')}
-                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        yogaSadhanaTab === 'PACK_5'
+                      onClick={() => {
+                        const firstPassId = CLASS_PACKS[0]?.id || 'pass-5-classes';
+                        setYogaSadhanaTab(firstPassId);
+                      }}
+                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
+                        yogaSadhanaTab !== 'SINGLE_SESSION'
                           ? 'bg-[#ff6325] text-white shadow-xs'
                           : 'text-slate-700 dark:text-slate-300 hover:text-slate-900'
                       }`}
                     >
-                      5-Class Pack
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setYogaSadhanaTab('MONTHLY_SADHANA')}
-                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        yogaSadhanaTab === 'MONTHLY_SADHANA'
-                          ? 'bg-[#0a3161] text-white shadow-xs'
-                          : 'text-slate-700 dark:text-slate-300 hover:text-slate-900'
-                      }`}
-                    >
-                      Monthly Pass
+                      Memberships &amp; Passes ({CLASS_PACKS.length})
                     </button>
                   </div>
                 </div>
@@ -5898,38 +5899,26 @@ export default function VenueProfilePage() {
                               </div>
 
                               <div className="pt-2 border-t border-slate-100 dark:border-white/10 flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <img
-                                    src={batch.guru.avatar}
-                                    alt={batch.guru.name}
-                                    className="w-7 h-7 rounded-full object-cover border border-white shadow-xs"
-                                  />
-                                  <div className="leading-tight">
-                                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
-                                      {batch.guru.name}
-                                    </span>
-                                    <span className="text-[10px] text-slate-400 block">
-                                      {batch.guru.lineage}
-                                    </span>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  <span className="text-sm font-black text-slate-900 dark:text-white">
+                                <div className="leading-tight">
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                                    Single Session Fee
+                                  </span>
+                                  <span className="text-base font-black text-slate-900 dark:text-white">
                                     ₹{batch.price}
                                   </span>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setSelectedYogaBatchId(batch.id);
-                                      setIsYogaDrawerOpen(true);
-                                    }}
-                                    className="px-3.5 py-1.5 rounded-xl font-black text-xs uppercase tracking-wider bg-[#ff6325] hover:bg-[#e04e13] text-white shadow-xs hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-1"
-                                  >
-                                    <span>Book</span>
-                                    <span>→</span>
-                                  </button>
                                 </div>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedYogaBatchId(batch.id);
+                                    setIsYogaDrawerOpen(true);
+                                  }}
+                                  className="px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider bg-[#ff6325] hover:bg-[#e04e13] text-white shadow-xs hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+                                >
+                                  <span>Book</span>
+                                  <span>→</span>
+                                </button>
                               </div>
                             </div>
                           );
@@ -5940,13 +5929,27 @@ export default function VenueProfilePage() {
                 ) : (
                   /* CLASS PACKS & MONTHLY SHALA SADHANA PASSES */
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                          Select Membership or Class Pass
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          Flexible studio all-access passes. Valid across all daily morning and evening batches.
+                        </p>
+                      </div>
+                      <span className="text-xs font-bold text-[#ff6325] px-2.5 py-1 rounded-full bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-500/20">
+                        {CLASS_PACKS.length} Passes Available
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {CLASS_PACKS.map((pack) => {
-                        const isPackSelected = yogaSadhanaTab === pack.tag;
+                        const isPackSelected = yogaSadhanaTab === pack.id;
                         return (
                           <div
                             key={pack.id}
-                            onClick={() => setYogaSadhanaTab(pack.tag as any)}
+                            onClick={() => setYogaSadhanaTab(pack.id as any)}
                             className={`p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-4 ${
                               isPackSelected
                                 ? 'bg-orange-50/70 dark:bg-orange-950/20 border-[#ff6325] ring-2 ring-[#ff6325]/40 shadow-sm'
@@ -5970,10 +5973,12 @@ export default function VenueProfilePage() {
                               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                                 {pack.validity}
                               </p>
-                              <div className="mt-3 py-2 px-3 rounded-xl bg-amber-50/80 dark:bg-slate-700/50 border border-amber-200/50 dark:border-white/5 text-[11px] font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
-                                <span>✦</span>
-                                <span>{pack.perk}</span>
-                              </div>
+                              {pack.perk && (
+                                <div className="mt-3 py-2 px-3 rounded-xl bg-amber-50/80 dark:bg-slate-700/50 border border-amber-200/50 dark:border-white/5 text-[11px] font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+                                  <span>✦</span>
+                                  <span>{pack.perk}</span>
+                                </div>
+                              )}
                             </div>
 
                             <div className="pt-3 border-t border-slate-100 dark:border-white/10 flex items-center justify-between">
@@ -6040,10 +6045,10 @@ export default function VenueProfilePage() {
                       type="button"
                       onClick={() => {
                         const resolvedMerchantId = merchantId || 'merchant-yoga-1';
-                        const bookingTitle = `${venueName} — ${activePack.name} (${yogaSadhanaTab === 'PACK_5' ? '5 Sessions' : '30-Day Sadhana'})`;
+                        const bookingTitle = `${venueName} — ${activePack.name} (${activePack.sessions} / ${activePack.validity})`;
 
                         setSelectedService({
-                          id: `yoga-${Date.now()}`,
+                          id: `yoga-pass-${Date.now()}`,
                           name: bookingTitle,
                           price: effectivePrice,
                           merchantId: resolvedMerchantId,
@@ -6114,9 +6119,9 @@ export default function VenueProfilePage() {
                             {activeBatch.title}
                           </h3>
                           <div className="flex items-center gap-3 mt-1 text-xs text-slate-600 dark:text-slate-300">
-                            <span>🕒 {activeBatch.time} ({activeBatch.duration})</span>
+                            <span>{activeBatch.time}</span>
                             <span>•</span>
-                            <span>🧘 {activeBatch.guru.name}</span>
+                            <span>{activeBatch.discipline}</span>
                           </div>
                         </div>
                         <button
