@@ -393,11 +393,11 @@ export function SmartSlotFinder() {
                             }}
                             className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-medium flex items-center gap-2 transition-colors cursor-pointer ${
                               selectedCity === city
-                                ? 'bg-[#ff6325]/10 text-[#ff6325] font-bold'
-                                : 'text-slate-700 dark:text-slate-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
+                                ? 'bg-[#0A3161]/10 text-[#0A3161] dark:text-blue-400 font-bold'
+                                : 'text-slate-700 dark:text-slate-200 hover:bg-[#0A3161]/[0.05] dark:hover:bg-blue-950/30'
                             }`}
                           >
-                            <span className="material-symbols-outlined text-[13px] text-[#ff6325] shrink-0">
+                            <span className="material-symbols-outlined text-[13px] text-[#0A3161] dark:text-blue-400 shrink-0">
                               {city.includes('Near Me') ? 'my_location' : 'near_me'}
                             </span>
                             <span className="truncate">{city}</span>
@@ -409,7 +409,7 @@ export function SmartSlotFinder() {
                           onClick={() => setIsCitySuggestionsOpen(false)}
                           className="w-full text-left px-2.5 py-1.5 rounded-xl text-xs text-slate-500 hover:bg-black/[0.04] flex items-center gap-2 cursor-pointer"
                         >
-                          <span className="material-symbols-outlined text-[13px] text-[#ff6325]">location_searching</span>
+                          <span className="material-symbols-outlined text-[13px] text-[#0A3161] dark:text-blue-400">location_searching</span>
                           <span>Use &ldquo;{selectedCity}&rdquo;</span>
                         </button>
                       )}
