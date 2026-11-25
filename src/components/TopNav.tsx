@@ -103,57 +103,10 @@ export function TopNav({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
 
-  // Scroll behavior:
-  // Dynamically hide/reveal on scroll across Home, Categories, and Booking pages:
-  // - Downward scroll: hide all headers
-  // - Upward scroll: main header appears first
-  // - Top of page (scroll <= 25px): both main and secondary header appear
-  const [headerMainVisible, setHeaderMainVisible] = useState(true);
-  const [headerSecondaryVisible, setHeaderSecondaryVisible] = useState(true);
-  const lastScrollYRef = useRef(0);
-
-  useEffect(() => {
-    let ticking = false;
-
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY || document.documentElement.scrollTop || 0;
-
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          // 1. When at or near the very top of page (scrollY <= 25), BOTH headers show
-          if (currentScrollY <= 25) {
-            setHeaderMainVisible(true);
-            setHeaderSecondaryVisible(true);
-          } else {
-            const scrollDelta = currentScrollY - lastScrollYRef.current;
-
-            // Use an intentional threshold to prevent microscopic mouse/touch jitter
-            if (scrollDelta > 15) {
-              // Scrolling DOWN: hide both headers
-              setHeaderMainVisible(false);
-              setHeaderSecondaryVisible(false);
-            } else if (scrollDelta < -15) {
-              // Scrolling UP in middle: ONLY main orange header, secondary white nav stays strictly hidden
-              setHeaderMainVisible(true);
-              setHeaderSecondaryVisible(false);
-            }
-          }
-
-          lastScrollYRef.current = currentScrollY;
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
-
-  const isMainHeaderVisible = headerMainVisible;
-  const isSecondaryHeaderVisible = headerSecondaryVisible;
+  // Header & SubNav behavior:
+  // Permanently visible & fixed across all pages (no hide on scroll) to ensure consistent, stable navigation
+  const isMainHeaderVisible = true;
+  const isSecondaryHeaderVisible = true;
 
   useEffect(() => {
     setMounted(true);
@@ -391,8 +344,7 @@ export function TopNav({
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 custom-navbar transition-transform duration-300 ease-in-out ${isMainHeaderVisible ? 'translate-y-0' : '-translate-y-full'
-          }`}
+        className="fixed top-0 left-0 right-0 custom-navbar shadow-md"
         style={{
           zIndex: 9999,
         }}
@@ -844,12 +796,9 @@ export function TopNav({
           </div>
         </div>
 
-        {/* Secondary Subnav Bar (Appears when at the very top of page; hidden during middle scrolling) */}
+        {/* Secondary Subnav Bar - Permanently fixed across all pages */}
         <div
-          className={`w-full overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out bg-gradient-to-r from-[#f0f7ff] via-[#e8f2fe] to-[#f0f7ff] dark:bg-[#080c14] border-b-[1px] border-[#0A3161]/80 shadow-[0_4px_16px_rgba(10,49,97,0.08)] ${isSecondaryHeaderVisible
-              ? 'h-10 max-h-10 opacity-100'
-              : 'h-0 max-h-0 opacity-0 pointer-events-none'
-            }`}
+          className="w-full h-10 max-h-10 opacity-100 bg-gradient-to-r from-[#f0f7ff] via-[#e8f2fe] to-[#f0f7ff] dark:bg-[#080c14] border-b-[1px] border-[#0A3161]/80 shadow-[0_4px_16px_rgba(10,49,97,0.08)]"
         >
           <div
             style={{
