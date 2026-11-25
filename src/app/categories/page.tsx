@@ -603,13 +603,13 @@ export default function CategoriesPage() {
                   key={bento.title}
                   onClick={() => handleSelectCategory(bento.tag)}
                   className={`group relative p-2.5 sm:p-3 rounded-[20px] border text-left flex items-center gap-2.5 sm:gap-3 transition-all duration-200 cursor-pointer overflow-hidden min-h-[76px] sm:min-h-[82px] ${isSelected
-                      ? 'bg-white dark:bg-[#121c2e] border-[#0a3161] dark:border-blue-500'
-                      : 'bg-white/80 dark:bg-[#121722]/80 hover:bg-white dark:hover:bg-[#171d2b] border-slate-200/80 dark:border-white/10 hover:border-[#0a3161]/50 dark:hover:border-blue-400/50'
+                      ? 'bg-[#0a3161]/[0.08] dark:bg-blue-950/40 border-[#0a3161] dark:border-blue-400'
+                      : 'bg-slate-50/80 dark:bg-[#121722]/80 hover:bg-slate-100 dark:hover:bg-[#171d2b] border-slate-200/80 dark:border-white/10 hover:border-[#0a3161]/40 dark:hover:border-blue-400/50'
                     }`}
                 >
                   {/* Category-Specific Soft Atmospheric Gradient Wash */}
                   <div
-                    className={`absolute inset-0 bg-gradient-to-br ${bento.bgGlow} pointer-events-none transition-opacity duration-300 ${isSelected ? 'opacity-100' : 'opacity-50 group-hover:opacity-80'
+                    className={`absolute inset-0 bg-gradient-to-br ${bento.bgGlow} pointer-events-none transition-opacity duration-300 ${isSelected ? 'opacity-80' : 'opacity-40 group-hover:opacity-70'
                       }`}
                   />
 

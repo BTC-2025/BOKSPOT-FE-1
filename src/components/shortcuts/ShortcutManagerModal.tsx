@@ -96,13 +96,15 @@ export function ShortcutManagerModal() {
                   <span className="text-xs font-semibold truncate">{item.label}</span>
                 </div>
 
-                <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ml-2 ${
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ml-2 transition-all ${
                   isSelected 
-                    ? 'border-[#0A3161] bg-[#0A3161] text-white' 
-                    : 'border-slate-300 dark:border-slate-700'
+                    ? 'border-[#0A3161] bg-[#0A3161] text-white shadow-2xs' 
+                    : 'border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50'
                 }`}>
                   {isSelected && (
-                    <span className="material-symbols-outlined text-[11px] font-black">check</span>
+                    <svg className="w-3 h-3 text-white" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3.5 8.5 6.5 11.5 12.5 5" />
+                    </svg>
                   )}
                 </div>
               </button>
