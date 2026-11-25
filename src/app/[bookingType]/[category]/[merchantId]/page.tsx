@@ -272,6 +272,18 @@ export default function VenueProfilePage() {
   // ── Dedicated Pure Yoga Shala Flow States (Mat Spot, Live Schedule, Rituals) ──
   const [selectedYogaBatchId, setSelectedYogaBatchId] = useState<string>('batch-sunrise');
   const [isYogaDrawerOpen, setIsYogaDrawerOpen] = useState<boolean>(false);
+
+  // Lock background body scroll when Yoga Modal Drawer is open
+  useEffect(() => {
+    if (isYogaDrawerOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isYogaDrawerOpen]);
+
   const [selectedYogaFormat, setSelectedYogaFormat] = useState<string>('ALL');
   const [yogaMatOption, setYogaMatOption] = useState<'BRING_OWN_MAT' | 'RENT_STUDIO_MAT'>('BRING_OWN_MAT');
   const [selectedYogaBrew, setSelectedYogaBrew] = useState<'ASHWAGANDHA_TULSI' | 'DETOX_GREEN' | 'WARM_TURMERIC_GOLD'>('ASHWAGANDHA_TULSI');
@@ -6315,17 +6327,17 @@ export default function VenueProfilePage() {
 
                 {/* TOP-APP STYLE SLIDE-OVER / MODAL DRAWER FOR YOGA SESSION CUSTOMIZATION */}
                 {isYogaDrawerOpen && (
-                  <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
+                  <div className="fixed inset-0 z-[10002] flex items-center justify-center p-4 pt-20 font-sans">
                     {/* Backdrop */}
                     <div
-                      className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+                      className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
                       onClick={() => setIsYogaDrawerOpen(false)}
                     />
 
                     {/* Modal Content */}
-                    <div className="relative w-full sm:max-w-xl bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 z-10 max-h-[92vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-6 duration-200">
+                    <div className="relative w-full sm:max-w-xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 z-10 max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
                       {/* Header */}
-                      <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-white/10 flex items-start justify-between bg-orange-50/50 dark:bg-slate-800/40">
+                      <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-white/10 flex items-start justify-between bg-orange-50/50 dark:bg-slate-800/40 shrink-0">
                         <div>
                           <div className="flex items-center gap-2 mb-1">
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-orange-100 dark:bg-orange-950/60 text-[#ff6325]">
@@ -6335,7 +6347,7 @@ export default function VenueProfilePage() {
                               {selectedDate || todayStr}
                             </span>
                           </div>
-                          <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                          <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
                             {activeBatch.title}
                           </h3>
                           <div className="flex items-center gap-3 mt-1 text-xs text-slate-600 dark:text-slate-300">
@@ -6347,7 +6359,7 @@ export default function VenueProfilePage() {
                         <button
                           type="button"
                           onClick={() => setIsYogaDrawerOpen(false)}
-                          className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                          className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                         >
                           ✕
                         </button>
