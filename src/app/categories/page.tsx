@@ -449,8 +449,8 @@ export default function CategoriesPage() {
       iconSrc: '/images/user_icons/all-services.png',
       desc: 'Browse entire directory',
       badge: '55 TOTAL',
-      badgeClass: 'bg-[#ff6325] text-white border-[#ff6325]',
-      bgGlow: 'from-[#ff6325]/15 via-[#ff6325]/5 to-transparent',
+      badgeClass: 'bg-[#0a3161]/10 dark:bg-blue-950/60 text-[#0a3161] dark:text-blue-300 border-[#0a3161]/20 dark:border-blue-800',
+      bgGlow: 'from-[#0a3161]/10 via-[#0a3161]/3 to-transparent',
     },
     {
       title: 'Travel & Cabs',
@@ -467,8 +467,8 @@ export default function CategoriesPage() {
       iconSrc: '/images/user_icons/stay-accommodation.png',
       desc: 'Resorts, Villas & homestays',
       badge: '5 TYPES',
-      badgeClass: 'bg-[#ffedd5] dark:bg-amber-950/60 text-[#ea580c] dark:text-amber-300 border-[#fed7aa] dark:border-amber-800',
-      bgGlow: 'from-amber-500/10 via-amber-500/3 to-transparent',
+      badgeClass: 'bg-[#e0f2fe] dark:bg-blue-950/60 text-[#0a3161] dark:text-blue-300 border-[#bae6fd] dark:border-blue-800',
+      bgGlow: 'from-blue-500/10 via-blue-500/3 to-transparent',
     },
     {
       title: 'Sports & Turfs',
@@ -485,8 +485,8 @@ export default function CategoriesPage() {
       iconSrc: '/images/user_icons/entertainment.png',
       desc: 'Cinema, concerts & events',
       badge: '7 SHOWS',
-      badgeClass: 'bg-[#fce7f3] dark:bg-pink-950/60 text-[#db2777] dark:text-pink-300 border-[#fbcfe8] dark:border-pink-800',
-      bgGlow: 'from-pink-500/10 via-pink-500/3 to-transparent',
+      badgeClass: 'bg-[#f0f4ff] dark:bg-indigo-950/60 text-[#3730a3] dark:text-indigo-300 border-[#c7d2fe] dark:border-indigo-800',
+      bgGlow: 'from-indigo-500/10 via-indigo-500/3 to-transparent',
     },
     {
       title: 'Lifestyle & Spa',
@@ -503,8 +503,8 @@ export default function CategoriesPage() {
       iconSrc: '/images/user_icons/coworking-office.png',
       desc: 'Desks, meeting & studios',
       badge: '5 WORKSPACES',
-      badgeClass: 'bg-[#f3e8ff] dark:bg-purple-950/60 text-[#9333ea] dark:text-purple-300 border-[#e9d5ff] dark:border-purple-800',
-      bgGlow: 'from-purple-500/10 via-purple-500/3 to-transparent',
+      badgeClass: 'bg-[#f0f9ff] dark:bg-sky-950/60 text-[#0369a1] dark:text-sky-300 border-[#bae6fd] dark:border-sky-800',
+      bgGlow: 'from-sky-500/10 via-sky-500/3 to-transparent',
     },
     {
       title: 'Darshan & Pooja',
@@ -512,8 +512,8 @@ export default function CategoriesPage() {
       iconSrc: '/images/user_icons/darshan-pooja.png',
       desc: 'Temple darshan & pilgrimage',
       badge: '3 PASSES',
-      badgeClass: 'bg-[#ffedd5] dark:bg-orange-950/60 text-[#ea580c] dark:text-orange-300 border-[#fed7aa] dark:border-orange-800',
-      bgGlow: 'from-orange-500/12 via-orange-500/3 to-transparent',
+      badgeClass: 'bg-[#eff6ff] dark:bg-blue-950/60 text-[#1d4ed8] dark:text-blue-300 border-[#bfdbfe] dark:border-blue-800',
+      bgGlow: 'from-blue-500/10 via-blue-500/3 to-transparent',
     },
     {
       title: 'Equipment Rentals',
@@ -530,8 +530,8 @@ export default function CategoriesPage() {
       iconSrc: '/images/user_icons/personal-services-v2.png',
       desc: 'Pet groom, care & babysit',
       badge: '4 SERVICES',
-      badgeClass: 'bg-[#f3e8ff] dark:bg-purple-950/60 text-[#9333ea] dark:text-purple-300 border-[#e9d5ff] dark:border-purple-800',
-      bgGlow: 'from-purple-500/10 via-purple-500/3 to-transparent',
+      badgeClass: 'bg-[#f1f5f9] dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+      bgGlow: 'from-slate-500/10 via-slate-500/3 to-transparent',
     },
   ];
 
@@ -595,50 +595,31 @@ export default function CategoriesPage() {
 
           {/* ── BENTO CATEGORY CARDS GRID (Horizontal Sleek Style - Icon Left, Text Middle, Badge Top-Right) ── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 pt-1">
-            {BENTO_CATEGORIES.map((bento, idx) => {
+            {BENTO_CATEGORIES.map((bento) => {
               const isSelected = activeGroup === bento.tag;
-              const isEven = idx % 2 === 0;
-
-              // Alternating Hover Colors:
-              // Even cards -> Bokspot Warm Orange hover accent
-              // Odd cards -> Bokspot Deep Navy / Sky Blue hover accent
-              const hoverCardStyle = isEven
-                ? 'hover:border-[#ff6325]/70 hover:shadow-[0_8px_22px_rgba(255,99,37,0.14)]'
-                : 'hover:border-[#0a3161]/70 dark:hover:border-sky-400 hover:shadow-[0_8px_22px_rgba(10,49,97,0.14)] dark:hover:shadow-[0_8px_22px_rgba(56,189,248,0.18)]';
-
-              const hoverTitleColor = isEven
-                ? 'group-hover:text-[#ff6325]'
-                : 'group-hover:text-[#0a3161] dark:group-hover:text-sky-400';
-
-              const hoverChevron = isEven
-                ? 'group-hover:bg-[#ff6325] group-hover:text-white group-hover:shadow-xs'
-                : 'group-hover:bg-[#0a3161] dark:group-hover:bg-sky-500 group-hover:text-white group-hover:shadow-xs';
 
               return (
                 <button
                   key={bento.title}
                   onClick={() => handleSelectCategory(bento.tag)}
-                  className={`group relative p-2.5 sm:p-3 rounded-[20px] border text-left flex items-center gap-2.5 sm:gap-3 transition-all duration-200 cursor-pointer overflow-hidden min-h-[76px] sm:min-h-[82px] ${
-                    isSelected
-                      ? 'bg-white/70 dark:bg-[#161c2b]/70 backdrop-blur-xl border-[#ff6325] shadow-[0_8px_24px_rgba(255,99,37,0.16)] ring-1.5 ring-[#ff6325]/45'
-                      : `bg-white/80 dark:bg-[#121722]/80 backdrop-blur-md hover:bg-white dark:hover:bg-[#171d2b] border-slate-200/70 dark:border-white/10 ${hoverCardStyle} shadow-[0_2px_8px_rgba(0,0,0,0.02)]`
-                  }`}
+                  className={`group relative p-2.5 sm:p-3 rounded-[20px] border text-left flex items-center gap-2.5 sm:gap-3 transition-all duration-200 cursor-pointer overflow-hidden min-h-[76px] sm:min-h-[82px] ${isSelected
+                      ? 'bg-white dark:bg-[#121c2e] border-[#0a3161] dark:border-blue-500'
+                      : 'bg-white/80 dark:bg-[#121722]/80 hover:bg-white dark:hover:bg-[#171d2b] border-slate-200/80 dark:border-white/10 hover:border-[#0a3161]/50 dark:hover:border-blue-400/50'
+                    }`}
                 >
                   {/* Category-Specific Soft Atmospheric Gradient Wash */}
                   <div
-                    className={`absolute inset-0 bg-gradient-to-br ${bento.bgGlow} pointer-events-none transition-opacity duration-300 ${
-                      isSelected ? 'opacity-100' : 'opacity-70 group-hover:opacity-100'
-                    }`}
+                    className={`absolute inset-0 bg-gradient-to-br ${bento.bgGlow} pointer-events-none transition-opacity duration-300 ${isSelected ? 'opacity-100' : 'opacity-50 group-hover:opacity-80'
+                      }`}
                   />
 
                   {/* Badge positioned at Top-Right */}
                   <div className="absolute top-2 right-2.5 z-20">
                     <span
-                      className={`text-[8px] font-bold tracking-wider px-2 py-0.5 rounded-full border shrink-0 transition-all ${
-                        isSelected
-                          ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
+                      className={`text-[8px] font-bold tracking-wider px-2 py-0.5 rounded-full border shrink-0 transition-all ${isSelected
+                          ? 'bg-[#0a3161] dark:bg-blue-600 text-white border-[#0a3161] dark:border-blue-500'
                           : `${bento.badgeClass} border-slate-200/90 dark:border-white/15`
-                      }`}
+                        }`}
                     >
                       {bento.badge}
                     </span>
@@ -651,7 +632,7 @@ export default function CategoriesPage() {
                       alt={bento.title}
                       width={56}
                       height={56}
-                      className="w-full h-full object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.12)] transition-transform duration-200 group-hover:scale-105"
+                      className="w-full h-full object-contain transition-transform duration-200 group-hover:scale-105"
                       priority
                     />
                   </div>
@@ -659,11 +640,10 @@ export default function CategoriesPage() {
                   {/* Middle: Title + Description */}
                   <div className="relative z-10 flex-1 min-w-0 pr-6 pt-1">
                     <h3
-                      className={`font-bold text-[12px] sm:text-[12.5px] tracking-tight leading-tight transition-colors truncate ${
-                        isSelected
-                          ? 'text-[#ff6325] font-extrabold'
-                          : `text-slate-800 dark:text-slate-100 ${hoverTitleColor}`
-                      }`}
+                      className={`font-bold text-[12px] sm:text-[12.5px] tracking-tight leading-tight transition-colors truncate ${isSelected
+                          ? 'text-[#0a3161] dark:text-blue-400 font-black'
+                          : 'text-slate-800 dark:text-slate-100 group-hover:text-[#0a3161] dark:group-hover:text-blue-400'
+                        }`}
                     >
                       {bento.title}
                     </h3>
@@ -675,11 +655,10 @@ export default function CategoriesPage() {
                   {/* Bottom-Right: Circular Chevron Arrow */}
                   <div className="absolute bottom-2 right-2.5 z-20">
                     <div
-                      className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${
-                        isSelected
-                          ? 'bg-[#ff6325] text-white shadow-xs'
-                          : `bg-slate-100/90 dark:bg-white/10 text-slate-400 dark:text-slate-300 ${hoverChevron}`
-                      }`}
+                      className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${isSelected
+                          ? 'bg-[#0a3161] dark:bg-blue-600 text-white'
+                          : 'bg-slate-100/90 dark:bg-white/10 text-slate-400 dark:text-slate-300 group-hover:bg-[#0a3161] dark:group-hover:bg-blue-600 group-hover:text-white'
+                        }`}
                     >
                       <ChevronRight size={11} strokeWidth={2.5} />
                     </div>
