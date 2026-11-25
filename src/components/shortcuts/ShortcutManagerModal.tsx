@@ -58,7 +58,7 @@ export function ShortcutManagerModal() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search services..."
-              className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 text-xs focus:border-[#ff6325] outline-none transition-colors"
+              className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 text-xs focus:border-[#0A3161] outline-none transition-colors"
             />
           </div>
         </div>
@@ -83,13 +83,13 @@ export function ShortcutManagerModal() {
                 }}
                 className={`flex items-center justify-between p-2.5 rounded-xl text-left border transition-all cursor-pointer ${
                   isSelected 
-                    ? 'bg-[#ff6325]/10 border-[#ff6325] text-[#ff6325] shadow-xs' 
+                    ? 'bg-[#0A3161]/10 border-[#0A3161] text-[#0A3161] dark:text-blue-400 shadow-xs' 
                     : 'bg-slate-50/80 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800/80 border-slate-200/70 dark:border-slate-800 text-slate-700 dark:text-slate-300'
                 }`}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
-                    isSelected ? 'bg-[#ff6325] text-white' : 'bg-slate-200/80 dark:bg-slate-800 text-slate-500'
+                    isSelected ? 'bg-[#0A3161] text-white' : 'bg-slate-200/80 dark:bg-slate-800 text-slate-500'
                   }`}>
                     <span className="material-symbols-outlined text-[16px]">{item.icon}</span>
                   </div>
@@ -98,7 +98,7 @@ export function ShortcutManagerModal() {
 
                 <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ml-2 ${
                   isSelected 
-                    ? 'border-[#ff6325] bg-[#ff6325] text-white' 
+                    ? 'border-[#0A3161] bg-[#0A3161] text-white' 
                     : 'border-slate-300 dark:border-slate-700'
                 }`}>
                   {isSelected && (
@@ -120,13 +120,13 @@ export function ShortcutManagerModal() {
             onClick={() => {
               useShortcutStore.setState({ activeShortcuts: ['buses', 'trains', 'flights', 'hotels', 'movies', 'football-turf', 'dining', 'cabs'] });
             }}
-            className="text-xs font-semibold text-slate-500 hover:text-[#ff6325] cursor-pointer"
+            className="text-xs font-semibold text-slate-500 hover:text-[#0A3161] dark:hover:text-blue-400 cursor-pointer"
           >
             Reset Defaults
           </button>
           <button
             onClick={() => setShortcutModalOpen(false)}
-            className="px-5 py-2 rounded-xl bg-[#ff6325] hover:bg-[#ea580c] text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+            className="px-5 py-2 rounded-xl bg-[#0A3161] hover:bg-[#08284d] text-white font-bold text-xs shadow-md transition-all cursor-pointer"
           >
             Done
           </button>
