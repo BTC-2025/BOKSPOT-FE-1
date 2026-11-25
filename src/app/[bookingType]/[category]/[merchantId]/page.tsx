@@ -8,6 +8,7 @@ import { ArrowLeft, Map, Clock, CheckCircle2, ChevronRight, ChevronLeft, Chevron
 import { api } from '@/lib/api';
 import { useLocationStore, useBookingFlowStore, ALL_CITIES, POPULAR_CITIES } from '@/lib/store';
 import { BokspotLoader } from '@/components/ui/BokspotLoader';
+import { DoctorBookingFlow } from '@/components/archetypes/doctor/DoctorBookingFlow';
 // import { getSportCategoryConfig } from '@/lib/sportsData';
 // import { getEntertainmentCategoryConfig, getMovieBySlugOrId, NOW_SHOWING_MOVIES, MovieListingItem } from '@/lib/entertainmentData';
 // import { getDiningConfig } from '@/lib/diningData';
@@ -53,7 +54,7 @@ export default function VenueProfilePage() {
   const isEntertainment = (bookingType || '').toLowerCase().includes('entertainment') || ['movies', 'theatre', 'concerts', 'events', 'exhibitions', 'workshops'].includes((category || '').toLowerCase());
   const isPgStay = !isEntertainment && (category === 'pg-hostels' || category === 'hostels' || (bookingType === 'stay-accommodation' && (rawCategory?.includes('pg') || rawCategory?.includes('hostel'))));
   const isFacility = !isEntertainment && (category === 'football-turf' || category === 'cricket-ground' || category === 'badminton' || category === 'tennis' || category === 'basketball' || category === 'swimming' || category === 'play-arena' || category === 'studio' || category === 'photo-studios' || category === 'dance-studio' || category === 'meeting-room' || category === 'podcast' || category === 'gaming' || bookingType === 'sports-turf');
-  const isDoctor = category === 'doctor';
+  const isDoctor = category === 'doctor' || category === 'clinic' || cleanCat.includes('doctor') || cleanCat.includes('clinic');
   const isWellness = category === 'salons' || category === 'spa' || category === 'wellness' || (cleanCat.includes('salon') || cleanCat.includes('spa'));
   const isFitness = (category === 'gym' || category === 'gym-yoga' || cleanCat.includes('gym') || (cleanCat.includes('fitness') && !cleanCat.includes('yoga')));
   const isYoga = (category === 'yoga' || category === 'yoga-meditation' || cleanCat.includes('yoga') || cleanCat.includes('meditation'));
@@ -4878,276 +4879,15 @@ export default function VenueProfilePage() {
          * SECTION D5: DOCTOR APPOINTMENTS & CLINIC OPD TOKEN QUEUE
          * ============================================================ */}
         {isDoctor && (
-          <div className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>🩺</span> Doctor Appointment & Token Queue
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Guaranteed slot with live OPD token queue estimate to avoid waiting room congestion.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50 text-xs font-bold">
-                <span>⏱️ Live Token Serving: #{tokenQueueNum - 3}</span>
-              </div>
-            </div>
-
-            {/* Practitioner Selection */}
-            <div>
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-                Select Specialist / Doctor
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {(() => {
-                  const liveDocListings = (liveServices && liveServices.length > 0 && liveServices[0]?.listings && liveServices[0].listings.length > 0)
-                    ? liveServices[0].listings.map((l: any, idx: number) => ({
-                        name: l.title || l.name || `Doctor ${idx + 1}`,
-                        fee: Number(l.price || l.basePrice || 600),
-                        exp: l.subtitle || l.description || 'Verified Specialist • Live OPD'
-                      }))
-                    : (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.doctors)
-                      ? (liveServices[0].metadata.doctors as any[]).map((d: any) => ({
-                          name: d.name || 'Doctor Specialist',
-                          fee: Number(d.consultationFee || 600),
-                          exp: `${d.qualification || 'MBBS'} • ${d.specialty || 'General'}`
-                        }))
-                      : [
-                          { name: 'Dr. Rajesh Kumar (Senior Consultant)', fee: 600, exp: '14+ yrs exp • MBBS, MD' },
-                          { name: 'Dr. Priya Sundaram (Associate Specialist)', fee: 450, exp: '8+ yrs exp • DNB, Fellow' }
-                        ];
-                  return liveDocListings.map((spec: any) => (
-                  <div
-                    key={spec.name}
-                    onClick={() => setSelectedPractitioner(spec.name)}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${selectedPractitioner === spec.name
-                      ? 'bg-[#033266]/5 dark:bg-[#ff6325]/10 border-[#033266] dark:border-[#ff6325]'
-                      : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
-                      }`}
-                  >
-                    <div>
-                      <h4 className="text-xs font-black text-slate-900 dark:text-white">{spec.name}</h4>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400">{spec.exp}</p>
-                    </div>
-                    <span className="text-sm font-black text-[#033266] dark:text-[#ff6325]">₹{spec.fee}</span>
-                  </div>
-                ));
-                })()}
-              </div>
-            </div>
-
-            {/* Interactive Clean Appointment Date Picker */}
-            <div>
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-                Select Appointment Date
-              </label>
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const d = selectedDate ? new Date(selectedDate) : new Date();
-                    setApptCalMonth(isNaN(d.getTime()) ? new Date() : d);
-                    setIsApptCalOpen(!isApptCalOpen);
-                  }}
-                  className="w-full sm:w-80 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white hover:border-[#ff6325] transition-all cursor-pointer shadow-xs"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-[#ff6325]/10 text-[#ff6325] flex items-center justify-center font-bold shrink-0">
-                      <Calendar size={16} />
-                    </div>
-                    <div className="text-left">
-                      <span className="text-[10px] text-slate-400 uppercase tracking-wider block">CONSULTATION DATE</span>
-                      <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
-                        {(() => {
-                          try {
-                            const [y, m, d] = (selectedDate || todayStr).split('-');
-                            return `${d}-${m}-${y}`;
-                          } catch {
-                            return selectedDate || todayStr;
-                          }
-                        })()} {selectedDate === todayStr ? '(Today)' : ''}
-                      </span>
-                    </div>
-                  </div>
-                  <ChevronDown size={16} className={`text-slate-400 transition-transform duration-200 ${isApptCalOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {/* Clean Airbnb / BokSpot Standard White Calendar Popover */}
-                {isApptCalOpen && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setIsApptCalOpen(false)} />
-                    <div className="absolute top-full left-0 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-white/15 shadow-2xl p-4 z-50 text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
-                      {/* Month Header */}
-                      <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-2 mb-3 border border-slate-150/60 dark:border-white/5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newD = new Date(apptCalMonth);
-                            newD.setMonth(newD.getMonth() - 1);
-                            setApptCalMonth(newD);
-                          }}
-                          className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
-                        >
-                          <ChevronLeft size={16} />
-                        </button>
-                        <span className="font-extrabold text-xs sm:text-sm tracking-tight text-slate-900 dark:text-white">
-                          {apptCalMonth.toLocaleString('default', { month: 'long' })} {apptCalMonth.getFullYear()}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newD = new Date(apptCalMonth);
-                            newD.setMonth(newD.getMonth() + 1);
-                            setApptCalMonth(newD);
-                          }}
-                          className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
-                        >
-                          <ChevronRight size={16} />
-                        </button>
-                      </div>
-
-                      {/* Day of Week */}
-                      <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-400 mb-2">
-                        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
-                          <div key={d} className="py-1">{d}</div>
-                        ))}
-                      </div>
-
-                      {/* Day Cells */}
-                      <div className="grid grid-cols-7 gap-1 text-center">
-                        {(() => {
-                          const year = apptCalMonth.getFullYear();
-                          const month = apptCalMonth.getMonth();
-                          const firstDay = new Date(year, month, 1).getDay();
-                          const totalDays = new Date(year, month + 1, 0).getDate();
-
-                          const cells = [];
-                          for (let i = 0; i < firstDay; i++) {
-                            cells.push(<div key={`empty-${i}`} className="h-8 w-8" />);
-                          }
-
-                          for (let day = 1; day <= totalDays; day++) {
-                            const mStr = String(month + 1).padStart(2, '0');
-                            const dStr = String(day).padStart(2, '0');
-                            const dateStr = `${year}-${mStr}-${dStr}`;
-                            const isSelected = dateStr === (selectedDate || todayStr);
-                            const isPast = dateStr < todayStr;
-
-                            cells.push(
-                              <button
-                                key={`day-${day}`}
-                                type="button"
-                                disabled={isPast}
-                                onClick={() => {
-                                  setSelectedDate(dateStr);
-                                  setIsApptCalOpen(false);
-                                }}
-                                className={`h-8 w-8 mx-auto rounded-full text-xs font-bold flex items-center justify-center transition-all ${isSelected
-                                  ? 'bg-[#ff6325] text-white shadow-sm font-black'
-                                  : isPast
-                                    ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
-                                    : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer'
-                                  }`}
-                              >
-                                {day}
-                              </button>
-                            );
-                          }
-                          return cells;
-                        })()}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Consultation Slots */}
-            <div>
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-                Available Appointment Windows
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
-                {['10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '04:30 PM', '05:00 PM', '05:30 PM', '06:00 PM'].map(slot => {
-                  const isSelected = selectedApptSlot === slot;
-                  return (
-                    <button
-                      key={slot}
-                      type="button"
-                      onClick={() => setSelectedApptSlot(slot)}
-                      className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${isSelected
-                        ? 'bg-[#033266] dark:bg-[#ff6325] text-white border-transparent shadow-md'
-                        : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-[#033266] dark:hover:border-[#ff6325] text-slate-900 dark:text-white'
-                        }`}
-                    >
-                      <span className="text-xs font-black block">{slot}</span>
-                      <span className="text-[10px] opacity-75 font-medium mt-0.5 block">Token #{tokenQueueNum}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Patient Symptoms / Reason */}
-            <div>
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
-                Brief Symptoms or Visit Notes (Optional)
-              </label>
-              <input
-                type="text"
-                value={patientNotes}
-                onChange={(e) => setPatientNotes(e.target.value)}
-                placeholder="e.g., Routine fever checkup, throat irritation since 2 days..."
-                className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-[#033266] dark:focus:border-[#ff6325]"
-              />
-            </div>
-
-            {/* Confirm Consultation Card */}
-            {selectedApptSlot && (
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div>
-                  <span className="text-xs font-black text-slate-900 dark:text-white block">
-                    {selectedPractitioner}
-                  </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
-                    {selectedDate} at {selectedApptSlot} • Est. Token #{tokenQueueNum}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const fee = selectedPractitioner.includes('Rajesh') ? 600 : 450;
-                    setSelectedService({
-                      id: `appt-${Date.now()}`,
-                      name: `${venueName} — ${selectedPractitioner}`,
-                      price: fee,
-                      metadata: {
-                        appointmentBooking: {
-                          venueName,
-                          practitioner: selectedPractitioner,
-                          slotTime: selectedApptSlot,
-                          slotDate: selectedDate,
-                          tokenNum: tokenQueueNum,
-                          patientNotes
-                        }
-                      }
-                    });
-                    setSelectedSlot({
-                      id: `token-${tokenQueueNum}`,
-                      timeStr: `${selectedDate} at ${selectedApptSlot} (Token #${tokenQueueNum})`,
-                      date: selectedDate,
-                      available: true
-                    });
-                    router.push('/booking/checkout');
-                  }}
-                  className="px-6 py-3 rounded-xl bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer w-full sm:w-auto"
-                >
-                  Confirm Appointment (₹{selectedPractitioner.includes('Rajesh') ? '600' : '450'}) &rarr;
-                </button>
-              </div>
-            )}
-          </div>
+          <DoctorBookingFlow
+            venueName={venueName}
+            merchantId={merchantId}
+            category={category}
+            city={city}
+            liveServices={liveServices}
+            setSelectedService={setSelectedService}
+            setSelectedSlot={setSelectedSlot}
+          />
         )}
 
         {/* ============================================================
