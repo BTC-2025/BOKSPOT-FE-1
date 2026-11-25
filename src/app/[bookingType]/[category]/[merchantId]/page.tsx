@@ -1011,7 +1011,9 @@ export default function VenueProfilePage() {
             const curMCat = (curM?.category || '').toLowerCase();
             const isCompatible = isFacility
               ? (curMCat.includes('turf') || curMCat.includes('sport') || curMCat.includes('arena') || curMCat.includes('ground') || curMCat.includes('court') || curMCat.includes('badminton') || curMCat.includes('football') || curMCat.includes('cricket'))
-              : (!curMCat.includes('turf') && !curMCat.includes('sport'));
+              : (isYoga || isFitness)
+                ? (curMCat.includes('yoga') || curMCat.includes('gym') || curMCat.includes('fitness') || curMCat.includes('wellness') || curMCat.includes('shala') || curMCat.includes('studio') || !curMCat.includes('turf'))
+                : (!curMCat.includes('turf') && !curMCat.includes('sport'));
 
             if (isCompatible && curM?.gallery && Array.isArray(curM.gallery)) {
               curM.gallery.forEach(addIfValid);
@@ -1026,7 +1028,9 @@ export default function VenueProfilePage() {
   const mCat = (finalMerchantObj?.category || '').toLowerCase();
   const isMerchantCompatible = isFacility
     ? (mCat.includes('turf') || mCat.includes('sport') || mCat.includes('arena') || mCat.includes('court') || mCat.includes('badminton') || mCat.includes('football') || mCat.includes('cricket'))
-    : (!mCat.includes('turf') && !mCat.includes('sport'));
+    : (isYoga || isFitness)
+      ? (mCat.includes('yoga') || mCat.includes('gym') || mCat.includes('fitness') || mCat.includes('wellness') || mCat.includes('shala') || mCat.includes('studio') || !mCat.includes('turf'))
+      : (!mCat.includes('turf') && !mCat.includes('sport'));
 
   if (isMerchantCompatible) {
     (finalMerchantObj.images || []).forEach(addIfValid);
@@ -1034,30 +1038,32 @@ export default function VenueProfilePage() {
     (finalMerchantObj.metadata?.gallery || []).forEach(addIfValid);
   }
 
-  // 2. Next Priority: Room listings / service photos (strictly matching current category)
-  liveServices.forEach((svc: any) => {
-    const sCat = (svc.category || svc.categoryObj?.slug || '').toLowerCase();
-    const isSvcCompatible = isFacility
-      ? (sCat.includes('turf') || sCat.includes('sport') || sCat.includes('arena') || sCat.includes('court') || sCat.includes('play') || sCat.includes('swimming') || sCat.includes('badminton') || sCat.includes('football') || sCat.includes('cricket'))
-      : true;
+  // 2. Fallback: Only if venue itself has NO photos uploaded in Venue Profile, fallback to listing/service photos
+  if (extractedImages.length === 0) {
+    liveServices.forEach((svc: any) => {
+      const sCat = (svc.category || svc.categoryObj?.slug || '').toLowerCase();
+      const isSvcCompatible = isFacility
+        ? (sCat.includes('turf') || sCat.includes('sport') || sCat.includes('arena') || sCat.includes('court') || sCat.includes('play') || sCat.includes('swimming') || sCat.includes('badminton') || sCat.includes('football') || sCat.includes('cricket'))
+        : true;
 
-    if (isSvcCompatible) {
-      const svcListings = (Array.isArray(svc.listings) && svc.listings.length > 0) ? svc.listings : (svc.metadata?.listings || svc.rawConfig?.metadata?.listings || []);
-      svcListings.forEach((l: any) => {
-        addIfValid(l.imageUrl);
-        addIfValid(l.image);
-        (l.images || []).forEach(addIfValid);
-        (l.metadata?.gallery || []).forEach(addIfValid);
-      });
-      addIfValid(svc.imageUrl);
-      addIfValid(svc.image);
-      (svc.images || []).forEach(addIfValid);
-      (svc.metadata?.images || []).forEach(addIfValid);
-      (svc.metadata?.gallery || []).forEach(addIfValid);
-    }
-  });
+      if (isSvcCompatible) {
+        addIfValid(svc.imageUrl);
+        addIfValid(svc.image);
+        (svc.images || []).forEach(addIfValid);
+        (svc.metadata?.images || []).forEach(addIfValid);
+        (svc.metadata?.gallery || []).forEach(addIfValid);
+        const svcListings = (Array.isArray(svc.listings) && svc.listings.length > 0) ? svc.listings : (svc.metadata?.listings || svc.rawConfig?.metadata?.listings || []);
+        svcListings.forEach((l: any) => {
+          addIfValid(l.imageUrl);
+          addIfValid(l.image);
+          (l.images || []).forEach(addIfValid);
+          (l.metadata?.gallery || []).forEach(addIfValid);
+        });
+      }
+    });
+  }
 
-  // Fallback photos based on category (Turf/Sports vs Hotel)
+  // Fallback photos based on category (Turf/Sports vs Yoga/Fitness vs Hotel)
   const defaultTurfPhotos = [
     'https://images.unsplash.com/photo-1529900245534-47fbf82a4fbe?w=1200&q=80',
     'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80',
@@ -1065,10 +1071,17 @@ export default function VenueProfilePage() {
     'https://images.unsplash.com/photo-1551958219-acbc608c6377?w=800&q=80'
   ];
 
+  const defaultYogaPhotos = [
+    'https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=1200&q=80',
+    'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800&q=80',
+    'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=800&q=80',
+    'https://images.unsplash.com/photo-1575052814086-f385e2e2ad1b?w=800&q=80'
+  ];
+
   // Provide curated high-res photos if no custom images exist
   const galleryImages: string[] = extractedImages.length > 0
     ? extractedImages
-    : (isFacility ? defaultTurfPhotos : defaultHotelPhotos);
+    : (isFacility ? defaultTurfPhotos : (isYoga || isFitness) ? defaultYogaPhotos : defaultHotelPhotos);
 
   const firstSvc = liveServices[0];
   const firstListing = firstSvc?.metadata?.listings?.[0] || firstSvc?.rawConfig?.metadata?.listings?.[0];
@@ -3132,7 +3145,7 @@ export default function VenueProfilePage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="absolute top-3 left-3 px-3 py-1 rounded-xl bg-black/60 backdrop-blur-md text-white text-[11px] font-bold shadow-sm">
-                    ✨ Featured Property
+                    ✨ {isFacility ? 'Featured Venue' : (isYoga || isFitness) ? 'Featured Studio' : 'Featured Property'}
                   </div>
                 </div>
 
@@ -3290,7 +3303,12 @@ export default function VenueProfilePage() {
 
               {/* Catchy Bio / Summary Text */}
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-3">
-                {aboutText || `${venueName} features luxury air-conditioned accommodations, outdoor swimming pools, multi-cuisine dining, and 24/7 dedicated guest assistance along the scenic East Coast corridor.`}
+                {aboutText || (isYoga
+                  ? `${venueName} is a traditional yoga shala and wellness studio offering daily Sadhana batches, breathwork rituals, and personalized coaching in ${city || 'Chennai'}.`
+                  : isFitness
+                    ? `${venueName} provides premier fitness facilities, strength training equipment, and expert personal trainers in ${city || 'Chennai'}.`
+                    : `${venueName} features luxury air-conditioned accommodations, outdoor swimming pools, multi-cuisine dining, and 24/7 dedicated guest assistance along the scenic East Coast corridor.`
+                )}
               </p>
 
               {/* Dedicated High-Trust Card for Women's / Ladies PG Stays */}
@@ -3402,10 +3420,10 @@ export default function VenueProfilePage() {
             {/* Middle: Amenities Grid & Check-in Pill */}
             <div className="space-y-3">
               <span className="text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 block tracking-wider">
-                {isFacility ? 'Venue Highlights & Amenities' : isWellness ? 'Salon Highlights & Amenities' : 'Property Highlights & Inclusions'}
+                {isFacility ? 'Venue Highlights & Amenities' : isWellness ? 'Salon Highlights & Amenities' : (isYoga || isFitness) ? 'Studio Highlights & Amenities' : 'Property Highlights & Inclusions'}
               </span>
               <div className="grid grid-cols-2 gap-2.5">
-                {(amenities && amenities.length > 0 ? amenities.slice(0, 6) : isWellness ? ['Private Spa Suites', '100% Organic Products', 'Air Conditioned', 'Certified Stylists', 'Complimentary Green Tea', 'Valet Parking'] : ['Free High-Speed Wi-Fi', 'Swimming Pool', 'Air Conditioned', '24/7 Front Desk', 'Private Bath', 'Daily Housekeeping']).map((am: string, idx: number) => (
+                {(amenities && amenities.length > 0 ? amenities.slice(0, 6) : isWellness ? ['Private Spa Suites', '100% Organic Products', 'Air Conditioned', 'Certified Stylists', 'Complimentary Green Tea', 'Valet Parking'] : (isYoga || isFitness) ? ['Dedicated Practice Shala', 'High-Grip Mats & Props', 'Air Purified Studio', 'Changing Rooms & Showers', 'Filtered Water Station', 'Herbal Brew & Lounge'] : ['Free High-Speed Wi-Fi', 'Swimming Pool', 'Air Conditioned', '24/7 Front Desk', 'Private Bath', 'Daily Housekeeping']).map((am: string, idx: number) => (
                   <div key={idx} className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-white/5 shadow-2xs">
                     <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0 stroke-[2.5]" />
                     <span className="truncate text-[11px]">{am}</span>
@@ -3413,12 +3431,12 @@ export default function VenueProfilePage() {
                 ))}
               </div>
 
-              {/* Timings Bar: Operating Hours for Facility/Turf/Salon, Check-in/out for Stays */}
-              {isFacility || isWellness ? (
+              {/* Timings Bar: Operating Hours for Facility/Turf/Salon/Yoga/Gym, Check-in/out for Stays */}
+              {isFacility || isWellness || isYoga || isFitness ? (
                 <div className="px-3.5 py-2.5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40 flex items-center justify-between text-xs font-bold text-emerald-800 dark:text-emerald-300">
                   <span className="flex items-center gap-1.5">
                     <span>Operating Hours:</span>
-                    <strong className="font-extrabold">{firstSvc?.metadata?.operatingHours || firstListing?.metadata?.operatingHours || finalMerchantObj.operatingHours || '09:00 AM – 09:00 PM'}</strong>
+                    <strong className="font-extrabold">{firstSvc?.metadata?.operatingHours || firstListing?.metadata?.operatingHours || finalMerchantObj.operatingHours || '06:00 AM – 09:00 PM'}</strong>
                   </span>
                   <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-md bg-emerald-200/60 dark:bg-emerald-800/60 text-emerald-900 dark:text-emerald-100">
                     Open Daily
@@ -3448,7 +3466,7 @@ export default function VenueProfilePage() {
               </button>
 
               <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500">
-                {isFacility ? 'Slots & Courts listed below ←“' : 'Rooms listed below ←“'}
+                {isFacility ? 'Slots & Courts listed below ←“' : isYoga ? 'Batches & Passes listed below ←“' : isFitness ? 'Gym Plans listed below ←“' : 'Rooms listed below ←“'}
               </span>
             </div>
 
@@ -5594,7 +5612,19 @@ export default function VenueProfilePage() {
                     const guruLineage = lMeta.yogaCertifications || lMeta.lineage || lMeta.qualification || lMeta.guru?.lineage || 'Certified Lineage';
                     const guruAvatar = lMeta.guruAvatar || lMeta.guru?.avatar || l.imageUrl || svc.imageUrl || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80';
                     const timeWindow = lMeta.batchSchedule || lMeta.schedule || lMeta.time || (idx === 0 ? '06:00 AM – 07:15 AM' : idx === 1 ? '07:30 AM – 08:45 AM' : '05:30 PM – 06:45 PM');
-                    const discipline = (lMeta.yogaStyle || lMeta.discipline || 'Hatha Flow').toUpperCase();
+                    const discipline = (
+                      lMeta.yogaStyle || 
+                      lMeta.discipline || 
+                      lMeta.speciality || 
+                      (l as any).speciality || 
+                      l.discipline || 
+                      (l.name && l.name.toLowerCase().includes('hatha') ? 'Hatha Flow' : '') ||
+                      (l.name && l.name.toLowerCase().includes('ashtanga') ? 'Ashtanga' : '') ||
+                      (l.name && l.name.toLowerCase().includes('vinyasa') ? 'Vinyasa' : '') ||
+                      (l.name && l.name.toLowerCase().includes('sound') ? 'Sound Healing' : '') ||
+                      (l.name && l.name.toLowerCase().includes('nidra') ? 'Yoga Nidra' : '') ||
+                      'Hatha Flow'
+                    ).trim();
                     const intensity = lMeta.intensity || lMeta.level || 'Mindful Flow';
                     const capacity = Number(lMeta.maxMatCapacity || lMeta.maxCapacity || l.maxCapacity || 16);
                     const spotsLeft = Number(lMeta.spotsLeft || lMeta.spotsAvailable || Math.max(1, capacity - (idx * 2)));
@@ -5732,16 +5762,28 @@ export default function VenueProfilePage() {
             const activeBatch = shalaBatches.find((b: any) => b.id === selectedYogaBatchId) || shalaBatches[0];
             const activePack = CLASS_PACKS.find(p => p.id === yogaSadhanaTab) || CLASS_PACKS[0] || defaultClassPacks[0];
 
-            // Filter batches by selected format (Cult.fit Standard)
+            // Dynamic Yoga Style / Practice Filter Pills from live vendor listings
+            const availableDisciplineSet = new Set<string>();
+            shalaBatches.forEach((b: any) => {
+              const d = (b.discipline || '').trim();
+              if (d) availableDisciplineSet.add(d);
+            });
+
+            const dynamicYogaPills: { id: string; label: string }[] = [
+              { id: 'ALL', label: 'All Classes' },
+              ...Array.from(availableDisciplineSet).map(d => ({
+                id: d.toUpperCase(),
+                label: d
+              }))
+            ];
+
+            // Filter batches by selected format
             const filteredShalaBatches = selectedYogaFormat === 'ALL'
               ? shalaBatches
               : shalaBatches.filter((b: any) => {
                   const disc = (b.discipline || '').toUpperCase();
-                  if (selectedYogaFormat === 'HATHA') return disc.includes('HATHA');
-                  if (selectedYogaFormat === 'ASHTANGA') return disc.includes('ASHTANGA');
-                  if (selectedYogaFormat === 'SOUND_BATH') return disc.includes('SOUND') || disc.includes('YIN');
-                  if (selectedYogaFormat === 'NIDRA') return disc.includes('NIDRA');
-                  return true;
+                  const title = (b.title || '').toUpperCase();
+                  return disc.includes(selectedYogaFormat) || title.includes(selectedYogaFormat);
                 });
 
             const dynamicAddonsTotal = (activeBatch.addons || [])
@@ -5803,20 +5845,14 @@ export default function VenueProfilePage() {
                   </div>
                 </div>
 
-                {/* Format Filter Pills (Cult.fit Standard) */}
-                {yogaSadhanaTab === 'SINGLE_SESSION' && (
+                {/* Dynamic Format Filter Pills from Vendor Batches */}
+                {yogaSadhanaTab === 'SINGLE_SESSION' && dynamicYogaPills.length > 1 && (
                   <div className="space-y-2">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
                       Filter Yoga Style / Practice:
                     </span>
                     <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-                      {[
-                        { id: 'ALL', label: 'All Classes' },
-                        { id: 'HATHA', label: 'Hatha Flow' },
-                        { id: 'ASHTANGA', label: 'Ashtanga Vinyasa' },
-                        { id: 'SOUND_BATH', label: 'Sound Bath & Yin' },
-                        { id: 'NIDRA', label: 'Yoga Nidra & Breath' }
-                      ].map(pill => {
+                      {dynamicYogaPills.map(pill => {
                         const isFormatActive = selectedYogaFormat === pill.id;
                         return (
                           <button
