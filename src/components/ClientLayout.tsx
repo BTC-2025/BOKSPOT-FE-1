@@ -58,11 +58,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       if ('scrollRestoration' in window.history) {
         window.history.scrollRestoration = 'manual';
       }
-      window.scrollTo(0, 0);
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
 
       // Guard against late hydrating DOM elements jumping to bottom
       const frame = requestAnimationFrame(() => {
-        window.scrollTo(0, 0);
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       });
       return () => cancelAnimationFrame(frame);
     }
@@ -71,7 +71,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   // On client-side route change, scroll to top
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      window.scrollTo(0, 0);
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     }
   }, [pathname]);
 

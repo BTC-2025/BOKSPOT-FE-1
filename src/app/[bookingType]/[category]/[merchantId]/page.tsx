@@ -4925,21 +4925,26 @@ export default function VenueProfilePage() {
           ];
 
           // Dynamic Backend DB integration: pull live listings or metadata treatments first
+          // Dynamic Backend DB integration: pull live listings or metadata treatments only (no hardcoded fallback)
           const dbTreatments = (liveServices && liveServices.length > 0 && liveServices[0]?.listings && liveServices[0].listings.length > 0)
             ? liveServices[0].listings.map((l: any, idx: number) => ({
                 id: l.id || `live-treat-${idx}`,
                 name: l.title || l.name || 'Treatment',
                 category: l.category || 'HAIR',
+                category: l.metadata?.salonCategory || l.category || 'HAIR',
                 durationMinutes: l.durationMinutes || l.duration || 45,
                 price: Number(l.price || l.basePrice || 499),
                 description: l.description || 'Professional styling & care ritual by verified stylist.',
                 genderTarget: (l.genderTarget || 'UNISEX'),
                 serviceMode: (l.serviceMode || 'BOTH'),
+                genderTarget: (l.metadata?.genderTarget || l.genderTarget || 'UNISEX'),
+                serviceMode: (l.metadata?.serviceMode || l.serviceMode || 'BOTH'),
                 badge: l.badge || 'Live Available'
               }))
             : (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.treatments)
               ? (liveServices[0].metadata.treatments as any[])
               : defaultWellnessTreatments;
+              : [];
           const allTreatments = dbTreatments;
           const allSpecialists = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.specialists)
             ? (liveServices[0].metadata.specialists as any[])
@@ -4977,6 +4982,16 @@ export default function VenueProfilePage() {
           const startMinutes = 9 * 60; // 09:00 AM
           const endMinutes = 21 * 60; // 09:00 PM
           const interval = 30; // 30 min intervals
+          // Smart Slot Calculation with Overrun Protection (Dynamic from Business Portal salonSchedule)
+          const parseHHMM = (str: string, fallbackMins: number) => {
+            if (!str || !str.includes(':')) return fallbackMins;
+            const [hh, mm] = str.split(':').map(Number);
+            return (!isNaN(hh) && !isNaN(mm)) ? (hh * 60 + mm) : fallbackMins;
+          };
+          const salonSched = liveServices?.[0]?.metadata?.salonSchedule;
+          const startMinutes = parseHHMM(salonSched?.openTime, 9 * 60);
+          const endMinutes = parseHHMM(salonSched?.closeTime, 21 * 60);
+          const interval = Number(salonSched?.slotInterval) || 30;
           const duration = Math.max(totalSelectedDuration || 30, 20);
 
           const formatMinutesToTime = (totalMins: number) => {
@@ -4987,6 +5002,10 @@ export default function VenueProfilePage() {
             if (h === 0) h = 12;
             return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
           };
+
+          const activeDateObj = new Date((selectedDate || todayStr) + 'T00:00:00');
+          const activeDayShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][activeDateObj.getDay()];
+          const isSalonOpenOnSelectedDay = !salonSched?.activeDays || salonSched.activeDays.includes(activeDayShort);
 
           const dynamicSlots: { startStr: string; endStr: string; label: string; slotValue: string; period: 'MORNING' | 'AFTERNOON' | 'EVENING' }[] = [];
           for (let m = startMinutes; m <= endMinutes - duration; m += interval) {
@@ -5000,6 +5019,30 @@ export default function VenueProfilePage() {
               slotValue: sTime,
               period
             });
+          const bBreakStart = salonSched?.breakfastBreak?.enabled ? parseHHMM(salonSched.breakfastBreak.start, -1) : -1;
+          const bBreakEnd = salonSched?.breakfastBreak?.enabled ? parseHHMM(salonSched.breakfastBreak.end, -1) : -1;
+          const lBreakStart = salonSched?.lunchBreak?.enabled ? parseHHMM(salonSched.lunchBreak.start, -1) : -1;
+          const lBreakEnd = salonSched?.lunchBreak?.enabled ? parseHHMM(salonSched.lunchBreak.end, -1) : -1;
+          const blockedForDate: string[] = salonSched?.blockedSlotsByDate?.[selectedDate || todayStr] || [];
+
+          if (isSalonOpenOnSelectedDay) {
+            for (let m = startMinutes; m <= endMinutes - duration; m += interval) {
+              const isBreakSlot =
+                (bBreakStart >= 0 && m >= bBreakStart && m < bBreakEnd) ||
+                (lBreakStart >= 0 && m >= lBreakStart && m < lBreakEnd);
+              if (isBreakSlot) continue;
+              const sTime = formatMinutesToTime(m);
+              if (blockedForDate.includes(sTime)) continue;
+              const eTime = formatMinutesToTime(m + duration);
+              const period: 'MORNING' | 'AFTERNOON' | 'EVENING' = m < 12 * 60 ? 'MORNING' : m < 16 * 60 ? 'AFTERNOON' : 'EVENING';
+              dynamicSlots.push({
+                startStr: sTime,
+                endStr: eTime,
+                label: `${sTime} – ${eTime}`,
+                slotValue: sTime,
+                period
+              });
+            }
           }
 
           const morningSlots = dynamicSlots.filter(s => s.period === 'MORNING');
@@ -5441,6 +5484,16 @@ export default function VenueProfilePage() {
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[220px] overflow-y-auto pr-1">
                         {displayedSlots.map(slot => {
                           const isSelected = selectedApptSlot === slot.slotValue;
+                          const slotCapacity = Number(salonSched?.capacity) || 2;
+                          const activeDateKey = selectedDate || todayStr;
+                          const bookedCount = (bookings || []).filter((b: any) =>
+                            b.status !== 'CANCELLED' &&
+                            (b.date === activeDateKey || !b.date) &&
+                            (b.time === slot.slotValue || b.time === slot.label) &&
+                            (!merchantData?.id || b.merchantId === merchantData.id || b.merchantName === merchantData.name)
+                          ).length;
+                          const isSlotFull = bookedCount >= slotCapacity;
+
                           return (
                             <button
                               key={slot.label}
@@ -5449,11 +5502,21 @@ export default function VenueProfilePage() {
                               className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer ${isSelected
                                 ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md ring-2 ring-[#ff6325]/30'
                                 : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300 text-slate-900 dark:text-white'
+                              disabled={isSlotFull}
+                              onClick={() => !isSlotFull && setSelectedApptSlot(slot.slotValue)}
+                              className={`p-2.5 rounded-2xl border text-left transition-all ${
+                                isSlotFull
+                                  ? 'bg-slate-100 dark:bg-slate-900/60 border-slate-200 dark:border-white/5 text-slate-400 cursor-not-allowed opacity-60'
+                                  : isSelected
+                                    ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md ring-2 ring-[#ff6325]/30 cursor-pointer'
+                                    : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300 text-slate-900 dark:text-white cursor-pointer'
                                 }`}
                             >
                               <span className="text-xs font-black block tracking-tight">{slot.label}</span>
                               <span className={`text-[10px] block mt-0.5 ${isSelected ? 'text-white/90' : 'text-slate-400'}`}>
                                 {wellnessServiceMode === 'HOME_VISIT' ? 'Doorstep Visit' : 'Instant Chair'}
+                              <span className={`text-[10px] block mt-0.5 ${isSlotFull ? 'text-rose-500 font-bold' : isSelected ? 'text-white/90' : 'text-slate-400'}`}>
+                                {isSlotFull ? 'Booked' : wellnessServiceMode === 'HOME_VISIT' ? 'Doorstep Visit' : 'Instant Chair'}
                               </span>
                             </button>
                           );
