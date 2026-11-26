@@ -6644,7 +6644,7 @@ export default function VenueProfilePage() {
                   <button
                     type="button"
                     onClick={() => setShowGymTrainers(!showGymTrainers)}
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 hover:border-[#ff6325]/60 transition-all flex items-center justify-between gap-3 cursor-pointer"
+                    className="mx-auto px-5 py-2.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 hover:border-[#ff6325]/60 transition-all flex items-center justify-center gap-4 cursor-pointer"
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">
