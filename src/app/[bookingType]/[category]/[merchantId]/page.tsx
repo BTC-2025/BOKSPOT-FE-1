@@ -293,7 +293,8 @@ export default function VenueProfilePage() {
   const [yogaSadhanaTab, setYogaSadhanaTab] = useState<'SINGLE_SESSION' | 'PACK_5' | 'MONTHLY_SADHANA'>('SINGLE_SESSION');
   const [selectedGymPlanId, setSelectedGymPlanId] = useState<string>('gym-plan-3m');
   const [selectedGymPTId, setSelectedGymPTId] = useState<string>('pt-none');
-  const [selectedGymTrainerId, setSelectedGymTrainerId] = useState<string>('trn-vikram');
+  const [selectedGymTrainerId, setSelectedGymTrainerId] = useState<string>('');
+  const [showGymTrainers, setShowGymTrainers] = useState(false);
   const [selectedGymShift, setSelectedGymShift] = useState<'ANY' | 'MORNING' | 'EVENING'>('ANY');
   const [fitnessDigitalLockerAddon, setFitnessDigitalLockerAddon] = useState<boolean>(true);
   const [fitnessProteinShakeAddon, setFitnessProteinShakeAddon] = useState<boolean>(false);
@@ -675,7 +676,7 @@ export default function VenueProfilePage() {
                   }
                 }
               }
-            } catch {}
+            } catch { }
           }
 
           const merchantServices = res.data.filter((s: any) => {
@@ -1430,8 +1431,8 @@ export default function VenueProfilePage() {
                       {isYoga
                         ? (fitnessFormatFilter === 'PERSONAL_TRAINING' ? '1-on-1 Guru Session' : 'Group Yoga Batch')
                         : (gymBookingType === 'MEMBERSHIP'
-                            ? 'Monthly Membership'
-                            : (fitnessFormatFilter === 'PERSONAL_TRAINING' ? '1-on-1 PT Session' : 'Daily Workout Pass & Trial'))}
+                          ? 'Monthly Membership'
+                          : (fitnessFormatFilter === 'PERSONAL_TRAINING' ? '1-on-1 PT Session' : 'Daily Workout Pass & Trial'))}
                       {' • Turnstile Pass'}
                     </span>
                   </div>
@@ -2363,22 +2364,20 @@ export default function VenueProfilePage() {
                             <button
                               type="button"
                               onClick={() => setSelectedDate(todayStr)}
-                              className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                                (selectedDate || todayStr) === todayStr
+                              className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${(selectedDate || todayStr) === todayStr
                                   ? 'bg-[#ff6325] text-white shadow-xs font-black'
                                   : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200'
-                              }`}
+                                }`}
                             >
                               Today
                             </button>
                             <button
                               type="button"
                               onClick={() => setSelectedDate(tomorrowStr)}
-                              className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                                selectedDate === tomorrowStr
+                              className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${selectedDate === tomorrowStr
                                   ? 'bg-[#ff6325] text-white shadow-xs font-black'
                                   : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200'
-                              }`}
+                                }`}
                             >
                               Tomorrow
                             </button>
@@ -2476,11 +2475,10 @@ export default function VenueProfilePage() {
                           setWellnessTimeFilter('ANY');
                           setSelectedApptSlot('10:00 AM');
                         }}
-                        className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
-                          wellnessTimeFilter === 'ANY'
+                        className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${wellnessTimeFilter === 'ANY'
                             ? 'bg-[#6366f1]/10 border-[#6366f1] text-[#6366f1] ring-2 ring-[#6366f1]/20 font-bold'
                             : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 font-semibold'
-                        }`}
+                          }`}
                       >
                         <span className="text-xs leading-tight">Any time</span>
                       </button>
@@ -2492,11 +2490,10 @@ export default function VenueProfilePage() {
                           setWellnessTimeFilter('MORNING');
                           setSelectedApptSlot('10:00 AM');
                         }}
-                        className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
-                          wellnessTimeFilter === 'MORNING'
+                        className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${wellnessTimeFilter === 'MORNING'
                             ? 'bg-[#6366f1]/10 border-[#6366f1] text-[#6366f1] ring-2 ring-[#6366f1]/20 font-bold'
                             : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300'
-                        }`}
+                          }`}
                       >
                         <span className="text-xs font-semibold leading-tight">Morning</span>
                         <span className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">6am - 12pm</span>
@@ -2509,11 +2506,10 @@ export default function VenueProfilePage() {
                           setWellnessTimeFilter('AFTERNOON');
                           setSelectedApptSlot('02:00 PM');
                         }}
-                        className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
-                          wellnessTimeFilter === 'AFTERNOON'
+                        className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${wellnessTimeFilter === 'AFTERNOON'
                             ? 'bg-[#6366f1]/10 border-[#6366f1] text-[#6366f1] ring-2 ring-[#6366f1]/20 font-bold'
                             : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300'
-                        }`}
+                          }`}
                       >
                         <span className="text-xs font-semibold leading-tight">Afternoon</span>
                         <span className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">12pm - 5pm</span>
@@ -2526,11 +2522,10 @@ export default function VenueProfilePage() {
                           setWellnessTimeFilter('EVENING');
                           setSelectedApptSlot('06:00 PM');
                         }}
-                        className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
-                          wellnessTimeFilter === 'EVENING'
+                        className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${wellnessTimeFilter === 'EVENING'
                             ? 'bg-[#6366f1]/10 border-[#6366f1] text-[#6366f1] ring-2 ring-[#6366f1]/20 font-bold'
                             : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300'
-                        }`}
+                          }`}
                       >
                         <span className="text-xs font-semibold leading-tight">Evening</span>
                         <span className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">5pm - 12am</span>
@@ -2542,11 +2537,10 @@ export default function VenueProfilePage() {
                         onClick={() => {
                           setWellnessTimeFilter('CUSTOM');
                         }}
-                        className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
-                          wellnessTimeFilter === 'CUSTOM'
+                        className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${wellnessTimeFilter === 'CUSTOM'
                             ? 'bg-[#6366f1]/10 border-[#6366f1] text-[#6366f1] ring-2 ring-[#6366f1]/20 font-bold'
                             : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 font-semibold'
-                        }`}
+                          }`}
                       >
                         <span className="text-xs leading-tight">Custom</span>
                       </button>
@@ -2572,11 +2566,10 @@ export default function VenueProfilePage() {
                                 setWellnessCustomTime(tVal);
                                 setSelectedApptSlot(tVal);
                               }}
-                              className={`py-1 rounded-lg text-xs font-semibold text-center transition-colors ${
-                                (wellnessCustomTime === tVal || selectedApptSlot === tVal)
+                              className={`py-1 rounded-lg text-xs font-semibold text-center transition-colors ${(wellnessCustomTime === tVal || selectedApptSlot === tVal)
                                   ? 'bg-[#6366f1] text-white font-bold'
                                   : 'bg-white dark:bg-slate-700/60 text-slate-700 dark:text-slate-200 hover:bg-slate-100'
-                              }`}
+                                }`}
                             >
                               {tVal}
                             </button>
@@ -4909,16 +4902,16 @@ export default function VenueProfilePage() {
           // Dynamic Backend DB integration: pull live listings or metadata treatments only (no hardcoded fallback)
           const dbTreatments = (liveServices && liveServices.length > 0 && liveServices[0]?.listings && liveServices[0].listings.length > 0)
             ? liveServices[0].listings.map((l: any, idx: number) => ({
-                id: l.id || `live-treat-${idx}`,
-                name: l.title || l.name || 'Treatment',
-                category: l.metadata?.salonCategory || l.category || 'HAIR',
-                durationMinutes: l.durationMinutes || l.duration || 45,
-                price: Number(l.price || l.basePrice || 499),
-                description: l.description || 'Professional styling & care ritual by verified stylist.',
-                genderTarget: (l.metadata?.genderTarget || l.genderTarget || 'UNISEX'),
-                serviceMode: (l.metadata?.serviceMode || l.serviceMode || 'BOTH'),
-                badge: l.badge || 'Live Available'
-              }))
+              id: l.id || `live-treat-${idx}`,
+              name: l.title || l.name || 'Treatment',
+              category: l.metadata?.salonCategory || l.category || 'HAIR',
+              durationMinutes: l.durationMinutes || l.duration || 45,
+              price: Number(l.price || l.basePrice || 499),
+              description: l.description || 'Professional styling & care ritual by verified stylist.',
+              genderTarget: (l.metadata?.genderTarget || l.genderTarget || 'UNISEX'),
+              serviceMode: (l.metadata?.serviceMode || l.serviceMode || 'BOTH'),
+              badge: l.badge || 'Live Available'
+            }))
             : (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.treatments)
               ? (liveServices[0].metadata.treatments as any[])
               : [];
@@ -5462,8 +5455,7 @@ export default function VenueProfilePage() {
                               type="button"
                               disabled={isSlotFull}
                               onClick={() => !isSlotFull && setSelectedApptSlot(slot.slotValue)}
-                              className={`p-2.5 rounded-2xl border text-left transition-all ${
-                                isSlotFull
+                              className={`p-2.5 rounded-2xl border text-left transition-all ${isSlotFull
                                   ? 'bg-slate-100 dark:bg-slate-900/60 border-slate-200 dark:border-white/5 text-slate-400 cursor-not-allowed opacity-60'
                                   : isSelected
                                     ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md ring-2 ring-[#ff6325]/30 cursor-pointer'
@@ -5614,7 +5606,7 @@ export default function VenueProfilePage() {
           );
         })()}
 
-                {/* ============================================================
+        {/* ============================================================
          * SECTION D5-C: GYM & YOGA FITNESS PASS / BATCH SLOT SELECTION
          * ============================================================ */}
         {(isFitness || isYoga) && (() => {
@@ -5624,38 +5616,38 @@ export default function VenueProfilePage() {
             // 1. Direct real-time dynamic listings created in Vendor Business Portal
             const liveYogaListings = (liveServices && liveServices.length > 0)
               ? liveServices.flatMap((svc: any, sIdx: number) => {
-                  const svcListings = Array.isArray(svc?.listings) && svc.listings.length > 0 ? svc.listings : [svc];
-                  return svcListings.map((l: any, idx: number) => {
-                    const lMeta = l.metadata || {};
-                    const guruName = lMeta.leadGuru || lMeta.guruName || lMeta.instructor || lMeta.guru?.name || svc.metadata?.instructor || 'Senior Shala Acharya';
-                    const guruLineage = lMeta.yogaCertifications || lMeta.lineage || lMeta.qualification || lMeta.guru?.lineage || 'Certified Lineage';
-                    const guruAvatar = lMeta.guruAvatar || lMeta.guru?.avatar || l.imageUrl || svc.imageUrl || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80';
-                    const timeWindow = lMeta.batchSchedule || lMeta.schedule || lMeta.time || (idx === 0 ? '06:00 AM – 07:15 AM' : idx === 1 ? '07:30 AM – 08:45 AM' : '05:30 PM – 06:45 PM');
-                    const discipline = (lMeta.yogaStyle || lMeta.discipline || 'Hatha Flow').toUpperCase();
-                    const intensity = lMeta.intensity || lMeta.level || 'Mindful Flow';
-                    const capacity = Number(lMeta.maxMatCapacity || lMeta.maxCapacity || l.maxCapacity || 16);
-                    const spotsLeft = Number(lMeta.spotsLeft || lMeta.spotsAvailable || Math.max(1, capacity - (idx * 2)));
-                    const batchAddons = l.addons || lMeta.addons || svc.addOns || svc.metadata?.addons || [];
+                const svcListings = Array.isArray(svc?.listings) && svc.listings.length > 0 ? svc.listings : [svc];
+                return svcListings.map((l: any, idx: number) => {
+                  const lMeta = l.metadata || {};
+                  const guruName = lMeta.leadGuru || lMeta.guruName || lMeta.instructor || lMeta.guru?.name || svc.metadata?.instructor || 'Senior Shala Acharya';
+                  const guruLineage = lMeta.yogaCertifications || lMeta.lineage || lMeta.qualification || lMeta.guru?.lineage || 'Certified Lineage';
+                  const guruAvatar = lMeta.guruAvatar || lMeta.guru?.avatar || l.imageUrl || svc.imageUrl || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80';
+                  const timeWindow = lMeta.batchSchedule || lMeta.schedule || lMeta.time || (idx === 0 ? '06:00 AM – 07:15 AM' : idx === 1 ? '07:30 AM – 08:45 AM' : '05:30 PM – 06:45 PM');
+                  const discipline = (lMeta.yogaStyle || lMeta.discipline || 'Hatha Flow').toUpperCase();
+                  const intensity = lMeta.intensity || lMeta.level || 'Mindful Flow';
+                  const capacity = Number(lMeta.maxMatCapacity || lMeta.maxCapacity || l.maxCapacity || 16);
+                  const spotsLeft = Number(lMeta.spotsLeft || lMeta.spotsAvailable || Math.max(1, capacity - (idx * 2)));
+                  const batchAddons = l.addons || lMeta.addons || svc.addOns || svc.metadata?.addons || [];
 
-                    return {
-                      id: l.id || `batch-live-${sIdx}-${idx}`,
-                      time: timeWindow,
-                      title: l.name || svc.name || 'Yoga Shala Batch',
-                      guru: {
-                        name: guruName,
-                        lineage: guruLineage,
-                        avatar: guruAvatar
-                      },
-                      level: lMeta.level || 'All Levels',
-                      discipline: discipline,
-                      intensity: intensity,
-                      price: Number(l.price || l.basePrice || svc.price || 399),
-                      spotsAvailable: spotsLeft,
-                      totalCapacity: capacity,
-                      addons: Array.isArray(batchAddons) ? batchAddons : []
-                    };
-                  });
-                })
+                  return {
+                    id: l.id || `batch-live-${sIdx}-${idx}`,
+                    time: timeWindow,
+                    title: l.name || svc.name || 'Yoga Shala Batch',
+                    guru: {
+                      name: guruName,
+                      lineage: guruLineage,
+                      avatar: guruAvatar
+                    },
+                    level: lMeta.level || 'All Levels',
+                    discipline: discipline,
+                    intensity: intensity,
+                    price: Number(l.price || l.basePrice || svc.price || 399),
+                    spotsAvailable: spotsLeft,
+                    totalCapacity: capacity,
+                    addons: Array.isArray(batchAddons) ? batchAddons : []
+                  };
+                });
+              })
               : [];
 
             const defaultGurus = [
@@ -5756,14 +5748,14 @@ export default function VenueProfilePage() {
 
             const CLASS_PACKS: any[] = vendorConfiguredPasses.length > 0
               ? vendorConfiguredPasses.map((p: any, idx: number) => ({
-                  id: p.id || `pass-${idx}`,
-                  name: p.name || `Class Pass #${idx + 1}`,
-                  sessions: p.sessions || 'Unlimited',
-                  price: Number(p.price) || 0,
-                  originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
-                  validity: p.validity || 'Standard Validity',
-                  perk: p.perk || 'Full Shala Access'
-                }))
+                id: p.id || `pass-${idx}`,
+                name: p.name || `Class Pass #${idx + 1}`,
+                sessions: p.sessions || 'Unlimited',
+                price: Number(p.price) || 0,
+                originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
+                validity: p.validity || 'Standard Validity',
+                perk: p.perk || 'Full Shala Access'
+              }))
               : defaultClassPacks;
 
             const activeBatch = shalaBatches.find((b: any) => b.id === selectedYogaBatchId) || shalaBatches[0];
@@ -5773,13 +5765,13 @@ export default function VenueProfilePage() {
             const filteredShalaBatches = selectedYogaFormat === 'ALL'
               ? shalaBatches
               : shalaBatches.filter((b: any) => {
-                  const disc = (b.discipline || '').toUpperCase();
-                  if (selectedYogaFormat === 'HATHA') return disc.includes('HATHA');
-                  if (selectedYogaFormat === 'ASHTANGA') return disc.includes('ASHTANGA');
-                  if (selectedYogaFormat === 'SOUND_BATH') return disc.includes('SOUND') || disc.includes('YIN');
-                  if (selectedYogaFormat === 'NIDRA') return disc.includes('NIDRA');
-                  return true;
-                });
+                const disc = (b.discipline || '').toUpperCase();
+                if (selectedYogaFormat === 'HATHA') return disc.includes('HATHA');
+                if (selectedYogaFormat === 'ASHTANGA') return disc.includes('ASHTANGA');
+                if (selectedYogaFormat === 'SOUND_BATH') return disc.includes('SOUND') || disc.includes('YIN');
+                if (selectedYogaFormat === 'NIDRA') return disc.includes('NIDRA');
+                return true;
+              });
 
             const dynamicAddonsTotal = (activeBatch.addons || [])
               .filter((a: any) => selectedYogaDynamicAddons.includes(a.name || a.id))
@@ -5815,11 +5807,10 @@ export default function VenueProfilePage() {
                     <button
                       type="button"
                       onClick={() => setYogaSadhanaTab('SINGLE_SESSION')}
-                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
-                        yogaSadhanaTab === 'SINGLE_SESSION'
+                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${yogaSadhanaTab === 'SINGLE_SESSION'
                           ? 'bg-[#ff6325] text-white shadow-xs'
                           : 'text-slate-700 dark:text-slate-300 hover:text-slate-900'
-                      }`}
+                        }`}
                     >
                       Daily Drop-in Batches ({filteredShalaBatches.length})
                     </button>
@@ -5829,11 +5820,10 @@ export default function VenueProfilePage() {
                         const firstPassId = CLASS_PACKS[0]?.id || 'pass-5-classes';
                         setYogaSadhanaTab(firstPassId);
                       }}
-                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
-                        yogaSadhanaTab !== 'SINGLE_SESSION'
+                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${yogaSadhanaTab !== 'SINGLE_SESSION'
                           ? 'bg-[#ff6325] text-white shadow-xs'
                           : 'text-slate-700 dark:text-slate-300 hover:text-slate-900'
-                      }`}
+                        }`}
                     >
                       Memberships &amp; Passes ({CLASS_PACKS.length})
                     </button>
@@ -5860,11 +5850,10 @@ export default function VenueProfilePage() {
                             key={pill.id}
                             type="button"
                             onClick={() => setSelectedYogaFormat(pill.id)}
-                            className={`px-3.5 py-1.5 rounded-full text-xs font-bold shrink-0 transition-all cursor-pointer border ${
-                              isFormatActive
+                            className={`px-3.5 py-1.5 rounded-full text-xs font-bold shrink-0 transition-all cursor-pointer border ${isFormatActive
                                 ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-xs'
                                 : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-slate-300'
-                            }`}
+                              }`}
                           >
                             <span>{pill.label}</span>
                           </button>
@@ -5907,11 +5896,10 @@ export default function VenueProfilePage() {
                             <div
                               key={batch.id}
                               onClick={() => setSelectedYogaBatchId(batch.id)}
-                              className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
-                                isSelected
+                              className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${isSelected
                                   ? 'bg-orange-50/70 dark:bg-orange-950/20 border-[#ff6325] ring-1 ring-[#ff6325]/40 shadow-sm'
                                   : 'bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-white/10 hover:border-slate-300'
-                              }`}
+                                }`}
                             >
                               <div>
                                 <div className="flex items-center justify-between gap-2 mb-1.5">
@@ -5987,11 +5975,10 @@ export default function VenueProfilePage() {
                           <div
                             key={pack.id}
                             onClick={() => setYogaSadhanaTab(pack.id as any)}
-                            className={`p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-4 ${
-                              isPackSelected
+                            className={`p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-4 ${isPackSelected
                                 ? 'bg-orange-50/70 dark:bg-orange-950/20 border-[#ff6325] ring-2 ring-[#ff6325]/40 shadow-sm'
                                 : 'bg-white dark:bg-slate-800/40 border-slate-200 dark:border-white/10 hover:border-slate-300'
-                            }`}
+                              }`}
                           >
                             <div>
                               <div className="flex items-center justify-between mb-1.5">
@@ -6024,9 +6011,8 @@ export default function VenueProfilePage() {
                               </span>
                               <button
                                 type="button"
-                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                                  isPackSelected ? 'bg-[#ff6325] text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
-                                }`}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${isPackSelected ? 'bg-[#ff6325] text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                                  }`}
                               >
                                 {isPackSelected ? 'Selected Pass' : 'Select Pass'}
                               </button>
@@ -6208,20 +6194,18 @@ export default function VenueProfilePage() {
                                         setSelectedYogaDynamicAddons(prev => [...prev, addonKey]);
                                       }
                                     }}
-                                    className={`group p-4 rounded-xl border transition-all duration-150 cursor-pointer flex items-center justify-between gap-4 ${
-                                      isChecked
+                                    className={`group p-4 rounded-xl border transition-all duration-150 cursor-pointer flex items-center justify-between gap-4 ${isChecked
                                         ? 'bg-orange-50/70 dark:bg-orange-950/20 border-[#ff6325] ring-1 ring-[#ff6325]'
                                         : 'bg-white dark:bg-slate-800/50 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
-                                    }`}
+                                      }`}
                                   >
                                     <div className="flex items-center gap-3.5 min-w-0">
                                       {/* Clean modern check indicator */}
                                       <div
-                                        className={`w-5 h-5 rounded-md flex items-center justify-center transition-all shrink-0 ${
-                                          isChecked
+                                        className={`w-5 h-5 rounded-md flex items-center justify-center transition-all shrink-0 ${isChecked
                                             ? 'bg-[#ff6325] text-white'
                                             : 'border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 group-hover:border-slate-400'
-                                        }`}
+                                          }`}
                                       >
                                         {isChecked && (
                                           <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
@@ -6253,11 +6237,10 @@ export default function VenueProfilePage() {
                                     {/* Clean Price */}
                                     <div className="shrink-0 text-right">
                                       <span
-                                        className={`text-sm font-black ${
-                                          isChecked
+                                        className={`text-sm font-black ${isChecked
                                             ? 'text-[#ff6325]'
                                             : 'text-slate-700 dark:text-slate-200'
-                                        }`}
+                                          }`}
                                       >
                                         +₹{addonPrice}
                                       </span>
@@ -6349,15 +6332,15 @@ export default function VenueProfilePage() {
           // 1. Check live listings created in vendor portal (Hotel pattern)
           const livePassListings = (liveServices && liveServices.length > 0 && Array.isArray(liveServices[0]?.listings) && liveServices[0].listings.length > 0)
             ? liveServices[0].listings.map((l: any) => ({
-                id: l.id,
-                name: l.name,
-                price: Number(l.price || l.basePrice || 299),
-                originalPrice: l.originalPrice ? Number(l.originalPrice) : undefined,
-                durationMinutes: l.durationMinutes || (l.metadata?.durationMinutes) || 720,
-                formatType: l.metadata?.formatType || (l.name?.toLowerCase().includes('pt') || l.name?.toLowerCase().includes('trainer') ? 'PERSONAL_TRAINING' : 'OPEN_GYM'),
-                description: l.description || '',
-                inclusions: l.metadata?.inclusions || ['Turnstile QR Access', 'Locker & Shower']
-              }))
+              id: l.id,
+              name: l.name,
+              price: Number(l.price || l.basePrice || 299),
+              originalPrice: l.originalPrice ? Number(l.originalPrice) : undefined,
+              durationMinutes: l.durationMinutes || (l.metadata?.durationMinutes) || 720,
+              formatType: l.metadata?.formatType || (l.name?.toLowerCase().includes('pt') || l.name?.toLowerCase().includes('trainer') ? 'PERSONAL_TRAINING' : 'OPEN_GYM'),
+              description: l.description || '',
+              inclusions: l.metadata?.inclusions || ['Turnstile QR Access', 'Locker & Shower']
+            }))
             : [];
 
           const defaultGymPasses = [
@@ -6379,19 +6362,22 @@ export default function VenueProfilePage() {
 
           const allPasses = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.passes)
             ? (liveServices[0].metadata.passes as any[])
-            : (livePassListings.length > 0 ? livePassListings : defaultGymPasses);
+            : livePassListings;
 
           const allTrainers = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.trainers)
             ? (liveServices[0].metadata.trainers as any[])
-            : defaultGymTrainers;
+            : [];
 
-          const allMembershipPlans = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.membershipPlans)
-            ? (liveServices[0].metadata.membershipPlans as any[])
-            : defaultGymMembershipPlans;
+          const allMembershipPlans = (liveServices && liveServices.length > 0 && (liveServices[0]?.metadata?.membershipPlans || liveServices[0]?.metadata?.classPasses))
+            ? ((liveServices[0].metadata.membershipPlans || liveServices[0].metadata.classPasses) as any[]).map((p: any) => ({
+              ...p,
+              months: p.months || Math.max(1, Math.round((parseInt(String(p.validity || '30'), 10) || 30) / 30))
+            }))
+            : [];
 
           const allPtPackages = (liveServices && liveServices.length > 0 && liveServices[0]?.metadata?.ptPackages)
             ? (liveServices[0].metadata.ptPackages as any[])
-            : defaultPtPackages;
+            : [];
 
           // Pure gym passes
           const categoryPasses = allPasses.filter((p: any) => p.formatType !== 'YOGA_CLASS');
@@ -6413,16 +6399,40 @@ export default function VenueProfilePage() {
             effectivePrice = activePass?.price || 0;
           }
 
-          const gymDynamicSlots = [
-            { time: '05:30 AM', spotsLeft: 14, peak: false },
-            { time: '06:45 AM', spotsLeft: 4, peak: true },
-            { time: '08:00 AM', spotsLeft: 8, peak: true },
-            { time: '09:30 AM', spotsLeft: 18, peak: false },
-            { time: '05:00 PM', spotsLeft: 12, peak: false },
-            { time: '06:15 PM', spotsLeft: 3, peak: true },
-            { time: '07:30 PM', spotsLeft: 5, peak: true },
-            { time: '08:45 PM', spotsLeft: 16, peak: false }
-          ];
+          const gymSchedule = liveServices?.[0]?.metadata?.salonSchedule as any;
+          const gymDynamicSlots = (() => {
+            if (gymSchedule && gymSchedule.openTime && gymSchedule.closeTime) {
+              const parseMins = (t: string) => {
+                const [h, m] = t.split(':').map(Number);
+                return (h || 0) * 60 + (m || 0);
+              };
+              const fmtTime = (mins: number) => {
+                const h24 = Math.floor(mins / 60) % 24;
+                const m = mins % 60;
+                const ampm = h24 >= 12 ? 'PM' : 'AM';
+                const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+                return `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`;
+              };
+              const dateKey = selectedDate || todayStr;
+              const dayCfg = gymSchedule.dateOverrides?.[dateKey] || gymSchedule;
+              const openM = parseMins(dayCfg.openTime || gymSchedule.openTime);
+              const closeM = parseMins(dayCfg.closeTime || gymSchedule.closeTime);
+              const step = Number(dayCfg.slotDuration || gymSchedule.slotDuration || 60);
+              const cap = Number(dayCfg.capacity || gymSchedule.capacity || 15);
+              const breaks: any[] = dayCfg.breaks || gymSchedule.breaks || [];
+              const blocked: string[] = dayCfg.blockedSlots || gymSchedule.blockedSlots || [];
+              const out: { time: string; spotsLeft: number; peak: boolean }[] = [];
+              for (let t = openM; t + step <= closeM; t += step) {
+                const label = fmtTime(t);
+                const inBreak = breaks.some((b: any) => t >= parseMins(b.start) && t < parseMins(b.end));
+                if (!inBreak && !blocked.includes(label)) {
+                  out.push({ time: label, spotsLeft: cap, peak: false });
+                }
+              }
+              return out;
+            }
+            return [];
+          })();
 
           return (
             <div id="fitness-booking-section" className="space-y-6 mt-8 p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
@@ -6453,22 +6463,20 @@ export default function VenueProfilePage() {
                   <button
                     type="button"
                     onClick={() => setGymBookingType('DAY_PASS')}
-                    className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                      gymBookingType === 'DAY_PASS'
+                    className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${gymBookingType === 'DAY_PASS'
                         ? 'bg-[#ff6325] text-white shadow-sm'
                         : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
-                    }`}
+                      }`}
                   >
                     Day Passes & Trials
                   </button>
                   <button
                     type="button"
                     onClick={() => setGymBookingType('MEMBERSHIP')}
-                    className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                      gymBookingType === 'MEMBERSHIP'
+                    className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${gymBookingType === 'MEMBERSHIP'
                         ? 'bg-[#033266] text-white shadow-sm'
                         : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
-                    }`}
+                      }`}
                   >
                     Monthly Memberships
                   </button>
@@ -6485,11 +6493,10 @@ export default function VenueProfilePage() {
                         key={tab.id}
                         type="button"
                         onClick={() => setFitnessFormatFilter(tab.id as any)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                          fitnessFormatFilter === tab.id
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${fitnessFormatFilter === tab.id
                             ? 'bg-[#ff6325] text-white shadow-xs'
                             : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-                        }`}
+                          }`}
                       >
                         {tab.label}
                       </button>
@@ -6508,11 +6515,10 @@ export default function VenueProfilePage() {
                         <div
                           key={pass.id}
                           onClick={() => setSelectedFitnessPassId(isSelected ? '' : pass.id)}
-                          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                            isSelected
+                          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${isSelected
                               ? 'bg-[#ff6325]/10 dark:bg-[#ff6325]/15 border-[#ff6325] ring-1 ring-[#ff6325]/30 shadow-xs'
                               : 'bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-white/10 hover:border-slate-300'
-                          }`}
+                            }`}
                         >
                           <div className="min-w-0 flex-1">
                             <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate">
@@ -6540,11 +6546,10 @@ export default function VenueProfilePage() {
                                 e.stopPropagation();
                                 setSelectedFitnessPassId(isSelected ? '' : pass.id);
                               }}
-                              className={`h-8 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${
-                                isSelected
+                              className={`h-8 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${isSelected
                                   ? 'bg-[#ff6325] text-white font-black shadow-xs'
                                   : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-[#ff6325] hover:text-white'
-                              }`}
+                                }`}
                             >
                               {isSelected ? (
                                 <>
@@ -6573,11 +6578,10 @@ export default function VenueProfilePage() {
                         <div
                           key={plan.id}
                           onClick={() => setSelectedGymPlanId(isSelected ? '' : plan.id)}
-                          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                            isSelected
+                          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${isSelected
                               ? 'bg-[#ff6325]/10 dark:bg-[#ff6325]/15 border-[#ff6325] ring-1 ring-[#ff6325]/30 shadow-xs'
                               : 'bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-white/10 hover:border-slate-300'
-                          }`}
+                            }`}
                         >
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
@@ -6612,11 +6616,10 @@ export default function VenueProfilePage() {
                                 e.stopPropagation();
                                 setSelectedGymPlanId(isSelected ? '' : plan.id);
                               }}
-                              className={`h-8 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${
-                                isSelected
+                              className={`h-8 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${isSelected
                                   ? 'bg-[#ff6325] text-white font-black shadow-xs'
                                   : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-[#ff6325] hover:text-white'
-                              }`}
+                                }`}
                             >
                               {isSelected ? (
                                 <>
@@ -6638,1335 +6641,1364 @@ export default function VenueProfilePage() {
               {/* STEP 2: CERTIFIED COACHES (Clean Compact Selector) */}
               {allTrainers && allTrainers.length > 0 && (
                 <div>
-                  <div className="flex items-center justify-between mb-2.5">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                      2. Dedicated Coach / Trainer
-                    </label>
-                    <span className="text-[11px] text-slate-400 font-medium">
-                      {selectedGymTrainerId ? 'Click to unselect' : 'Optional • Click to choose'}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 max-h-[220px] overflow-y-auto pr-1">
-                    {allTrainers.map((tr: any) => {
-                      const isTrainerActive = selectedGymTrainerId === tr.id;
-                      return (
-                        <div
-                          key={tr.id}
-                          onClick={() => setSelectedGymTrainerId(isTrainerActive ? '' : tr.id)}
-                          className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 ${
-                            isTrainerActive
-                              ? 'border-[#ff6325] bg-[#ff6325]/10 dark:bg-[#ff6325]/15 ring-1 ring-[#ff6325]/30 shadow-xs'
-                              : 'bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-white/10 hover:border-slate-300'
-                          }`}
-                        >
-                          <div className="relative shrink-0">
-                            <img
-                              src={tr.avatar}
-                              alt={tr.name}
-                              className="w-10 h-10 rounded-full object-cover border border-white dark:border-slate-700 shadow-xs"
-                              onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80'; }}
-                            />
-                            {isTrainerActive && (
-                              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#ff6325] text-white flex items-center justify-center text-[9px] font-black shadow-xs">
-                                ✓
-                              </div>
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
-                              <h5 className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                                {tr.name}
-                              </h5>
-                              <div className="flex items-center text-[10px] font-black text-amber-500 shrink-0">
-                                <span>★</span>
-                                <span>{tr.rating}</span>
-                              </div>
-                            </div>
-                            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium block truncate">
-                              {tr.role?.split(',')[0]} • {tr.experienceYears}y exp
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* STEP 3 & 4: DATE & WORKOUT BATCH TIME */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 pt-3 border-t border-slate-100 dark:border-white/10">
-                {/* Date Picker */}
-                <div className="lg:col-span-5 space-y-2">
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                    3. Workout Start Date
-                  </label>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const d = selectedDate ? new Date(selectedDate) : new Date();
-                        setFitnessCalMonth(isNaN(d.getTime()) ? new Date() : d);
-                        setIsFitnessCalOpen(!isFitnessCalOpen);
-                      }}
-                      className="w-full bg-white dark:bg-slate-800/40 border border-slate-200/80 dark:border-white/10 rounded-2xl px-4 py-3 flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white hover:border-[#ff6325] transition-all cursor-pointer shadow-xs"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-[#ff6325]/10 text-[#ff6325] flex items-center justify-center font-bold shrink-0">
-                          <Calendar size={16} />
-                        </div>
-                        <div className="text-left">
-                          <span className="text-[10px] text-slate-400 uppercase tracking-wider block">START DATE</span>
-                          <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
-                            {(() => {
-                              try {
-                                const [y, m, d] = (selectedDate || todayStr).split('-');
-                                return `${d}-${m}-${y}`;
-                              } catch {
-                                return selectedDate || todayStr;
-                              }
-                            })()} {selectedDate === todayStr ? '(Today)' : ''}
-                          </span>
-                        </div>
-                      </div>
-                      <ChevronDown size={16} className={`text-slate-400 transition-transform duration-200 ${isFitnessCalOpen ? 'rotate-180' : ''}`} />
-                    </button>
-
-                    {/* Popover Calendar */}
-                    {isFitnessCalOpen && (
-                      <>
-                        <div className="fixed inset-0 z-40" onClick={() => setIsFitnessCalOpen(false)} />
-                        <div className="absolute top-full left-0 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-white/15 shadow-2xl p-4 z-50 text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
-                          <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-2 mb-3 border border-slate-150/60 dark:border-white/5">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const newD = new Date(fitnessCalMonth);
-                                newD.setMonth(newD.getMonth() - 1);
-                                setFitnessCalMonth(newD);
-                              }}
-                              className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
-                            >
-                              <ChevronLeft size={16} />
-                            </button>
-                            <span className="text-xs font-black tracking-wide">
-                              {fitnessCalMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const newD = new Date(fitnessCalMonth);
-                                newD.setMonth(newD.getMonth() + 1);
-                                setFitnessCalMonth(newD);
-                              }}
-                              className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
-                            >
-                              <ChevronRight size={16} />
-                            </button>
-                          </div>
-
-                          <div className="grid grid-cols-7 gap-1 text-center font-bold text-[10px] text-slate-400 mb-2">
-                            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
-                              <div key={day}>{day}</div>
-                            ))}
-                          </div>
-
-                          <div className="grid grid-cols-7 gap-1 text-center">
-                            {(() => {
-                              const y = fitnessCalMonth.getFullYear();
-                              const m = fitnessCalMonth.getMonth();
-                              const firstDay = new Date(y, m, 1).getDay();
-                              const daysInMonth = new Date(y, m + 1, 0).getDate();
-                              const cells = [];
-                              for (let i = 0; i < firstDay; i++) {
-                                cells.push(<div key={`blank-${i}`} className="h-8" />);
-                              }
-                              for (let d = 1; d <= daysInMonth; d++) {
-                                const dayStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                                const isCurrentSelected = dayStr === selectedDate;
-                                const isPast = dayStr < todayStr;
-                                cells.push(
-                                  <button
-                                    key={dayStr}
-                                    type="button"
-                                    disabled={isPast}
-                                    onClick={() => {
-                                      setSelectedDate(dayStr);
-                                      setIsFitnessCalOpen(false);
-                                    }}
-                                    className={`h-8 rounded-xl text-xs font-black flex items-center justify-center transition-all cursor-pointer ${
-                                      isCurrentSelected
-                                        ? 'bg-[#ff6325] text-white shadow-xs'
-                                        : isPast
-                                          ? 'opacity-25 cursor-not-allowed text-slate-400'
-                                          : 'hover:bg-orange-50 hover:text-[#ff6325] dark:hover:bg-slate-800'
-                                    }`}
-                                  >
-                                    {d}
-                                  </button>
-                                );
-                              }
-                              return cells;
-                            })()}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Workout Batch Time Pills */}
-                <div className="lg:col-span-7 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                      4. Workout Batch Time
-                    </label>
-                    <span className="text-[11px] text-slate-400 font-medium">Instant turnstile access</span>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {gymDynamicSlots.map((slot) => {
-                      const isSelected = selectedFitnessTimeSlot === slot.time;
-                      return (
-                        <button
-                          key={slot.time}
-                          type="button"
-                          onClick={() => setSelectedFitnessTimeSlot(slot.time)}
-                          className={`py-2.5 px-3 rounded-xl border text-center transition-all cursor-pointer ${
-                            isSelected
-                              ? 'bg-[#ff6325] text-white border-[#ff6325] font-black shadow-xs'
-                              : 'bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-white/10 hover:border-slate-300 text-slate-800 dark:text-slate-200 font-bold'
-                          }`}
-                        >
-                          <span className="text-xs block tracking-tight">{slot.time}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Gym Facility Highlights (Minimalist Clean Chips) */}
-              <div className="pt-1">
-                <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 block mb-2 uppercase tracking-wider">
-                  Included Amenities
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    'Olympic Barbells & Rogue Racks',
-                    'Hi-Tech Cardio & Sled Track',
-                    'Steam Sauna & Luxury Showers',
-                    'InBody Composition Scan',
-                    'RFID Smart Lockers',
-                    'Valet Parking'
-                  ].map((label, idx) => (
-                    <span
-                      key={idx}
-                      className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-slate-200/60 dark:border-white/5 text-[11px] font-medium text-slate-600 dark:text-slate-300"
-                    >
-                      ✓ {label}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Gym Summary & Checkout Dock */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-black text-slate-900 dark:text-white">
-                      {gymBookingType === 'MEMBERSHIP'
-                        ? (activePlan ? activePlan.name : 'Select a Membership Plan')
-                        : (activePass ? activePass.name : 'Select a Day Pass / Trial')}
-                    </span>
-                    {effectivePrice > 0 && (
-                      <span className="text-base font-black text-[#ff6325]">
-                        ₹{effectivePrice}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
-                    {selectedDate || todayStr} at {selectedFitnessTimeSlot}
-                    {activeTrainer ? ` • Coach: ${activeTrainer.name}` : ' • General Floor Access'}
-                    {' • Instant Turnstile Pass'}
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  disabled={gymBookingType === 'MEMBERSHIP' ? !activePlan : !activePass}
-                  onClick={() => {
-                    const chosenItem = gymBookingType === 'MEMBERSHIP' ? activePlan : activePass;
-                    if (!chosenItem) return;
-
-                    const bookingTitle = gymBookingType === 'MEMBERSHIP'
-                      ? `${venueName} — ${activePlan.name} (${activePlan.months}M)`
-                      : `${venueName} — ${activePass.name}`;
-
-                    setSelectedService({
-                      id: `fitness-${Date.now()}`,
-                      name: bookingTitle,
-                      price: effectivePrice,
-                      metadata: {
-                        isFitnessBooking: true,
-                        fitnessBooking: {
-                          venueName,
-                          passName: gymBookingType === 'MEMBERSHIP' ? activePlan.name : activePass.name,
-                          bookingType: gymBookingType,
-                          formatType: activePass?.formatType || 'GYM_MEMBERSHIP',
-                          planMonths: gymBookingType === 'MEMBERSHIP' ? activePlan.months : 1,
-                          slotTime: selectedFitnessTimeSlot,
-                          slotDate: selectedDate || todayStr,
-                          trainer: activeTrainer?.name || 'Floor Coach (General Access)',
-                          ptPackage: selectedGymPTId,
-                          durationMinutes: activePass?.durationMinutes || 720
-                        }
-                      }
-                    });
-                    setSelectedSlot({
-                      id: `slot-fit-${Date.now()}`,
-                      timeStr: `${selectedDate || todayStr} at ${selectedFitnessTimeSlot}`,
-                      date: selectedDate || todayStr,
-                      available: true
-                    });
-                    router.push('/booking/checkout');
-                  }}
-                  className={`px-8 py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-wider shadow-md transition-all cursor-pointer w-full sm:w-auto flex items-center justify-center gap-2 ${
-                    (gymBookingType === 'MEMBERSHIP' ? !activePlan : !activePass)
-                      ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed shadow-none'
-                      : 'bg-[#ff6325] hover:bg-[#e04e13] text-white active:scale-95'
-                  }`}
-                >
-                  <span>
-                    {gymBookingType === 'MEMBERSHIP'
-                      ? (activePlan ? `Join Membership (₹${effectivePrice})` : 'Select Membership')
-                      : (activePass ? `Book Gym Pass (₹${effectivePrice})` : 'Select Pass')}
-                  </span>
-                  <span>→</span>
-                </button>
-              </div>
-            </div>
-          );
-        })()}
-
-
-{
-  isDining && (() => {
-    // 1. Direct Real-time Dynamic Tables & Menu from Live DB Services
-    const liveDiningService = (liveServices && liveServices.length > 0)
-      ? liveServices.find((s: any) => s.metadata?.isDining || s.category?.toLowerCase().includes('dining') || s.category?.toLowerCase().includes('restaurant')) || liveServices[0]
-      : null;
-
-    const liveTables = (liveDiningService && Array.isArray(liveDiningService.listings) && liveDiningService.listings.length > 0)
-      ? liveDiningService.listings.map((l: any, idx: number) => {
-          const zone = l.metadata?.tableZone || l.tableZone || 'AC_INDOOR';
-          const icon = zone === 'ROOFTOP' ? '🌆' : zone === 'PRIVATE_DINING' ? '👑' : zone === 'GARDEN_PATIO' ? '🌿' : '🛋️';
-          return {
-            id: l.id || `table-live-${idx}`,
-            name: l.name,
-            capacity: `${l.minGuests || l.metadata?.minGuests || 1} - ${l.maxGuests || l.metadata?.maxGuests || 4} Guests`,
-            minGuests: l.minGuests || l.metadata?.minGuests || 1,
-            maxGuests: l.maxGuests || l.metadata?.maxGuests || 4,
-            zone: zone,
-            depositAmount: Number(l.price || l.basePrice || l.metadata?.depositAmount || 0),
-            badge: l.offerBadge || l.metadata?.highlightBadge || undefined,
-            icon,
-            description: l.description || l.metadata?.atmosphereTagline || `Comfortable table setup in ${zone.replace('_', ' ')}.`
-          };
-        })
-      : [];
-
-    const defaultDiningTables = [
-      { id: 'tbl-cozy-2', name: 'Cozy Couple Table (2 Seater)', capacity: '1 - 2 Guests', minGuests: 1, maxGuests: 2, zone: 'ROOFTOP' as const, depositAmount: 0, badge: 'Romantic Rooftop', icon: '🍷', description: 'Intimate candlelit table overlooking panoramic city skyline views.' },
-      { id: 'tbl-family-4', name: 'Family Booth Dining (4 Seater)', capacity: '3 - 4 Guests', minGuests: 3, maxGuests: 4, zone: 'AC_INDOOR' as const, depositAmount: 0, badge: 'Most Popular', icon: '🛋️', description: 'Plush cushioned booth seating in the central air-conditioned royal dining hall.' },
-      { id: 'tbl-large-6', name: 'Celebration Grand Table (6 - 8 Seater)', capacity: '5 - 8 Guests', minGuests: 5, maxGuests: 8, zone: 'AC_INDOOR' as const, depositAmount: 200, badge: 'Celebrations', icon: '🎂', description: 'Spacious extended table ideal for family reunions, birthdays & gatherings.' },
-      { id: 'tbl-pdr', name: 'Royal Private Dining Suite (PDR)', capacity: '8 - 14 Guests', minGuests: 8, maxGuests: 14, zone: 'PRIVATE_DINING' as const, depositAmount: 500, badge: 'Ultra Luxury', icon: '👑', description: 'Exclusive sound-insulated VIP room with dedicated butler & custom curated menu.' }
-    ];
-    const defaultDiningSlots = [
-      { time: '12:00 PM', session: 'LUNCH', discountOffer: 'Flat 20% Off on Food Bill', isFastFilling: false },
-      { time: '12:45 PM', session: 'LUNCH', discountOffer: 'Flat 15% Off', isFastFilling: true },
-      { time: '01:30 PM', session: 'LUNCH', discountOffer: 'Flat 15% Off', isFastFilling: true },
-      { time: '07:00 PM', session: 'DINNER', discountOffer: 'Complimentary Welcome Mocktail', isFastFilling: false },
-      { time: '07:45 PM', session: 'DINNER', discountOffer: 'Prime Slot (Full Menu Available)', isFastFilling: true },
-      { time: '08:30 PM', session: 'DINNER', discountOffer: 'Live Acoustic Music Session', isFastFilling: true }
-    ];
-    let allTables = liveTables.length > 0 ? liveTables : (liveDiningService?.metadata?.tableTypes || defaultDiningTables);
-    let allSlots = liveDiningService?.metadata?.timeSlots || defaultDiningSlots;
-    let popularMenu = liveDiningService?.metadata?.popularMenu || [];
-    let activeDeals = liveDiningService?.metadata?.bookingDeals || [];
-    let activeCuisines = liveDiningService?.metadata?.cuisines || (merchantData?.metadata?.cuisines || ['South Indian Heritage', 'Chettinad Gourmet', 'North Indian']);
-    let activeCostForTwo = liveDiningService?.metadata?.costForTwo || liveDiningService?.basePrice || 800;
-    let customSessionsList: any[] = [];
-
-    if (typeof window !== 'undefined') {
-      try {
-        const busStorageRaw = localStorage.getItem('vendor-portal-storage-v10');
-        if (busStorageRaw) {
-          const busData = JSON.parse(busStorageRaw);
-          const curM = busData.state?.currentMerchant;
-          const storedServices = busData.state?.services || [];
-          const activeBranchId = curM?.activeBranchId;
-
-          // 1. Read Vendor Cuisines, Cost for Two, Deals & Perks from Merchant Profile (Modules 1, 3)
-          if (curM?.metadata?.cuisines && Array.isArray(curM.metadata.cuisines) && curM.metadata.cuisines.length > 0) {
-            activeCuisines = curM.metadata.cuisines;
-          }
-          if (curM?.metadata?.costForTwo) {
-            activeCostForTwo = Number(curM.metadata.costForTwo);
-          }
-          if (curM?.metadata?.bookingDeals && Array.isArray(curM.metadata.bookingDeals)) {
-            activeDeals = curM.metadata.bookingDeals.filter((d: any) => d.active !== false);
-          }
-          if (curM?.metadata?.customSessions && Array.isArray(curM.metadata.customSessions)) {
-            customSessionsList = curM.metadata.customSessions.filter((cs: any) => cs.enabled);
-          }
-
-          const vendorLunchPerk = curM?.metadata?.lunchPerkText;
-          const vendorDinnerPerk = curM?.metadata?.dinnerPerkText;
-          if (vendorLunchPerk || vendorDinnerPerk) {
-            allSlots = allSlots.map((s: any) => {
-              if (s.session === 'LUNCH' && vendorLunchPerk) {
-                return { ...s, discountOffer: vendorLunchPerk };
-              }
-              if (s.session === 'DINNER' && vendorDinnerPerk) {
-                return { ...s, discountOffer: vendorDinnerPerk };
-              }
-              return s;
-            });
-          }
-
-          // Append custom session slots if vendor configured them (e.g. Breakfast / High Tea)
-          if (customSessionsList.length > 0) {
-            customSessionsList.forEach((cs: any) => {
-              const sessionKey = cs.name.toUpperCase().includes('BREAKFAST') ? 'BREAKFAST' : cs.name.toUpperCase().includes('TEA') ? 'HIGH_TEA' : cs.name.toUpperCase();
-              if (!allSlots.some((s: any) => s.session === sessionKey)) {
-                allSlots.push({
-                  time: cs.opensAt || '08:00 AM',
-                  session: sessionKey as any,
-                  discountOffer: `${cs.name} Special`,
-                  isFastFilling: false
-                });
-              }
-            });
-          }
-
-          // 2. Read live tables configured in Business Portal (Module 2)
-          const matchedService = storedServices.find((s: any) => {
-            const sName = (s.name || '').toLowerCase();
-            const sCat = (s.category || '').toLowerCase();
-            const matchCat = sCat.includes('dining') || sCat.includes('restaurant') || sName.includes('dining') || s.metadata?.isDining;
-            const matchBranch = activeBranchId ? (!s.branchId || s.branchId === activeBranchId) : true;
-            return matchCat && matchBranch;
-          });
-
-          if (matchedService && Array.isArray(matchedService.listings) && matchedService.listings.length > 0) {
-            allTables = matchedService.listings.map((l: any, idx: number) => {
-              const zone = l.metadata?.tableZone || l.tableZone || 'AC_INDOOR';
-              const icon = zone === 'ROOFTOP' ? '🌆' : zone === 'PRIVATE_DINING' ? '👑' : zone === 'GARDEN_PATIO' ? '🌿' : '🛋️';
-              return {
-                id: l.id || `table-${idx}`,
-                name: l.name,
-                capacity: `${l.minGuests || l.metadata?.minGuests || 1} - ${l.maxGuests || l.metadata?.maxGuests || 4} Guests`,
-                minGuests: l.minGuests || l.metadata?.minGuests || 1,
-                maxGuests: l.maxGuests || l.metadata?.maxGuests || 4,
-                zone: zone,
-                depositAmount: Number(l.price || l.basePrice || l.metadata?.depositAmount || 0),
-                badge: l.offerBadge || l.metadata?.highlightBadge || undefined,
-                icon,
-                description: l.description || l.metadata?.atmosphereTagline || `Comfortable table setup in ${zone.replace('_', ' ')}.`
-              };
-            });
-
-            // Read add-on dishes
-            const vendorAddons: any[] = [];
-            matchedService.listings.forEach((l: any) => {
-              const isAddonsOn = l.isAddonsEnabled ?? l.metadata?.isAddonsEnabled ?? true;
-              const items = l.addOns || l.metadata?.addons || [];
-              if (isAddonsOn && Array.isArray(items)) {
-                items.forEach((item: any) => {
-                  if (item.name && !vendorAddons.some(v => v.name.toLowerCase() === item.name.toLowerCase())) {
-                    vendorAddons.push({
-                      id: `menu-vendor-${item.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
-                      name: item.name,
-                      category: 'MAIN_COURSE',
-                      isVeg: !item.name.toLowerCase().includes('chicken') && !item.name.toLowerCase().includes('mutton') && !item.name.toLowerCase().includes('fish') && !item.name.toLowerCase().includes('meat') && !item.name.toLowerCase().includes('prawn'),
-                      price: Number(item.price || 0),
-                      rating: 4.8,
-                      chefSpecial: true,
-                      description: `Chef special pre-order item freshly prepared for your table.`
-                    });
-                  }
-                });
-              }
-            });
-            if (vendorAddons.length > 0) {
-              popularMenu = vendorAddons;
-            }
-          }
-        }
-      } catch (e) { }
-    }
-
-    // Auto-Match Best Fit Table for user's selected party size
-    const bestFitTable = allTables.find((t: any) => diningGuestCount >= t.minGuests && diningGuestCount <= t.maxGuests);
-    const effectiveSelectedTableId = selectedTableId || (bestFitTable ? bestFitTable.id : (allTables[0]?.id || ''));
-
-    const filteredTables = allTables.filter((tbl: any) => {
-      if (diningZoneTab === 'ALL') return true;
-      return tbl.zone === diningZoneTab;
-    });
-
-    const activeTable = allTables.find((t: any) => t.id === effectiveSelectedTableId) || bestFitTable || allTables[0];
-    const reservationDeposit = activeTable?.depositAmount || 0;
-
-    return (
-      <div id="dining-booking-section" className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
-        {/* Header with Search Context Summary */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-              <span>🍽️</span> Restaurant Table Reservation
-            </h2>
-            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-900/50 text-[#ff6325] text-xs font-black">
-                <span>📅</span> {selectedDate || todayStr} {selectedDate === todayStr ? '(Today)' : ''}
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50 text-[#033266] dark:text-blue-400 text-xs font-black">
-                <span>👥</span> {diningGuestCount} {diningGuestCount === 1 ? 'Guest' : 'Guests'}
-              </span>
-              <button
-                type="button"
-                onClick={() => setIsEditSearchOpen(true)}
-                className="text-[11px] text-[#ff6325] hover:underline font-bold cursor-pointer ml-1"
-              >
-                Change Date / Party Size
-              </button>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full text-[11px] font-black bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-              ✓ Instant Confirmation
-            </span>
-          </div>
-        </div>
-
-        {/* 2. Seating Zone Ambiance Filter Tabs */}
-        <div>
-          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-            1. Select Seating Ambience & Zone
-          </label>
-          <div className="flex flex-wrap items-center gap-2">
-            {[
-              { id: 'ALL', label: 'All Tables', icon: '🍽️' },
-              { id: 'AC_INDOOR', label: 'AC Indoor Hall', icon: '🌟' },
-              { id: 'ROOFTOP', label: 'Romantic Rooftop', icon: '🌆' },
-              { id: 'GARDEN_PATIO', label: 'Garden Patio', icon: '🌿' },
-              { id: 'PRIVATE_DINING', label: 'Private Dining (PDR)', icon: '👑' }
-            ].map(tab => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setDiningZoneTab(tab.id as any)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${diningZoneTab === tab.id
-                  ? 'bg-[#033266] dark:bg-[#ff6325] text-white shadow-sm'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                  }`}
-              >
-                <span>{tab.icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* 3. Table Types Selection Cards */}
-        <div>
-          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-            2. Choose Table Type & Arrangement
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-            {filteredTables.map((tbl: any) => {
-              const isSelected = selectedTableId === tbl.id;
-              const isCapacityFit = diningGuestCount >= tbl.minGuests && diningGuestCount <= tbl.maxGuests;
-
-              return (
-                <div
-                  key={tbl.id}
-                  onClick={() => setSelectedTableId(tbl.id)}
-                  className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between relative ${isSelected
-                    ? 'bg-[#ff6325]/5 border-[#ff6325] shadow-md ring-2 ring-[#ff6325]/20'
-                    : 'bg-slate-50/70 dark:bg-slate-800/60 border-slate-200 dark:border-white/10 hover:border-slate-300'
-                    }`}
-                >
-                  {isCapacityFit && (
-                    <div className="absolute -top-2 right-3">
-                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500 text-white shadow-xs">
-                        Best Fit ({tbl.capacity})
+                  <button
+                    type="button"
+                    onClick={() => setShowGymTrainers(!showGymTrainers)}
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 hover:border-[#ff6325]/60 transition-all flex items-center justify-between gap-3 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">
+                        {activeTrainer
+                          ? `Coach: ${activeTrainer.name}${Number(activeTrainer.price) > 0 ? ` (+₹${Number(activeTrainer.price).toLocaleString()})` : ' (Free)'}`
+                          : 'Need a Dedicated Coach / Trainer? (Optional)'}
                       </span>
                     </div>
-                  )}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-2xl">{tbl.icon}</span>
-                      {tbl.badge && (
-                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                          {tbl.badge}
-                        </span>
+                    <span className="text-xs font-black text-[#ff6325] shrink-0">
+                      {showGymTrainers ? 'Hide ⌃' : activeTrainer ? 'Change ›' : '+ Add Coach ›'}
+                    </span>
+                  </button>
+
+                  {showGymTrainers && (
+                    <div className="flex flex-wrap gap-2.5 max-h-[240px] overflow-y-auto pr-1 mt-3">
+                          {allTrainers.map((tr: any) => {
+                            const isTrainerActive = selectedGymTrainerId === tr.id;
+                            const initials = (tr.name || 'TR')
+                              .split(' ')
+                              .map((w: string) => w[0])
+                              .join('')
+                              .slice(0, 2)
+                              .toUpperCase();
+                            return (
+                              <div
+                                key={tr.id}
+                                onClick={() => setSelectedGymTrainerId(isTrainerActive ? '' : tr.id)}
+                                className={`px-3 py-2.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-2.5 w-fit max-w-full ${isTrainerActive
+                                    ? 'border-[#ff6325] bg-[#ff6325]/10 dark:bg-[#ff6325]/15 ring-1 ring-[#ff6325]/30 shadow-xs'
+                                    : 'bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-white/10 hover:border-slate-300'
+                                  }`}
+                              >
+                                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${isTrainerActive
+                                    ? 'bg-[#ff6325] text-white'
+                                    : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                                  }`}>
+                                  {initials}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center justify-between gap-1.5">
+                                    <h5 className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                                      {tr.name}
+                                    </h5>
+                                    {isTrainerActive && (
+                                      <span className="w-4 h-4 rounded-full bg-[#ff6325] text-white flex items-center justify-center text-[9px] font-black shrink-0">
+                                        ✓
+                                      </span>
+                                    )}
+                                  </div>
+                                  {(tr.title || tr.role) && (
+                                    <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium truncate">
+                                      {tr.title || tr.role?.split(',')[0]}
+                                    </p>
+                                  )}
+                                  <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold truncate mt-0.5">
+                                    {tr.experienceYears}y exp{tr.certs ? ` • ${tr.certs}` : ''}
+                                  </p>
+                                </div>
+                                <div className="shrink-0 pl-3 ml-1 border-l border-slate-100 dark:border-white/10 flex items-center gap-2.5">
+                                  <div className="text-right">
+                                    <span className={`text-xs font-black block leading-tight ${Number(tr.price) > 0 ? 'text-slate-900 dark:text-white' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                                      {Number(tr.price) > 0 ? `+₹${Number(tr.price).toLocaleString()}` : 'Free'}
+                                    </span>
+                                    {Number(tr.price) > 0 && (
+                                      <span className="text-[10px] font-semibold text-slate-400 block leading-tight">
+                                        /{tr.priceUnit === 'month' ? 'month' : 'session'}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${isTrainerActive
+                                      ? 'bg-[#ff6325] text-white shadow-xs'
+                                      : 'border-2 border-slate-300 dark:border-slate-600 text-transparent'
+                                    }`}>
+                                    ✓
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
-                    <h4 className="text-sm font-black text-slate-900 dark:text-white">{tbl.name}</h4>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
-                      {tbl.description}
-                    </p>
-                  </div>
+              )}
 
-                  <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-white/10 flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                      <span>👥</span> {tbl.capacity}
-                    </span>
-                    <span className="text-xs font-black text-[#ff6325]">
-                      {tbl.depositAmount === 0 ? 'Free Reservation' : `₹${tbl.depositAmount} Hold Deposit`}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+                    {/* STEP 3 & 4: DATE & WORKOUT BATCH TIME */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 pt-3 border-t border-slate-100 dark:border-white/10">
+                      {/* Date Picker */}
+                      <div className="lg:col-span-5 space-y-2">
+                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                          3. Workout Start Date
+                        </label>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const d = selectedDate ? new Date(selectedDate) : new Date();
+                              setFitnessCalMonth(isNaN(d.getTime()) ? new Date() : d);
+                              setIsFitnessCalOpen(!isFitnessCalOpen);
+                            }}
+                            className="w-full bg-white dark:bg-slate-800/40 border border-slate-200/80 dark:border-white/10 rounded-2xl px-4 py-3 flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white hover:border-[#ff6325] transition-all cursor-pointer shadow-xs"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-xl bg-[#ff6325]/10 text-[#ff6325] flex items-center justify-center font-bold shrink-0">
+                                <Calendar size={16} />
+                              </div>
+                              <div className="text-left">
+                                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">START DATE</span>
+                                <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
+                                  {(() => {
+                                    try {
+                                      const [y, m, d] = (selectedDate || todayStr).split('-');
+                                      return `${d}-${m}-${y}`;
+                                    } catch {
+                                      return selectedDate || todayStr;
+                                    }
+                                  })()} {selectedDate === todayStr ? '(Today)' : ''}
+                                </span>
+                              </div>
+                            </div>
+                            <ChevronDown size={16} className={`text-slate-400 transition-transform duration-200 ${isFitnessCalOpen ? 'rotate-180' : ''}`} />
+                          </button>
 
-        {/* 4. Time Slots with Session Filters & Discount Chips */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-              3. Preferred Dining Time Slot & Offers
-            </label>
-            <div className="flex items-center gap-1.5">
-              {['ALL', 'LUNCH', 'DINNER'].map((ses) => (
-                <button
-                  key={ses}
-                  type="button"
-                  onClick={() => setDiningSession(ses as any)}
-                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${diningSession === ses
-                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                    }`}
-                >
-                  {ses === 'ALL' ? 'All Slots' : ses}
-                </button>
-              ))}
-            </div>
-          </div>
+                          {/* Popover Calendar */}
+                          {isFitnessCalOpen && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={() => setIsFitnessCalOpen(false)} />
+                              <div className="absolute top-full left-0 mt-3 w-80 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-white/15 shadow-2xl p-4 z-50 text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-150">
+                                <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-2 mb-3 border border-slate-150/60 dark:border-white/5">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newD = new Date(fitnessCalMonth);
+                                      newD.setMonth(newD.getMonth() - 1);
+                                      setFitnessCalMonth(newD);
+                                    }}
+                                    className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
+                                  >
+                                    <ChevronLeft size={16} />
+                                  </button>
+                                  <span className="text-xs font-black tracking-wide">
+                                    {fitnessCalMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newD = new Date(fitnessCalMonth);
+                                      newD.setMonth(newD.getMonth() + 1);
+                                      setFitnessCalMonth(newD);
+                                    }}
+                                    className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-xs transition-all cursor-pointer"
+                                  >
+                                    <ChevronRight size={16} />
+                                  </button>
+                                </div>
 
-          <div className="space-y-3">
-            {/* Lunch Sessions */}
-            {(diningSession === 'ALL' || diningSession === 'LUNCH') && (
-              <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">
-                  ☀️ Lunch Slots (12:00 PM - 03:30 PM)
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                  {allSlots
-                    .filter((s: any) => s.session === 'LUNCH')
-                    .map((slot: any) => {
-                      const isSelected = selectedDiningTime === slot.time;
-                      return (
-                        <button
-                          key={slot.time}
-                          type="button"
-                          onClick={() => setSelectedDiningTime(slot.time)}
-                          className={`py-3 px-3 rounded-xl text-center border transition-all cursor-pointer ${isSelected
-                            ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md scale-[1.02]'
-                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 hover:border-slate-300'
-                            }`}
-                        >
-                          <span className="text-xs font-black block">{slot.time}</span>
-                        </button>
-                      );
-                    })}
-                </div>
-              </div>
-            )}
+                                <div className="grid grid-cols-7 gap-1 text-center font-bold text-[10px] text-slate-400 mb-2">
+                                  {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                                    <div key={day}>{day}</div>
+                                  ))}
+                                </div>
 
-            {/* Dinner Sessions */}
-            {(diningSession === 'ALL' || diningSession === 'DINNER') && (
-              <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">
-                  🌙 Dinner Slots (07:00 PM - 11:00 PM)
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                  {allSlots
-                    .filter((s: any) => s.session === 'DINNER')
-                    .map((slot: any) => {
-                      const isSelected = selectedDiningTime === slot.time;
-                      return (
-                        <button
-                          key={slot.time}
-                          type="button"
-                          onClick={() => setSelectedDiningTime(slot.time)}
-                          className={`py-3 px-3 rounded-xl text-center border transition-all cursor-pointer ${isSelected
-                            ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md scale-[1.02]'
-                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 hover:border-slate-300'
-                            }`}
-                        >
-                          <span className="text-xs font-black block">{slot.time}</span>
-                        </button>
-                      );
-                    })}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+                                <div className="grid grid-cols-7 gap-1 text-center">
+                                  {(() => {
+                                    const y = fitnessCalMonth.getFullYear();
+                                    const m = fitnessCalMonth.getMonth();
+                                    const firstDay = new Date(y, m, 1).getDay();
+                                    const daysInMonth = new Date(y, m + 1, 0).getDate();
+                                    const cells = [];
+                                    for (let i = 0; i < firstDay; i++) {
+                                      cells.push(<div key={`blank-${i}`} className="h-8" />);
+                                    }
+                                    for (let d = 1; d <= daysInMonth; d++) {
+                                      const dayStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                                      const isCurrentSelected = dayStr === selectedDate;
+                                      const isPast = dayStr < todayStr;
+                                      cells.push(
+                                        <button
+                                          key={dayStr}
+                                          type="button"
+                                          disabled={isPast}
+                                          onClick={() => {
+                                            setSelectedDate(dayStr);
+                                            setIsFitnessCalOpen(false);
+                                          }}
+                                          className={`h-8 rounded-xl text-xs font-black flex items-center justify-center transition-all cursor-pointer ${isCurrentSelected
+                                              ? 'bg-[#ff6325] text-white shadow-xs'
+                                              : isPast
+                                                ? 'opacity-25 cursor-not-allowed text-slate-400'
+                                                : 'hover:bg-orange-50 hover:text-[#ff6325] dark:hover:bg-slate-800'
+                                            }`}
+                                        >
+                                          {d}
+                                        </button>
+                                      );
+                                    }
+                                    return cells;
+                                  })()}
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
 
-        {/* 5. Special Booking Deals & Coupons (Top App Standards: Dineout / EazyDiner) */}
-        {activeDeals && activeDeals.length > 0 && (
-          <div>
-            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-              4. Applicable Restaurant Deals & Offers
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {activeDeals.map((deal: any) => {
-                const isApplied = selectedDiningDealId === deal.id;
-                return (
-                  <div
-                    key={deal.id}
-                    onClick={() => setSelectedDiningDealId(isApplied ? '' : deal.id)}
-                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${isApplied
-                      ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 ring-2 ring-emerald-500/20'
-                      : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
-                      }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">🎉</span>
+                      {/* Workout Batch Time Pills */}
+                      <div className="lg:col-span-7 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                            4. Workout Batch Time
+                          </label>
+                          <span className="text-[11px] text-slate-400 font-medium">Instant turnstile access</span>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          {gymDynamicSlots.map((slot) => {
+                            const isSelected = selectedFitnessTimeSlot === slot.time;
+                            return (
+                              <button
+                                key={slot.time}
+                                type="button"
+                                onClick={() => setSelectedFitnessTimeSlot(slot.time)}
+                                className={`py-2.5 px-3 rounded-xl border text-center transition-all cursor-pointer ${isSelected
+                                    ? 'bg-[#ff6325] text-white border-[#ff6325] font-black shadow-xs'
+                                    : 'bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-white/10 hover:border-slate-300 text-slate-800 dark:text-slate-200 font-bold'
+                                  }`}
+                              >
+                                <span className="text-xs block tracking-tight">{slot.time}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Gym Facility Highlights (Minimalist Clean Chips) */}
+                    <div className="pt-1">
+                      <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 block mb-2 uppercase tracking-wider">
+                        Included Amenities
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          'Olympic Barbells & Rogue Racks',
+                          'Hi-Tech Cardio & Sled Track',
+                          'Steam Sauna & Luxury Showers',
+                          'InBody Composition Scan',
+                          'RFID Smart Lockers',
+                          'Valet Parking'
+                        ].map((label, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-slate-200/60 dark:border-white/5 text-[11px] font-medium text-slate-600 dark:text-slate-300"
+                          >
+                            ✓ {label}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Gym Summary & Checkout Dock */}
+                    <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="text-xs font-black text-slate-900 dark:text-white">{deal.title}</h4>
-                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300">
-                            {deal.code}
+                          <span className="text-sm font-black text-slate-900 dark:text-white">
+                            {gymBookingType === 'MEMBERSHIP'
+                              ? (activePlan ? activePlan.name : 'Select a Membership Plan')
+                              : (activePass ? activePass.name : 'Select a Day Pass / Trial')}
                           </span>
+                          {(effectivePrice + Number(activeTrainer?.price || 0)) > 0 && (
+                            <span className="text-base font-black text-[#ff6325]">
+                              ₹{effectivePrice + Number(activeTrainer?.price || 0)}
+                            </span>
+                          )}
                         </div>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
-                          {deal.description}
-                        </p>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
+                          {selectedDate || todayStr} at {selectedFitnessTimeSlot}
+                          {activeTrainer ? ` • Coach: ${activeTrainer.name}` : ' • General Floor Access'}
+                          {' • Instant Turnstile Pass'}
+                        </span>
                       </div>
-                    </div>
-                    <span className={`text-xs font-black px-2.5 py-1 rounded-xl shrink-0 ${isApplied ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/10'
-                      }`}>
-                      {isApplied ? 'Applied ✓' : 'Apply'}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
-        {/* 6. Optional Chef Special Pre-order Delicacies (Zero Wait Serving) */}
-        {popularMenu && popularMenu.length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                5. Pre-order Signature Dishes (Optional)
-              </label>
-              <span className="text-[10px] text-slate-400 font-bold">
-                {selectedPreOrderItems.length} items added (+₹{selectedPreOrderItems.reduce((acc, itm) => {
-                  const m = popularMenu.find((p: any) => p.id === itm.id);
-                  return acc + (m ? m.price * itm.qty : 0);
-                }, 0)})
-              </span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {popularMenu.slice(0, 6).map((item: any) => {
-                const sel = selectedPreOrderItems.find((p) => p.id === item.id);
-                const qty = sel?.qty || 0;
-
-                return (
-                  <div
-                    key={item.id}
-                    className="p-3.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/80 flex items-center justify-between gap-3 shadow-2xs"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className={`w-2 h-2 rounded-full shrink-0 ${item.isVeg ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                        <h5 className="text-xs font-black text-slate-900 dark:text-white truncate">{item.name}</h5>
-                      </div>
-                      <span className="text-xs font-black text-[#ff6325] block mt-1">₹{item.price}</span>
-                    </div>
-
-                    {qty === 0 ? (
                       <button
                         type="button"
-                        onClick={() => setSelectedPreOrderItems([...selectedPreOrderItems, { id: item.id, qty: 1 }])}
-                        className="px-3 py-1.5 rounded-xl border border-[#ff6325] text-[#ff6325] hover:bg-[#ff6325] hover:text-white text-xs font-black transition-all cursor-pointer"
-                      >
-                        + Add
-                      </button>
-                    ) : (
-                      <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-700 rounded-xl px-2 py-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (qty === 1) {
-                              setSelectedPreOrderItems(selectedPreOrderItems.filter((p) => p.id !== item.id));
-                            } else {
-                              setSelectedPreOrderItems(selectedPreOrderItems.map((p) => p.id === item.id ? { ...p, qty: p.qty - 1 } : p));
+                        disabled={gymBookingType === 'MEMBERSHIP' ? !activePlan : !activePass}
+                        onClick={() => {
+                          const chosenItem = gymBookingType === 'MEMBERSHIP' ? activePlan : activePass;
+                          if (!chosenItem) return;
+
+                          const bookingTitle = gymBookingType === 'MEMBERSHIP'
+                            ? `${venueName} — ${activePlan.name} (${activePlan.months}M)`
+                            : `${venueName} — ${activePass.name}`;
+
+                          setSelectedService({
+                            id: `fitness-${Date.now()}`,
+                            name: bookingTitle,
+                            price: effectivePrice,
+                            metadata: {
+                              isFitnessBooking: true,
+                              fitnessBooking: {
+                                venueName,
+                                passName: gymBookingType === 'MEMBERSHIP' ? activePlan.name : activePass.name,
+                                bookingType: gymBookingType,
+                                formatType: activePass?.formatType || 'GYM_MEMBERSHIP',
+                                planMonths: gymBookingType === 'MEMBERSHIP' ? activePlan.months : 1,
+                                slotTime: selectedFitnessTimeSlot,
+                                slotDate: selectedDate || todayStr,
+                                trainer: activeTrainer?.name || 'Floor Coach (General Access)',
+                                ptPackage: selectedGymPTId,
+                                durationMinutes: activePass?.durationMinutes || 720
+                              }
                             }
-                          }}
-                          className="text-xs font-black text-slate-600 hover:text-slate-900 px-1 cursor-pointer"
-                        >
-                          -
-                        </button>
-                        <span className="text-xs font-black text-slate-900 dark:text-white">{qty}</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedPreOrderItems(selectedPreOrderItems.map((p) => p.id === item.id ? { ...p, qty: p.qty + 1 } : p));
-                          }}
-                          className="text-xs font-black text-slate-600 hover:text-slate-900 px-1 cursor-pointer"
-                        >
-                          +
-                        </button>
-                      </div>
-                    )}
+                          });
+                          setSelectedSlot({
+                            id: `slot-fit-${Date.now()}`,
+                            timeStr: `${selectedDate || todayStr} at ${selectedFitnessTimeSlot}`,
+                            date: selectedDate || todayStr,
+                            available: true
+                          });
+                          router.push('/booking/checkout');
+                        }}
+                        className={`px-8 py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-wider shadow-md transition-all cursor-pointer w-full sm:w-auto flex items-center justify-center gap-2 ${(gymBookingType === 'MEMBERSHIP' ? !activePlan : !activePass)
+                            ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed shadow-none'
+                            : 'bg-[#ff6325] hover:bg-[#e04e13] text-white active:scale-95'
+                          }`}
+                      >
+                        <span>
+                          {gymBookingType === 'MEMBERSHIP'
+                            ? (activePlan ? `Join Membership (₹${effectivePrice})` : 'Select Membership')
+                            : (activePass ? `Book Gym Pass (₹${effectivePrice})` : 'Select Pass')}
+                        </span>
+                        <span>→</span>
+                      </button>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* 7. Special Requests / Occasions */}
-        <div>
-          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
-            6. Special Requests & Occasions (Optional)
-          </label>
-          <div className="space-y-2">
-            <div className="flex flex-wrap gap-2">
-              {['🎂 Birthday Celebration', '🥂 Anniversary Dinner', '👶 High Chair Required', '🌸 Quiet Corner Table', '🕯️ Candlelight Setup'].map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => {
-                    setDiningSpecialRequest(prev => prev.includes(tag) ? prev.replace(tag, '').trim() : `${prev} ${tag}`.trim());
-                  }}
-                  className={`px-3 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer ${diningSpecialRequest.includes(tag)
-                    ? 'bg-[#ff6325]/15 border-[#ff6325] text-[#ff6325]'
-                    : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400'
-                    }`}
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-            <input
-              type="text"
-              value={diningSpecialRequest}
-              onChange={(e) => setDiningSpecialRequest(e.target.value)}
-              placeholder="Add other requests (e.g., Less spicy, wheelchair access, table near window)..."
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[#ff6325]"
-            />
-          </div>
-        </div>
-        {/* Bottom Reservation Action Summary */}
-        {(() => {
-          const preOrderMenu = liveDiningService?.metadata?.popularMenu || [];
-          const preOrderTotal = selectedPreOrderItems.reduce((acc, itm) => {
-            const m = preOrderMenu.find((p: any) => p.id === itm.id);
-            return acc + (m ? m.price * itm.qty : 0);
-          }, 0);
-          const finalPayableAtBooking = reservationDeposit + preOrderTotal;
-          const activeDeal = (liveDiningService?.metadata?.bookingDeals || []).find((d: any) => d.id === selectedDiningDealId);
-
-          return (
-            <div className="pt-5 border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/80 dark:bg-slate-800/60 p-4 sm:p-5 rounded-3xl">
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-base font-black text-slate-900 dark:text-white">
-                    {activeTable?.name || 'Selected Table'} • {diningGuestCount} Guests
-                  </span>
-                  <span className="text-xs text-slate-500 font-bold">• {selectedDiningTime}</span>
-                  {activeDeal && (
-                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-500 text-white shadow-2xs">
-                      Offer: {activeDeal.code}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
-                    {finalPayableAtBooking === 0
-                      ? '✓ Free Table Reservation • Pay bill at restaurant'
-                      : `Total Booking Payable: ₹${finalPayableAtBooking}${reservationDeposit > 0 ? ` (₹${reservationDeposit} adjustable deposit` : ''}${preOrderTotal > 0 ? ` + ₹${preOrderTotal} pre-order` : ''}${reservationDeposit > 0 ? ')' : ''}`}
-                  </span>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  const effectiveMerchantId = merchantId || 'R404';
-                  const effectiveMerchantName = venueName || liveDiningService?.name || 'Restaurant';
-
-                  setSelectedService({
-                    id: `dining-table-${activeTable?.id || '2-cozy'}`,
-                    name: `${effectiveMerchantName} — ${activeTable?.name || 'Table'} (${diningGuestCount} Guests)`,
-                    price: finalPayableAtBooking,
-                    merchantId: effectiveMerchantId,
-                    merchantName: effectiveMerchantName,
-                    merchant: {
-                      id: effectiveMerchantId,
-                      name: effectiveMerchantName
-                    },
-                    category: 'Restaurant Table Reservation',
-                    metadata: {
-                      isDiningBooking: true,
-                      diningBooking: {
-                        restaurantName: effectiveMerchantName,
-                        tableType: activeTable?.name,
-                        tableId: activeTable?.id,
-                        zone: diningZoneTab,
-                        guests: diningGuestCount,
-                        date: selectedDate || todayStr,
-                        time: selectedDiningTime,
-                        depositAmount: reservationDeposit,
-                        preOrderTotal,
-                        preOrderItems: selectedPreOrderItems.map(p => {
-                          const m = popularMenu.find((item: any) => item.id === p.id);
-                          return {
-                            id: p.id,
-                            name: m?.name || 'Dish',
-                            price: m?.price || 0,
-                            qty: p.qty,
-                            isVeg: m?.isVeg ?? true
-                          };
-                        }),
-                        appliedDeal: activeDeal ? {
-                          code: activeDeal.code,
-                          title: activeDeal.title,
-                          description: activeDeal.description
-                        } : null,
-                        specialRequest: diningSpecialRequest,
-                        costForTwo: activeCostForTwo,
-                        cuisines: activeCuisines
-                      }
-                    }
-                  });
-
-                  setSelectedSlot({
-                    id: `table-slot-${Date.now()}`,
-                    timeStr: `${selectedDate || todayStr} at ${selectedDiningTime} (${diningGuestCount} Guests)`,
-                    date: selectedDate || todayStr,
-                    available: true
-                  });
-
-                  router.push('/booking/checkout');
-                }}
-                className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#ff6325] to-[#f4511e] hover:from-[#e04e13] hover:to-[#d84315] text-white font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all cursor-pointer w-full sm:w-auto text-center"
-              >
-                Confirm Table Reservation &rarr;
-              </button>
-            </div>
-          );
+                  );
         })()}
-      </div>
-    );
-  })()
-}
 
-{/* ============================================================
+
+                  {
+                    isDining && (() => {
+                      // 1. Direct Real-time Dynamic Tables & Menu from Live DB Services
+                      const liveDiningService = (liveServices && liveServices.length > 0)
+                        ? liveServices.find((s: any) => s.metadata?.isDining || s.category?.toLowerCase().includes('dining') || s.category?.toLowerCase().includes('restaurant')) || liveServices[0]
+                        : null;
+
+                      const liveTables = (liveDiningService && Array.isArray(liveDiningService.listings) && liveDiningService.listings.length > 0)
+                        ? liveDiningService.listings.map((l: any, idx: number) => {
+                          const zone = l.metadata?.tableZone || l.tableZone || 'AC_INDOOR';
+                          const icon = zone === 'ROOFTOP' ? '🌆' : zone === 'PRIVATE_DINING' ? '👑' : zone === 'GARDEN_PATIO' ? '🌿' : '🛋️';
+                          return {
+                            id: l.id || `table-live-${idx}`,
+                            name: l.name,
+                            capacity: `${l.minGuests || l.metadata?.minGuests || 1} - ${l.maxGuests || l.metadata?.maxGuests || 4} Guests`,
+                            minGuests: l.minGuests || l.metadata?.minGuests || 1,
+                            maxGuests: l.maxGuests || l.metadata?.maxGuests || 4,
+                            zone: zone,
+                            depositAmount: Number(l.price || l.basePrice || l.metadata?.depositAmount || 0),
+                            badge: l.offerBadge || l.metadata?.highlightBadge || undefined,
+                            icon,
+                            description: l.description || l.metadata?.atmosphereTagline || `Comfortable table setup in ${zone.replace('_', ' ')}.`
+                          };
+                        })
+                        : [];
+
+                      const defaultDiningTables = [
+                        { id: 'tbl-cozy-2', name: 'Cozy Couple Table (2 Seater)', capacity: '1 - 2 Guests', minGuests: 1, maxGuests: 2, zone: 'ROOFTOP' as const, depositAmount: 0, badge: 'Romantic Rooftop', icon: '🍷', description: 'Intimate candlelit table overlooking panoramic city skyline views.' },
+                        { id: 'tbl-family-4', name: 'Family Booth Dining (4 Seater)', capacity: '3 - 4 Guests', minGuests: 3, maxGuests: 4, zone: 'AC_INDOOR' as const, depositAmount: 0, badge: 'Most Popular', icon: '🛋️', description: 'Plush cushioned booth seating in the central air-conditioned royal dining hall.' },
+                        { id: 'tbl-large-6', name: 'Celebration Grand Table (6 - 8 Seater)', capacity: '5 - 8 Guests', minGuests: 5, maxGuests: 8, zone: 'AC_INDOOR' as const, depositAmount: 200, badge: 'Celebrations', icon: '🎂', description: 'Spacious extended table ideal for family reunions, birthdays & gatherings.' },
+                        { id: 'tbl-pdr', name: 'Royal Private Dining Suite (PDR)', capacity: '8 - 14 Guests', minGuests: 8, maxGuests: 14, zone: 'PRIVATE_DINING' as const, depositAmount: 500, badge: 'Ultra Luxury', icon: '👑', description: 'Exclusive sound-insulated VIP room with dedicated butler & custom curated menu.' }
+                      ];
+                      const defaultDiningSlots = [
+                        { time: '12:00 PM', session: 'LUNCH', discountOffer: 'Flat 20% Off on Food Bill', isFastFilling: false },
+                        { time: '12:45 PM', session: 'LUNCH', discountOffer: 'Flat 15% Off', isFastFilling: true },
+                        { time: '01:30 PM', session: 'LUNCH', discountOffer: 'Flat 15% Off', isFastFilling: true },
+                        { time: '07:00 PM', session: 'DINNER', discountOffer: 'Complimentary Welcome Mocktail', isFastFilling: false },
+                        { time: '07:45 PM', session: 'DINNER', discountOffer: 'Prime Slot (Full Menu Available)', isFastFilling: true },
+                        { time: '08:30 PM', session: 'DINNER', discountOffer: 'Live Acoustic Music Session', isFastFilling: true }
+                      ];
+                      let allTables = liveTables.length > 0 ? liveTables : (liveDiningService?.metadata?.tableTypes || defaultDiningTables);
+                      let allSlots = liveDiningService?.metadata?.timeSlots || defaultDiningSlots;
+                      let popularMenu = liveDiningService?.metadata?.popularMenu || [];
+                      let activeDeals = liveDiningService?.metadata?.bookingDeals || [];
+                      let activeCuisines = liveDiningService?.metadata?.cuisines || (merchantData?.metadata?.cuisines || ['South Indian Heritage', 'Chettinad Gourmet', 'North Indian']);
+                      let activeCostForTwo = liveDiningService?.metadata?.costForTwo || liveDiningService?.basePrice || 800;
+                      let customSessionsList: any[] = [];
+
+                      if (typeof window !== 'undefined') {
+                        try {
+                          const busStorageRaw = localStorage.getItem('vendor-portal-storage-v10');
+                          if (busStorageRaw) {
+                            const busData = JSON.parse(busStorageRaw);
+                            const curM = busData.state?.currentMerchant;
+                            const storedServices = busData.state?.services || [];
+                            const activeBranchId = curM?.activeBranchId;
+
+                            // 1. Read Vendor Cuisines, Cost for Two, Deals & Perks from Merchant Profile (Modules 1, 3)
+                            if (curM?.metadata?.cuisines && Array.isArray(curM.metadata.cuisines) && curM.metadata.cuisines.length > 0) {
+                              activeCuisines = curM.metadata.cuisines;
+                            }
+                            if (curM?.metadata?.costForTwo) {
+                              activeCostForTwo = Number(curM.metadata.costForTwo);
+                            }
+                            if (curM?.metadata?.bookingDeals && Array.isArray(curM.metadata.bookingDeals)) {
+                              activeDeals = curM.metadata.bookingDeals.filter((d: any) => d.active !== false);
+                            }
+                            if (curM?.metadata?.customSessions && Array.isArray(curM.metadata.customSessions)) {
+                              customSessionsList = curM.metadata.customSessions.filter((cs: any) => cs.enabled);
+                            }
+
+                            const vendorLunchPerk = curM?.metadata?.lunchPerkText;
+                            const vendorDinnerPerk = curM?.metadata?.dinnerPerkText;
+                            if (vendorLunchPerk || vendorDinnerPerk) {
+                              allSlots = allSlots.map((s: any) => {
+                                if (s.session === 'LUNCH' && vendorLunchPerk) {
+                                  return { ...s, discountOffer: vendorLunchPerk };
+                                }
+                                if (s.session === 'DINNER' && vendorDinnerPerk) {
+                                  return { ...s, discountOffer: vendorDinnerPerk };
+                                }
+                                return s;
+                              });
+                            }
+
+                            // Append custom session slots if vendor configured them (e.g. Breakfast / High Tea)
+                            if (customSessionsList.length > 0) {
+                              customSessionsList.forEach((cs: any) => {
+                                const sessionKey = cs.name.toUpperCase().includes('BREAKFAST') ? 'BREAKFAST' : cs.name.toUpperCase().includes('TEA') ? 'HIGH_TEA' : cs.name.toUpperCase();
+                                if (!allSlots.some((s: any) => s.session === sessionKey)) {
+                                  allSlots.push({
+                                    time: cs.opensAt || '08:00 AM',
+                                    session: sessionKey as any,
+                                    discountOffer: `${cs.name} Special`,
+                                    isFastFilling: false
+                                  });
+                                }
+                              });
+                            }
+
+                            // 2. Read live tables configured in Business Portal (Module 2)
+                            const matchedService = storedServices.find((s: any) => {
+                              const sName = (s.name || '').toLowerCase();
+                              const sCat = (s.category || '').toLowerCase();
+                              const matchCat = sCat.includes('dining') || sCat.includes('restaurant') || sName.includes('dining') || s.metadata?.isDining;
+                              const matchBranch = activeBranchId ? (!s.branchId || s.branchId === activeBranchId) : true;
+                              return matchCat && matchBranch;
+                            });
+
+                            if (matchedService && Array.isArray(matchedService.listings) && matchedService.listings.length > 0) {
+                              allTables = matchedService.listings.map((l: any, idx: number) => {
+                                const zone = l.metadata?.tableZone || l.tableZone || 'AC_INDOOR';
+                                const icon = zone === 'ROOFTOP' ? '🌆' : zone === 'PRIVATE_DINING' ? '👑' : zone === 'GARDEN_PATIO' ? '🌿' : '🛋️';
+                                return {
+                                  id: l.id || `table-${idx}`,
+                                  name: l.name,
+                                  capacity: `${l.minGuests || l.metadata?.minGuests || 1} - ${l.maxGuests || l.metadata?.maxGuests || 4} Guests`,
+                                  minGuests: l.minGuests || l.metadata?.minGuests || 1,
+                                  maxGuests: l.maxGuests || l.metadata?.maxGuests || 4,
+                                  zone: zone,
+                                  depositAmount: Number(l.price || l.basePrice || l.metadata?.depositAmount || 0),
+                                  badge: l.offerBadge || l.metadata?.highlightBadge || undefined,
+                                  icon,
+                                  description: l.description || l.metadata?.atmosphereTagline || `Comfortable table setup in ${zone.replace('_', ' ')}.`
+                                };
+                              });
+
+                              // Read add-on dishes
+                              const vendorAddons: any[] = [];
+                              matchedService.listings.forEach((l: any) => {
+                                const isAddonsOn = l.isAddonsEnabled ?? l.metadata?.isAddonsEnabled ?? true;
+                                const items = l.addOns || l.metadata?.addons || [];
+                                if (isAddonsOn && Array.isArray(items)) {
+                                  items.forEach((item: any) => {
+                                    if (item.name && !vendorAddons.some(v => v.name.toLowerCase() === item.name.toLowerCase())) {
+                                      vendorAddons.push({
+                                        id: `menu-vendor-${item.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+                                        name: item.name,
+                                        category: 'MAIN_COURSE',
+                                        isVeg: !item.name.toLowerCase().includes('chicken') && !item.name.toLowerCase().includes('mutton') && !item.name.toLowerCase().includes('fish') && !item.name.toLowerCase().includes('meat') && !item.name.toLowerCase().includes('prawn'),
+                                        price: Number(item.price || 0),
+                                        rating: 4.8,
+                                        chefSpecial: true,
+                                        description: `Chef special pre-order item freshly prepared for your table.`
+                                      });
+                                    }
+                                  });
+                                }
+                              });
+                              if (vendorAddons.length > 0) {
+                                popularMenu = vendorAddons;
+                              }
+                            }
+                          }
+                        } catch (e) { }
+                      }
+
+                      // Auto-Match Best Fit Table for user's selected party size
+                      const bestFitTable = allTables.find((t: any) => diningGuestCount >= t.minGuests && diningGuestCount <= t.maxGuests);
+                      const effectiveSelectedTableId = selectedTableId || (bestFitTable ? bestFitTable.id : (allTables[0]?.id || ''));
+
+                      const filteredTables = allTables.filter((tbl: any) => {
+                        if (diningZoneTab === 'ALL') return true;
+                        return tbl.zone === diningZoneTab;
+                      });
+
+                      const activeTable = allTables.find((t: any) => t.id === effectiveSelectedTableId) || bestFitTable || allTables[0];
+                      const reservationDeposit = activeTable?.depositAmount || 0;
+
+                      return (
+                        <div id="dining-booking-section" className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
+                          {/* Header with Search Context Summary */}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
+                            <div>
+                              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                <span>🍽️</span> Restaurant Table Reservation
+                              </h2>
+                              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-900/50 text-[#ff6325] text-xs font-black">
+                                  <span>📅</span> {selectedDate || todayStr} {selectedDate === todayStr ? '(Today)' : ''}
+                                </span>
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50 text-[#033266] dark:text-blue-400 text-xs font-black">
+                                  <span>👥</span> {diningGuestCount} {diningGuestCount === 1 ? 'Guest' : 'Guests'}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setIsEditSearchOpen(true)}
+                                  className="text-[11px] text-[#ff6325] hover:underline font-bold cursor-pointer ml-1"
+                                >
+                                  Change Date / Party Size
+                                </button>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="px-3 py-1 rounded-full text-[11px] font-black bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                ✓ Instant Confirmation
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* 2. Seating Zone Ambiance Filter Tabs */}
+                          <div>
+                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                              1. Select Seating Ambience & Zone
+                            </label>
+                            <div className="flex flex-wrap items-center gap-2">
+                              {[
+                                { id: 'ALL', label: 'All Tables', icon: '🍽️' },
+                                { id: 'AC_INDOOR', label: 'AC Indoor Hall', icon: '🌟' },
+                                { id: 'ROOFTOP', label: 'Romantic Rooftop', icon: '🌆' },
+                                { id: 'GARDEN_PATIO', label: 'Garden Patio', icon: '🌿' },
+                                { id: 'PRIVATE_DINING', label: 'Private Dining (PDR)', icon: '👑' }
+                              ].map(tab => (
+                                <button
+                                  key={tab.id}
+                                  type="button"
+                                  onClick={() => setDiningZoneTab(tab.id as any)}
+                                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${diningZoneTab === tab.id
+                                    ? 'bg-[#033266] dark:bg-[#ff6325] text-white shadow-sm'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                                    }`}
+                                >
+                                  <span>{tab.icon}</span>
+                                  <span>{tab.label}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* 3. Table Types Selection Cards */}
+                          <div>
+                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                              2. Choose Table Type & Arrangement
+                            </label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                              {filteredTables.map((tbl: any) => {
+                                const isSelected = selectedTableId === tbl.id;
+                                const isCapacityFit = diningGuestCount >= tbl.minGuests && diningGuestCount <= tbl.maxGuests;
+
+                                return (
+                                  <div
+                                    key={tbl.id}
+                                    onClick={() => setSelectedTableId(tbl.id)}
+                                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between relative ${isSelected
+                                      ? 'bg-[#ff6325]/5 border-[#ff6325] shadow-md ring-2 ring-[#ff6325]/20'
+                                      : 'bg-slate-50/70 dark:bg-slate-800/60 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                                      }`}
+                                  >
+                                    {isCapacityFit && (
+                                      <div className="absolute -top-2 right-3">
+                                        <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500 text-white shadow-xs">
+                                          Best Fit ({tbl.capacity})
+                                        </span>
+                                      </div>
+                                    )}
+                                    <div>
+                                      <div className="flex items-center justify-between mb-2">
+                                        <span className="text-2xl">{tbl.icon}</span>
+                                        {tbl.badge && (
+                                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                                            {tbl.badge}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <h4 className="text-sm font-black text-slate-900 dark:text-white">{tbl.name}</h4>
+                                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                                        {tbl.description}
+                                      </p>
+                                    </div>
+
+                                    <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-white/10 flex items-center justify-between">
+                                      <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                                        <span>👥</span> {tbl.capacity}
+                                      </span>
+                                      <span className="text-xs font-black text-[#ff6325]">
+                                        {tbl.depositAmount === 0 ? 'Free Reservation' : `₹${tbl.depositAmount} Hold Deposit`}
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* 4. Time Slots with Session Filters & Discount Chips */}
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                                3. Preferred Dining Time Slot & Offers
+                              </label>
+                              <div className="flex items-center gap-1.5">
+                                {['ALL', 'LUNCH', 'DINNER'].map((ses) => (
+                                  <button
+                                    key={ses}
+                                    type="button"
+                                    onClick={() => setDiningSession(ses as any)}
+                                    className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${diningSession === ses
+                                      ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
+                                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                                      }`}
+                                  >
+                                    {ses === 'ALL' ? 'All Slots' : ses}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="space-y-3">
+                              {/* Lunch Sessions */}
+                              {(diningSession === 'ALL' || diningSession === 'LUNCH') && (
+                                <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5">
+                                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">
+                                    ☀️ Lunch Slots (12:00 PM - 03:30 PM)
+                                  </span>
+                                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                                    {allSlots
+                                      .filter((s: any) => s.session === 'LUNCH')
+                                      .map((slot: any) => {
+                                        const isSelected = selectedDiningTime === slot.time;
+                                        return (
+                                          <button
+                                            key={slot.time}
+                                            type="button"
+                                            onClick={() => setSelectedDiningTime(slot.time)}
+                                            className={`py-3 px-3 rounded-xl text-center border transition-all cursor-pointer ${isSelected
+                                              ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md scale-[1.02]'
+                                              : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 hover:border-slate-300'
+                                              }`}
+                                          >
+                                            <span className="text-xs font-black block">{slot.time}</span>
+                                          </button>
+                                        );
+                                      })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Dinner Sessions */}
+                              {(diningSession === 'ALL' || diningSession === 'DINNER') && (
+                                <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-white/5">
+                                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">
+                                    🌙 Dinner Slots (07:00 PM - 11:00 PM)
+                                  </span>
+                                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                                    {allSlots
+                                      .filter((s: any) => s.session === 'DINNER')
+                                      .map((slot: any) => {
+                                        const isSelected = selectedDiningTime === slot.time;
+                                        return (
+                                          <button
+                                            key={slot.time}
+                                            type="button"
+                                            onClick={() => setSelectedDiningTime(slot.time)}
+                                            className={`py-3 px-3 rounded-xl text-center border transition-all cursor-pointer ${isSelected
+                                              ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-md scale-[1.02]'
+                                              : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 hover:border-slate-300'
+                                              }`}
+                                          >
+                                            <span className="text-xs font-black block">{slot.time}</span>
+                                          </button>
+                                        );
+                                      })}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* 5. Special Booking Deals & Coupons (Top App Standards: Dineout / EazyDiner) */}
+                          {activeDeals && activeDeals.length > 0 && (
+                            <div>
+                              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                                4. Applicable Restaurant Deals & Offers
+                              </label>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {activeDeals.map((deal: any) => {
+                                  const isApplied = selectedDiningDealId === deal.id;
+                                  return (
+                                    <div
+                                      key={deal.id}
+                                      onClick={() => setSelectedDiningDealId(isApplied ? '' : deal.id)}
+                                      className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${isApplied
+                                        ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 ring-2 ring-emerald-500/20'
+                                        : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-slate-300'
+                                        }`}
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <span className="text-xl">🎉</span>
+                                        <div>
+                                          <div className="flex items-center gap-2">
+                                            <h4 className="text-xs font-black text-slate-900 dark:text-white">{deal.title}</h4>
+                                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300">
+                                              {deal.code}
+                                            </span>
+                                          </div>
+                                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                                            {deal.description}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <span className={`text-xs font-black px-2.5 py-1 rounded-xl shrink-0 ${isApplied ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/10'
+                                        }`}>
+                                        {isApplied ? 'Applied ✓' : 'Apply'}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 6. Optional Chef Special Pre-order Delicacies (Zero Wait Serving) */}
+                          {popularMenu && popularMenu.length > 0 && (
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                                  5. Pre-order Signature Dishes (Optional)
+                                </label>
+                                <span className="text-[10px] text-slate-400 font-bold">
+                                  {selectedPreOrderItems.length} items added (+₹{selectedPreOrderItems.reduce((acc, itm) => {
+                                    const m = popularMenu.find((p: any) => p.id === itm.id);
+                                    return acc + (m ? m.price * itm.qty : 0);
+                                  }, 0)})
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {popularMenu.slice(0, 6).map((item: any) => {
+                                  const sel = selectedPreOrderItems.find((p) => p.id === item.id);
+                                  const qty = sel?.qty || 0;
+
+                                  return (
+                                    <div
+                                      key={item.id}
+                                      className="p-3.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/80 flex items-center justify-between gap-3 shadow-2xs"
+                                    >
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className={`w-2 h-2 rounded-full shrink-0 ${item.isVeg ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                                          <h5 className="text-xs font-black text-slate-900 dark:text-white truncate">{item.name}</h5>
+                                        </div>
+                                        <span className="text-xs font-black text-[#ff6325] block mt-1">₹{item.price}</span>
+                                      </div>
+
+                                      {qty === 0 ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => setSelectedPreOrderItems([...selectedPreOrderItems, { id: item.id, qty: 1 }])}
+                                          className="px-3 py-1.5 rounded-xl border border-[#ff6325] text-[#ff6325] hover:bg-[#ff6325] hover:text-white text-xs font-black transition-all cursor-pointer"
+                                        >
+                                          + Add
+                                        </button>
+                                      ) : (
+                                        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-700 rounded-xl px-2 py-1">
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              if (qty === 1) {
+                                                setSelectedPreOrderItems(selectedPreOrderItems.filter((p) => p.id !== item.id));
+                                              } else {
+                                                setSelectedPreOrderItems(selectedPreOrderItems.map((p) => p.id === item.id ? { ...p, qty: p.qty - 1 } : p));
+                                              }
+                                            }}
+                                            className="text-xs font-black text-slate-600 hover:text-slate-900 px-1 cursor-pointer"
+                                          >
+                                            -
+                                          </button>
+                                          <span className="text-xs font-black text-slate-900 dark:text-white">{qty}</span>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setSelectedPreOrderItems(selectedPreOrderItems.map((p) => p.id === item.id ? { ...p, qty: p.qty + 1 } : p));
+                                            }}
+                                            className="text-xs font-black text-slate-600 hover:text-slate-900 px-1 cursor-pointer"
+                                          >
+                                            +
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 7. Special Requests / Occasions */}
+                          <div>
+                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
+                              6. Special Requests & Occasions (Optional)
+                            </label>
+                            <div className="space-y-2">
+                              <div className="flex flex-wrap gap-2">
+                                {['🎂 Birthday Celebration', '🥂 Anniversary Dinner', '👶 High Chair Required', '🌸 Quiet Corner Table', '🕯️ Candlelight Setup'].map((tag) => (
+                                  <button
+                                    key={tag}
+                                    type="button"
+                                    onClick={() => {
+                                      setDiningSpecialRequest(prev => prev.includes(tag) ? prev.replace(tag, '').trim() : `${prev} ${tag}`.trim());
+                                    }}
+                                    className={`px-3 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer ${diningSpecialRequest.includes(tag)
+                                      ? 'bg-[#ff6325]/15 border-[#ff6325] text-[#ff6325]'
+                                      : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400'
+                                      }`}
+                                  >
+                                    {tag}
+                                  </button>
+                                ))}
+                              </div>
+                              <input
+                                type="text"
+                                value={diningSpecialRequest}
+                                onChange={(e) => setDiningSpecialRequest(e.target.value)}
+                                placeholder="Add other requests (e.g., Less spicy, wheelchair access, table near window)..."
+                                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[#ff6325]"
+                              />
+                            </div>
+                          </div>
+                          {/* Bottom Reservation Action Summary */}
+                          {(() => {
+                            const preOrderMenu = liveDiningService?.metadata?.popularMenu || [];
+                            const preOrderTotal = selectedPreOrderItems.reduce((acc, itm) => {
+                              const m = preOrderMenu.find((p: any) => p.id === itm.id);
+                              return acc + (m ? m.price * itm.qty : 0);
+                            }, 0);
+                            const finalPayableAtBooking = reservationDeposit + preOrderTotal;
+                            const activeDeal = (liveDiningService?.metadata?.bookingDeals || []).find((d: any) => d.id === selectedDiningDealId);
+
+                            return (
+                              <div className="pt-5 border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/80 dark:bg-slate-800/60 p-4 sm:p-5 rounded-3xl">
+                                <div>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-base font-black text-slate-900 dark:text-white">
+                                      {activeTable?.name || 'Selected Table'} • {diningGuestCount} Guests
+                                    </span>
+                                    <span className="text-xs text-slate-500 font-bold">• {selectedDiningTime}</span>
+                                    {activeDeal && (
+                                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-500 text-white shadow-2xs">
+                                        Offer: {activeDeal.code}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
+                                      {finalPayableAtBooking === 0
+                                        ? '✓ Free Table Reservation • Pay bill at restaurant'
+                                        : `Total Booking Payable: ₹${finalPayableAtBooking}${reservationDeposit > 0 ? ` (₹${reservationDeposit} adjustable deposit` : ''}${preOrderTotal > 0 ? ` + ₹${preOrderTotal} pre-order` : ''}${reservationDeposit > 0 ? ')' : ''}`}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const effectiveMerchantId = merchantId || 'R404';
+                                    const effectiveMerchantName = venueName || liveDiningService?.name || 'Restaurant';
+
+                                    setSelectedService({
+                                      id: `dining-table-${activeTable?.id || '2-cozy'}`,
+                                      name: `${effectiveMerchantName} — ${activeTable?.name || 'Table'} (${diningGuestCount} Guests)`,
+                                      price: finalPayableAtBooking,
+                                      merchantId: effectiveMerchantId,
+                                      merchantName: effectiveMerchantName,
+                                      merchant: {
+                                        id: effectiveMerchantId,
+                                        name: effectiveMerchantName
+                                      },
+                                      category: 'Restaurant Table Reservation',
+                                      metadata: {
+                                        isDiningBooking: true,
+                                        diningBooking: {
+                                          restaurantName: effectiveMerchantName,
+                                          tableType: activeTable?.name,
+                                          tableId: activeTable?.id,
+                                          zone: diningZoneTab,
+                                          guests: diningGuestCount,
+                                          date: selectedDate || todayStr,
+                                          time: selectedDiningTime,
+                                          depositAmount: reservationDeposit,
+                                          preOrderTotal,
+                                          preOrderItems: selectedPreOrderItems.map(p => {
+                                            const m = popularMenu.find((item: any) => item.id === p.id);
+                                            return {
+                                              id: p.id,
+                                              name: m?.name || 'Dish',
+                                              price: m?.price || 0,
+                                              qty: p.qty,
+                                              isVeg: m?.isVeg ?? true
+                                            };
+                                          }),
+                                          appliedDeal: activeDeal ? {
+                                            code: activeDeal.code,
+                                            title: activeDeal.title,
+                                            description: activeDeal.description
+                                          } : null,
+                                          specialRequest: diningSpecialRequest,
+                                          costForTwo: activeCostForTwo,
+                                          cuisines: activeCuisines
+                                        }
+                                      }
+                                    });
+
+                                    setSelectedSlot({
+                                      id: `table-slot-${Date.now()}`,
+                                      timeStr: `${selectedDate || todayStr} at ${selectedDiningTime} (${diningGuestCount} Guests)`,
+                                      date: selectedDate || todayStr,
+                                      available: true
+                                    });
+
+                                    router.push('/booking/checkout');
+                                  }}
+                                  className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#ff6325] to-[#f4511e] hover:from-[#e04e13] hover:to-[#d84315] text-white font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all cursor-pointer w-full sm:w-auto text-center"
+                                >
+                                  Confirm Table Reservation &rarr;
+                                </button>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      );
+                    })()
+                  }
+
+                  {/* ============================================================
          * SECTION D6: SELF-DRIVE & VEHICLE RENTALS (ARCHETYPE 4: AssetRental)
          * ============================================================ */}
-{
-  isRental && (
-    <div className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-            <span>🚗</span> Vehicle / Equipment Rental Selection
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            100% Tax-Exempt Security Deposit refunded immediately upon safe return.
-          </p>
-        </div>
+                  {
+                    isRental && (
+                      <div className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
+                          <div>
+                            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                              <span>🚗</span> Vehicle / Equipment Rental Selection
+                            </h2>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                              100% Tax-Exempt Security Deposit refunded immediately upon safe return.
+                            </p>
+                          </div>
 
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 text-xs font-bold">
-          <span>🛡️ Zero Deposit Deductions Guarantee</span>
-        </div>
-      </div>
+                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 text-xs font-bold">
+                            <span>🛡️ Zero Deposit Deductions Guarantee</span>
+                          </div>
+                        </div>
 
-      {/* Rental Duration Pickers */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div>
-          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
-            Pick-up Date
-          </label>
-          <input
-            type="date"
-            value={rentalStartDate}
-            onChange={(e) => setRentalStartDate(e.target.value)}
-            className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none"
-          />
-        </div>
+                        {/* Rental Duration Pickers */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          <div>
+                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
+                              Pick-up Date
+                            </label>
+                            <input
+                              type="date"
+                              value={rentalStartDate}
+                              onChange={(e) => setRentalStartDate(e.target.value)}
+                              className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none"
+                            />
+                          </div>
 
-        <div>
-          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
-            Return Date
-          </label>
-          <input
-            type="date"
-            value={rentalEndDate}
-            onChange={(e) => setRentalEndDate(e.target.value)}
-            className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none"
-          />
-        </div>
+                          <div>
+                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
+                              Return Date
+                            </label>
+                            <input
+                              type="date"
+                              value={rentalEndDate}
+                              onChange={(e) => setRentalEndDate(e.target.value)}
+                              className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none"
+                            />
+                          </div>
 
-        <div>
-          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
-            Total Rental Days
-          </label>
-          <select
-            value={rentalDays}
-            onChange={(e) => setRentalDays(Number(e.target.value))}
-            className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none"
-          >
-            {[1, 2, 3, 5, 7, 14, 30].map(d => (
-              <option key={d} value={d}>{d} Day{d > 1 ? 's' : ''}</option>
-            ))}
-          </select>
-        </div>
-      </div>
+                          <div>
+                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
+                              Total Rental Days
+                            </label>
+                            <select
+                              value={rentalDays}
+                              onChange={(e) => setRentalDays(Number(e.target.value))}
+                              className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none"
+                            >
+                              {[1, 2, 3, 5, 7, 14, 30].map(d => (
+                                <option key={d} value={d}>{d} Day{d > 1 ? 's' : ''}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
 
-      {/* Mandatory DL / ID Verification Notice */}
-      <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">🪪</span>
-          <div>
-            <h4 className="text-xs font-extrabold text-amber-900 dark:text-amber-200">
-              Mandatory Driving License / Govt ID Check
-            </h4>
-            <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80">
-              Required at handover for vehicle insurance coverage.
-            </p>
-          </div>
-        </div>
-        <label className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold cursor-pointer transition-all shadow-xs shrink-0">
-          <span>{uploadedDlName ? `✓ ${uploadedDlName}` : 'Upload DL / ID Document'}</span>
-          <input
-            type="file"
-            accept="image/*,.pdf"
-            className="hidden"
-            onChange={(e) => {
-              if (e.target.files?.[0]) setUploadedDlName(e.target.files[0].name);
-            }}
-          />
-        </label>
-      </div>
+                        {/* Mandatory DL / ID Verification Notice */}
+                        <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex flex-col sm:flex-row items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <span className="text-2xl">🪪</span>
+                            <div>
+                              <h4 className="text-xs font-extrabold text-amber-900 dark:text-amber-200">
+                                Mandatory Driving License / Govt ID Check
+                              </h4>
+                              <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80">
+                                Required at handover for vehicle insurance coverage.
+                              </p>
+                            </div>
+                          </div>
+                          <label className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold cursor-pointer transition-all shadow-xs shrink-0">
+                            <span>{uploadedDlName ? `✓ ${uploadedDlName}` : 'Upload DL / ID Document'}</span>
+                            <input
+                              type="file"
+                              accept="image/*,.pdf"
+                              className="hidden"
+                              onChange={(e) => {
+                                if (e.target.files?.[0]) setUploadedDlName(e.target.files[0].name);
+                              }}
+                            />
+                          </label>
+                        </div>
 
-      {/* Rental Breakdown Summary */}
-      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div>
-          <span className="text-xs font-black text-slate-900 dark:text-white block">
-            {liveServices[0]?.name || 'Standard Vehicle Rental'}
-          </span>
-          <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
-            ₹1,500/day × {rentalDays} days (₹{1500 * rentalDays}) + ₹2,000 Refundable Security Deposit
-          </span>
-        </div>
+                        {/* Rental Breakdown Summary */}
+                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                          <div>
+                            <span className="text-xs font-black text-slate-900 dark:text-white block">
+                              {liveServices[0]?.name || 'Standard Vehicle Rental'}
+                            </span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
+                              ₹1,500/day × {rentalDays} days (₹{1500 * rentalDays}) + ₹2,000 Refundable Security Deposit
+                            </span>
+                          </div>
 
-        <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-          <div className="text-right">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Payable</span>
-            <span className="text-xl font-black text-[#033266] dark:text-[#ff6325]">
-              ₹{(1500 * rentalDays + 2000).toLocaleString()}
-            </span>
-          </div>
+                          <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                            <div className="text-right">
+                              <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Payable</span>
+                              <span className="text-xl font-black text-[#033266] dark:text-[#ff6325]">
+                                ₹{(1500 * rentalDays + 2000).toLocaleString()}
+                              </span>
+                            </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              const baseDaily = 1500;
-              const deposit = 2000;
-              const total = baseDaily * rentalDays + deposit;
-              setSelectedService({
-                id: `rental-${Date.now()}`,
-                name: `${venueName} — Rental`,
-                price: total,
-                metadata: {
-                  rentalBooking: {
-                    venueName,
-                    rentalDays,
-                    rentalStartDate,
-                    rentalEndDate,
-                    securityDeposit: deposit,
-                    uploadedDoc: uploadedDlName || 'Verified at Counter'
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const baseDaily = 1500;
+                                const deposit = 2000;
+                                const total = baseDaily * rentalDays + deposit;
+                                setSelectedService({
+                                  id: `rental-${Date.now()}`,
+                                  name: `${venueName} — Rental`,
+                                  price: total,
+                                  metadata: {
+                                    rentalBooking: {
+                                      venueName,
+                                      rentalDays,
+                                      rentalStartDate,
+                                      rentalEndDate,
+                                      securityDeposit: deposit,
+                                      uploadedDoc: uploadedDlName || 'Verified at Counter'
+                                    }
+                                  }
+                                });
+                                setSelectedSlot({
+                                  id: `rental-slot-${Date.now()}`,
+                                  timeStr: `${rentalStartDate} to ${rentalEndDate} (${rentalDays} Days)`,
+                                  date: rentalStartDate,
+                                  available: true
+                                });
+                                router.push('/booking/checkout');
+                              }}
+                              className="px-6 py-3 rounded-xl bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+                            >
+                              Reserve Vehicle &rarr;
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
                   }
-                }
-              });
-              setSelectedSlot({
-                id: `rental-slot-${Date.now()}`,
-                timeStr: `${rentalStartDate} to ${rentalEndDate} (${rentalDays} Days)`,
-                date: rentalStartDate,
-                available: true
-              });
-              router.push('/booking/checkout');
-            }}
-            className="px-6 py-3 rounded-xl bg-[#033266] dark:bg-[#ff6325] hover:bg-[#022349] dark:hover:bg-[#e04e13] text-white font-extrabold text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
-          >
-            Reserve Vehicle &rarr;
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
-{/* ============================================================
+                  {/* ============================================================
          * SECTION D7: BOOKMYSHOW & DISTRICT MULTI-STEP CINEMA TICKETING WIZARD
          * ============================================================ */}
-{
-  isPass && (() => {
-    // Dynamic binding to live service metadata created by business partner
-    const activeEntSvc = liveServices.find(s => s.metadata?.isEntertainment || s.category?.toLowerCase().includes('movie') || s.category?.toLowerCase().includes('cinema')) || liveServices[0];
-    
-    // Live movies directly from live backend listings or fallback to catalog
-    const liveMoviesList: any[] = (activeEntSvc?.listings && activeEntSvc.listings.length > 0)
-      ? activeEntSvc.listings.map((l: any, idx: number) => ({
-          id: l.id || `live-mov-${idx}`,
-          slug: (l.title || l.name || `movie-${idx}`).toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-          title: l.title || l.name || 'Now Showing Feature',
-          posterUrl: l.image || l.posterUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600&auto=format&fit=crop&q=80',
-          backdropUrl: l.image || l.backdropUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1600&auto=format&fit=crop&q=80',
-          rating: Number(l.rating || 9.0),
-          votes: 'Verified Live',
-          certificate: l.certificate || 'UA16+',
-          runtime: l.runtime || '2h 45m',
-          languages: Array.isArray(l.languages) ? l.languages : ['Tamil', 'English', 'Hindi'],
-          formats: Array.isArray(l.formats) ? l.formats : ['IMAX 3D', 'Dolby Atmos 7.1'],
-          genres: Array.isArray(l.genres) ? l.genres : ['Action', 'Thriller', 'Sci-Fi'],
-          synopsis: l.description || 'Live screening at verified multiplex cinema.',
-          releaseDate: 'In Theatres Now'
-        }))
-      : [
-          {
-            id: 'mov-avatar-3',
-            slug: 'avatar-fire-and-ash',
-            title: 'Avatar: Fire & Ash',
-            posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&q=80',
-            backdropUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600&q=80',
-            rating: 8.4,
-            certificate: 'UA 16+',
-            runtime: '2h 45m',
-            languages: ['Tamil', 'English', 'Hindi'],
-            formats: ['IMAX Laser 3D', 'Dolby Atmos 7.1'],
-            genres: ['Action', 'Sci-Fi'],
-            synopsis: 'Live screening at verified multiplex cinema.',
-            releaseDate: 'Now Showing'
-          }
-        ];
-    const dynamicFormats: Array<{ id: string; label: string; sub: string; icon: string }> = (activeEntSvc?.metadata?.formats && Array.isArray(activeEntSvc.metadata.formats))
-      ? activeEntSvc.metadata.formats.map((fmt: any) => {
-        if (typeof fmt === 'string') {
-          const icon = fmt.includes('IMAX') ? '🎥' : fmt.includes('Atmos') ? '🔊' : fmt.includes('4DX') ? '⚡' : '👓';
-          const sub = fmt.includes('IMAX') ? 'Next-Gen 4K Laser Projection' : fmt.includes('Atmos') ? 'Immersive 64-Channel Spatial Audio' : fmt.includes('4DX') ? 'Synchronised Motion Seats' : 'Crystal Clear Digital Laser';
-          return { id: fmt, label: fmt, sub, icon };
-        }
-        return { id: fmt.id || fmt.name, label: fmt.label || fmt.name, sub: fmt.sub || 'Cinema Standard', icon: fmt.icon || '🎥' };
-      })
-      : [
-        { id: 'IMAX Laser 3D', label: 'IMAX Laser 3D', sub: 'Next-Gen 4K Laser Projection', icon: '🎥' },
-        { id: 'Dolby Atmos 7.1', label: 'Dolby Atmos 7.1', sub: 'Immersive 64-Channel Spatial Audio', icon: '🔊' },
-        { id: '4DX Motion', label: '4DX Motion & Scent', sub: 'Synchronised Motion Seats', icon: '⚡' },
-        { id: 'RealD 3D / 2D', label: 'RealD 3D / 2D Standard', sub: 'Crystal Clear Digital Laser', icon: '👓' }
-      ];
+                  {
+                    isPass && (() => {
+                      // Dynamic binding to live service metadata created by business partner
+                      const activeEntSvc = liveServices.find(s => s.metadata?.isEntertainment || s.category?.toLowerCase().includes('movie') || s.category?.toLowerCase().includes('cinema')) || liveServices[0];
 
-    const dynamicShowtimes: Array<{ time: string; status: string; audi: string }> = (activeEntSvc?.metadata?.showtimes && Array.isArray(activeEntSvc.metadata.showtimes))
-      ? activeEntSvc.metadata.showtimes.map((st: any) => ({
-        time: st.time || '10:30 AM',
-        status: st.status || (st.fillingFast ? 'Fast Filling' : 'Available'),
-        audi: st.screen || st.audi || 'Audi 1'
-      }))
-      : [
-        { time: '10:30 AM', status: 'Almost Full', audi: 'Audi 1 (IMAX)' },
-        { time: '02:15 PM', status: 'Available', audi: 'Audi 1 (IMAX)' },
-        { time: '06:45 PM', status: 'Fast Filling', audi: 'Audi 2 (Dolby Atmos)' },
-        { time: '10:00 PM', status: 'Available', audi: 'Audi 2 (Dolby Atmos)' }
-      ];
+                      // Live movies directly from live backend listings or fallback to catalog
+                      const liveMoviesList: any[] = (activeEntSvc?.listings && activeEntSvc.listings.length > 0)
+                        ? activeEntSvc.listings.map((l: any, idx: number) => ({
+                          id: l.id || `live-mov-${idx}`,
+                          slug: (l.title || l.name || `movie-${idx}`).toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+                          title: l.title || l.name || 'Now Showing Feature',
+                          posterUrl: l.image || l.posterUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600&auto=format&fit=crop&q=80',
+                          backdropUrl: l.image || l.backdropUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1600&auto=format&fit=crop&q=80',
+                          rating: Number(l.rating || 9.0),
+                          votes: 'Verified Live',
+                          certificate: l.certificate || 'UA16+',
+                          runtime: l.runtime || '2h 45m',
+                          languages: Array.isArray(l.languages) ? l.languages : ['Tamil', 'English', 'Hindi'],
+                          formats: Array.isArray(l.formats) ? l.formats : ['IMAX 3D', 'Dolby Atmos 7.1'],
+                          genres: Array.isArray(l.genres) ? l.genres : ['Action', 'Thriller', 'Sci-Fi'],
+                          synopsis: l.description || 'Live screening at verified multiplex cinema.',
+                          releaseDate: 'In Theatres Now'
+                        }))
+                        : [
+                          {
+                            id: 'mov-avatar-3',
+                            slug: 'avatar-fire-and-ash',
+                            title: 'Avatar: Fire & Ash',
+                            posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&q=80',
+                            backdropUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600&q=80',
+                            rating: 8.4,
+                            certificate: 'UA 16+',
+                            runtime: '2h 45m',
+                            languages: ['Tamil', 'English', 'Hindi'],
+                            formats: ['IMAX Laser 3D', 'Dolby Atmos 7.1'],
+                            genres: ['Action', 'Sci-Fi'],
+                            synopsis: 'Live screening at verified multiplex cinema.',
+                            releaseDate: 'Now Showing'
+                          }
+                        ];
+                      const dynamicFormats: Array<{ id: string; label: string; sub: string; icon: string }> = (activeEntSvc?.metadata?.formats && Array.isArray(activeEntSvc.metadata.formats))
+                        ? activeEntSvc.metadata.formats.map((fmt: any) => {
+                          if (typeof fmt === 'string') {
+                            const icon = fmt.includes('IMAX') ? '🎥' : fmt.includes('Atmos') ? '🔊' : fmt.includes('4DX') ? '⚡' : '👓';
+                            const sub = fmt.includes('IMAX') ? 'Next-Gen 4K Laser Projection' : fmt.includes('Atmos') ? 'Immersive 64-Channel Spatial Audio' : fmt.includes('4DX') ? 'Synchronised Motion Seats' : 'Crystal Clear Digital Laser';
+                            return { id: fmt, label: fmt, sub, icon };
+                          }
+                          return { id: fmt.id || fmt.name, label: fmt.label || fmt.name, sub: fmt.sub || 'Cinema Standard', icon: fmt.icon || '🎥' };
+                        })
+                        : [
+                          { id: 'IMAX Laser 3D', label: 'IMAX Laser 3D', sub: 'Next-Gen 4K Laser Projection', icon: '🎥' },
+                          { id: 'Dolby Atmos 7.1', label: 'Dolby Atmos 7.1', sub: 'Immersive 64-Channel Spatial Audio', icon: '🔊' },
+                          { id: '4DX Motion', label: '4DX Motion & Scent', sub: 'Synchronised Motion Seats', icon: '⚡' },
+                          { id: 'RealD 3D / 2D', label: 'RealD 3D / 2D Standard', sub: 'Crystal Clear Digital Laser', icon: '👓' }
+                        ];
 
-    const dynamicSeatTiers: Array<{ id: string; name: string; price: number; icon: string; desc: string }> = (activeEntSvc?.metadata?.seatTiers && Array.isArray(activeEntSvc.metadata.seatTiers))
-      ? activeEntSvc.metadata.seatTiers.map((tier: any) => ({
-        id: tier.id || tier.name,
-        name: tier.name || 'Standard Tier',
-        price: Number(tier.price) || 190,
-        icon: tier.icon || '🎟️',
-        desc: tier.desc || 'Standard cinema seat'
-      }))
-      : [
-        { id: 'recliner', name: 'Royal Recliner (Lounge)', price: 380, icon: '👑', desc: 'Motorized lounger + Butler dining' },
-        { id: 'prime', name: 'Prime Circle', price: 250, icon: '🌟', desc: 'Optimum center rows + Extra legroom' },
-        { id: 'classic', name: 'Classic Executive', price: 190, icon: '🎟️', desc: 'Standard cushioned cinema seat' }
-      ];
+                      const dynamicShowtimes: Array<{ time: string; status: string; audi: string }> = (activeEntSvc?.metadata?.showtimes && Array.isArray(activeEntSvc.metadata.showtimes))
+                        ? activeEntSvc.metadata.showtimes.map((st: any) => ({
+                          time: st.time || '10:30 AM',
+                          status: st.status || (st.fillingFast ? 'Fast Filling' : 'Available'),
+                          audi: st.screen || st.audi || 'Audi 1'
+                        }))
+                        : [
+                          { time: '10:30 AM', status: 'Almost Full', audi: 'Audi 1 (IMAX)' },
+                          { time: '02:15 PM', status: 'Available', audi: 'Audi 1 (IMAX)' },
+                          { time: '06:45 PM', status: 'Fast Filling', audi: 'Audi 2 (Dolby Atmos)' },
+                          { time: '10:00 PM', status: 'Available', audi: 'Audi 2 (Dolby Atmos)' }
+                        ];
 
-    const dynamicSnacks: Array<{ id: string; name: string; price: number; icon: string; desc: string }> = (activeEntSvc?.metadata?.snackAddons && Array.isArray(activeEntSvc.metadata.snackAddons))
-      ? activeEntSvc.metadata.snackAddons.map((snk: any) => ({
-        id: snk.id || snk.name,
-        name: snk.name,
-        price: Number(snk.price) || 150,
-        icon: snk.icon || '🍿',
-        desc: snk.desc || 'Fresh cinema concession'
-      }))
-      : [
-        { id: 'popcorn', name: 'Tub Popcorn + Coke Combo', price: 240, icon: '🍿', desc: 'Large Salted & Caramel popcorn tub with 500ml chilled Coke' },
-        { id: 'nachos', name: 'Warm Cheesy Nachos', price: 180, icon: '🌮', desc: 'Crisp tortilla chips served with warm melted jalapeno salsa dip' },
-        { id: 'coffee', name: 'Cold Coffee / Iced Tea', price: 120, icon: '🥤', desc: 'Chilled refreshing brew delivered directly to your cinema lounger' }
-      ];
+                      const dynamicSeatTiers: Array<{ id: string; name: string; price: number; icon: string; desc: string }> = (activeEntSvc?.metadata?.seatTiers && Array.isArray(activeEntSvc.metadata.seatTiers))
+                        ? activeEntSvc.metadata.seatTiers.map((tier: any) => ({
+                          id: tier.id || tier.name,
+                          name: tier.name || 'Standard Tier',
+                          price: Number(tier.price) || 190,
+                          icon: tier.icon || '🎟️',
+                          desc: tier.desc || 'Standard cinema seat'
+                        }))
+                        : [
+                          { id: 'recliner', name: 'Royal Recliner (Lounge)', price: 380, icon: '👑', desc: 'Motorized lounger + Butler dining' },
+                          { id: 'prime', name: 'Prime Circle', price: 250, icon: '🌟', desc: 'Optimum center rows + Extra legroom' },
+                          { id: 'classic', name: 'Classic Executive', price: 190, icon: '🎟️', desc: 'Standard cushioned cinema seat' }
+                        ];
 
-    const reclinerTier = dynamicSeatTiers.find(t => t.name.toLowerCase().includes('recliner') || t.id.toLowerCase().includes('recliner')) || dynamicSeatTiers[0];
-    const primeTier = dynamicSeatTiers.find(t => t.name.toLowerCase().includes('prime') || t.id.toLowerCase().includes('prime')) || dynamicSeatTiers[1] || dynamicSeatTiers[0];
-    const classicTier = dynamicSeatTiers.find(t => t.name.toLowerCase().includes('classic') || t.id.toLowerCase().includes('classic') || t.id.toLowerCase().includes('executive')) || dynamicSeatTiers[dynamicSeatTiers.length - 1];
+                      const dynamicSnacks: Array<{ id: string; name: string; price: number; icon: string; desc: string }> = (activeEntSvc?.metadata?.snackAddons && Array.isArray(activeEntSvc.metadata.snackAddons))
+                        ? activeEntSvc.metadata.snackAddons.map((snk: any) => ({
+                          id: snk.id || snk.name,
+                          name: snk.name,
+                          price: Number(snk.price) || 150,
+                          icon: snk.icon || '🍿',
+                          desc: snk.desc || 'Fresh cinema concession'
+                        }))
+                        : [
+                          { id: 'popcorn', name: 'Tub Popcorn + Coke Combo', price: 240, icon: '🍿', desc: 'Large Salted & Caramel popcorn tub with 500ml chilled Coke' },
+                          { id: 'nachos', name: 'Warm Cheesy Nachos', price: 180, icon: '🌮', desc: 'Crisp tortilla chips served with warm melted jalapeno salsa dip' },
+                          { id: 'coffee', name: 'Cold Coffee / Iced Tea', price: 120, icon: '🥤', desc: 'Chilled refreshing brew delivered directly to your cinema lounger' }
+                        ];
 
-    return (
-      <div id="entertainment-booking-section" className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
+                      const reclinerTier = dynamicSeatTiers.find(t => t.name.toLowerCase().includes('recliner') || t.id.toLowerCase().includes('recliner')) || dynamicSeatTiers[0];
+                      const primeTier = dynamicSeatTiers.find(t => t.name.toLowerCase().includes('prime') || t.id.toLowerCase().includes('prime')) || dynamicSeatTiers[1] || dynamicSeatTiers[0];
+                      const classicTier = dynamicSeatTiers.find(t => t.name.toLowerCase().includes('classic') || t.id.toLowerCase().includes('classic') || t.id.toLowerCase().includes('executive')) || dynamicSeatTiers[dynamicSeatTiers.length - 1];
 
-        {/* Quick Movie Selector Strip (Allows instant switching between now-showing movies in this theatre) */}
-        <div className="space-y-2 pb-4 border-b border-slate-200/80 dark:border-white/10">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <span>🎬</span> Now Showing At This Multiplex ({liveMoviesList.length} Movies)
-            </span>
-            <span className="text-[10px] font-bold text-[#ff6325]">Click any poster to switch show</span>
-          </div>
+                      return (
+                        <div id="entertainment-booking-section" className="space-y-6 mt-8 p-6 rounded-3xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-xs">
 
-          <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none">
-            {liveMoviesList.map((mov) => {
-              const isCur = activeMovie.id === mov.id || activeMovie.slug === mov.slug;
-              return (
-                <button
-                  key={mov.id}
-                  type="button"
-                  onClick={() => {
-                    setActiveMovie(mov);
-                    router.replace(`/${bookingType}/${category}/${merchantId}?movie=${mov.slug}`, { scroll: false });
-                  }}
-                  className={`flex items-center gap-2.5 p-1.5 pr-3 rounded-2xl border text-left transition-all cursor-pointer shrink-0 ${isCur
-                    ? 'border-[#ff6325] bg-[#ff6325]/10 shadow-sm shadow-[#ff6325]/20 ring-1 ring-[#ff6325]'
-                    : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 hover:border-slate-300 dark:hover:border-white/20'
-                    }`}
-                >
-                  <div className="w-10 h-14 rounded-xl overflow-hidden bg-slate-900 shrink-0 relative">
-                    <img src={mov.posterUrl} alt={mov.title} className="w-full h-full object-cover" />
-                    <span className="absolute bottom-0 inset-x-0 bg-black/80 text-[8px] font-black text-amber-400 text-center py-0.5">
-                      ★{mov.rating}
-                    </span>
-                  </div>
-                  <div className="min-w-0 max-w-[130px]">
-                    <h4 className={`text-xs font-black truncate ${isCur ? 'text-[#ff6325]' : 'text-slate-800 dark:text-white'}`}>
-                      {mov.title}
-                    </h4>
-                    <span className="text-[10px] text-slate-400 font-medium block truncate">
-                      {mov.certificate} • {mov.runtime}
-                    </span>
-                    <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 truncate block">
-                      {mov.formats[0]}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+                          {/* Quick Movie Selector Strip (Allows instant switching between now-showing movies in this theatre) */}
+                          <div className="space-y-2 pb-4 border-b border-slate-200/80 dark:border-white/10">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                                <span>🎬</span> Now Showing At This Multiplex ({liveMoviesList.length} Movies)
+                              </span>
+                              <span className="text-[10px] font-bold text-[#ff6325]">Click any poster to switch show</span>
+                            </div>
 
-        {/* Header Specs Banner - Displays Currently Active Selected Movie Details */}
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 border-b border-slate-200 dark:border-white/10 pb-5">
-          <div className="flex items-start gap-4">
-            <div className="relative w-20 h-28 sm:w-24 sm:h-32 rounded-2xl overflow-hidden shadow-lg border border-white/15 shrink-0 bg-slate-900">
-              <img
-                src={activeMovie.posterUrl}
-                alt={activeMovie.title}
-                className="w-full h-full object-cover"
-              />
-              <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-md text-amber-400 font-black text-[9px]">
-                ★ {activeMovie.rating}
-              </span>
-            </div>
+                            <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none">
+                              {liveMoviesList.map((mov) => {
+                                const isCur = activeMovie.id === mov.id || activeMovie.slug === mov.slug;
+                                return (
+                                  <button
+                                    key={mov.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setActiveMovie(mov);
+                                      router.replace(`/${bookingType}/${category}/${merchantId}?movie=${mov.slug}`, { scroll: false });
+                                    }}
+                                    className={`flex items-center gap-2.5 p-1.5 pr-3 rounded-2xl border text-left transition-all cursor-pointer shrink-0 ${isCur
+                                      ? 'border-[#ff6325] bg-[#ff6325]/10 shadow-sm shadow-[#ff6325]/20 ring-1 ring-[#ff6325]'
+                                      : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 hover:border-slate-300 dark:hover:border-white/20'
+                                      }`}
+                                  >
+                                    <div className="w-10 h-14 rounded-xl overflow-hidden bg-slate-900 shrink-0 relative">
+                                      <img src={mov.posterUrl} alt={mov.title} className="w-full h-full object-cover" />
+                                      <span className="absolute bottom-0 inset-x-0 bg-black/80 text-[8px] font-black text-amber-400 text-center py-0.5">
+                                        ★{mov.rating}
+                                      </span>
+                                    </div>
+                                    <div className="min-w-0 max-w-[130px]">
+                                      <h4 className={`text-xs font-black truncate ${isCur ? 'text-[#ff6325]' : 'text-slate-800 dark:text-white'}`}>
+                                        {mov.title}
+                                      </h4>
+                                      <span className="text-[10px] text-slate-400 font-medium block truncate">
+                                        {mov.certificate} • {mov.runtime}
+                                      </span>
+                                      <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 truncate block">
+                                        {mov.formats[0]}
+                                      </span>
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
 
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 font-black text-[10px] tracking-wide border border-amber-500/30">
-                  {activeMovie.certificate}
-                </span>
-                <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[10px]">
-                  {activeMovie.genres.join(' / ')}
-                </span>
-                <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[10px]">
-                  ⏱️ {activeMovie.runtime}
-                </span>
-                <span className="px-2 py-0.5 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 font-bold text-[10px]">
-                  {activeMovie.languages.join(', ')}
-                </span>
-              </div>
+                          {/* Header Specs Banner - Displays Currently Active Selected Movie Details */}
+                          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 border-b border-slate-200 dark:border-white/10 pb-5">
+                            <div className="flex items-start gap-4">
+                              <div className="relative w-20 h-28 sm:w-24 sm:h-32 rounded-2xl overflow-hidden shadow-lg border border-white/15 shrink-0 bg-slate-900">
+                                <img
+                                  src={activeMovie.posterUrl}
+                                  alt={activeMovie.title}
+                                  className="w-full h-full object-cover"
+                                />
+                                <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-md text-amber-400 font-black text-[9px]">
+                                  ★ {activeMovie.rating}
+                                </span>
+                              </div>
 
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                <span>🎬</span> {activeMovie.title}
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xl line-clamp-2">
-                {activeMovie.synopsis}
-              </p>
+                              <div className="space-y-1.5">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 font-black text-[10px] tracking-wide border border-amber-500/30">
+                                    {activeMovie.certificate}
+                                  </span>
+                                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[10px]">
+                                    {activeMovie.genres.join(' / ')}
+                                  </span>
+                                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[10px]">
+                                    ⏱️ {activeMovie.runtime}
+                                  </span>
+                                  <span className="px-2 py-0.5 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 font-bold text-[10px]">
+                                    {activeMovie.languages.join(', ')}
+                                  </span>
+                                </div>
 
-              <div className="flex items-center gap-2 pt-1">
-                <span className="text-[11px] font-bold text-slate-400">At Theatre:</span>
-                <span className="text-xs font-black text-[#ff6325]">{venueName}</span>
-                <span className="text-slate-400 text-xs">•</span>
-                <span className="text-xs text-slate-400 font-medium">{address || 'Chennai Location'}</span>
-              </div>
-            </div>
-          </div>
+                                <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                  <span>🎬</span> {activeMovie.title}
+                                </h2>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xl line-clamp-2">
+                                  {activeMovie.synopsis}
+                                </p>
 
-          <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-900/50 text-xs font-bold shrink-0 shadow-xs">
-            <span>📱 Contactless Turnstile M-Ticket</span>
-          </div>
-        </div>
+                                <div className="flex items-center gap-2 pt-1">
+                                  <span className="text-[11px] font-bold text-slate-400">At Theatre:</span>
+                                  <span className="text-xs font-black text-[#ff6325]">{venueName}</span>
+                                  <span className="text-slate-400 text-xs">•</span>
+                                  <span className="text-xs text-slate-400 font-medium">{address || 'Chennai Location'}</span>
+                                </div>
+                              </div>
+                            </div>
 
-        {/* STEP PROGRESS BAR (BookMyShow standard 4 steps + Live 8-Min Seat Lock Timer) */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between px-2 sm:px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 text-xs font-bold">
-            <div className={`flex items-center gap-1.5 ${cinemaStep === 'SHOWTIMES' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'SHOWTIMES' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>1</span>
-              <span>Date & Show</span>
-            </div>
-            <span className="text-slate-300 dark:text-slate-600 font-normal">→</span>
-            <div className={`flex items-center gap-1.5 ${cinemaStep === 'SEAT_COUNT' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'SEAT_COUNT' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>2</span>
-              <span>Seats Qty</span>
-            </div>
-            <span className="text-slate-300 dark:text-slate-600 font-normal">→</span>
-            <div className={`flex items-center gap-1.5 ${cinemaStep === 'SEAT_LAYOUT' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'SEAT_LAYOUT' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>3</span>
-              <span>Seat Layout</span>
-            </div>
-            <span className="text-slate-300 dark:text-slate-600 font-normal">→</span>
-            <div className={`flex items-center gap-1.5 ${cinemaStep === 'FNB_DRAWER' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'FNB_DRAWER' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>4</span>
-              <span>Grab a Bite</span>
-            </div>
-          </div>
+                            <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-900/50 text-xs font-bold shrink-0 shadow-xs">
+                              <span>📱 Contactless Turnstile M-Ticket</span>
+                            </div>
+                          </div>
 
-          {/* BookMyShow Live Seat Lock Indicator Banner (Runs in Stages 3 & 4) */}
-          {(cinemaStep === 'SEAT_LAYOUT' || cinemaStep === 'FNB_DRAWER') && (
-            <div className={`px-4 py-2 rounded-2xl flex items-center justify-between border transition-all ${seatLockExpired
-              ? 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
-              : 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300'
-              }`}>
-              <div className="flex items-center gap-2">
-                <span className="text-sm">{seatLockExpired ? '⚠️' : '⏱️'}</span>
-                <span className="text-xs font-bold">
-                  {seatLockExpired
-                    ? 'Seats Lock Expired! Another user may book these seats.'
-                    : `Seats are locked for you in ${selectedAudiScreen}:`}
-                </span>
-                {!seatLockExpired && (
-                  <span className="text-xs font-black text-slate-900 dark:text-white">
-                    {selectedCinemaSeats.join(', ') || `${passCount} Seats`}
-                  </span>
-                )}
+                          {/* STEP PROGRESS BAR (BookMyShow standard 4 steps + Live 8-Min Seat Lock Timer) */}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between px-2 sm:px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 text-xs font-bold">
+                              <div className={`flex items-center gap-1.5 ${cinemaStep === 'SHOWTIMES' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
+                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'SHOWTIMES' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>1</span>
+                                <span>Date & Show</span>
+                              </div>
+                              <span className="text-slate-300 dark:text-slate-600 font-normal">→</span>
+                              <div className={`flex items-center gap-1.5 ${cinemaStep === 'SEAT_COUNT' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
+                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'SEAT_COUNT' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>2</span>
+                                <span>Seats Qty</span>
+                              </div>
+                              <span className="text-slate-300 dark:text-slate-600 font-normal">→</span>
+                              <div className={`flex items-center gap-1.5 ${cinemaStep === 'SEAT_LAYOUT' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
+                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'SEAT_LAYOUT' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>3</span>
+                                <span>Seat Layout</span>
+                              </div>
+                              <span className="text-slate-300 dark:text-slate-600 font-normal">→</span>
+                              <div className={`flex items-center gap-1.5 ${cinemaStep === 'FNB_DRAWER' ? 'text-[#ff6325] font-black' : 'text-slate-400'}`}>
+                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${cinemaStep === 'FNB_DRAWER' ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>4</span>
+                                <span>Grab a Bite</span>
+                              </div>
+                            </div>
+
+                            {/* BookMyShow Live Seat Lock Indicator Banner (Runs in Stages 3 & 4) */}
+                            {(cinemaStep === 'SEAT_LAYOUT' || cinemaStep === 'FNB_DRAWER') && (
+                              <div className={`px-4 py-2 rounded-2xl flex items-center justify-between border transition-all ${seatLockExpired
+                                ? 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
+                                : 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300'
+                                }`}>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm">{seatLockExpired ? '⚠️' : '⏱️'}</span>
+                                  <span className="text-xs font-bold">
+                                    {seatLockExpired
+                                      ? 'Seats Lock Expired! Another user may book these seats.'
+                                      : `Seats are locked for you in ${selectedAudiScreen}:`}
+                                  </span>
+                                  {!seatLockExpired && (
+                                    <span className="text-xs font-black text-slate-900 dark:text-white">
+                                      {selectedCinemaSeats.join(', ') || `${passCount} Seats`}
+                                    </span>
+                                  )}
               </div>
 
               <div className="flex items-center gap-2">
