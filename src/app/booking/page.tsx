@@ -116,6 +116,7 @@ function TracksContent() {
   const [mounted, setMounted] = useState(false);
   const [selectedMode, setSelectedMode] = useState('');
   const [pnr, setPnr] = useState('');
+  const [hasTracked, setHasTracked] = useState(false);
   const [searchBookingsQuery, setSearchBookingsQuery] = useState('');
   const [liveStatuses, setLiveStatuses] = useState<Record<string, string>>({});
   const [remoteMetadata, setRemoteMetadata] = useState<Record<string, { keycardIssued?: boolean; roomNumber?: string }>>({});
@@ -274,7 +275,26 @@ function TracksContent() {
         <div className="relative rounded-2xl overflow-hidden border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#0f172a] p-3 sm:p-4 shadow-xs">
           <div className="relative z-10 w-full space-y-3">
             {/* 1. TOP ROW: 4 Compact Transit Mode Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr] gap-3 w-full">
+              {/* Left Promo / Quick Action Card */}
+              <div className="flex items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-50/90 via-sky-50/80 to-orange-50/60 dark:from-slate-800/80 dark:to-slate-800/60 border border-slate-200/80 dark:border-white/10 shadow-2xs w-full">
+                <img
+                  src="/images/transport/plan-smarter.png"
+                  alt="Plan Smarter"
+                  className="w-20 h-20 -my-3 -ml-1 object-contain shrink-0 drop-shadow-md"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs sm:text-sm font-black text-[#0a3161] dark:text-white truncate">
+                    Plan Smarter. Travel Better!
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">
+                    Track, Book &amp; Explore
+                  </div>
+                </div>
+                <span className="w-7 h-7 rounded-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-xs font-black text-[#0a3161] dark:text-white shrink-0">
+                  →
+                </span>
+              </div>
               {[
                 {
                   id: 'flight',
@@ -318,49 +338,36 @@ function TracksContent() {
                     type="button"
                     onClick={() => {
                       setSelectedMode(id);
-                      const matching = mergedBookings.find(b => (b.category || '').toLowerCase().includes(id) || (b.serviceName || '').toLowerCase().includes(id));
-                      if (matching) setPnr(matching.ref);
                     }}
-                    className={`relative group flex items-center justify-between px-3 py-2.5 rounded-xl transition-all cursor-pointer select-none w-full text-left overflow-hidden ${
+                    className={`relative group flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-2xl transition-all cursor-pointer select-none w-full text-left ${
                       isActive
-                        ? 'bg-[#0a2540] text-white shadow-md ring-1 ring-[#0a2540]'
-                        : 'bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-white/10 hover:border-slate-300 hover:bg-white shadow-2xs'
+                        ? 'bg-[#0a3161]/5 dark:bg-[#0a3161]/20 text-slate-900 dark:text-white border-2 border-[#0a3161] shadow-md'
+                        : 'bg-white dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-white/10 hover:border-slate-300 shadow-2xs'
                     }`}
                   >
-                    {/* Left: Icon Pill + Labels */}
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                        isActive ? 'bg-white/15 text-white' : `${iconBg} dark:bg-white/10 dark:text-white`
-                      }`}>
-                        <Icon size={16} className="stroke-[2.2]" />
-                      </div>
+                    {/* Left: 3D Pop-out Icon */}
+                    <img
+                      src={`/images/transport/${id}.png`}
+                      alt={label}
+                      className="w-20 h-20 -my-3 -ml-1 object-contain shrink-0 drop-shadow-md transition-transform group-hover:scale-105"
+                    />
 
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs sm:text-[13px] font-black tracking-tight truncate">{label}</span>
-                          {matchingCount > 0 && (
-                            <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black font-mono ${
-                              isActive ? 'bg-[#ff6325] text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
-                            }`}>
-                              {matchingCount}
-                            </span>
-                          )}
-                        </div>
-                        <span className={`text-[10px] block truncate font-medium ${
-                          isActive ? 'text-slate-300' : 'text-slate-400 dark:text-slate-400'
-                        }`}>
-                          {subtitle}
-                        </span>
-                      </div>
+                    {/* Middle: Title & Subtitle */}
+                    <div className="min-w-0 flex-1 text-center">
+                      <span className="text-sm sm:text-base font-black tracking-tight block truncate">{label}</span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium block truncate">
+                        {subtitle}
+                      </span>
                     </div>
 
-                    {/* Right: Live Tag Pill */}
-                    <div className="shrink-0 pl-1.5">
-                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
-                        isActive
-                          ? 'bg-white/20 text-white'
-                          : 'bg-slate-200/80 dark:bg-slate-700/80 text-slate-600 dark:text-slate-400'
+                    {/* Right: Count + Tag Pill */}
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-black font-mono ${
+                        isActive ? 'bg-[#0a3161] text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
                       }`}>
+                        {matchingCount}
+                      </span>
+                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
                         {tag}
                       </span>
                     </div>
@@ -371,7 +378,7 @@ function TracksContent() {
 
             {/* 2. MIDDLE ROW: Left (Track Text & Subtitle) + Right (Search Box & Track Live Button) */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 bg-white/95 dark:bg-slate-900/90 border border-slate-200/90 dark:border-white/10 p-4 sm:p-5 rounded-3xl shadow-sm backdrop-blur-sm">
-              {/* Left Side: Track Title, Live Badge & Subtitle */}
+              {/* Left Side: Track Title & Subtitle */}
               <div className="space-y-1.5 max-w-md">
                 <div className="flex items-center gap-2">
                   <span className="relative flex h-2.5 w-2.5">
@@ -389,17 +396,17 @@ function TracksContent() {
                   <span>PNR</span>
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
-                  Real-time satellite radar status, gate changes, and departure updates across modes.
+                  Real-time tracking across flights, trains, buses and cabs.
                 </p>
               </div>
 
               {/* Right Side: Search Box + Track Live Button */}
-              <div className="w-full lg:max-w-xl space-y-2">
+              <div className="w-full flex-1 lg:max-w-2xl space-y-2">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
-                    const targetRef = pnr.trim() || activeModeBooking?.ref;
-                    if (targetRef) router.push(`/booking/track?ref=${encodeURIComponent(targetRef)}`);
+                    if (!pnr.trim()) return;
+                    setHasTracked(true);
                   }}
                   className="flex items-center gap-2"
                 >
@@ -441,7 +448,8 @@ function TracksContent() {
                   </button>
                 </form>
 
-                {/* Sub status line under search box */}
+                {/* Sub status line under search box (only after tracking) */}
+                {hasTracked && pnr.trim() && (
                 <div className="flex items-center justify-between text-xs px-1">
                   <div className="flex items-center gap-2">
                     <span className="relative flex h-2 w-2">
@@ -457,57 +465,74 @@ function TracksContent() {
                     {activeModeBooking?.city ? `${activeModeBooking.city.toUpperCase()} • IN` : 'MAA ✈ BLR'}
                   </span>
                 </div>
+                )}
               </div>
             </div>
 
-            {/* 3. BOTTOM ROW: Journey Live Summary Card (Full Width Content) */}
+            {/* 3. BOTTOM ROW: Journey Live Summary Card (only after tracking) */}
+            {hasTracked && pnr.trim() && (
             <div className="rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200/90 dark:border-white/10 p-4 sm:p-5 shadow-xs w-full">
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                {/* Left: Carrier & Timings (5 cols) */}
-                <div className="md:col-span-5 space-y-1">
-                  <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                {/* Left: Carrier & Timings */}
+                <div className="space-y-1 min-w-0">
+                  <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase block truncate">
                     {displayCarrier} • {displayService}
                   </span>
-                  <div className="flex items-baseline gap-3">
-                    <div>
-                      <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">{displayTime}</span>
-                      <span className="text-[10px] text-slate-400 font-bold ml-1">Departure</span>
-                    </div>
-                    <span className="text-slate-300 dark:text-slate-600 font-light">|</span>
-                    <div>
-                      <span className="text-sm sm:text-base font-bold text-slate-600 dark:text-slate-300">{displayDate}</span>
-                      <span className="text-[10px] text-slate-400 font-bold ml-1">Scheduled</span>
-                    </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span className="text-base sm:text-lg font-black text-slate-900 dark:text-white whitespace-nowrap">
+                      {displayTime}
+                    </span>
+                    <span className="text-slate-300 dark:text-slate-600 hidden sm:inline">|</span>
+                    <span className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                      {displayDate}
+                    </span>
                   </div>
                 </div>
 
-                {/* Center: Terminal / Platform Info (3 cols) */}
-                <div className="md:col-span-3 md:border-l md:border-r border-slate-100 dark:border-white/5 md:px-5 space-y-0.5">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">
-                    {selectedMode === 'train' ? 'Platform Info' : selectedMode === 'bus' ? 'Boarding Bay' : selectedMode === 'cab' ? 'Pick-up Spot' : 'Terminal Info'}
-                  </span>
-                  <div className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
-                    {(activeModeBooking as any)?.metadata?.terminal || (activeModeBooking as any)?.metadata?.platform || (
-                      selectedMode === 'train' ? 'PF #4 (Central)' :
-                      selectedMode === 'bus' ? 'Bay #12 (Intercity)' :
-                      selectedMode === 'cab' ? 'Pick-up Bay 2' :
-                      'T1, G14'
-                    )}
+                {/* Middle: Terminal / Platform + Status */}
+                <div className="flex items-center gap-4 md:border-l md:border-r border-slate-100 dark:border-white/10 md:px-6 shrink-0">
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">
+                      {selectedMode === 'train' ? 'Platform' : selectedMode === 'bus' ? 'Boarding Bay' : selectedMode === 'cab' ? 'Pick-up' : 'Terminal'}
+                    </span>
+                    <span className="text-sm font-black text-slate-900 dark:text-white whitespace-nowrap">
+                      {(activeModeBooking as any)?.metadata?.terminal || (activeModeBooking as any)?.metadata?.platform || (
+                        selectedMode === 'train' ? 'PF #4 (Central)' :
+                        selectedMode === 'bus' ? 'Bay #12 (Intercity)' :
+                        selectedMode === 'cab' ? 'Pick-up Bay 2' :
+                        'T1, G14'
+                      )}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Status</span>
+                    <span className={`inline-block px-2 py-0.5 rounded-md text-[11px] font-black ${
+                      displayStatus === 'CONFIRMED'
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                        : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                    }`}>
+                      {displayStatus}
+                    </span>
                   </div>
                 </div>
 
-                {/* Right: Booking Summary Status & PNR (4 cols) */}
-                <div className="md:col-span-4 space-y-0.5 text-left md:text-right">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Booking Summary</span>
-                  <div className="text-xs font-bold text-slate-600 dark:text-slate-300">
-                    Status: <span className={`font-black ${displayStatus === 'CONFIRMED' ? 'text-emerald-600' : 'text-amber-600'}`}>{displayStatus}</span>
+                {/* Right: PNR + View Live Details */}
+                <div className="flex items-center justify-between md:justify-end gap-4 shrink-0">
+                  <div className="text-left md:text-right">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">REF / PNR</span>
+                    <span className="text-xs font-black text-slate-900 dark:text-white font-mono">{displayPnr}</span>
                   </div>
-                  <div className="text-xs font-bold text-slate-600 dark:text-slate-300 font-mono">
-                    REF / PNR: <span className="text-slate-900 dark:text-white font-black">{displayPnr}</span>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/booking/track?ref=${encodeURIComponent(pnr.trim())}`)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#ff6325] hover:bg-[#e04e13] text-white text-xs font-black transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                  >
+                    View Live Details →
+                  </button>
                 </div>
               </div>
             </div>
+            )}
           </div>
         </div>
 

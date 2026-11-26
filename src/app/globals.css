@@ -1235,7 +1235,7 @@
 .light .secondary-subnav-bar .subnav-pill {
   color: #0A3161 !important;
   background-color: #ffffff !important;
-  border: 1px solid #dbeafe !important;
+  border: 1px solid transparent !important;
   box-shadow: 0 1px 3px rgba(10, 49, 97, 0.06) !important;
   font-weight: 600 !important;
 }
