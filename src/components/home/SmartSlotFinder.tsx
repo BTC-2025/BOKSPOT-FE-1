@@ -233,10 +233,7 @@ export function SmartSlotFinder() {
         {/* Header */}
         <div className="flex items-center justify-between pb-2.5 border-b border-[color:var(--color-outline-variant)]/20 shrink-0">
           <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0a3161] opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#0a3161]" />
-            </span>
+            <span className="w-2 h-2 rounded-full bg-[#0a3161] motion-safe:animate-pulse shrink-0" />
             <h3 className="text-xs md:text-sm font-bold tracking-tight text-[#0A3161] dark:text-white flex items-center gap-1.5">
               <span>Instant Slot Finder</span>
               <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider backdrop-blur-md bg-[#0a3161]/15 dark:bg-[#0a3161]/35 text-[#0a3161] dark:text-blue-300 border border-[#0a3161]/25 shadow-xs">

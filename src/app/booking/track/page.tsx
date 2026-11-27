@@ -741,6 +741,18 @@ Show this at the reception counter.
                     </span>
                   </div>
 
+                  {/* Prominent OPD Token Badge (if doctor appointment) */}
+                  {(() => {
+                    const match = (booking.timeSlot || '').match(/Token\s*#(\d+)/i);
+                    const tokenNum = (booking as any).metadata?.doctor?.tokenNumber || (match ? match[1] : null);
+                    if (!tokenNum) return null;
+                    return (
+                      <div className="mb-2.5 px-4 py-1.5 rounded-xl bg-[#0A3161] text-white font-black text-sm tracking-wider shadow-xs">
+                        OPD TOKEN #{tokenNum}
+                      </div>
+                    );
+                  })()}
+
                   {/* QR Code */}
                   <div className="p-1.5 bg-white rounded-xl shadow-xs border border-slate-100 dark:border-white/10 my-0.5">
                     <img

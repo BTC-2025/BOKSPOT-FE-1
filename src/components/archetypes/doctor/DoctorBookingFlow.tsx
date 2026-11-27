@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Stethoscope,
@@ -101,7 +101,7 @@ export function DoctorBookingFlow({
       return {
         id: svc.id || `doc-${idx + 1}`,
         name: svc.name || 'Consultant Doctor',
-        specialty: svc.metadata?.specialty || svc.category || 'General Medicine',
+        specialty: svc.metadata?.specialty || svc.metadata?.salonCategory || svc.category || 'General Medicine',
         degree: svc.metadata?.degree || 'MBBS',
         experienceYears: Number(svc.metadata?.experienceYears) || 5,
         clinicName: venueName || 'Clinic',
@@ -137,7 +137,36 @@ export function DoctorBookingFlow({
   const [hasFollowupReports, setHasFollowupReports] = useState<boolean>(false);
   const [patientVisitType, setPatientVisitType] = useState<'NEW' | 'RETURNING'>('NEW');
   const [paymentMode, setPaymentMode] = useState<'ONLINE' | 'PAY_AT_CLINIC'>('ONLINE');
+  const [selectedSpecialty, setSelectedSpecialty] = useState<string>('ALL');
+  const [selectedShift, setSelectedShift] = useState<'MORNING' | 'AFTERNOON' | 'EVENING'>('MORNING');
   const [formError, setFormError] = useState<string>('');
+  const [bookedSlotKeys, setBookedSlotKeys] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/v1/bookings/sync')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active || !data) return;
+        const list = Array.isArray(data) ? data : (data.bookings || []);
+        const keys = new Set<string>();
+        const mId = String(merchantId || '').trim();
+        const mName = (venueName || '').toLowerCase().trim();
+        list.forEach((b: any) => {
+          if (b.status === 'CANCELLED') return;
+          const bId = String(b.merchantId || '').trim();
+          const bName = (b.merchantName || '').toLowerCase().trim();
+          if ((mId && bId && bId !== mId) && (mName && bName && bName !== mName)) return;
+          const doc = b.metadata?.doctor;
+          if (doc?.doctorName && doc?.timeSlot && (doc?.date || b.date)) {
+            keys.add(`${doc.doctorName.toLowerCase().trim()}|${doc.date || b.date}|${doc.timeSlot.trim()}`);
+          }
+        });
+        setBookedSlotKeys(keys);
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [merchantId, venueName]);
 
   const activeDoctor = useMemo(() => {
     return doctorsList.find((d) => d.id === selectedDoctorId) || doctorsList[0];
@@ -263,8 +292,31 @@ export function DoctorBookingFlow({
       </div>
 
       {/* ── DOCTOR PROFILE CARDS ───────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {doctorsList.map((doc) => {
+      {(() => {
+        const specialties = ['ALL', ...Array.from(new Set(doctorsList.map(d => d.specialty).filter(Boolean)))];
+        const visibleDoctors = selectedSpecialty === 'ALL' ? doctorsList : doctorsList.filter(d => d.specialty === selectedSpecialty);
+        return (
+          <>
+            {specialties.length > 2 && (
+              <div className="flex flex-wrap items-center gap-2">
+                {specialties.map((spec) => (
+                  <button
+                    key={spec}
+                    type="button"
+                    onClick={() => setSelectedSpecialty(spec)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer border ${
+                      selectedSpecialty === spec
+                        ? 'bg-[#0A3161] text-white border-[#0A3161] shadow-xs'
+                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-[#0A3161]/40'
+                    }`}
+                  >
+                    {spec === 'ALL' ? 'All Specialists' : spec}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {visibleDoctors.map((doc) => {
           const isSelected = selectedDoctorId === doc.id;
           const fee = consultationMode === 'IN_CLINIC' ? doc.consultationFee : doc.videoFee;
 
@@ -279,11 +331,17 @@ export function DoctorBookingFlow({
               }`}
             >
               <div className="flex items-start gap-3.5">
-                <img
-                  src={doc.avatar}
-                  alt={doc.name}
-                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border border-slate-200 shrink-0 shadow-2xs"
-                />
+                {doc.avatar ? (
+                  <img
+                    src={doc.avatar}
+                    alt={doc.name}
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border border-slate-200 shrink-0 shadow-2xs"
+                  />
+                ) : (
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#0A3161]/10 text-[#0A3161] dark:bg-blue-500/20 dark:text-blue-300 flex items-center justify-center text-base font-black shrink-0 border border-slate-200/80 dark:border-white/10">
+                    {(doc.name || 'DR').replace(/^Dr\.\s*/i, '').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-0.5">
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
@@ -337,7 +395,10 @@ export function DoctorBookingFlow({
             </div>
           );
         })}
-      </div>
+            </div>
+          </>
+        );
+      })()}
 
       {/* ── TIME SLOT SELECTION GRID ───────────────────── */}
       <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-white/10 space-y-4">
@@ -365,57 +426,67 @@ export function DoctorBookingFlow({
           </div>
         </div>
 
-        {/* Morning Slots */}
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-            🌅 Morning OPD Session (09:00 AM – 01:00 PM)
-          </span>
-          <div className="flex flex-wrap gap-2">
-            {activeDoctor.slotsMorning.map((slot) => {
-              const isSelected = selectedSlotTime === slot;
-  return (
-                <button
-                  key={slot}
-                  type="button"
-                  onClick={() => setSelectedSlotTime(slot)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                    isSelected
-                      ? 'bg-[#0A3161] text-white border-[#0A3161] shadow-xs scale-105'
-                      : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  {slot}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Evening Slots */}
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-            🌇 Evening OPD Session (05:00 PM – 09:00 PM)
-          </span>
-          <div className="flex flex-wrap gap-2">
-            {activeDoctor.slotsEvening.map((slot) => {
-              const isSelected = selectedSlotTime === slot;
-  return (
-                <button
-                  key={slot}
-                  type="button"
-                  onClick={() => setSelectedSlotTime(slot)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                    isSelected
-                      ? 'bg-[#0A3161] text-white border-[#0A3161] shadow-xs scale-105'
-                      : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  {slot}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        {/* Shift Tabs: Morning / Afternoon / Evening */}
+        {(() => {
+          const morningSlots = activeDoctor.slotsMorning;
+          const afternoonSlots = activeDoctor.slotsEvening.filter(s => s.startsWith('12:') || s.startsWith('01:') || s.startsWith('02:') || s.startsWith('03:'));
+          const eveningSlots = activeDoctor.slotsEvening.filter(s => !afternoonSlots.includes(s));
+          const shifts = [
+            { id: 'MORNING' as const, label: '🌅 Morning', slots: morningSlots },
+            { id: 'AFTERNOON' as const, label: '☀️ Afternoon', slots: afternoonSlots },
+            { id: 'EVENING' as const, label: '🌆 Evening', slots: eveningSlots }
+          ];
+          const currentSlots = shifts.find(sh => sh.id === selectedShift)?.slots || [];
+          return (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                {shifts.map((sh) => (
+                  <button
+                    key={sh.id}
+                    type="button"
+                    onClick={() => setSelectedShift(sh.id)}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      selectedShift === sh.id
+                        ? 'bg-[#0A3161] text-white border-[#0A3161] shadow-xs'
+                        : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-[#0A3161]/40'
+                    }`}
+                  >
+                    {sh.label} ({sh.slots.length})
+                  </button>
+                ))}
+              </div>
+              {currentSlots.length === 0 ? (
+                <p className="text-xs text-slate-400 font-medium py-2">No slots available in this shift.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {currentSlots.map((slot) => {
+                    const slotKey = `${(activeDoctor.name || '').toLowerCase().trim()}|${selectedDate}|${slot.trim()}`;
+                    const isBooked = bookedSlotKeys.has(slotKey);
+                    const isSelected = !isBooked && selectedSlotTime === slot;
+                    return (
+                      <button
+                        key={slot}
+                        type="button"
+                        disabled={isBooked}
+                        title={isBooked ? 'Already booked' : undefined}
+                        onClick={() => !isBooked && setSelectedSlotTime(slot)}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition-all ${
+                          isBooked
+                            ? 'bg-slate-100 dark:bg-slate-800/40 border-slate-200 dark:border-white/5 text-slate-400 line-through cursor-not-allowed opacity-60'
+                            : isSelected
+                              ? 'bg-[#FF5201] text-white border-[#FF5201] shadow-xs scale-105 cursor-pointer'
+                              : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:border-slate-300 cursor-pointer'
+                        }`}
+                      >
+                        {slot}{isBooked ? ' (Booked)' : ''}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* ── BOTTOM DOCK BAR ────────────────────────────── */}
@@ -568,52 +639,27 @@ export function DoctorBookingFlow({
               </div>
 
               {/* Checkbox: Follow-up Reports */}
-              {/* New / Returning Patient & Payment Mode */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-                    Visit Type
-                  </label>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {(['NEW', 'RETURNING'] as const).map((vt) => (
-                      <button
-                        key={vt}
-                        type="button"
-                        onClick={() => setPatientVisitType(vt)}
-                        className={`py-2 px-2.5 rounded-xl text-[11px] font-black border transition-all cursor-pointer ${
-                          patientVisitType === vt
-                            ? 'bg-[#0a3161] text-white border-[#0a3161]'
-                            : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10'
-                        }`}
-                      >
-                        {vt === 'NEW' ? 'New Patient' : 'Returning'}
-                      </button>
-                    ))}
-                  </div>
+              {/* New / Returning Patient */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                  Visit Type
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['NEW', 'RETURNING'] as const).map((vt) => (
+                    <button
+                      key={vt}
+                      type="button"
+                      onClick={() => setPatientVisitType(vt)}
+                      className={`py-2 px-3 rounded-xl text-xs font-black border transition-all cursor-pointer ${
+                        patientVisitType === vt
+                          ? 'bg-[#0a3161] text-white border-[#0a3161]'
+                          : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10'
+                      }`}
+                    >
+                      {vt === 'NEW' ? 'New Patient' : 'Returning'}
+                    </button>
+                  ))}
                 </div>
-                {consultationMode === 'IN_CLINIC' && (
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-                      Payment Option
-                    </label>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {(['ONLINE', 'PAY_AT_CLINIC'] as const).map((pm) => (
-                        <button
-                          key={pm}
-                          type="button"
-                          onClick={() => setPaymentMode(pm)}
-                          className={`py-2 px-2.5 rounded-xl text-[11px] font-black border transition-all cursor-pointer ${
-                            paymentMode === pm
-                              ? 'bg-[#ff6325] text-white border-[#ff6325]'
-                              : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10'
-                          }`}
-                        >
-                          {pm === 'ONLINE' ? 'Pay Online' : 'Pay at Clinic'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
 
               <div

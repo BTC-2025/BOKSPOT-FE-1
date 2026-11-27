@@ -268,8 +268,8 @@ function TracksContent() {
   const displayDate = activeModeBooking?.date || 'Today';
 
   return (
-    <main className="page-content w-full px-4 sm:px-6 lg:px-8 min-h-screen">
-      <div className="mx-auto max-w-[1600px] pt-4 pb-14 space-y-6">
+    <main className="page-content w-full px-4 sm:px-6 lg:px-8 min-h-screen overflow-x-hidden">
+      <div className="w-full pt-4 pb-14 space-y-6">
 
         {/* ── DESIGN MOCKUP & SKETCH TRACKER HERO DOCK ── */}
         <div className="relative w-full">
@@ -341,7 +341,7 @@ function TracksContent() {
                     }}
                     className={`relative group flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-2xl transition-all cursor-pointer select-none w-full h-full min-h-[84px] text-left ${
                       isActive
-                        ? 'bg-[#0a3161]/5 dark:bg-[#0a3161]/20 text-slate-900 dark:text-white border-2 border-[#0a3161] shadow-md'
+                        ? 'bg-[#0a3161]/5 dark:bg-[#0a3161]/20 text-slate-900 dark:text-white border border-[#0a3161] shadow-md'
                         : 'bg-white dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-white/10 hover:border-slate-300 shadow-2xs'
                     }`}
                   >
@@ -530,7 +530,7 @@ function TracksContent() {
                       ].map((stepText, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center gap-[10px] text-[#0B2447] dark:text-slate-200 whitespace-nowrap"
+                          className="flex items-center gap-[10px] text-[#0B2447] dark:text-slate-200 min-w-0"
                           style={{ fontSize: '15px', fontWeight: 600 }}
                         >
                           <img

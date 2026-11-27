@@ -79,6 +79,14 @@ export default function CheckoutPage() {
     };
   });
 
+  // Sync DoctorBookingFlow's Pay at Clinic selection into checkout payMode
+  useEffect(() => {
+    const docPayMode = (selectedService as any)?.metadata?.doctor?.paymentMode;
+    if (docPayMode === 'PAY_AT_CLINIC' && vendorPolicy.allowPayAtVenue) {
+      setPayMode('PAY_AT_VENUE');
+    }
+  }, [(selectedService as any)?.metadata?.doctor?.paymentMode, vendorPolicy.allowPayAtVenue]);
+
   // Keep payMode aligned with what vendor has enabled
   useEffect(() => {
     if (!vendorPolicy.allowFullPayment && payMode === 'FULL_ONLINE') {
@@ -788,7 +796,7 @@ export default function CheckoutPage() {
                         <Stethoscope size={14} /> {selectedService.metadata.doctor.clinicName || 'Doctor Consultation'}
                       </span>
                       <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-600 text-white uppercase tracking-wider">
-                        OPD Token #{selectedService.metadata.doctor.tokenNumber} Reserved
+                        Instant OPD Token (After Payment)
                       </span>
                     </div>
 
