@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { Search, Heart, ShoppingBag, Sparkles, MapPin, Map, X, User, Sun, Moon, Laptop, Headset, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { ChevronDown } from 'lucide-react';
 import { useLocationStore, useUIStore, useUserStore, useCartStore, useWishlistStore, useBookingFlowStore } from '../lib/store';
 import { LiveClock } from './LiveClock';
 import { ALL_SEARCHABLE_SERVICES, SearchableService, SERVICE_SYNONYMS } from '../lib/searchData';
@@ -375,7 +376,7 @@ export function TopNav({
                     return raw.length > 8 ? `${raw.slice(0, 8)}...` : raw;
                   })()}
                 </span>
-                <span className="material-symbols-outlined text-[13px] text-white/90 transition-transform duration-200 shrink-0" style={{ transform: isLocationModalOpen ? 'rotate(180deg)' : 'none' }}>keyboard_arrow_down</span>
+                <ChevronDown size={14} className="text-white/90 transition-transform duration-200 shrink-0" style={{ transform: isLocationModalOpen ? 'rotate(180deg)' : 'none' }} />
               </button>
             </div>
 
@@ -602,12 +603,11 @@ export function TopNav({
                   </span>
 
                   {/* Chevron pointing down/up on the right */}
-                  <span
-                    className="material-symbols-outlined text-[15px] text-white/90 group-hover:text-white transition-transform duration-200"
+                  <ChevronDown
+                    size={15}
+                    className="text-white/90 group-hover:text-white transition-transform duration-200 shrink-0"
                     style={{ transform: profileOpen ? 'rotate(180deg)' : 'none' }}
-                  >
-                    keyboard_arrow_down
-                  </span>
+                  />
                 </button>
                 {profileOpen && (
                   <div className="absolute right-0 top-full mt-3 w-80 bg-white dark:bg-[#1a1d24] text-slate-800 dark:text-slate-100 rounded-[28px] shadow-2xl border border-slate-200/80 dark:border-slate-800/80 z-50 overflow-hidden backdrop-blur-xl animate-fade-up p-5">

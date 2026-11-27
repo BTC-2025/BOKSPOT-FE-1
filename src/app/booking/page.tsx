@@ -272,7 +272,7 @@ function TracksContent() {
       <div className="mx-auto max-w-[1600px] pt-4 pb-14 space-y-6">
 
         {/* ── DESIGN MOCKUP & SKETCH TRACKER HERO DOCK ── */}
-        <div className="relative rounded-2xl overflow-hidden border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#0f172a] p-3 sm:p-4 shadow-xs">
+        <div className="relative w-full">
           <div className="relative z-10 w-full space-y-3">
             {/* 1. TOP ROW: 4 Compact Transit Mode Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr] gap-3 w-full">
@@ -339,7 +339,7 @@ function TracksContent() {
                     onClick={() => {
                       setSelectedMode(id);
                     }}
-                    className={`relative group flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-2xl transition-all cursor-pointer select-none w-full text-left ${
+                    className={`relative group flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-2xl transition-all cursor-pointer select-none w-full h-full min-h-[84px] text-left ${
                       isActive
                         ? 'bg-[#0a3161]/5 dark:bg-[#0a3161]/20 text-slate-900 dark:text-white border-2 border-[#0a3161] shadow-md'
                         : 'bg-white dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-white/10 hover:border-slate-300 shadow-2xs'
@@ -360,48 +360,42 @@ function TracksContent() {
                       </span>
                     </div>
 
-                    {/* Right: Count + Tag Pill */}
-                    <div className="flex flex-col items-end gap-1 shrink-0">
-                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-black font-mono ${
-                        isActive ? 'bg-[#0a3161] text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
-                      }`}>
-                        {matchingCount}
+                    {/* Right: Simplified Live Count Badge (hidden when 0) */}
+                    {matchingCount > 0 && (
+                      <span
+                        title={`${matchingCount} trips with live tracking`}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#E7F6EE] text-[#0F7A4B] text-[12px] font-semibold shrink-0 mr-1"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#0F7A4B] shrink-0" />
+                        <span>{matchingCount} live</span>
                       </span>
-                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                        {tag}
-                      </span>
-                    </div>
+                    )}
                   </button>
                 );
               })}
             </div>
 
-            {/* 2. MIDDLE ROW: Left (Track Text & Subtitle) + Right (Search Box & Track Live Button) */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 bg-white/95 dark:bg-slate-900/90 border border-slate-200/90 dark:border-white/10 p-4 sm:p-5 rounded-3xl shadow-sm backdrop-blur-sm">
-              {/* Left Side: Track Title & Subtitle */}
-              <div className="space-y-1.5 max-w-md">
-                <div className="flex items-center gap-2">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff6325] opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#ff6325]" />
-                  </span>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-[#ff6325]">
-                    Real-time Radar
-                  </span>
+            {/* 2. MIDDLE ROW: Left (Track Title + Search Box & Track Live) + Right (Tracked Booking Summary) */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-[#F8FAFD] dark:bg-slate-900/90 py-4 px-6 rounded-2xl">
+              {/* Left Side: Track Title, Subtitle + Search Box */}
+              <div className="space-y-3 w-full lg:max-w-xl">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#FF5A1F] motion-safe:animate-pulse shrink-0" />
+                    <span className="text-[10px] font-black uppercase tracking-wider text-[#ff6325]">
+                      Real-time Radar
+                    </span>
+                  </div>
+
+                  <h2 className="text-xl sm:text-2xl font-bold text-[#0A3161] dark:text-white tracking-tight flex items-center gap-2">
+                    <span>Track Your Journey &amp;</span>
+                    <span className="text-[#ff6325]">Live</span>
+                    <span>PNR</span>
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+                    Real-time tracking across flights, trains, buses and cabs.
+                  </p>
                 </div>
-
-                <h2 className="text-xl sm:text-2xl font-bold text-[#0A3161] dark:text-white tracking-tight flex items-center gap-2">
-                  <span>Track Your Journey &amp;</span>
-                  <span className="text-[#ff6325]">Live</span>
-                  <span>PNR</span>
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
-                  Real-time tracking across flights, trains, buses and cabs.
-                </p>
-              </div>
-
-              {/* Right Side: Search Box + Track Live Button */}
-              <div className="w-full flex-1 lg:max-w-2xl space-y-2">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -426,25 +420,26 @@ function TracksContent() {
                     />
                     <button
                       type="button"
-                      title="Paste from clipboard"
                       onClick={async () => {
                         try {
                           const text = await navigator.clipboard.readText();
                           if (text) setPnr(text.trim());
                         } catch { }
                       }}
-                      className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                      className="px-2.5 py-1.5 rounded-xl bg-slate-200/70 dark:bg-slate-700/80 text-[#0a3161] dark:text-slate-200 hover:bg-[#ff6325]/15 hover:text-[#ff6325] transition-colors cursor-pointer flex items-center gap-1 text-[11px] font-bold shrink-0"
+                      title="Scan / Paste PNR"
                     >
-                      <QrCode size={17} />
+                      <QrCode size={15} />
+                      <span>Scan</span>
                     </button>
                   </div>
 
                   <button
                     type="submit"
-                    className="px-6 py-3.5 rounded-2xl bg-[#ff6325] hover:bg-[#e04e13] text-white font-extrabold text-xs sm:text-sm tracking-wide transition-all shadow-md shadow-orange-500/25 active:scale-95 cursor-pointer flex items-center gap-1.5 shrink-0"
+                    className="h-[52px] px-6 rounded-[12px] bg-[#0a3161] border-b-[3px] border-[#061e3d] hover:brightness-110 hover:shadow-md active:translate-y-[1px] text-white font-extrabold text-xs sm:text-sm tracking-wide transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0B2447] focus-visible:ring-offset-2 focus-visible:ring-offset-white cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
                   >
                     <span>Track Live</span>
-                    <span className="text-base leading-none">↗</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
                   </button>
                 </form>
 
@@ -467,72 +462,90 @@ function TracksContent() {
                 </div>
                 )}
               </div>
+
+              {/* Right Side: Tracked Booking Summary Card (or clean placeholder before tracking) */}
+              {hasTracked && pnr.trim() ? (
+                <div className="w-full lg:flex-1 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-200/90 dark:border-white/10 p-4 shadow-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-1 min-w-0">
+                      <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase block truncate">
+                        {displayCarrier} • {displayService}
+                      </span>
+                      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
+                        <span className="text-sm sm:text-base font-black text-slate-900 dark:text-white whitespace-nowrap">
+                          {displayTime}
+                        </span>
+                        <span className="text-slate-300 dark:text-slate-600">|</span>
+                        <span className="text-xs font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                          {displayDate}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 pt-0.5">
+                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-black ${
+                          displayStatus === 'CONFIRMED'
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                            : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                        }`}>
+                          {displayStatus}
+                        </span>
+                        <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 font-mono">
+                          {displayPnr}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/booking/track?ref=${encodeURIComponent(pnr.trim())}`)}
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#ff6325] hover:bg-[#e04e13] text-white text-xs font-black transition-all cursor-pointer shadow-xs whitespace-nowrap shrink-0"
+                    >
+                      View Live Details →
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="w-full lg:flex-1 lg:border-l border-slate-200/80 dark:border-white/10 lg:pl-6 flex items-center gap-4">
+                  {/* 3D Radar Globe Visual on Left */}
+                  <div className="hidden sm:flex items-center justify-center shrink-0">
+                    <img
+                      src="/images/transport/radar-3d.png"
+                      alt="Live Radar"
+                      className="w-[100px] h-[100px] object-contain shrink-0 drop-shadow-md"
+                    />
+                  </div>
+                  <div className="space-y-2 min-w-0 flex-1">
+                    <div>
+                      <h3 className="text-[#0B2447] dark:text-white tracking-tight" style={{ fontSize: '18px', fontWeight: 700 }}>
+                        Your live status shows here
+                      </h3>
+                      <p className="text-slate-500 dark:text-slate-400" style={{ fontSize: '14px' }}>
+                        Enter a PNR to see where your trip is right now.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-[28px] pt-0.5">
+                      {[
+                        'Enter or scan PNR',
+                        'Track any travel mode',
+                        'Live status & alerts'
+                      ].map((stepText, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-[10px] text-[#0B2447] dark:text-slate-200 whitespace-nowrap"
+                          style={{ fontSize: '15px', fontWeight: 600 }}
+                        >
+                          <img
+                            src={`/images/transport/step-${idx + 1}.png`}
+                            alt=""
+                            className="w-[26px] h-[26px] object-contain shrink-0 drop-shadow-xs"
+                          />
+                          <span>{stepText}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-
-            {/* 3. BOTTOM ROW: Journey Live Summary Card (only after tracking) */}
-            {hasTracked && pnr.trim() && (
-            <div className="rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200/90 dark:border-white/10 p-4 sm:p-5 shadow-xs w-full">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                {/* Left: Carrier & Timings */}
-                <div className="space-y-1 min-w-0">
-                  <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase block truncate">
-                    {displayCarrier} • {displayService}
-                  </span>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <span className="text-base sm:text-lg font-black text-slate-900 dark:text-white whitespace-nowrap">
-                      {displayTime}
-                    </span>
-                    <span className="text-slate-300 dark:text-slate-600 hidden sm:inline">|</span>
-                    <span className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">
-                      {displayDate}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Middle: Terminal / Platform + Status */}
-                <div className="flex items-center gap-4 md:border-l md:border-r border-slate-100 dark:border-white/10 md:px-6 shrink-0">
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block">
-                      {selectedMode === 'train' ? 'Platform' : selectedMode === 'bus' ? 'Boarding Bay' : selectedMode === 'cab' ? 'Pick-up' : 'Terminal'}
-                    </span>
-                    <span className="text-sm font-black text-slate-900 dark:text-white whitespace-nowrap">
-                      {(activeModeBooking as any)?.metadata?.terminal || (activeModeBooking as any)?.metadata?.platform || (
-                        selectedMode === 'train' ? 'PF #4 (Central)' :
-                        selectedMode === 'bus' ? 'Bay #12 (Intercity)' :
-                        selectedMode === 'cab' ? 'Pick-up Bay 2' :
-                        'T1, G14'
-                      )}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Status</span>
-                    <span className={`inline-block px-2 py-0.5 rounded-md text-[11px] font-black ${
-                      displayStatus === 'CONFIRMED'
-                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                        : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                    }`}>
-                      {displayStatus}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Right: PNR + View Live Details */}
-                <div className="flex items-center justify-between md:justify-end gap-4 shrink-0">
-                  <div className="text-left md:text-right">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block">REF / PNR</span>
-                    <span className="text-xs font-black text-slate-900 dark:text-white font-mono">{displayPnr}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => router.push(`/booking/track?ref=${encodeURIComponent(pnr.trim())}`)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#ff6325] hover:bg-[#e04e13] text-white text-xs font-black transition-all cursor-pointer shadow-xs whitespace-nowrap"
-                  >
-                    View Live Details →
-                  </button>
-                </div>
-              </div>
-            </div>
-            )}
           </div>
         </div>
 
@@ -604,7 +617,7 @@ function TracksContent() {
                     {activeFilter === f.id && (
                       <motion.div
                         layoutId="filter-pill"
-                        className="absolute inset-0 bg-[#003580] dark:bg-blue-600 rounded-lg shadow-xs"
+                        className="absolute inset-0 bg-[#ff6325] rounded-lg shadow-xs"
                         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                       />
                     )}

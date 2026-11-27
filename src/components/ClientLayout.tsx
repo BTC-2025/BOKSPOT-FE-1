@@ -111,7 +111,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         }}
         className="flex-1 w-auto transition-[margin-right] duration-200 ease-out flex flex-col justify-between"
       >
-        <div className="flex-1">
+        <div className="flex-1 min-h-[85vh]">
           {children}
         </div>
         {!isCheckout && <BokspotFooter />}
