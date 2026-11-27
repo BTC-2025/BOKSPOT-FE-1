@@ -415,14 +415,18 @@ export function DoctorBookingFlow({
 
           {/* Date Picker */}
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-400">Date:</span>
-            <input
-              type="date"
-              min={todayStr}
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900 text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer"
-            />
+            <span className="text-xs font-bold text-slate-500">Date:</span>
+            <div className="relative flex items-center rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 gap-2">
+              <Calendar size={14} className="text-[#0A3161] dark:text-[#FF5201] shrink-0 pointer-events-none" />
+              <input
+                type="date"
+                min={todayStr}
+                value={selectedDate}
+                onClick={(e) => (e.currentTarget as HTMLInputElement).showPicker?.()}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="bg-transparent text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
+              />
+            </div>
           </div>
         </div>
 

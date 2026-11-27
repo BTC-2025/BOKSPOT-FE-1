@@ -1149,8 +1149,8 @@ export default function VenueProfilePage() {
         {/* ============================================================
          * SECTION C: CONTEXTUAL SUMMARY BAR & EDIT SEARCH DOCK (ALL BOOKINGS)
          * ============================================================ */}
-        <div className="mb-6 z-20 transition-all flex flex-col items-center">
-          <div className={`p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-md flex items-center justify-between gap-4 transition-all ${isFacility ? 'w-fit max-w-full' : 'w-full'}`}>
+        <div className="sticky top-[108px] mb-6 z-30 transition-all flex flex-col items-center">
+          <div className="p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-[#0f1219] border border-slate-200/90 dark:border-white/10 shadow-md flex items-center justify-between gap-4 sm:gap-6 transition-all w-fit max-w-full mx-auto">
             {isPgStay ? (
               <div className="flex flex-wrap items-center gap-6 text-xs">
                 {/* Move-in Date */}

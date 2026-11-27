@@ -744,11 +744,27 @@ Show this at the reception counter.
                   {/* Prominent OPD Token Badge (if doctor appointment) */}
                   {(() => {
                     const match = (booking.timeSlot || '').match(/Token\s*#(\d+)/i);
-                    const tokenNum = (booking as any).metadata?.doctor?.tokenNumber || (match ? match[1] : null);
-                    if (!tokenNum) return null;
+                    const docMeta = (booking as any).metadata?.doctor;
+                    const tokenNum = docMeta?.tokenNumber || (match ? match[1] : null);
+                    const isVideo = docMeta?.consultationMode === 'VIDEO_CONSULTATION';
+                    if (!tokenNum && !isVideo) return null;
                     return (
-                      <div className="mb-2.5 px-4 py-1.5 rounded-xl bg-[#0A3161] text-white font-black text-sm tracking-wider shadow-xs">
-                        OPD TOKEN #{tokenNum}
+                      <div className="mb-2.5 flex flex-col items-center gap-1.5 w-full">
+                        {tokenNum && (
+                          <div className="px-4 py-1.5 rounded-xl bg-[#0A3161] text-white font-black text-sm tracking-wider shadow-xs">
+                            OPD TOKEN #{tokenNum}
+                          </div>
+                        )}
+                        {isVideo && (
+                          <a
+                            href={`https://meet.jit.si/bokspot-${booking.ref}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs tracking-wide shadow-xs transition-colors"
+                          >
+                            📹 Join Video Consultation →
+                          </a>
+                        )}
                       </div>
                     );
                   })()}

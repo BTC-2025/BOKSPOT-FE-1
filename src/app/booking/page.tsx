@@ -404,7 +404,8 @@ function TracksContent() {
                   }}
                   className="flex items-center gap-2"
                 >
-                  <div className="relative flex-1 flex items-center bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200/90 dark:border-white/10 px-3.5 py-2.5 focus-within:border-[#ff6325] focus-within:ring-2 focus-within:ring-[#ff6325]/15 transition-all">
+                  <div className="relative flex-1 flex items-center bg-white dark:bg-slate-800/80 rounded-2xl border border-slate-300 dark:border-white/15 shadow-xs px-3.5 py-2.5 focus-within:border-[#ff6325] focus-within:ring-2 focus-within:ring-[#ff6325]/15 transition-all">
+                    <Search size={16} className="text-[#0A3161] dark:text-[#FF5201] mr-2.5 shrink-0" />
                     <input
                       type="text"
                       value={pnr}
