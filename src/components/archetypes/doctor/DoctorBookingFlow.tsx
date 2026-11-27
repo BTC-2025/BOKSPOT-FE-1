@@ -58,69 +58,66 @@ export function DoctorBookingFlow({
 }: DoctorBookingFlowProps) {
   const router = useRouter();
 
-  // 1. Dynamic or Default Doctor Profiles
+  // 1. Dynamic Doctor Profiles (100% from Business Portal)
   const doctorsList: DoctorProfile[] = useMemo(() => {
-    if (liveServices && liveServices.length > 0) {
-      return liveServices.map((svc: any, idx: number) => ({
+    if (!liveServices || liveServices.length === 0) return [];
+
+    const parseMins = (t: string) => {
+      const [h, m] = t.split(':').map(Number);
+  return (h || 0) * 60 + (m || 0);
+    };
+    const fmtTime = (mins: number) => {
+      const h24 = Math.floor(mins / 60) % 24;
+      const m = mins % 60;
+      const ampm = h24 >= 12 ? 'PM' : 'AM';
+      const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+      return `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`;
+    };
+
+    const sourceDoctors = (liveServices[0]?.listings && liveServices[0].listings.length > 0)
+      ? liveServices[0].listings
+      : liveServices;
+
+    return sourceDoctors.map((svc: any, idx: number) => {
+      const sched = svc.metadata?.salonSchedule || liveServices[0]?.metadata?.salonSchedule;
+      let morning: string[] = [];
+      let evening: string[] = [];
+      if (sched && sched.openTime && sched.closeTime) {
+        const openM = parseMins(sched.openTime);
+        const closeM = parseMins(sched.closeTime);
+        const step = Number(sched.slotDuration || 20);
+        const breaks: any[] = sched.breaks || [];
+        const blocked: string[] = sched.blockedSlots || [];
+        for (let t = openM; t + step <= closeM; t += step) {
+          const label = fmtTime(t);
+          const inBreak = breaks.some((b: any) => t >= parseMins(b.start) && t < parseMins(b.end));
+          if (!inBreak && !blocked.includes(label)) {
+            if (t < 12 * 60) morning.push(label);
+            else evening.push(label);
+          }
+        }
+      }
+
+      return {
         id: svc.id || `doc-${idx + 1}`,
-        name: svc.name || 'Senior Consultant Physician',
-        specialty: svc.metadata?.specialty || svc.category || 'General Medicine & Diabetology',
-        degree: svc.metadata?.degree || 'MBBS, MD (General Medicine)',
-        experienceYears: Number(svc.metadata?.experienceYears) || 12,
-        clinicName: venueName || 'MedCare Clinic & Diagnostic Center',
+        name: svc.name || 'Consultant Doctor',
+        specialty: svc.metadata?.specialty || svc.category || 'General Medicine',
+        degree: svc.metadata?.degree || 'MBBS',
+        experienceYears: Number(svc.metadata?.experienceYears) || 5,
+        clinicName: venueName || 'Clinic',
         opdRoom: svc.metadata?.opdRoom || `OPD Room ${101 + idx}`,
         rating: 4.9,
-        reviewsCount: 142,
-        avatar: svc.image || (idx % 2 === 0
-          ? 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=300&q=80'
-          : 'https://images.unsplash.com/photo-1594824813511-536f96612739?w=300&q=80'),
+        reviewsCount: 0,
+        avatar: svc.image || '',
         consultationFee: Number(svc.price || 500),
-        videoFee: Number(svc.price || 500) - 50,
+        videoFee: Number(svc.metadata?.videoFee ?? Math.max(0, Number(svc.price || 500) - 50)),
         languages: svc.metadata?.languages || ['English', 'Tamil'],
-        slotsMorning: ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:15 AM', '12:00 PM'],
-        slotsEvening: ['05:00 PM', '05:30 PM', '06:15 PM', '07:00 PM', '07:45 PM', '08:30 PM'],
-        nextAvailable: 'Today • Instant OPD Token'
-      }));
-    }
-
-    return [
-      {
-        id: 'doc-1',
-        name: 'Dr. Rajesh Sundaram',
-        specialty: 'Senior General Physician & Diabetologist',
-        degree: 'MBBS, MD (Internal Medicine), FICP',
-        experienceYears: 16,
-        clinicName: venueName || 'Apollo City Clinic & Diagnostics',
-        opdRoom: 'Room 204 • 2nd Floor',
-        rating: 4.9,
-        reviewsCount: 318,
-        avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=300&q=80',
-        consultationFee: 500,
-        videoFee: 450,
-        languages: ['English', 'Tamil', 'Hindi'],
-        slotsMorning: ['09:30 AM', '10:00 AM', '10:30 AM', '11:15 AM', '12:00 PM'],
-        slotsEvening: ['05:30 PM', '06:00 PM', '06:45 PM', '07:30 PM', '08:15 PM'],
-        nextAvailable: 'Today • 3 Slots Open'
-      },
-      {
-        id: 'doc-2',
-        name: 'Dr. Priya Narayanan',
-        specialty: 'Consultant Dermatologist & Cosmetologist',
-        degree: 'MBBS, DDVL, MD (Dermatology)',
-        experienceYears: 11,
-        clinicName: venueName || 'DermaCare Skin & Hair Clinic',
-        opdRoom: 'Room 102 • Ground Floor',
-        rating: 4.8,
-        reviewsCount: 224,
-        avatar: 'https://images.unsplash.com/photo-1594824813511-536f96612739?w=300&q=80',
-        consultationFee: 650,
-        videoFee: 600,
-        languages: ['English', 'Tamil'],
-        slotsMorning: ['10:00 AM', '10:45 AM', '11:30 AM', '12:15 PM'],
-        slotsEvening: ['05:00 PM', '05:45 PM', '06:30 PM', '07:15 PM', '08:00 PM'],
-        nextAvailable: 'Today • Instant Token'
-      }
-    ];
+        slotsMorning: morning,
+        slotsEvening: evening,
+        nextAvailable: 'Today • Instant OPD Token',
+        clinicContact: svc.metadata?.clinicContact || ''
+      };
+    });
   }, [liveServices, venueName]);
 
   // States
@@ -138,15 +135,17 @@ export function DoctorBookingFlow({
   const [patientPhone, setPatientPhone] = useState<string>('');
   const [symptoms, setSymptoms] = useState<string>('');
   const [hasFollowupReports, setHasFollowupReports] = useState<boolean>(false);
+  const [patientVisitType, setPatientVisitType] = useState<'NEW' | 'RETURNING'>('NEW');
+  const [paymentMode, setPaymentMode] = useState<'ONLINE' | 'PAY_AT_CLINIC'>('ONLINE');
   const [formError, setFormError] = useState<string>('');
 
   const activeDoctor = useMemo(() => {
     return doctorsList.find((d) => d.id === selectedDoctorId) || doctorsList[0];
   }, [doctorsList, selectedDoctorId]);
 
-  const activeFee = consultationMode === 'IN_CLINIC'
-    ? activeDoctor.consultationFee
-    : activeDoctor.videoFee;
+  const activeFee = activeDoctor
+    ? (consultationMode === 'IN_CLINIC' ? activeDoctor.consultationFee : activeDoctor.videoFee)
+    : 0;
 
   // Handle Proceed to Checkout
   const handleProceedToCheckout = () => {
@@ -189,6 +188,9 @@ export function DoctorBookingFlow({
           patientPhone: patientPhone.trim(),
           symptoms: symptoms.trim() || 'General health consultation',
           hasFollowupReports,
+          patientVisitType,
+          paymentMode,
+          clinicContact: (activeDoctor as any).clinicContact || '',
           degree: activeDoctor.degree
         }
       }
@@ -204,6 +206,14 @@ export function DoctorBookingFlow({
     setIsPatientModalOpen(false);
     router.push('/booking/checkout');
   };
+
+  if (doctorsList.length === 0) {
+    return (
+      <div className="p-8 rounded-3xl bg-white dark:bg-[#0f172a] border border-dashed border-slate-200 dark:border-white/10 text-center text-sm font-bold text-slate-500">
+        No doctors or OPD consultation slots listed yet for this clinic.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -258,7 +268,7 @@ export function DoctorBookingFlow({
           const isSelected = selectedDoctorId === doc.id;
           const fee = consultationMode === 'IN_CLINIC' ? doc.consultationFee : doc.videoFee;
 
-          return (
+  return (
             <div
               key={doc.id}
               onClick={() => setSelectedDoctorId(doc.id)}
@@ -363,7 +373,7 @@ export function DoctorBookingFlow({
           <div className="flex flex-wrap gap-2">
             {activeDoctor.slotsMorning.map((slot) => {
               const isSelected = selectedSlotTime === slot;
-              return (
+  return (
                 <button
                   key={slot}
                   type="button"
@@ -389,7 +399,7 @@ export function DoctorBookingFlow({
           <div className="flex flex-wrap gap-2">
             {activeDoctor.slotsEvening.map((slot) => {
               const isSelected = selectedSlotTime === slot;
-              return (
+  return (
                 <button
                   key={slot}
                   type="button"
@@ -558,6 +568,54 @@ export function DoctorBookingFlow({
               </div>
 
               {/* Checkbox: Follow-up Reports */}
+              {/* New / Returning Patient & Payment Mode */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                    Visit Type
+                  </label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {(['NEW', 'RETURNING'] as const).map((vt) => (
+                      <button
+                        key={vt}
+                        type="button"
+                        onClick={() => setPatientVisitType(vt)}
+                        className={`py-2 px-2.5 rounded-xl text-[11px] font-black border transition-all cursor-pointer ${
+                          patientVisitType === vt
+                            ? 'bg-[#0a3161] text-white border-[#0a3161]'
+                            : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10'
+                        }`}
+                      >
+                        {vt === 'NEW' ? 'New Patient' : 'Returning'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {consultationMode === 'IN_CLINIC' && (
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                      Payment Option
+                    </label>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {(['ONLINE', 'PAY_AT_CLINIC'] as const).map((pm) => (
+                        <button
+                          key={pm}
+                          type="button"
+                          onClick={() => setPaymentMode(pm)}
+                          className={`py-2 px-2.5 rounded-xl text-[11px] font-black border transition-all cursor-pointer ${
+                            paymentMode === pm
+                              ? 'bg-[#ff6325] text-white border-[#ff6325]'
+                              : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10'
+                          }`}
+                        >
+                          {pm === 'ONLINE' ? 'Pay Online' : 'Pay at Clinic'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div
                 onClick={() => setHasFollowupReports(!hasFollowupReports)}
                 className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between cursor-pointer bg-slate-50/50 dark:bg-slate-900/50"
