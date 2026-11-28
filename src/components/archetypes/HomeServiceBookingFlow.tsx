@@ -83,12 +83,23 @@ export function HomeServiceBookingFlow({
   const meta = getCategoryMeta(category);
   const todayStr = new Date().toISOString().split('T')[0];
 
-  const [selectedServiceId, setSelectedServiceId] = useState<string>(
-    liveServices[0]?.id || ''
-  );
+  const resolvedServices = useMemo(() => {
+    const flat: any[] = [];
+    liveServices.forEach((svc) => {
+      if (Array.isArray(svc.listings) && svc.listings.length > 0) {
+        flat.push(...svc.listings);
+      } else {
+        flat.push(svc);
+      }
+    });
+    return flat;
+  }, [liveServices]);
+
+  const [selectedServiceId, setSelectedServiceId] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string>(todayStr);
   const [selectedShift, setSelectedShift] = useState<'MORNING' | 'AFTERNOON' | 'EVENING'>('MORNING');
   const [selectedSlotTime, setSelectedSlotTime] = useState<string>('10:00 AM');
+  const [isExpressSelected, setIsExpressSelected] = useState<boolean>(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState<boolean>(false);
 
   const [addressLine, setAddressLine] = useState<string>('');
@@ -98,11 +109,10 @@ export function HomeServiceBookingFlow({
   const [formError, setFormError] = useState<string>('');
   const [bookedSlotKeys, setBookedSlotKeys] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    if (liveServices.length > 0 && !liveServices.some((s) => s.id === selectedServiceId)) {
-      setSelectedServiceId(liveServices[0].id);
-    }
-  }, [liveServices, selectedServiceId]);
+  const activeService = useMemo(
+    () => resolvedServices.find((s) => s.id === selectedServiceId) || null,
+    [resolvedServices, selectedServiceId]
+  );
 
   useEffect(() => {
     let active = true;
@@ -132,11 +142,6 @@ export function HomeServiceBookingFlow({
     };
   }, [merchantId, venueName]);
 
-  const activeService = useMemo(
-    () => liveServices.find((s) => s.id === selectedServiceId) || liveServices[0],
-    [liveServices, selectedServiceId]
-  );
-
   const shifts = [
     { id: 'MORNING' as const, label: '🌅 Morning', slots: MORNING_SLOTS },
     { id: 'AFTERNOON' as const, label: '☀️ Afternoon', slots: AFTERNOON_SLOTS },
@@ -157,7 +162,11 @@ export function HomeServiceBookingFlow({
     if (!activeService) return;
 
     setFormError('');
-    const price = Number(activeService.price || 499);
+    const basePrice = Number(activeService.price || 499);
+    const expressFee = isExpressSelected && activeService.metadata?.expressAvailable
+      ? Number(activeService.metadata?.expressFee ?? 149)
+      : 0;
+    const price = basePrice + expressFee;
 
     setSelectedService({
       id: activeService.id,
@@ -172,27 +181,40 @@ export function HomeServiceBookingFlow({
           serviceId: activeService.id,
           serviceTitle: activeService.title || activeService.name,
           date: selectedDate,
-          timeSlot: selectedSlotTime,
+          timeSlot: isExpressSelected ? 'Express (Within 90 mins)' : selectedSlotTime,
           addressLine: addressLine.trim(),
           landmark: landmark.trim(),
           contactPhone: contactPhone.trim(),
           issueNotes: issueNotes.trim(),
+          priceType: activeService.metadata?.priceType || 'FIXED',
+          materials: activeService.metadata?.materials || 'CHARGED_SEPARATELY',
+          serviceGuarantee: activeService.metadata?.serviceGuarantee || 'NONE',
+          customGuarantee: activeService.metadata?.customGuarantee || '',
+          whatsIncluded: activeService.metadata?.whatsIncluded || '',
+          whatsExcluded: activeService.metadata?.whatsExcluded || '',
+          technicianName: activeService.metadata?.technicianName || '',
+          serviceContact: activeService.metadata?.serviceContact || '',
+          isExpress: isExpressSelected,
+          expressFee,
+          expressAreas: activeService.metadata?.expressAreas || '',
         },
       },
     });
 
     setSelectedSlot({
       id: `slot-hs-${Date.now()}`,
-      timeStr: `${selectedDate} at ${selectedSlotTime}`,
+      timeStr: isExpressSelected
+        ? `${selectedDate} • ⚡ Express (Within 90 mins)`
+        : `${selectedDate} at ${selectedSlotTime}`,
       date: selectedDate,
-      time: selectedSlotTime,
+      time: isExpressSelected ? 'Express (Within 90 mins)' : selectedSlotTime,
     });
 
     setIsAddressModalOpen(false);
     router.push('/booking/checkout');
   };
 
-  if (liveServices.length === 0) {
+  if (resolvedServices.length === 0) {
     return (
       <div className="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-center">
         <p className="text-sm font-bold text-slate-500">
@@ -222,13 +244,33 @@ export function HomeServiceBookingFlow({
 
       {/* Step 1: Service Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-        {liveServices.map((svc) => {
+        {resolvedServices.map((svc) => {
           const isSelected = svc.id === activeService?.id;
+          const m = svc.metadata || {};
+          const priceType = m.priceType || 'FIXED';
+          const guarantee = m.serviceGuarantee;
+          const guaranteeLabel =
+            guarantee === '7_DAY_REVISIT'
+              ? '7-Day Free Revisit'
+              : guarantee === '30_DAY_LABOR'
+                ? '30-Day Labor Warranty'
+                : guarantee === 'CUSTOM'
+                  ? m.customGuarantee || 'Service Warranty'
+                  : '';
+          const materialsLabel =
+            m.materials === 'INCLUDED'
+              ? 'Materials Included'
+              : m.materials === 'CUSTOMER_PROVIDES'
+                ? 'Customer Provides Materials'
+                : m.materials === 'CHARGED_SEPARATELY'
+                  ? 'Spares Extra'
+                  : '';
+
           return (
             <button
               key={svc.id}
               type="button"
-              onClick={() => setSelectedServiceId(svc.id)}
+              onClick={() => setSelectedServiceId((prev) => (prev === svc.id ? '' : svc.id))}
               className={`text-left p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-4 ${
                 isSelected
                   ? 'border-[#0A3161] bg-[#0A3161]/[0.03] dark:bg-white/[0.04] ring-1 ring-[#0A3161]'
@@ -236,13 +278,28 @@ export function HomeServiceBookingFlow({
               }`}
             >
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-1.5">
                   <span className="text-xs font-black text-emerald-600 flex items-center gap-1">
                     <ShieldCheck size={13} /> Verified
                   </span>
                   {svc.duration && (
                     <span className="text-[11px] font-semibold text-slate-400">
-                      • {svc.duration}
+                      • {svc.duration} mins
+                    </span>
+                  )}
+                  {guaranteeLabel && (
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold">
+                      {guaranteeLabel}
+                    </span>
+                  )}
+                  {materialsLabel && (
+                    <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 text-[10px] font-bold">
+                      {materialsLabel}
+                    </span>
+                  )}
+                  {m.expressAvailable && (
+                    <span className="px-2 py-0.5 rounded-full bg-[#FF5201]/10 text-[#FF5201] text-[10px] font-bold">
+                      ⚡ 90-Min Express (+₹{Number(m.expressFee ?? 149)})
                     </span>
                   )}
                 </div>
@@ -252,9 +309,21 @@ export function HomeServiceBookingFlow({
                 {svc.description && (
                   <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{svc.description}</p>
                 )}
-                <p className="text-base font-black text-[#0A3161] dark:text-[#FF5201] mt-2">
-                  ₹{Number(svc.price || 499).toLocaleString()}
-                </p>
+                <div className="mt-2 space-y-0.5">
+                  <p className="text-base font-black text-[#0A3161] dark:text-[#FF5201]">
+                    <span className="text-[11px] font-bold text-slate-500 mr-1.5">
+                      {priceType === 'CUSTOM_QUOTE' ? 'Inspection Fee:' : priceType === 'STARTING_FROM' ? 'Service / Labor (Starts at):' : 'Service / Labor Fee:'}
+                    </span>
+                    ₹{Number(svc.price || 499).toLocaleString()}
+                  </p>
+                  <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                    {m.materials === 'INCLUDED'
+                      ? '• Materials & spares included in price'
+                      : m.materials === 'CUSTOMER_PROVIDES'
+                        ? '• Materials to be provided by customer'
+                        : '• Spare parts billed separately on actuals (with your approval)'}
+                  </p>
+                </div>
               </div>
               <span
                 className={`px-3.5 py-2 rounded-xl text-xs font-black shrink-0 ${
@@ -270,7 +339,34 @@ export function HomeServiceBookingFlow({
         })}
       </div>
 
-      {/* Step 2: Date & Time Slot */}
+      {/* Selected Service Scope (What's Included / Excluded) */}
+      {(activeService?.metadata?.whatsIncluded || activeService?.metadata?.whatsExcluded) && (
+        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-white/10 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          {activeService?.metadata?.whatsIncluded && (
+            <div>
+              <p className="font-black text-emerald-700 dark:text-emerald-400 uppercase text-[10px] tracking-wider mb-1">
+                ✓ What&apos;s Included
+              </p>
+              <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                {activeService.metadata.whatsIncluded}
+              </p>
+            </div>
+          )}
+          {activeService?.metadata?.whatsExcluded && (
+            <div>
+              <p className="font-black text-rose-600 dark:text-rose-400 uppercase text-[10px] tracking-wider mb-1">
+                ✕ What&apos;s Not Included
+              </p>
+              <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                {activeService.metadata.whatsExcluded}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Step 2: Date & Time Slot (shown once a service is selected) */}
+      {activeService && (
       <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200">
@@ -293,14 +389,47 @@ export function HomeServiceBookingFlow({
           </div>
         </div>
 
+        {/* Express 90-Min Priority Dispatch Option (if enabled by provider) */}
+        {activeService?.metadata?.expressAvailable && (
+          <button
+            type="button"
+            onClick={() => setIsExpressSelected((prev) => !prev)}
+            className={`w-full p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between gap-3 ${
+              isExpressSelected
+                ? 'bg-[#FF5201]/10 border-[#FF5201] ring-1 ring-[#FF5201]'
+                : 'bg-orange-50/50 dark:bg-slate-800/60 border-orange-200/80 dark:border-white/10 hover:border-[#FF5201]/50'
+            }`}
+          >
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black text-[#FF5201]">⚡ Express Priority Arrival (Within 90 mins)</span>
+                <span className="text-[10px] font-bold text-slate-500">• 8 AM – 8 PM</span>
+              </div>
+              {activeService.metadata?.expressAreas && (
+                <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">
+                  Coverage: <strong>{activeService.metadata.expressAreas}</strong>
+                </p>
+              )}
+            </div>
+            <span className={`px-3 py-1 rounded-xl text-xs font-black shrink-0 ${
+              isExpressSelected ? 'bg-[#FF5201] text-white' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white border border-slate-200 dark:border-white/10'
+            }`}>
+              {isExpressSelected ? `✓ Added (+₹${Number(activeService.metadata?.expressFee ?? 149)})` : `+₹${Number(activeService.metadata?.expressFee ?? 149)}`}
+            </span>
+          </button>
+        )}
+
         <div className="flex flex-wrap gap-2">
           {shifts.map((sh) => (
             <button
               key={sh.id}
               type="button"
-              onClick={() => setSelectedShift(sh.id)}
+              onClick={() => {
+                setIsExpressSelected(false);
+                setSelectedShift(sh.id);
+              }}
               className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all cursor-pointer ${
-                selectedShift === sh.id
+                !isExpressSelected && selectedShift === sh.id
                   ? 'bg-[#0A3161] text-white border-[#0A3161]'
                   : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300'
               }`}
@@ -310,6 +439,7 @@ export function HomeServiceBookingFlow({
           ))}
         </div>
 
+        {!isExpressSelected && (
         <div className="flex flex-wrap gap-2">
           {currentSlots.map((slot) => {
             const slotKey = `${activeService?.id || ''}|${selectedDate}|${slot.trim()}`;
@@ -335,10 +465,13 @@ export function HomeServiceBookingFlow({
             );
           })}
         </div>
+        )}
 
         <div className="pt-2 flex items-center justify-between border-t border-slate-100 dark:border-white/10">
           <div className="text-xs text-slate-500 font-semibold">
-            {selectedDate} • {selectedSlotTime}
+            {isExpressSelected
+              ? `${selectedDate} • ⚡ Express (Within 90 mins) • ₹${(Number(activeService?.price || 499) + Number(activeService?.metadata?.expressFee ?? 149)).toLocaleString()}`
+              : `${selectedDate} • ${selectedSlotTime}`}
           </div>
           <button
             type="button"
@@ -350,6 +483,7 @@ export function HomeServiceBookingFlow({
           </button>
         </div>
       </div>
+      )}
 
       {/* Step 3: Address & Issue Modal */}
       {isAddressModalOpen && (
@@ -436,11 +570,16 @@ export function HomeServiceBookingFlow({
               <div className="pt-2 flex items-center justify-between border-t border-slate-100 dark:border-white/10">
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase block">
-                    Service Fee
+                    {isExpressSelected ? 'Total (Service + Express)' : 'Service Fee'}
                   </span>
                   <span className="text-lg font-black text-[#0A3161] dark:text-white">
-                    ₹{Number(activeService?.price || 499).toLocaleString()}
+                    ₹{(Number(activeService?.price || 499) + (isExpressSelected ? Number(activeService?.metadata?.expressFee ?? 149) : 0)).toLocaleString()}
                   </span>
+                  {isExpressSelected && (
+                    <span className="block text-[10px] font-bold text-[#FF5201]">
+                      Base ₹{Number(activeService?.price || 499)} + ⚡ Express ₹{Number(activeService?.metadata?.expressFee ?? 149)}
+                    </span>
+                  )}
                 </div>
                 <button
                   type="submit"

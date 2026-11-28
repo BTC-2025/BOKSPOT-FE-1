@@ -131,6 +131,7 @@ export function getCategoryHeroTheme(category: string, bookingType: string, city
   const normCat = (category || '').toLowerCase();
   const normType = (bookingType || '').toLowerCase();
   const cName = categoryName || 'Experiences';
+  const cleanTitleName = cName.replace(/\s+Booking$/i, '').trim() || cName;
   const cityName = city || 'Chennai';
 
   // 1. SPORTS & TURF
@@ -207,7 +208,7 @@ export function getCategoryHeroTheme(category: string, bookingType: string, city
     return {
       bgImage: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1920&q=80&auto=format&fit=crop',
       subtitle: 'VERIFIED STYLISTS & THERAPISTS • ZERO WAITING TIME',
-      title: `Book ${cName} in ${cityName}`,
+      title: `Book ${cleanTitleName} in ${cityName}`,
       description: `Connect with top-rated salons, expert stylists, and luxury spas for beauty treatments & pampering in ${cityName}.`,
       badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
       whereLabel: 'SALON / SPA LOCATION',
@@ -221,7 +222,7 @@ export function getCategoryHeroTheme(category: string, bookingType: string, city
     return {
       bgImage: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=1920&q=80&auto=format&fit=crop',
       subtitle: 'VERIFIED SPECIALISTS • CONFIRMED APPOINTMENTS',
-      title: `Book ${cName} in ${cityName}`,
+      title: `Book ${cleanTitleName} in ${cityName}`,
       description: `Consult top certified doctors, medical practitioners, and specialist clinics with verified appointment slots.`,
       badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
       whereLabel: 'CLINIC / HOSPITAL / AREA',
@@ -249,7 +250,7 @@ export function getCategoryHeroTheme(category: string, bookingType: string, city
     return {
       bgImage: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1920&q=80&auto=format&fit=crop',
       subtitle: 'CERTIFIED TRAINERS • FLEXIBLE PASSES & SESSIONS',
-      title: `Book ${cName} in ${cityName}`,
+      title: `Book ${cleanTitleName} in ${cityName}`,
       description: `Access premium fitness gyms, yoga shalas, and certified personal trainers with day passes & memberships.`,
       badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
       whereLabel: 'GYM / STUDIO LOCATION',
@@ -263,7 +264,7 @@ export function getCategoryHeroTheme(category: string, bookingType: string, city
     return {
       bgImage: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1920&q=80&auto=format&fit=crop',
       subtitle: 'VERIFIED EXPERTS • DOORSTEP SERVICE AT YOUR CONVENIENCE',
-      title: `Book ${cName} in ${cityName}`,
+      title: `Book ${cleanTitleName} in ${cityName}`,
       description: `Hire vetted technicians, experienced handymen, and professional home service experts with guaranteed pricing.`,
       badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
       whereLabel: 'SERVICE LOCATION / AREA',
@@ -277,7 +278,7 @@ export function getCategoryHeroTheme(category: string, bookingType: string, city
     return {
       bgImage: 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=1920&q=80&auto=format&fit=crop',
       subtitle: 'TRUSTED CAREGIVERS • CERTIFIED PROFESSIONALS',
-      title: `Book ${cName} in ${cityName}`,
+      title: `Book ${cleanTitleName} in ${cityName}`,
       description: `Find trusted caregivers, certified pet groomers, and personalized assistance professionals in ${cityName}.`,
       badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
       whereLabel: 'LOCATION / AREA',
@@ -294,7 +295,7 @@ export function getCategoryHeroTheme(category: string, bookingType: string, city
     return {
       bgImage: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1920&q=80&auto=format&fit=crop',
       subtitle: 'VERIFIED FLEET • ZERO SURCHARGE GUARANTEE',
-      title: `Book ${cName} in ${cityName}`,
+      title: `Book ${cleanTitleName} in ${cityName}`,
       description: `Instant confirmed tickets and chauffeur rides across local routes and interstate destinations from ${cityName}.`,
       badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
       whereLabel: 'DESTINATION / PICKUP',
@@ -311,7 +312,7 @@ export function getCategoryHeroTheme(category: string, bookingType: string, city
     return {
       bgImage: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&q=80&auto=format&fit=crop',
       subtitle: 'FLEXIBLE DESKS • HIGH-SPEED CONNECTIVITY',
-      title: `Book ${cName} in ${cityName}`,
+      title: `Book ${cleanTitleName} in ${cityName}`,
       description: `Reserve ergonomic hot desks, private cabins, modern meeting rooms, and production studios in ${cityName}.`,
       badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
       whereLabel: 'HUB / TECH PARK / AREA',
@@ -329,7 +330,7 @@ export function getCategoryHeroTheme(category: string, bookingType: string, city
     return {
       bgImage: 'https://images.unsplash.com/photo-1609766857041-ed402ea8069a?w=1920&q=80&auto=format&fit=crop',
       subtitle: 'SACRED SLOTS • HASSLE-FREE DEVOTIONAL DARSHAN',
-      title: `Book ${cName} in ${cityName}`,
+      title: `Book ${cleanTitleName} in ${cityName}`,
       description: `Confirmed sanctum entry, specialized pooja rituals, and sacred pilgrimage passes with verified coordinators.`,
       badge: `${cName.toUpperCase()} • ${cityName.toUpperCase()}`,
       whereLabel: 'TEMPLE / DEITY / REGION',
@@ -5304,7 +5305,7 @@ export default function ProviderDiscoveryPage() {
                     </div>
                     <div className="flex flex-col min-w-0 flex-1">
                       <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                        {isHomeServicesCategory ? 'LOCALITY / PINCODE' : 'CLINIC / SALON / AREA'}
+                        {isHomeServicesCategory ? 'SERVICE, ISSUE OR AREA' : 'CLINIC / SALON / AREA'}
                       </span>
                       <input
                         type="text"
@@ -5317,7 +5318,7 @@ export default function ProviderDiscoveryPage() {
                           setSearchQuery(e.target.value);
                           setShowAutocomplete(true);
                         }}
-                        placeholder={`Search ${categoryName} in ${city || 'Chennai'}...`}
+                        placeholder={isHomeServicesCategory ? `Search MCB check, repair, or ${city || 'Chennai'}...` : `Search ${categoryName} in ${city || 'Chennai'}...`}
                         className="w-full bg-transparent text-xs sm:text-sm font-bold text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-normal outline-none truncate"
                       />
                     </div>
@@ -5437,18 +5438,52 @@ export default function ProviderDiscoveryPage() {
                     <div className="text-slate-600 dark:text-slate-300 group-hover:text-[#ff6325] transition-colors shrink-0">
                       <Clock size={18} />
                     </div>
-                    <div className="flex flex-col min-w-0 flex-1">
+                    <div className="flex flex-col min-w-0 flex-1 relative group/slot outline-none" tabIndex={0}>
                       <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">SLOT WINDOW</span>
-                      <select
-                        value={homeServiceTimeWindow}
-                        onChange={(e) => setHomeServiceTimeWindow(e.target.value)}
-                        className="bg-transparent text-xs sm:text-sm font-bold text-slate-800 dark:text-white outline-none cursor-pointer"
-                      >
-                        <option value="ALL" className="dark:bg-slate-900">Any Time Slot</option>
-                        <option value="MORNING" className="dark:bg-slate-900">Morning (09 AM – 12 PM)</option>
-                        <option value="AFTERNOON" className="dark:bg-slate-900">Afternoon (12 PM – 04 PM)</option>
-                        <option value="EVENING" className="dark:bg-slate-900">Evening (04 PM – 08 PM)</option>
-                      </select>
+                      <div className="flex items-center justify-between gap-2 cursor-pointer">
+                        <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white truncate">
+                          {homeServiceTimeWindow === 'EXPRESS'
+                            ? '⚡ Express (Within 90 mins)'
+                            : homeServiceTimeWindow === 'MORNING'
+                              ? 'Morning (09 AM – 12 PM)'
+                              : homeServiceTimeWindow === 'AFTERNOON'
+                                ? 'Afternoon (12 PM – 04 PM)'
+                                : homeServiceTimeWindow === 'EVENING'
+                                  ? 'Evening (04 PM – 08 PM)'
+                                  : 'Any Time Slot'}
+                        </span>
+                        <ChevronDown size={14} className="text-slate-400 group-focus-within/slot:rotate-180 transition-transform shrink-0" />
+                      </div>
+                      <div className="hidden group-focus-within/slot:block absolute top-full left-0 mt-3 w-64 bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl p-1.5 z-50">
+                        {[
+                          { value: 'ALL', label: 'Any Time Slot' },
+                          { value: 'EXPRESS', label: '⚡ Express (Within 90 mins)' },
+                          { value: 'MORNING', label: 'Morning (09 AM – 12 PM)' },
+                          { value: 'AFTERNOON', label: 'Afternoon (12 PM – 04 PM)' },
+                          { value: 'EVENING', label: 'Evening (04 PM – 08 PM)' },
+                        ].map((opt) => {
+                          const isActive = homeServiceTimeWindow === opt.value;
+                          return (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                setHomeServiceTimeWindow(opt.value);
+                                (document.activeElement as HTMLElement)?.blur();
+                              }}
+                              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center justify-between ${
+                                isActive
+                                  ? 'bg-[#ff6325] text-white'
+                                  : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                              }`}
+                            >
+                              <span>{opt.label}</span>
+                              {isActive && <Check size={13} />}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -6389,6 +6424,34 @@ export default function ProviderDiscoveryPage() {
                       </button>
                     ))}
                   </div>
+                </>
+              )}
+
+              {/* Contextual Pills for Home Services (Electrician, Plumber, Cleaning, Technician) */}
+              {isHomeServicesCategory && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setHomeServiceTimeWindow(homeServiceTimeWindow === 'EXPRESS' ? 'ALL' : 'EXPRESS')}
+                    className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
+                      homeServiceTimeWindow === 'EXPRESS'
+                        ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                    }`}
+                  >
+                    <span>⚡ Express (90 mins)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFreeCancellationOnly(!freeCancellationOnly)}
+                    className={`px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs ${
+                      freeCancellationOnly
+                        ? 'bg-[#ff6325] text-white border-[#ff6325] shadow-sm shadow-[#ff6325]/20'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 shadow-xs'
+                    }`}
+                  >
+                    <span>🛡️ Service Guarantee</span>
+                  </button>
                 </>
               )}
 
