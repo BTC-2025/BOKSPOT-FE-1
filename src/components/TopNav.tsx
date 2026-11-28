@@ -421,21 +421,11 @@ export function TopNav({
                           key={item.id}
                           href={item.href}
                           scroll={false}
-                          className={`px-3.5 py-1 rounded-full text-[13px] font-semibold tracking-normal hover:scale-[1.02] active:scale-[0.98] relative z-10 custom-nav-link select-none transition-colors duration-150 ${isActive ? 'custom-nav-link-active !text-white' : 'custom-nav-link-inactive'
+                          className={`px-3.5 py-1.5 rounded-full text-[13px] tracking-normal relative z-10 custom-nav-link select-none outline-none focus:outline-none transition-colors duration-150 ${isActive ? 'custom-nav-link-active font-semibold !text-white' : 'custom-nav-link-inactive font-medium !text-white/80 hover:!text-white active:!text-white'
                             }`}
                         >
                           {isActive && (
-                            <motion.div
-                              layoutId="fluid-nav-active-pill"
-                              className="absolute inset-0 rounded-full bg-white/26 shadow-[0_1px_4px_rgba(0,0,0,0.08)] -z-10 custom-nav-active-bg"
-                              style={{ willChange: 'transform' }}
-                              transition={{
-                                type: 'spring',
-                                stiffness: 500,
-                                damping: 38,
-                                mass: 0.5,
-                              }}
-                            />
+                            <div className="absolute inset-0 rounded-full bg-white/26 shadow-[0_1px_4px_rgba(0,0,0,0.08)] -z-10 custom-nav-active-bg" />
                           )}
                           <span>{item.label}</span>
                         </Link>

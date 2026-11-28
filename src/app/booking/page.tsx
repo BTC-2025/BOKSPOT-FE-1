@@ -465,46 +465,206 @@ function TracksContent() {
               </div>
 
               {/* Right Side: Tracked Booking Summary Card (or clean placeholder before tracking) */}
-              {hasTracked && pnr.trim() ? (
-                <div className="w-full lg:flex-1 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-200/90 dark:border-white/10 p-4 shadow-xs">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="space-y-1 min-w-0">
-                      <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase block truncate">
-                        {displayCarrier} • {displayService}
-                      </span>
-                      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
-                        <span className="text-sm sm:text-base font-black text-slate-900 dark:text-white whitespace-nowrap">
-                          {displayTime}
-                        </span>
-                        <span className="text-slate-300 dark:text-slate-600">|</span>
-                        <span className="text-xs font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">
-                          {displayDate}
-                        </span>
+              {hasTracked && pnr.trim() ? (() => {
+                const modeKey = (selectedMode || 'flight') as 'flight' | 'train' | 'bus' | 'cab';
+                const templates = {
+                  flight: {
+                    title: 'IndiGo 6E-542',
+                    subtitle: `${pnr.trim() || 'BK-RA0BFR'} • Seat 14A • Updated 2 min ago`,
+                    badge: 'On time',
+                    badgeTone: 'green',
+                    fromCode: 'MAA',
+                    fromCity: 'Chennai',
+                    fromTime: '10:00 AM',
+                    toCode: 'BLR',
+                    toCity: 'Bengaluru',
+                    toTime: '11:15 AM',
+                    duration: '1h 15m • Non-stop',
+                    note: 'Boarding opens in 1h 05m',
+                    boxes: [
+                      { label: 'Terminal', val: 'T1' },
+                      { label: 'Gate', val: 'B12' },
+                      { label: 'Boarding', val: '09:30 AM' },
+                      { label: 'Check-in', val: 'Open' },
+                    ],
+                    updateTime: '08:42',
+                    updateText: 'Gate B12 assigned',
+                    updateCount: 3,
+                    action1: 'Boarding pass',
+                    action2: 'Share',
+                  },
+                  train: {
+                    title: '12607 Lalbagh Express',
+                    subtitle: `PNR ${pnr.trim() || '4521896307'} • Coach B2 • Berth 34 • Updated 1 min ago`,
+                    badge: 'Late 12 min',
+                    badgeTone: 'orange',
+                    fromCode: 'MAS',
+                    fromCity: 'Chennai Central',
+                    fromTime: '03:30 PM',
+                    toCode: 'SBC',
+                    toCity: 'KSR Bengaluru',
+                    toTime: '09:20 PM',
+                    duration: '5h 50m • Express',
+                    note: 'Crossed Katpadi • next Jolarpettai, 6:05 PM',
+                    boxes: [
+                      { label: 'Platform', val: '5' },
+                      { label: 'Now at', val: 'Katpadi' },
+                      { label: 'Late by', val: '12 min' },
+                      { label: 'Chart', val: 'Prepared' },
+                    ],
+                    updateTime: '05:12',
+                    updateText: 'Departed Katpadi, 12 min late',
+                    updateCount: 4,
+                    action1: 'Ticket',
+                    action2: 'Share status',
+                  },
+                  bus: {
+                    title: 'SRS Travels • Volvo AC Sleeper',
+                    subtitle: `${pnr.trim() || 'BK-BS2291'} • Seat L4 • Live GPS • Updated 30 sec ago`,
+                    badge: 'On the way',
+                    badgeTone: 'green',
+                    fromCode: 'CMBT',
+                    fromCity: 'Koyambedu',
+                    fromTime: '10:30 PM',
+                    toCode: 'BLR',
+                    toCity: 'Majestic',
+                    toTime: '04:45 AM',
+                    duration: '6h 15m • Sleeper',
+                    note: 'Next stop: Vellore • ETA 12:05 AM',
+                    boxes: [
+                      { label: 'Bus no', val: 'TN 01 AB 1234' },
+                      { label: 'Boarding point', val: 'Gate 4' },
+                      { label: 'Next stop', val: 'Vellore' },
+                      { label: 'Driver', val: 'Call now' },
+                    ],
+                    updateTime: '11:20',
+                    updateText: 'Left Poonamallee toll',
+                    updateCount: 3,
+                    action1: 'Call driver',
+                    action2: 'Share location',
+                  },
+                  cab: {
+                    title: 'Outstation • Sedan • Murugan 4.8',
+                    subtitle: `${pnr.trim() || 'BK-CB7710'} • Fare ₹3,450 • Live GPS`,
+                    badge: 'Driver arriving',
+                    badgeTone: 'orange',
+                    fromCode: 'Pickup',
+                    fromCity: 'Adyar',
+                    fromTime: '06:00 AM',
+                    toCode: 'Drop',
+                    toCity: 'Pondicherry',
+                    toTime: '08:45 AM',
+                    duration: '151 km • 2h 45m',
+                    note: 'Driver is 6 min away • TN 09 CD 4567',
+                    boxes: [
+                      { label: 'Start OTP', val: '4 8 2 1', highlight: true },
+                      { label: 'Arrives in', val: '6 min' },
+                      { label: 'Vehicle', val: 'TN 09 CD 4567' },
+                      { label: 'Driver', val: 'Call Murugan' },
+                    ],
+                    updateTime: '05:54',
+                    updateText: 'Driver is on the way',
+                    updateCount: 3,
+                    action1: 'Call driver',
+                    action2: 'Share trip',
+                  },
+                };
+                const tpl = templates[modeKey] || templates.flight;
+
+                return (
+                <div className="w-full lg:flex-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-white/10 p-4 shadow-xs space-y-3.5">
+                  {/* Top Row: Carrier + PNR + Status badge */}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="h-10 w-10 flex items-center justify-center shrink-0">
+                        <img src={`/images/transport/${modeKey}.png`} alt={modeKey} className="w-full h-full object-contain" />
                       </div>
-                      <div className="flex items-center gap-2 pt-0.5">
-                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-black ${
-                          displayStatus === 'CONFIRMED'
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                            : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                        }`}>
-                          {displayStatus}
-                        </span>
-                        <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 font-mono">
-                          {displayPnr}
-                        </span>
+                      <div className="min-w-0">
+                        <h4 className="text-sm font-black text-[#0A3161] dark:text-white truncate">
+                          {tpl.title}
+                        </h4>
+                        <p className="text-[11px] font-semibold text-slate-500 truncate">
+                          {tpl.subtitle}
+                        </p>
                       </div>
                     </div>
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 ${
+                      tpl.badgeTone === 'green' ? 'bg-[#E7F6EE] text-[#0F7A4B]' : 'bg-[#FFF1EB] text-[#FF5201]'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${tpl.badgeTone === 'green' ? 'bg-[#0F7A4B]' : 'bg-[#FF5201]'}`} />
+                      {tpl.badge}
+                    </span>
+                  </div>
 
-                    <button
-                      type="button"
-                      onClick={() => router.push(`/booking/track?ref=${encodeURIComponent(pnr.trim())}`)}
-                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#ff6325] hover:bg-[#e04e13] text-white text-xs font-black transition-all cursor-pointer shadow-xs whitespace-nowrap shrink-0"
-                    >
-                      View Live Details →
-                    </button>
+                  {/* Middle Row: Route + 2x2 Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                    <div className="sm:col-span-7 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-lg font-black text-[#0A3161] dark:text-white leading-none">{tpl.fromCode}</p>
+                          <p className="text-[11px] text-slate-500 mt-1">{tpl.fromCity}</p>
+                          <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300">{tpl.fromTime}</p>
+                        </div>
+                        <div className="flex-1 px-2 text-center">
+                          <p className="text-[10px] font-semibold text-slate-400 mb-1">{tpl.duration}</p>
+                          <div className="relative h-1.5 rounded-full bg-slate-200 dark:bg-slate-700">
+                            <div className="absolute left-0 top-0 h-1.5 w-1/4 rounded-full bg-[#0A3161]" />
+                            <div className="absolute left-1/4 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[#FF5201] ring-2 ring-white dark:ring-slate-900" />
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-black text-[#0A3161] dark:text-white leading-none">{tpl.toCode}</p>
+                          <p className="text-[11px] text-slate-500 mt-1">{tpl.toCity}</p>
+                          <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300">{tpl.toTime}</p>
+                        </div>
+                      </div>
+                      <p className="text-[11px] font-semibold text-slate-500 flex items-center gap-1.5">
+                        <Clock size={12} /> {tpl.note}
+                      </p>
+                    </div>
+
+                    <div className="sm:col-span-5 grid grid-cols-2 gap-2">
+                      {tpl.boxes.map((box: any) => (
+                        <div key={box.label} className={`rounded-xl px-2.5 py-1.5 ${box.highlight ? 'bg-[#FFF1EB] dark:bg-[#FF5201]/15' : 'bg-slate-50 dark:bg-slate-800/70'}`}>
+                          <span className="text-[10px] font-semibold text-slate-400 block">{box.label}</span>
+                          <span className={`text-xs font-black ${box.highlight ? 'text-[#FF5201]' : 'text-[#0A3161] dark:text-white'}`}>{box.val}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Bottom Row: Updates + Actions */}
+                  <div className="pt-2.5 border-t border-slate-100 dark:border-white/10 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                    <p className="text-slate-600 dark:text-slate-300 font-semibold">
+                      <span className="font-black text-[#0A3161] dark:text-white">{tpl.updateTime}</span> {tpl.updateText} •{' '}
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/booking/track?ref=${encodeURIComponent(pnr.trim())}`)}
+                        className="text-[#FF5201] font-bold hover:underline cursor-pointer"
+                      >
+                        All updates ({tpl.updateCount})
+                      </button>
+                    </p>
+                    <div className="flex items-center gap-3 text-slate-500 font-semibold">
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/booking/track?ref=${encodeURIComponent(pnr.trim())}`)}
+                        className="hover:text-[#0A3161] dark:hover:text-white cursor-pointer"
+                      >
+                        {tpl.action1}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigator.share?.({ title: `${modeKey.toUpperCase()} ${displayPnr}`, url: window.location.href }).catch(() => {})}
+                        className="hover:text-[#0A3161] dark:hover:text-white cursor-pointer"
+                      >
+                        {tpl.action2}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              ) : (
+                );
+              })() : (
                 <div className="w-full lg:flex-1 lg:border-l border-slate-200/80 dark:border-white/10 lg:pl-6 flex items-center gap-4">
                   {/* 3D Radar Globe Visual on Left */}
                   <div className="hidden sm:flex items-center justify-center shrink-0">

@@ -9,6 +9,7 @@ import { api } from '@/lib/api';
 import { useLocationStore, useBookingFlowStore, ALL_CITIES, POPULAR_CITIES } from '@/lib/store';
 import { BokspotLoader } from '@/components/ui/BokspotLoader';
 import { DoctorBookingFlow } from '@/components/archetypes/doctor/DoctorBookingFlow';
+import { HomeServiceBookingFlow } from '@/components/archetypes/HomeServiceBookingFlow';
 // import { getSportCategoryConfig } from '@/lib/sportsData';
 // import { getEntertainmentCategoryConfig, getMovieBySlugOrId, NOW_SHOWING_MOVIES, MovieListingItem } from '@/lib/entertainmentData';
 // import { getDiningConfig } from '@/lib/diningData';
@@ -4874,6 +4875,23 @@ export default function VenueProfilePage() {
          * ============================================================ */}
         {isDoctor && (
           <DoctorBookingFlow
+            venueName={venueName}
+            merchantId={merchantId}
+            category={category}
+            city={city}
+            liveServices={liveServices}
+            setSelectedService={setSelectedService}
+            setSelectedSlot={setSelectedSlot}
+          />
+        )}
+
+        {/* ============================================================
+         * SECTION D5-HS: UNIFIED HOME SERVICES (ELECTRICIAN, PLUMBER, CLEANING, TECHNICIAN)
+         * ============================================================ */}
+        {['electrician', 'plumber', 'cleaning', 'technician'].some((k) =>
+          (category || '').toLowerCase().includes(k)
+        ) && (
+          <HomeServiceBookingFlow
             venueName={venueName}
             merchantId={merchantId}
             category={category}
