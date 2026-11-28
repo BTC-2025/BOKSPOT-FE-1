@@ -7,7 +7,7 @@ import {
   CheckCircle2, Clock, MapPin, XCircle,
   Train, Bus, Plane, Car, Navigation, Compass,
   Calendar, ChevronRight, ChevronLeft, Bookmark, Radio, ShieldCheck,
-  Shield, Hotel, Coffee, Zap, User, Mail, Phone, Building2, Key, QrCode, DoorClosed, Lock, Unlock, Search
+  Shield, Hotel, Coffee, Zap, User, Mail, Phone, Building2, Key, QrCode, DoorClosed, Lock, Unlock, Search, Ticket, Share2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBookingFlowStore, useUserStore } from '../../lib/store';
@@ -409,7 +409,7 @@ function TracksContent() {
                     <input
                       type="text"
                       value={pnr}
-                      onChange={e => setPnr(e.target.value)}
+                      onChange={e => { setPnr(e.target.value); if (hasTracked) setHasTracked(false); }}
                       placeholder={
                         activeModeBooking ? `Search PNR (e.g. ${activeModeBooking.ref})...` :
                         (selectedMode || 'flight') === 'flight' ? 'Quick Paste PNR (e.g. 6E-421)...' :
@@ -645,20 +645,22 @@ function TracksContent() {
                         All updates ({tpl.updateCount})
                       </button>
                     </p>
-                    <div className="flex items-center gap-3 text-slate-500 font-semibold">
+                    <div className="flex items-center gap-2.5">
                       <button
                         type="button"
                         onClick={() => router.push(`/booking/track?ref=${encodeURIComponent(pnr.trim())}`)}
-                        className="hover:text-[#0A3161] dark:hover:text-white cursor-pointer"
+                        className="h-[38px] px-4 rounded-[10px] bg-white dark:bg-slate-800 border border-[#CBD5E1] dark:border-white/15 hover:border-[#FF5201] text-[#0A3161] dark:text-white text-[13px] font-medium inline-flex items-center gap-2 transition-colors cursor-pointer"
                       >
-                        {tpl.action1}
+                        {modeKey === 'bus' || modeKey === 'cab' ? <Phone size={16} /> : <Ticket size={16} />}
+                        <span>{tpl.action1}</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => navigator.share?.({ title: `${modeKey.toUpperCase()} ${displayPnr}`, url: window.location.href }).catch(() => {})}
-                        className="hover:text-[#0A3161] dark:hover:text-white cursor-pointer"
+                        className="h-[38px] px-4 rounded-[10px] bg-[#0A3161] hover:bg-[#072448] text-white text-[13px] font-medium inline-flex items-center gap-2 transition-colors cursor-pointer"
                       >
-                        {tpl.action2}
+                        <Share2 size={16} />
+                        <span>{tpl.action2}</span>
                       </button>
                     </div>
                   </div>
